@@ -1,0 +1,25 @@
+{
+  "name": "chromium-reactor",
+  "version": "0.0.1",
+  "description": "A framework for Chromium-based browsers for building their user interfaces",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aswitalski/readme-to-test.git"
+  },
+  "keywords": [
+    "chromium",
+    "react",
+    "redux",
+    "router"
+  ],
+  "author": "Aleksander Świtalski",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aswitalski/readme-to-test/issues"
+  },
+  "homepage": "https://github.com/aswitalski/readme-to-test#readme"
+}
