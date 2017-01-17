@@ -1,0 +1,7 @@
+--require ./test/config/init.js
+--slow 120
+--colors
+--sort
+--reporter spec
+--compilers js:babel-register
+./**/*.test.js
