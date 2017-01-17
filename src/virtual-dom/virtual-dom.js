@@ -1,5 +1,3 @@
-const SUPPORTED_EVENTS = [ 'onClick' ];
-
 class VirtualDOM {
 
   static async resolve(component) {
@@ -7,7 +5,9 @@ class VirtualDOM {
     const template = await component.render();
     const node = this.createNode(template);
 
-    const { children } = this.extractDefinition(...template);
+    const {
+      children
+    } = this.extractDefinition(...template);
     await this.addChildren(node, children);
 
     node.component = component;
@@ -21,13 +21,28 @@ class VirtualDOM {
       children,
       text
     } = this.extractDefinition(...template);
-    
+
     const node = new VirtualNode(name);
+    this.addAttributes(node, props);
     this.addListeners(node, props);
     if (text) {
       node.text = text;
     }
     return node;
+  }
+
+  static addAttributes(node, props = {}) {
+    const attributes = Object.keys(props)
+      .filter(key => SUPPORTED_ATTRIBUTES.includes(key))
+      .reduce((result, key) => {
+        const attr = key.replace(/(?:^|\.?)([A-Z])/g,
+          (x, y) => ('-' + y.toLowerCase()));
+        result[attr] = '' + props[key];
+        return result;
+      }, {});
+    if (Object.keys(attributes).length > 0) {
+      node.attrs = attributes;
+    }
   }
 
   static addListeners(node, props = {}) {
@@ -46,11 +61,13 @@ class VirtualDOM {
   static async addChildren(node, children = []) {
     for (let childTemplate of children) {
       if (Array.isArray(childTemplate)) {
-        const [ name ] = childTemplate;
+        const [name] = childTemplate;
         if (typeof name === 'symbol') {
           // TODO: amend instantiation
           const child = await Reactor.instantiate(name);
-          const { props } = this.extractDefinition(...childTemplate);
+          const {
+            props
+          } = this.extractDefinition(...childTemplate);
           child.props = props;
           const childNode = await this.resolve(child);
           node.addChild(childNode);
@@ -68,17 +85,28 @@ class VirtualDOM {
   static extractDefinition(name, ...params) {
     switch (params.length) {
       case 0:
-        return { name };
+        return {
+          name
+        };
       case 1:
         if (typeof params[0] === 'string') {
           const text = params[0];
-          return { name, text };
+          return {
+            name,
+            text
+          };
         } else if (Array.isArray(params[0])) {
           const children = params;
-          return { name, children };
+          return {
+            name,
+            children
+          };
         } else if (typeof params[0] === 'object' && params[0]) {
           const props = params[0];
-          return { name, props };
+          return {
+            name,
+            props
+          };
         } else {
           throw `Invalid content type: ${params[0]}`;
         }
@@ -88,10 +116,18 @@ class VirtualDOM {
           const content = params[1];
           if (typeof params[1] === 'string') {
             const text = params[1];
-            return { name, props, text };
+            return {
+              name,
+              props,
+              text
+            };
           } else if (Array.isArray(params[1])) {
             const children = params;
-            return { name, props, children };        
+            return {
+              name,
+              props,
+              children
+            };
           } else {
             throw `Invalid content type: ${params[0]}`;
           }
