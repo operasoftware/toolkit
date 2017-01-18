@@ -63,13 +63,379 @@ describe('Virtual DOM', () => {
       assert.equal(type, 'undefined');
     });
 
-    it('returns "array" for an array', () => {
+    it('returns "element" for an array', () => {
 
       // when
       const type = VirtualDOM.getItemType([]);
 
       // then
-      assert.equal(type, 'array');
+      assert.equal(type, 'element');
+    });
+
+    it('returns "props" for an object', () => {
+
+      // when
+      const type = VirtualDOM.getItemType({});
+
+      // then
+      assert.equal(type, 'props');
+    });
+  });
+
+  describe('=> validate template', () => {
+
+    beforeEach(() => {
+      sinon.stub(console, 'error');
+    });
+
+    afterEach(() => {
+      sinon.restore(console);
+    });
+
+    it('accepts an empty element', () => {
+
+      // given
+      const template = [
+        'span'
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string']);
+      assert(!console.error.called);
+    });
+
+    it('accepts an empty element with properties', () => {
+
+      // given
+      const template = [
+        'span', {}
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'props']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a text element', () => {
+
+      // given
+      const template = [
+        'span', 'Text'
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'string']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a text element with properties', () => {
+
+      // given
+      const template = [
+        'span', {}, 'Text'
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'props', 'string']);
+      assert(!console.error.called);
+    });
+
+    it('accepts an element with a single child', () => {
+
+      // given
+      const template = [
+        'div', [
+          'span'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts an element with multiple children', () => {
+
+      // given
+      const template = [
+        'div', [
+          'span', '1'
+        ],
+        [
+          'span', '2'
+        ],
+        [
+          'span', '3'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'element', 'element', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts an element with properties and a single child', () => {
+
+      // given
+      const template = [
+        'div', {},
+        [
+          'span'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'props', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts an element with properties and multiple children', () => {
+
+      // given
+      const template = [
+        'div', {},
+        [
+          'span', '1'
+        ],
+        [
+          'span', '2'
+        ],
+        [
+          'span', '3'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['string', 'props', 'element', 'element', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent', () => {
+
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent with a single child', () => {
+
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component, [
+          'span'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent with multiple children', () => {
+
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component, [
+          'span', '1'
+        ],
+        [
+          'span', '2'
+        ],
+        [
+          'span', '3'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol', 'element', 'element', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent with properties', () => {
+
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component, {}
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol', 'props']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent with properties and a single child', () => {
+
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component, {},
+        [
+          'span'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol', 'props', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('accepts a subcomponent with properties with multiple children', () => {
+
+      // given
+      const component = Symbol.for('component');
+      const template = [
+        component, {},
+        [
+          'span', '1'
+        ],
+        [
+          'span', '2'
+        ],
+        [
+          'span', '3'
+        ]
+      ];
+
+      // when
+      const result = VirtualDOM.validate(template);
+
+      // then
+      assert.deepEqual(result, ['symbol', 'props', 'element', 'element', 'element']);
+      assert(!console.error.called);
+    });
+
+    it('rejects a number as a parameter', () => {
+
+      // when
+      const error = VirtualDOM.validate([ 5 ]);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Invalid parameter type "number" at index 0');
+      assert(console.error.called);
+    });
+
+    it('rejects a boolean as a parameter', () => {
+
+      // when
+      const error = VirtualDOM.validate([ true ]);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Invalid parameter type "boolean" at index 0');
+      assert(console.error.called);
+    });
+
+    it('rejects null as a parameter', () => {
+
+      // when
+      const error = VirtualDOM.validate([ null ]);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Invalid parameter type "null" at index 0');
+      assert(console.error.called);
+    });
+
+    it('rejects undefined as a parameter', () => {
+
+      // when
+      const error = VirtualDOM.validate([ undefined ]);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Invalid parameter type "undefined" at index 0');
+      assert(console.error.called);
+    });
+
+
+    it('rejects a text element with child nodes', () => {
+
+      // given
+      const template = [
+        'div', 'Text', [
+          'span', '1'
+        ]
+      ];
+
+      // when
+      const error = VirtualDOM.validate(template);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Text elements cannot have child nodes');
+      assert(console.error.called);
+    });
+
+    it('rejects a text element with properties and child nodes', () => {
+
+      // given
+      const template = [
+        'div', {}, 'Text', [
+          'span', '1'
+        ]
+      ];
+
+      // when
+      const error = VirtualDOM.validate(template);
+
+      // then
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Text elements cannot have child nodes');
+      assert(console.error.called);
     });
   });
 
