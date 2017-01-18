@@ -7,7 +7,7 @@ class VirtualDOM {
 
     const {
       children
-    } = this.extractDefinition(...template);
+    } = this.spread(template);
     await this.addChildren(node, children);
 
     node.component = component;
@@ -20,7 +20,7 @@ class VirtualDOM {
       props,
       children,
       text
-    } = this.extractDefinition(...template);
+    } = this.spread(template);
 
     const node = new VirtualNode(name);
     this.addAttributes(node, props);
@@ -67,7 +67,7 @@ class VirtualDOM {
           const child = await Reactor.instantiate(name);
           const {
             props
-          } = this.extractDefinition(...childTemplate);
+          } = this.spread(childTemplate);
           child.props = props;
           const childNode = await this.resolve(child);
           node.addChild(childNode);
@@ -75,14 +75,37 @@ class VirtualDOM {
           const childNode = this.createNode(childTemplate);
           node.addChild(childNode);
 
-          const grandchildren = this.extractDefinition(...childTemplate).children;
+          const grandchildren = this.spread(childTemplate).children;
           this.addChildren(childNode, grandchildren);
         }
       }
     }
   }
 
-  static extractDefinition(name, ...params) {
+  static getItemType(item) {
+    const type = typeof item;
+    switch (type) {
+      case 'string':
+      case 'number':
+      case 'boolean':
+      case 'undefined':
+      case 'symbol':
+        return type;
+      case 'object':
+        if (item === null) {
+          return 'null';
+        } else if (Array.isArray(item)) {
+          return 'array';
+        } else {
+          return 'object';
+        }
+      default:
+        console.error('Unknown type of:', item);
+    }
+  }
+
+  static spread(template) {
+    const [name, ...params] = template;
     switch (params.length) {
       case 0:
         return {
