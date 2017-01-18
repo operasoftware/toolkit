@@ -13,6 +13,13 @@
     }
 
     render() {
+
+      document.body.onclick = event => {
+        console.log('document.body.onClick()');
+        this.dispatch(ActionCreator.addItem('item ' + (this.props.items.length + 1)));
+        console.time('update');
+      };
+
       return [
         'div', [
           NavigationPanel, { items: this.props.items }

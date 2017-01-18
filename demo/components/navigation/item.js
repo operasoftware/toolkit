@@ -3,7 +3,7 @@
   const NavigationItem = class extends Reactor.Component {
 
     async init() {
-      console.debug('Async init in:', this);
+//       console.debug('Async init in:', this);
     }
 
     onClick() {
