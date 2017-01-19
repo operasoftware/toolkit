@@ -43,7 +43,7 @@ const ActionCreator = {
     if (action.type === Actions.ADD_ITEM) {
        const nextState = Object.assign({}, state);
        nextState.items = [...state.items];
-       for (let i = 0; i < 100; i++) {
+       for (let i = 0; i < 1000; i++) {
          nextState.items.push(action.label);
        }
        return nextState;
@@ -63,10 +63,14 @@ const ActionCreator = {
 
     instantiate: async (def) => {
       const componentPath = typeof def === 'symbol' ? registry.get(def) : def;
-      const ComponentClass = await require(componentPath);
-      const component = new ComponentClass();
-      await component.init();
-      return component;
+
+      let componentClass = registry.get(componentPath);
+      if (componentClass) {
+        return new componentClass();
+      }
+      
+      componentClass = await require(componentPath);
+      return new componentClass();
     },
 
     render: async (definition, containerElement) => {
@@ -100,11 +104,12 @@ const ActionCreator = {
       
       rootComponent.props = store.getState();
       const virtualDOM = await VirtualDOM.resolve(rootComponent);
+      console.timeEnd('update');
 
+      console.time('render');
       Renderer.renderInElement(rootElement, virtualDOM);
       currentVirtualDOM = virtualDOM;
-
-      console.timeEnd('update');
+      console.timeEnd('render');
     },
 
     Component: class  Component{
@@ -117,7 +122,7 @@ const ActionCreator = {
   window.require = componentPath => {
 
     if (registry.get(componentPath)) {
-//       console.log(`(loader) Loaded component "${componentPath}" from cache`);
+      // console.log(`(loader) Loaded component "${componentPath}" from cache`);
       return Promise.resolve(registry.get(componentPath));
     }
 
@@ -130,7 +135,14 @@ const ActionCreator = {
         registry.set(componentPath, module.exports);
         console.log('(loader) Loaded script:', script.src);
         console.timeEnd('=> script load time');
-        resolve(module.exports);
+        if (module.exports) {
+          const componentClass = module.exports;
+          if (componentClass.prototype instanceof Reactor.Component) {
+            componentClass.init().then(() => {
+              resolve(module.exports);
+            });
+          }
+        }
       };
       document.head.appendChild(script);
     });
