@@ -1,5 +1,18 @@
 class VirtualDOM {
 
+  static get ItemType() {
+    return {
+      STRING: 'string',
+      NUMBER: 'number',
+      BOOLEAN: 'boolean',
+      UNDEFINED: 'undefined',
+      NULL: 'null',
+      COMPONENT: 'component',
+      ELEMENT: 'element',
+      PROPS: 'props',
+    };
+  }
+
   static async resolve(component) {
 
     const template = await component.render();
@@ -89,21 +102,28 @@ class VirtualDOM {
   }
 
   static getItemType(item) {
+
+    const Type = VirtualDOM.ItemType;
     const type = typeof item;
+
     switch (type) {
       case 'string':
+        return Type.STRING;
       case 'number':
+        return Type.NUMBER;
       case 'boolean':
+        return Type.BOOLEAN;
       case 'undefined':
+        return Type.UNDEFINED;
       case 'symbol':
-        return type;
+        return Type.COMPONENT;
       case 'object':
         if (item === null) {
-          return 'null';
+          return Type.NULL;
         } else if (Array.isArray(item)) {
-          return 'element';
+          return Type.ELEMENT;
         } else {
-          return 'props';
+          return Type.PROPS;
         }
       default:
         console.error('Unknown type of:', item);
@@ -113,7 +133,7 @@ class VirtualDOM {
   static validate(template) {
     if (Array.isArray(template)) {
       const types = template.map(this.getItemType);
-      if (!['string', 'symbol'].includes(types[0])) {
+      if (!['string', 'component'].includes(types[0])) {
         console.error('Invalid element:', template[0],
           ', expecting component or tag name');
         const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
@@ -181,7 +201,7 @@ class VirtualDOM {
   }
 
   static spread(template) {
-    
+
     const {
       types,
       error

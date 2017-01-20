@@ -5,6 +5,8 @@ global.SUPPORTED_EVENTS = consts.SUPPORTED_EVENTS;
 global.VirtualNode = require('../src/virtual-dom/virtual-node.js');
 global.VirtualDOM = require('../src/virtual-dom/virtual-dom.js');
 
+const ItemType = VirtualDOM.ItemType;
+
 describe('Virtual DOM', () => {
 
   describe('=> get item type', () => {
@@ -15,7 +17,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType('string');
 
       // then
-      assert.equal(type, 'string');
+      assert.equal(type, ItemType.STRING);
     });
 
     it('returns "number" for a number', () => {
@@ -24,7 +26,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType(13);
 
       // then
-      assert.equal(type, 'number');
+      assert.equal(type, ItemType.NUMBER);
     });
 
     it('returns "boolean" for a boolean', () => {
@@ -33,16 +35,16 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType(true);
 
       // then
-      assert.equal(type, 'boolean');
+      assert.equal(type, ItemType.BOOLEAN);
     });
 
-    it('returns "symbol" for a symbol', () => {
+    it('returns "component" for a symbol', () => {
 
       // when
-      const type = VirtualDOM.getItemType(Symbol.for('symbol'));
+      const type = VirtualDOM.getItemType(Symbol.for('component'));
 
       // then
-      assert.equal(type, 'symbol');
+      assert.equal(type, ItemType.COMPONENT);
     });
 
     it('returns "null" for null', () => {
@@ -51,7 +53,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType(null);
 
       // then
-      assert.equal(type, 'null');
+      assert.equal(type, ItemType.NULL);
     });
 
     it('returns "undefined" for undefined', () => {
@@ -60,7 +62,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType(undefined);
 
       // then
-      assert.equal(type, 'undefined');
+      assert.equal(type, ItemType.UNDEFINED);
     });
 
     it('returns "element" for an array', () => {
@@ -69,7 +71,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType([]);
 
       // then
-      assert.equal(type, 'element');
+      assert.equal(type, ItemType.ELEMENT);
     });
 
     it('returns "props" for an object', () => {
@@ -78,7 +80,7 @@ describe('Virtual DOM', () => {
       const type = VirtualDOM.getItemType({});
 
       // then
-      assert.equal(type, 'props');
+      assert.equal(type, ItemType.PROPS);
     });
   });
 
@@ -264,7 +266,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol']
+        types: ['component']
       });
       assert(!console.error.called);
     });
@@ -285,7 +287,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol', 'element']
+        types: ['component', 'element']
       });
       assert(!console.error.called);
     });
@@ -312,7 +314,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol', 'element', 'element', 'element']
+        types: ['component', 'element', 'element', 'element']
       });
       assert(!console.error.called);
     });
@@ -331,7 +333,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol', 'props']
+        types: ['component', 'props']
       });
       assert(!console.error.called);
     });
@@ -353,7 +355,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol', 'props', 'element']
+        types: ['component', 'props', 'element']
       });
       assert(!console.error.called);
     });
@@ -380,7 +382,7 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(result, {
-        types: ['symbol', 'props', 'element', 'element', 'element']
+        types: ['component', 'props', 'element', 'element', 'element']
       });
       assert(!console.error.called);
     });
