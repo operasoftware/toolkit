@@ -1,23 +1,38 @@
 class VirtualDOM {
 
+  static get ItemType() {
+    return {
+      STRING: 'string',
+      NUMBER: 'number',
+      BOOLEAN: 'boolean',
+      UNDEFINED: 'undefined',
+      NULL: 'null',
+      COMPONENT: 'component',
+      ELEMENT: 'element',
+      PROPS: 'props',
+    };
+  }
+
   static async resolve(component) {
 
-    const template = await component.render();
-    const result = this.validate(template);
-    if (result.error) {
-      console.error('Invalid template definition:', template, 'rendered by:', component);
-      throw result.error;
+    try {
+
+      const template = await component.render();
+
+      const {
+        children
+      } = this.spread(template, component);
+
+      const node = this.createNode(template);
+      await this.addChildren(node, children);
+
+      node.component = component;
+      return node;
+
+    } catch (e) {
+      console.error('Error resolving:', component);
+      throw e;
     }
-
-    const node = this.createNode(template);
-
-    const {
-      children
-    } = this.spread(template);
-    await this.addChildren(node, children);
-
-    node.component = component;
-    return node;
   }
 
   static createNode(template) {
@@ -89,21 +104,28 @@ class VirtualDOM {
   }
 
   static getItemType(item) {
+
+    const Type = VirtualDOM.ItemType;
     const type = typeof item;
+
     switch (type) {
       case 'string':
+        return Type.STRING;
       case 'number':
+        return Type.NUMBER;
       case 'boolean':
+        return Type.BOOLEAN;
       case 'undefined':
+        return Type.UNDEFINED;
       case 'symbol':
-        return type;
+        return Type.COMPONENT;
       case 'object':
         if (item === null) {
-          return 'null';
+          return Type.NULL;
         } else if (Array.isArray(item)) {
-          return 'element';
+          return Type.ELEMENT;
         } else {
-          return 'props';
+          return Type.PROPS;
         }
       default:
         console.error('Unknown type of:', item);
@@ -111,9 +133,10 @@ class VirtualDOM {
   }
 
   static validate(template) {
+    const Type = VirtualDOM.ItemType;
     if (Array.isArray(template)) {
       const types = template.map(this.getItemType);
-      if (!['string', 'symbol'].includes(types[0])) {
+      if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
         console.error('Invalid element:', template[0],
           ', expecting component or tag name');
         const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
@@ -123,23 +146,37 @@ class VirtualDOM {
         };
       } else if (types.length > 1) {
         switch (types[1]) {
-          case 'string':
+          case Type.STRING:
             if (types.length > 2) {
               const error = new Error('Text elements cannot have child nodes');
               console.error('Text elements cannot have child nodes:', template.slice(1));
               return {
                 error,
                 types
-              }
+              };
+            } else if (types[0] === Type.COMPONENT) {
+              const error = new Error('Subcomponents do not accept text content');
+              console.error('Subcomponents do not accept text content:', template[1]);
+              return {
+                error,
+                types
+              };
             }
-          case 'props':
-          case 'element':
+          case Type.PROPS:
+          case Type.ELEMENT:
             if (types.length > 2) {
-              if (types[2] === 'string') {
+              if (types[2] === Type.STRING) {
                 if (types.length > 3) {
                   const error = new Error('Text elements cannot have child nodes');
                   console.error('Text elements cannot have child nodes:',
                     template.slice(2));
+                  return {
+                    error,
+                    types
+                  };
+                } else if (types[0] === Type.COMPONENT) {
+                  const error = new Error('Subcomponents do not accept text content');
+                  console.error('Subcomponents do not accept text content:', template[2]);
                   return {
                     error,
                     types
@@ -150,7 +187,7 @@ class VirtualDOM {
                 };
               }
               for (let i = 2; i < template.length; i++) {
-                if (types[i] !== 'element') {
+                if (types[i] !== Type.ELEMENT) {
                   const error = new Error(`Invalid parameter type: "${types[i]}" at index: ${i}`);
                   console.error('Invalid parameter:', template[i],
                     ', expecting child element');
@@ -180,66 +217,63 @@ class VirtualDOM {
     }
   }
 
-  static spread(template) {
-    
+  static spread(template, component) {
+
+    const Type = VirtualDOM.ItemType;
     const {
       types,
       error
     } = this.validate(template);
-    console.assert(!error, 'Invalid template:', template);
 
-    const [name, ...params] = template;
-    switch (params.length) {
-      case 0:
-        return {
-          name
-        };
+    if (error) {
+      console.error('Invalid template definition:', template);
+      throw error;
+    }
+
+    const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
+
+    switch (template.length) {
       case 1:
-        if (typeof params[0] === 'string') {
-          const text = params[0];
+        return {
+          [type]: template[0],
+        };
+      case 2:
+        if (types[1] === Type.STRING) {
+          const text = template[1];
           return {
-            name,
-            text
+            [type]: template[0],
+            text,
           };
-        } else if (Array.isArray(params[0])) {
-          const children = params;
+        } else if (types[1] === Type.PROPS) {
           return {
-            name,
-            children
+            [type]: template[0],
+            props: template[1]
           };
-        } else if (typeof params[0] === 'object' && params[0]) {
-          const props = params[0];
+        } else if (types[1] === Type.ELEMENT) {
           return {
-            name,
-            props
+            [type]: template[0],
+            children: template.slice(1),
           };
-        } else {
-          throw `Invalid content type: ${params[0]}`;
         }
       default:
-        const props = params[0];
-        if (typeof props === 'object') {
-          const content = params[1];
-          if (typeof params[1] === 'string') {
-            const text = params[1];
+        if (types[1] === Type.PROPS) {
+          if (types[2] === Type.STRING) {
             return {
-              name,
-              props,
-              text
+              [type]: template[0],
+              props: template[1],
+              text: template[2],
             };
-          } else if (Array.isArray(params[1])) {
-            const children = params;
-            return {
-              name,
-              props,
-              children
-            };
-          } else {
-            throw `Invalid content type: ${params[0]}`;
           }
-        } else {
-          throw `Invalid attributes definition: ${props}`;
+          return {
+            [type]: template[0],
+            props: template[1],
+            children: template.slice(2),
+          };
         }
+        return {
+          [type]: template[0],
+          children: template.slice(1),
+        };
     }
   }
 
