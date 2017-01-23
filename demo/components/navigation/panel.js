@@ -4,8 +4,8 @@
 
   const NavigationPanel = class extends Reactor.Component {
 
-    async init() {
-      console.debug('Async init in:', this);
+    static async init() {
+      // console.debug('Async init in:', this);
     }
 
     render() {

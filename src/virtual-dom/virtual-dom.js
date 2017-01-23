@@ -17,7 +17,7 @@ class VirtualDOM {
 
     try {
 
-      const template = await component.render();
+      const template = component.render();
 
       const {
         children
