@@ -13,18 +13,38 @@ class VirtualDOM {
     };
   }
 
-  static async resolve(component) {
-
+  static create(component) {
     try {
-
-      const template = await component.render();
+      const template = component.render();
 
       const {
         children
       } = this.spread(template, component);
 
       const node = this.createNode(template);
-      await this.addChildren(node, children);
+      this.addChildren(node, children);
+
+      node.component = component;
+      return node;
+
+    } catch (e) {
+      console.error('Error creating Virtual DOM:', component);
+      throw e;
+    }
+  }
+
+  static async resolve(component) {
+
+    try {
+
+      const template = component.render();
+
+      const {
+        children
+      } = this.spread(template, component);
+
+      const node = this.createNode(template);
+      await this.resolveChildren(node, children);
 
       node.component = component;
       return node;
@@ -79,7 +99,31 @@ class VirtualDOM {
     }
   }
 
-  static async addChildren(node, children = []) {
+  static addChildren(node, children = []) {
+    for (let childTemplate of children) {
+      if (Array.isArray(childTemplate)) {
+        const [name] = childTemplate;
+        if (typeof name === 'symbol') {
+          // TODO: amend instantiation
+          const child = Reactor.construct(name);
+          const {
+            props
+          } = this.spread(childTemplate);
+          child.props = props;
+          const childNode = this.create(child);
+          node.addChild(childNode);
+        } else if (typeof name === 'string') {
+          const childNode = this.createNode(childTemplate);
+          node.addChild(childNode);
+
+          const grandchildren = this.spread(childTemplate).children;
+          this.addChildren(childNode, grandchildren);
+        }
+      }
+    }
+  }
+
+  static async resolveChildren(node, children = []) {
     for (let childTemplate of children) {
       if (Array.isArray(childTemplate)) {
         const [name] = childTemplate;

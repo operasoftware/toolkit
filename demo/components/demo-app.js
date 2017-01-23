@@ -4,12 +4,8 @@
 
   const DemoApp = class extends Reactor.Component {
 
-    async init() {
-      console.debug('Async init in: ', this);
-      // WindowEvents = await require('utils/window-events');
-      this.props = {
-        items: ['bookmarks', 'news', 'extensions', 'tabs', 'settings']
-      };
+    static async init() {
+      // console.debug('Async init in: ', this);
     }
 
     render() {

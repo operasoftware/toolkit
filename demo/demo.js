@@ -1,6 +1,14 @@
 window.renderDemoApp = async () => {
+
   const DemoApp = require.defer('demo/components/demo-app');
-  await Reactor.render(DemoApp, document.body).then(() => {
-    console.log('(demo) Rendering done')
-  });
+  const store = {};
+
+  // create new app
+  const demo = Reactor.create(DemoApp).init(store);
+
+  // preload all resources
+  await demo.preload();
+
+  // render in body element
+  await demo.render(document.body);
 };
