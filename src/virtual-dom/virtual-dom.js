@@ -4,9 +4,9 @@ class VirtualDOM {
 
     const template = await component.render();
     const result = this.validate(template);
-    if (result instanceof Error) {
+    if (result.error) {
       console.error('Invalid template definition:', template, 'rendered by:', component);
-      throw result;
+      throw result.error;
     }
 
     const node = this.createNode(template);
@@ -116,47 +116,78 @@ class VirtualDOM {
       if (!['string', 'symbol'].includes(types[0])) {
         console.error('Invalid element:', template[0],
           ', expecting component or tag name');
-        return new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        return {
+          error,
+          types
+        };
       } else if (types.length > 1) {
         switch (types[1]) {
           case 'string':
             if (types.length > 2) {
-              console.error('Text elements cannot have child nodes:',
-                template.slice(1));
-              return new Error('Text elements cannot have child nodes');
+              const error = new Error('Text elements cannot have child nodes');
+              console.error('Text elements cannot have child nodes:', template.slice(1));
+              return {
+                error,
+                types
+              }
             }
           case 'props':
           case 'element':
             if (types.length > 2) {
               if (types[2] === 'string') {
                 if (types.length > 3) {
+                  const error = new Error('Text elements cannot have child nodes');
                   console.error('Text elements cannot have child nodes:',
                     template.slice(2));
-                  return new Error('Text elements cannot have child nodes');
+                  return {
+                    error,
+                    types
+                  };
                 }
-                return types;
+                return {
+                  types
+                };
               }
               for (let i = 2; i < template.length; i++) {
                 if (types[i] !== 'element') {
+                  const error = new Error(`Invalid parameter type: "${types[i]}" at index: ${i}`);
                   console.error('Invalid parameter:', template[i],
                     ', expecting child element');
-                  return new Error(`Invalid parameter type: "${types[i]}" at index: ${i}`);
+                  return {
+                    error,
+                    types
+                  };
                 }
               }
             }
-            return types;
+            return {
+              types
+            };
           default:
             console.log('Invalid parameter', template[1], 'expecting properties object, text content or first child element');
-            return new Error(`Invalid parameter type: "${types[1]}" at index: 1`);
+            return {
+              error,
+              types
+            };
         }
       }
-      return types;
+      return {
+        types
+      };
     } else {
       console.error('Specified template', template, 'is not an array!');
     }
   }
 
   static spread(template) {
+    
+    const {
+      types,
+      error
+    } = this.validate(template);
+    console.assert(!error, 'Invalid template:', template);
+
     const [name, ...params] = template;
     switch (params.length) {
       case 0:

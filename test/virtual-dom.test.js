@@ -103,7 +103,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string']);
+      assert.deepEqual(result, {
+        types: ['string']
+      });
       assert(!console.error.called);
     });
 
@@ -118,7 +120,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'props']);
+      assert.deepEqual(result, {
+        types: ['string', 'props']
+      });
       assert(!console.error.called);
     });
 
@@ -133,7 +137,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'string']);
+      assert.deepEqual(result, {
+        types: ['string', 'string']
+      });
       assert(!console.error.called);
     });
 
@@ -148,7 +154,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'props', 'string']);
+      assert.deepEqual(result, {
+        types: ['string', 'props', 'string']
+      });
       assert(!console.error.called);
     });
 
@@ -165,7 +173,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'element']);
+      assert.deepEqual(result, {
+        types: ['string', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -188,7 +198,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'element', 'element', 'element']);
+      assert.deepEqual(result, {
+        types: ['string', 'element', 'element', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -206,7 +218,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'props', 'element']);
+      assert.deepEqual(result, {
+        types: ['string', 'props', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -230,7 +244,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['string', 'props', 'element', 'element', 'element']);
+      assert.deepEqual(result, {
+        types: ['string', 'props', 'element', 'element', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -247,7 +263,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol']);
+      assert.deepEqual(result, {
+        types: ['symbol']
+      });
       assert(!console.error.called);
     });
 
@@ -266,7 +284,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol', 'element']);
+      assert.deepEqual(result, {
+        types: ['symbol', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -291,7 +311,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol', 'element', 'element', 'element']);
+      assert.deepEqual(result, {
+        types: ['symbol', 'element', 'element', 'element']
+      });
       assert(!console.error.called);
     });
 
@@ -308,7 +330,9 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol', 'props']);
+      assert.deepEqual(result, {
+        types: ['symbol', 'props']
+      });
       assert(!console.error.called);
     });
 
@@ -328,11 +352,13 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol', 'props', 'element']);
+      assert.deepEqual(result, {
+        types: ['symbol', 'props', 'element']
+      });
       assert(!console.error.called);
     });
 
-    it('accepts a subcomponent with properties with multiple children', () => {
+    it('accepts a subcomponent with properties and multiple children', () => {
 
       // given
       const component = Symbol.for('component');
@@ -353,51 +379,53 @@ describe('Virtual DOM', () => {
       const result = VirtualDOM.validate(template);
 
       // then
-      assert.deepEqual(result, ['symbol', 'props', 'element', 'element', 'element']);
+      assert.deepEqual(result, {
+        types: ['symbol', 'props', 'element', 'element', 'element']
+      });
       assert(!console.error.called);
     });
 
     it('rejects a number as a parameter', () => {
 
       // when
-      const error = VirtualDOM.validate([ 5 ]);
+      const result = VirtualDOM.validate([5]);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Invalid parameter type "number" at index 0');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Invalid parameter type "number" at index 0');
       assert(console.error.called);
     });
 
     it('rejects a boolean as a parameter', () => {
 
       // when
-      const error = VirtualDOM.validate([ true ]);
+      const result = VirtualDOM.validate([true]);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Invalid parameter type "boolean" at index 0');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Invalid parameter type "boolean" at index 0');
       assert(console.error.called);
     });
 
     it('rejects null as a parameter', () => {
 
       // when
-      const error = VirtualDOM.validate([ null ]);
+      const result = VirtualDOM.validate([null]);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Invalid parameter type "null" at index 0');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Invalid parameter type "null" at index 0');
       assert(console.error.called);
     });
 
     it('rejects undefined as a parameter', () => {
 
       // when
-      const error = VirtualDOM.validate([ undefined ]);
+      const result = VirtualDOM.validate([undefined]);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Invalid parameter type "undefined" at index 0');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Invalid parameter type "undefined" at index 0');
       assert(console.error.called);
     });
 
@@ -412,11 +440,11 @@ describe('Virtual DOM', () => {
       ];
 
       // when
-      const error = VirtualDOM.validate(template);
+      const result = VirtualDOM.validate(template);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Text elements cannot have child nodes');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Text elements cannot have child nodes');
       assert(console.error.called);
     });
 
@@ -430,11 +458,11 @@ describe('Virtual DOM', () => {
       ];
 
       // when
-      const error = VirtualDOM.validate(template);
+      const result = VirtualDOM.validate(template);
 
       // then
-      assert(error instanceof Error);
-      assert.equal(error.message, 'Text elements cannot have child nodes');
+      assert(result.error instanceof Error);
+      assert.equal(result.error.message, 'Text elements cannot have child nodes');
       assert(console.error.called);
     });
   });
