@@ -1,6 +1,6 @@
 window.renderDemoApp = async () => {
 
-  const DemoApp = require.defer('demo/components/demo-app');
+  const DemoApp = require.defer('components/demo-app');
   const store = {};
 
   // create new app
