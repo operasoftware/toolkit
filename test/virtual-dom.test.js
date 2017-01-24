@@ -703,12 +703,12 @@ describe('Virtual DOM', () => {
     it('creates an empty element', () => {
 
       // given
-      const template = [
-        'span'
-      ];
+      const definition = {
+        name: 'span'
+      };
 
       // when
-      const node = VirtualDOM.createNode(template);
+      const node = VirtualDOM.createNode(definition);
 
       // then
       assert(node instanceof VirtualNode);
@@ -723,17 +723,18 @@ describe('Virtual DOM', () => {
 
       // given
       const onChangeListener = () => {};
-      const template = [
-        'input', {
+      const definition = {
+        name:'input',
+        props: {
           type: 'text',
           tabIndex: 1,
           autoFocus: true,
           onChange: onChangeListener
         }
-      ];
+      };
 
       // when
-      const node = VirtualDOM.createNode(template);
+      const node = VirtualDOM.createNode(definition);
 
       // then
       assert(node instanceof VirtualNode);
@@ -753,12 +754,13 @@ describe('Virtual DOM', () => {
     it('creates a text element', () => {
 
       // given
-      const template = [
-        'div', 'Text'
-      ];
+      const definition = {
+        name: 'div',
+        text: 'Text'
+      };
 
       // when
-      const node = VirtualDOM.createNode(template);
+      const node = VirtualDOM.createNode(definition);
 
       // then
       assert(node instanceof VirtualNode);
@@ -773,18 +775,19 @@ describe('Virtual DOM', () => {
 
       // given
       const onClickListener = () => {};
-      const template = [
-        'a', {
+      const definition = {
+        name: 'a',
+        props: {
           href: 'http://www.opera.com/',
           target: '_blank',
           title: 'Opera Software',
           onClick: onClickListener,
         },
-        'Opera Software'
-      ];
+        text: 'Opera Software'
+      };
 
       // when
-      const node = VirtualDOM.createNode(template);
+      const node = VirtualDOM.createNode(definition);
 
       // then
       assert(node instanceof VirtualNode);

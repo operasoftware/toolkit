@@ -13,17 +13,26 @@ class VirtualDOM {
     };
   }
 
+  // synchronous element creation
+
   static create(component) {
     try {
       const template = component.render();
+      const definition = this.spread(template);
 
-      const {
-        children
-      } = this.spread(template, component);
-
-      const node = this.createNode(template);
-      this.addChildren(node, children);
-
+      const node = VirtualNode.create(definition);
+      if (definition.children) {
+        node.children = definition.children.map(childTemplate => {
+          const childDefinition = this.spread(childTemplate);
+          if (childDefinition.component) {
+            const child = Reactor.construct(childDefinition.component);
+            child.props = childDefinition.props;
+            return this.create(child);
+          } else {
+            return VirtualNode.create(childDefinition);
+          }
+        })
+      };
       node.component = component;
       return node;
 
@@ -33,15 +42,14 @@ class VirtualDOM {
     }
   }
 
+  // asynchronious element creation
+
   static async resolve(component) {
-
     try {
-
       const template = component.render();
-
       const {
         children
-      } = this.spread(template, component);
+      } = this.spread(template);
 
       const node = this.createNode(template);
       await this.resolveChildren(node, children);
@@ -52,74 +60,6 @@ class VirtualDOM {
     } catch (e) {
       console.error('Error resolving:', component);
       throw e;
-    }
-  }
-
-  static createNode(template) {
-    const {
-      name,
-      props,
-      children,
-      text
-    } = this.spread(template);
-
-    const node = new VirtualNode(name);
-    this.addAttributes(node, props);
-    this.addListeners(node, props);
-    if (text) {
-      node.text = text;
-    }
-    return node;
-  }
-
-  static addAttributes(node, props = {}) {
-    const attributes = Object.keys(props)
-      .filter(key => SUPPORTED_ATTRIBUTES.includes(key))
-      .reduce((result, key) => {
-        const attr = key.replace(/(?:^|\.?)([A-Z])/g,
-          (x, y) => ('-' + y.toLowerCase()));
-        result[attr] = '' + props[key];
-        return result;
-      }, {});
-    if (Object.keys(attributes).length > 0) {
-      node.attrs = attributes;
-    }
-  }
-
-  static addListeners(node, props = {}) {
-    const eventListeners = Object.keys(props)
-      .filter(key => SUPPORTED_EVENTS.includes(key))
-      .reduce((result, key) => {
-        const event = key.toLowerCase().slice(2);
-        result[event] = props[key];
-        return result;
-      }, {});
-    if (Object.keys(eventListeners).length > 0) {
-      node.listeners = eventListeners;
-    }
-  }
-
-  static addChildren(node, children = []) {
-    for (let childTemplate of children) {
-      if (Array.isArray(childTemplate)) {
-        const [name] = childTemplate;
-        if (typeof name === 'symbol') {
-          // TODO: amend instantiation
-          const child = Reactor.construct(name);
-          const {
-            props
-          } = this.spread(childTemplate);
-          child.props = props;
-          const childNode = this.create(child);
-          node.addChild(childNode);
-        } else if (typeof name === 'string') {
-          const childNode = this.createNode(childTemplate);
-          node.addChild(childNode);
-
-          const grandchildren = this.spread(childTemplate).children;
-          this.addChildren(childNode, grandchildren);
-        }
-      }
     }
   }
 
@@ -261,7 +201,7 @@ class VirtualDOM {
     }
   }
 
-  static spread(template, component) {
+  static spread(template) {
 
     const Type = VirtualDOM.ItemType;
     const {
