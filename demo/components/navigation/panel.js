@@ -1,6 +1,6 @@
 {
 
-  const NavigationItem = require.defer('demo/components/navigation/item');
+  const NavigationItem = require.defer('components/navigation/item');
 
   const NavigationPanel = class extends Reactor.Component {
 
