@@ -16,26 +16,27 @@ class VirtualDOM {
   // synchronous element creation
 
   static create(component) {
-    try {
-      const template = component.render();
-      const definition = this.spread(template);
 
+    const createFromTemplate = template => {
+      const definition = this.spread(template);
+      if (definition.component) {
+        const child = Reactor.construct(definition.component);
+        child.props = definition.props;
+        return this.create(child);
+      }
+      return createFromDefinition(definition);
+    };
+
+    const createFromDefinition = definition => {
       const node = VirtualNode.create(definition);
       if (definition.children) {
-        node.children = definition.children.map(childTemplate => {
-          const childDefinition = this.spread(childTemplate);
-          if (childDefinition.component) {
-            const child = Reactor.construct(childDefinition.component);
-            child.props = childDefinition.props;
-            return this.create(child);
-          } else {
-            return VirtualNode.create(childDefinition);
-          }
-        })
-      };
-      node.component = component;
+        node.children = definition.children.map(createFromTemplate);
+      }
       return node;
+    };
 
+    try {
+      return createFromTemplate(component.render());
     } catch (e) {
       console.error('Error creating Virtual DOM:', component);
       throw e;
@@ -51,7 +52,7 @@ class VirtualDOM {
         children
       } = this.spread(template);
 
-      const node = this.createNode(template);
+      const node = VirtualNode.create(template);
       await this.resolveChildren(node, children);
 
       node.component = component;
@@ -75,10 +76,16 @@ class VirtualDOM {
           } = this.spread(childTemplate);
           child.props = props;
           const childNode = await this.resolve(child);
-          node.addChild(childNode);
+          if (!node.children) {
+            node.children = [];
+          }
+          node.children.push(childNode);
         } else if (typeof name === 'string') {
-          const childNode = this.createNode(childTemplate);
-          node.addChild(childNode);
+          const childNode = VirtualNode.create(childTemplate);
+          if (!node.children) {
+            node.children = [];
+          }
+          node.children.push(childNode);
 
           const grandchildren = this.spread(childTemplate).children;
           this.addChildren(childNode, grandchildren);
