@@ -13,7 +13,7 @@ describe('Virtual DOM => create', () => {
     render
   });
 
-  it('creates nested markup from static template', () => {
+  it('creates nested markup from a static template', () => {
 
     // given
 

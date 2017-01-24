@@ -13,8 +13,6 @@ class VirtualDOM {
     };
   }
 
-  // synchronous element creation
-
   static create(component) {
 
     const createFromTemplate = template => {
@@ -43,54 +41,35 @@ class VirtualDOM {
     }
   }
 
-  // asynchronious element creation
-
   static async resolve(component) {
-    try {
-      const template = component.render();
-      const {
-        children
-      } = this.spread(template);
 
-      const node = VirtualNode.create(template);
-      await this.resolveChildren(node, children);
+    const createFromTemplate = async template => {
+      const definition = this.spread(template);
+      if (definition.component) {
+        const child = await Reactor.instantiate(definition.component);
+        child.props = definition.props;
+        return await this.resolve(child);
+      }
+      return await createFromDefinition(definition);
+    };
 
-      node.component = component;
-      return node;
-
-    } catch (e) {
-      console.error('Error resolving:', component);
-      throw e;
-    }
-  }
-
-  static async resolveChildren(node, children = []) {
-    for (let childTemplate of children) {
-      if (Array.isArray(childTemplate)) {
-        const [name] = childTemplate;
-        if (typeof name === 'symbol') {
-          // TODO: amend instantiation
-          const child = await Reactor.instantiate(name);
-          const {
-            props
-          } = this.spread(childTemplate);
-          child.props = props;
-          const childNode = await this.resolve(child);
-          if (!node.children) {
-            node.children = [];
-          }
-          node.children.push(childNode);
-        } else if (typeof name === 'string') {
-          const childNode = VirtualNode.create(childTemplate);
-          if (!node.children) {
-            node.children = [];
-          }
-          node.children.push(childNode);
-
-          const grandchildren = this.spread(childTemplate).children;
-          this.addChildren(childNode, grandchildren);
+    const createFromDefinition = async definition => {
+      const node = VirtualNode.create(definition);
+      if (definition.children) {
+        node.children = [];
+        for (let template of definition.children) {
+          const child = await createFromTemplate(template);
+          node.children.push(child);
         }
       }
+      return node;
+    };
+
+    try {
+      return await createFromTemplate(component.render());
+    } catch (e) {
+      console.error('Error resolving Virtual DOM:', component);
+      throw e;
     }
   }
 
