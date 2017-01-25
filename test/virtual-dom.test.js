@@ -65,8 +65,6 @@ describe('Virtual DOM => create', () => {
             return createComponent(() => ([B]));
           case B:
             return createComponent(() => (['div', 'Text']));
-          default:
-            throw 'Unknown component';
         }
       }
     };
@@ -127,13 +125,8 @@ describe('Virtual DOM => create', () => {
     const A = Symbol.for('A');
     const component = createComponent(function() {
       return [
-        'div', [
-          'span', 'Text'
-        ],
-        [
-          A, [
-            'span', 'from parent'
-          ]
+        A, [
+          'span', 'from parent'
         ]
       ];
     });
@@ -155,17 +148,67 @@ describe('Virtual DOM => create', () => {
     assert(rootNode instanceof VirtualNode);
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 2);
+
+    assert.equal(rootNode.children.length, 2);
     assert.equal(rootNode.children[0].name, 'span');
-    assert.equal(rootNode.children[0].text, 'Text');
+    assert.equal(rootNode.children[0].text, 'from parent');
+    assert.equal(rootNode.children[1].name, 'span');
+    assert.equal(rootNode.children[1].text, 'from child');
+  });
 
-    const subnode = rootNode.children[1]
-    assert.equal(subnode.name, 'div');
-    assert(subnode.children);
+  it('supports mixing subcomponents and static markup', () => {
 
-    assert.equal(subnode.children.length, 2);
-    assert.equal(subnode.children[0].name, 'span');
-    assert.equal(subnode.children[0].text, 'from parent');
-    assert.equal(subnode.children[1].name, 'span');
-    assert.equal(subnode.children[1].text, 'from child');
+    // given
+    const A = Symbol.for('A');
+    const B = Symbol.for('B');
+    const component = createComponent(function() {
+      return [
+        A, [
+          'p', [
+            B, [
+              'span', 'root'
+            ]
+          ]
+        ]
+      ];
+    });
+
+    global.Reactor = {
+      construct: component => {
+        switch (component) {
+          case A:
+            return createComponent(function() {
+              return ['section', ['h1', 'A'], ...this.children];
+            });
+          case B:
+            return createComponent(function() {
+              return ['div', ['h2', 'B'], ...this.children];
+            });
+        }
+      }
+    };
+
+    // when
+    const rootNode = VirtualDOM.create(component);
+
+    // then
+    assert(rootNode instanceof VirtualNode);
+    assert.equal(rootNode.name, 'section');
+    assert(rootNode.children);
+    assert.equal(rootNode.children.length, 2);
+    assert.equal(rootNode.children[0].name, 'h1');
+    assert.equal(rootNode.children[0].text, 'A');
+
+    const paragraphNode = rootNode.children[1];
+    assert.equal(paragraphNode.name, 'p');
+    assert(paragraphNode.children);
+    assert.equal(paragraphNode.children.length, 1);
+
+    const divNode = paragraphNode.children[0];
+    assert.equal(divNode.name, 'div');
+    assert(divNode.children);
+    assert.equal(divNode.children[0].name, 'h2');
+    assert.equal(divNode.children[1].name, 'span');
+    assert.equal(divNode.children[1].text, 'root');
   });
 });
