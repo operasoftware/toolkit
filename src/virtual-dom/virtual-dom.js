@@ -13,13 +13,23 @@ class VirtualDOM {
     };
   }
 
+  static assignProps(node, definition) {
+    if (definition.props || definition.children) {
+      node.props = Object.assign({}, {
+          children: definition.children
+        },
+        definition.props
+      );
+    }
+  }
+
   static create(component) {
 
     const createFromTemplate = template => {
       const definition = this.spread(template);
       if (definition.component) {
         const child = Reactor.construct(definition.component);
-        child.props = definition.props;
+        this.assignProps(child, definition);
         return this.create(child);
       }
       return createFromDefinition(definition);
@@ -47,7 +57,7 @@ class VirtualDOM {
       const definition = this.spread(template);
       if (definition.component) {
         const child = await Reactor.instantiate(definition.component);
-        child.props = definition.props;
+        this.assignProps(child, definition);
         return await this.resolve(child);
       }
       return await createFromDefinition(definition);
