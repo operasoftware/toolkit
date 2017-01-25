@@ -19,7 +19,12 @@ class VirtualDOM {
       const definition = this.spread(template);
       if (definition.component) {
         const child = Reactor.construct(definition.component);
-        child.props = definition.props;
+        if (definition.props) {
+          child.props = definition.props;
+        }
+        if (definition.children) {
+          child.children = definition.children;
+        }
         return this.create(child);
       }
       return createFromDefinition(definition);
@@ -47,7 +52,12 @@ class VirtualDOM {
       const definition = this.spread(template);
       if (definition.component) {
         const child = await Reactor.instantiate(definition.component);
-        child.props = definition.props;
+        if (definition.props) {
+          child.props = definition.props;
+        }
+        if (definition.children) {
+          child.children = definition.children;
+        }
         return await this.resolve(child);
       }
       return await createFromDefinition(definition);
