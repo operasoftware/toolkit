@@ -40,11 +40,7 @@
         rootComponentClass.init();
       }
       const rootComponent = new rootComponentClass();
-
-      // TODO: move me
-      rootComponent.props = {
-        items: Array(1000).fill('').map((item, index) => 'Item ' + (index + 1))
-      };
+      rootComponent.props = Object.assign({}, this.store.getState());
 
       console.time('render');
       let virtualDOM;

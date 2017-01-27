@@ -1,0 +1,2 @@
+resolve(path)
+get(path)
