@@ -4,6 +4,8 @@ class Renderer {
   static createElement(node) {
     const {
       name,
+      attrs,
+      listeners,
       props,
       children,
       text
@@ -19,9 +21,14 @@ class Renderer {
         element.appendChild(childElement);
       });
     }
-    if (node.listeners) {
-      Object.keys(node.listeners).forEach(key => {
-        element.addEventListener(key, node.listeners[key]);
+    if (listeners) {
+      Object.keys(listeners).forEach(key => {
+        element.addEventListener(key, listeners[key]);
+      });
+    }
+    if (attrs) {
+      Object.keys(attrs).forEach(key => {
+        element.setAttribute(key, attrs[key]);
       });
     }
     return element;

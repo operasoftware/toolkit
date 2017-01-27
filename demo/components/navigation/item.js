@@ -21,7 +21,8 @@
     render() {
       return [
         'a', {
-          onClick: () => this.onClick(),
+          onClick: this.props.onClick,
+          style: this.props.highlighted ? 'background-color: red' : undefined
         },
         this.props.text
       ];

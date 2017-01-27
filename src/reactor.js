@@ -8,11 +8,39 @@
   const preload = async path => {
     console.log('Preloading:', path);
     const component = await require(path);
+    const pendingDependencies = Array.from(dependencies);
     if (component.prototype instanceof Reactor.Component) {
-      component.init();
+      await component.init();
     }
-    for (let dependency of dependencies) {
+    for (let dependency of pendingDependencies) {
       await preload(dependency);
+    }
+  };
+
+  const Store = class {
+
+    constructor() {
+      this.stack = [];
+    }
+
+    get state() {
+      if (this.stack.length === 0) {
+        return null;
+      }
+      return Object.assign({}, this.stack[this.stack.length - 1]);
+    }
+
+    set state(state) {
+      this.stack.push(state);
+    }
+  };
+
+  const combineReducers = (...reducers) => {
+    return (state, command) => {
+      let nextState = reducers.forEach(reducer => {
+        nextState = reducer(state, command);
+      })
+      return nextState;
     }
   };
 
@@ -20,6 +48,7 @@
 
     constructor(rootPath) {
       this.rootPath = rootPath;
+      this.store = new Store();
     }
 
     async preload() {
@@ -27,33 +56,55 @@
       await preload(this.rootPath);
     }
 
-    init(store) {
-      this.store = store;
-      return this;
-    }
-
     async render(rootElement) {
       this.rootElement = rootElement;
 
       const rootComponentClass = await require(this.rootPath);
       if (!this.preloaded) {
-        rootComponentClass.init();
+        await rootComponentClass.init();
       }
       const rootComponent = new rootComponentClass();
 
-      // TODO: move me
-      rootComponent.props = {
-        items: Array(1000).fill('').map((item, index) => 'Item ' + (index + 1))
-      };
+      const reducer = rootComponent.getReducer() // combineReducers([rootComponent.getReducer()]);
 
-      console.time('render');
-      let virtualDOM;
+      // connect
+      rootComponent.dispatch = command => {
+        // TODO: move me
+        if (command.type === 'INIT') {
+          this.store.state = command.state;
+          return;
+        }
+        const nextState = reducer(this.store.state, command);
+        this.store.state = nextState;
+
+        this.updateDOM(rootComponent).then(() =>{
+          console.log('DOM updated after dispatch');
+        });
+      };
+      // init
+      rootComponent.dispatch({
+        type: 'INIT',
+        state: rootComponent.getInitialState()
+      });
+
+      this.updateDOM(rootComponent).then(() =>{
+        console.log('DOM created');
+      });
+    }
+
+    async createVirtualDOM(rootComponent) {
       if (this.preloaded) {
-        virtualDOM = VirtualDOM.create(rootComponent);
+        return VirtualDOM.create(rootComponent);
       } else {
-        virtualDOM = await VirtualDOM.resolve(rootComponent);
+        return await VirtualDOM.resolve(rootComponent);
       }
-      Renderer.renderInElement(rootElement, virtualDOM);
+    }
+
+    async updateDOM(rootComponent) {
+      console.time('render');
+      rootComponent.props = this.store.state;
+      const virtualDOM = await this.createVirtualDOM(rootComponent);
+      Renderer.renderInElement(this.rootElement, virtualDOM);
       console.timeEnd('render');
     }
   };
