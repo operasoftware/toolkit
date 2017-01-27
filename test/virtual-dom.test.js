@@ -58,13 +58,15 @@ describe('Virtual DOM => create', () => {
     const B = Symbol.for('B');
     const component = createComponent(() => ([A]));
 
-    global.Reactor = {
-      construct: component => {
-        switch (component) {
-          case A:
-            return createComponent(() => ([B]));
-          case B:
-            return createComponent(() => (['div', 'Text']));
+    global.chrome = {
+      loader: {
+        construct: component => {
+          switch (component) {
+            case A:
+              return createComponent(() => ([B]));
+            case B:
+              return createComponent(() => (['div', 'Text']));
+          }
         }
       }
     };
@@ -97,12 +99,14 @@ describe('Virtual DOM => create', () => {
       items: ['A', 'B', 'C', 'D', 'E']
     };
 
-    global.Reactor = {
-      construct: () => createComponent(function() {
-        return [
-          'span', 'Item ' + this.props.label
-        ];
-      })
+    global.chrome = {
+      loader: {
+        construct: () => createComponent(function() {
+          return [
+            'span', 'Item ' + this.props.label
+          ];
+        })
+      }
     };
 
     // when
@@ -131,14 +135,16 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.Reactor = {
-      construct: () => createComponent(function() {
-        return [
-          'div', ...this.children, [
-            'span', 'from child'
-          ]
-        ];
-      })
+    global.chrome = {
+      loader: {
+        construct: () => createComponent(function() {
+          return [
+            'div', ...this.children, [
+              'span', 'from child'
+            ]
+          ];
+        })
+      }
     };
 
     // when
@@ -173,17 +179,19 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.Reactor = {
-      construct: component => {
-        switch (component) {
-          case A:
-            return createComponent(function() {
-              return ['section', ['h1', 'A'], ...this.children];
-            });
-          case B:
-            return createComponent(function() {
-              return ['div', ['h2', 'B'], ...this.children];
-            });
+    global.chrome = {
+      loader: {
+        construct: component => {
+          switch (component) {
+            case A:
+              return createComponent(function() {
+                return ['section', ['h1', 'A'], ...this.children];
+              });
+            case B:
+              return createComponent(function() {
+                return ['div', ['h2', 'B'], ...this.children];
+              });
+          }
         }
       }
     };

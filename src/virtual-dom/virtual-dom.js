@@ -18,7 +18,7 @@ class VirtualDOM {
     const createFromTemplate = template => {
       const definition = this.spread(template);
       if (definition.component) {
-        const child = Reactor.construct(definition.component);
+        const child = chrome.loader.construct(definition.component);
         if (definition.props) {
           child.props = definition.props;
         }
@@ -51,7 +51,7 @@ class VirtualDOM {
     const createFromTemplate = async template => {
       const definition = this.spread(template);
       if (definition.component) {
-        const child = await Reactor.instantiate(definition.component);
+        const child = await chrome.loader.instantiate(definition.component);
         if (definition.props) {
           child.props = definition.props;
         }

@@ -1,22 +1,5 @@
 {
 
-  const getScriptPath = componentPath => '/' + componentPath + '.js';
-
-  const registry = new Map();
-  const cache = new Map();
-
-  const preload = async path => {
-    console.log('Preloading:', path);
-    const component = await require(path);
-    const pendingDependencies = Array.from(dependencies);
-    if (component.prototype instanceof Reactor.Component) {
-      await component.init();
-    }
-    for (let dependency of pendingDependencies) {
-      await preload(dependency);
-    }
-  };
-
   const Store = class {
 
     constructor() {
@@ -55,74 +38,59 @@
 
   const ReactorApp = class {
 
-    constructor(rootPath) {
-      this.rootPath = rootPath;
+    constructor(path) {
+      this.path = path;
       this.store = new Store();
     }
 
     async preload() {
       this.preloaded = true;
-      await preload(this.rootPath);
+      await preload(this.path);
     }
 
-    async render(rootElement) {
-      this.rootElement = rootElement;
+    async render(container) {
+      this.container = container;
 
-      const rootComponentClass = await require(this.rootPath);
+      const RootClass = await require(this.path);
       if (!this.preloaded) {
-        await rootComponentClass.init();
+        await RootClass.init();
       }
-      const rootComponent = new rootComponentClass();
+      this.root = new RootClass();
 
-      const reducer = combineReducers(coreReducer, rootComponent.getReducer());
+      this.reducer = combineReducers(coreReducer, ...this.root.getReducers());
 
       // connect
-      rootComponent.dispatch = command => {
-        const nextState = reducer(this.store.state, command);
+      this.root.dispatch = command => {
+        const nextState = this.reducer(this.store.state, command);
         this.store.state = nextState;
-        this.updateDOM(rootComponent);
+        this.updateDOM();
       };
+
       // init
-      rootComponent.dispatch({
+      this.root.dispatch({
         type: INIT,
-        state: rootComponent.getInitialState()
+        state: this.root.getInitialState()
       });
     }
 
-    async createVirtualDOM(rootComponent) {
+    async createVirtualDOM() {
       if (this.preloaded) {
-        return VirtualDOM.create(rootComponent);
+        return VirtualDOM.create(this.root);
       } else {
-        return await VirtualDOM.resolve(rootComponent);
+        return await VirtualDOM.resolve(this.root);
       }
     }
 
-    async updateDOM(rootComponent) {
+    async updateDOM() {
       console.time('render');
-      rootComponent.props = this.store.state;
-      const virtualDOM = await this.createVirtualDOM(rootComponent);
-      Renderer.renderInElement(this.rootElement, virtualDOM);
+      this.root.props = this.store.state;
+      const virtualDOM = await this.createVirtualDOM();
+      Renderer.renderInElement(this.container, virtualDOM);
       console.timeEnd('render');
     }
   };
 
   const Reactor = class {
-
-    static construct(def) {
-      const componentPath = typeof def === 'symbol' ? registry.get(def) : def;
-      const ComponentClass = cache.get(componentPath);
-      const component = new ComponentClass();
-      return component;
-    }
-
-    static async instantiate(def) {
-      const componentPath = typeof def === 'symbol' ? registry.get(def) : def;
-      const ComponentClass = await require(componentPath);
-      const component = new ComponentClass();
-      // await component.init();
-      return component;
-    }
-
     static create(component) {
       return new ReactorApp(component);
     }
@@ -134,45 +102,5 @@
     }
   };
 
-  const dependencies = [];
-
-  window.require = componentPath => {
-
-    if (typeof componentPath === 'symbol') {
-      componentPath = registry.get(componentPath);
-    }
-
-    if (cache.get(componentPath)) {
-      // console.log(`(loader) Loaded component "${componentPath}" from cache`);
-      return Promise.resolve(cache.get(componentPath));
-    }
-
-    const loadPromise = new Promise(resolve => {
-      dependencies.length = 0;
-      console.time('=> script load time');
-      const script = document.createElement('script');
-      script.src = getScriptPath(componentPath);
-      script.setAttribute('data-component-path', componentPath);
-      script.onload = () => {
-        cache.set(componentPath, module.exports);
-        console.log('(loader) Loaded script:', script.src);
-        console.timeEnd('=> script load time');
-        resolve(module.exports);
-      };
-      document.head.appendChild(script);
-    });
-
-    return loadPromise;
-  };
-
-  window.require.defer = componentPath => {
-    const symbol = Symbol.for(componentPath);
-    dependencies.push(symbol);
-    registry.set(symbol, componentPath);
-    return symbol;
-  };
-
   window.Reactor = Reactor;
-  window.module = {};
-
 }

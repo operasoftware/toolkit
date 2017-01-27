@@ -1,5 +1,4 @@
 {
-
   const NavigationPanel = require.defer('demo/components/navigation/panel');
 
   let reducer;
@@ -18,24 +17,24 @@
       };
     }
 
-    getReducer() {
-      // TODO: combine reducers
-      return reducer;
+    getReducers() {
+      return [reducer];
     }
 
     render() {
       const onItemClicked = index => {
-        console.log('onItemClicked');
         this.dispatch(reducer.commands.highlightItem(index));
       };
       return [
         'div', [
-          NavigationPanel, { items: this.props.items, onItemClicked }
+          NavigationPanel, {
+            items: this.props.items,
+            onItemClicked
+          }
         ]
       ];
     }
   };
 
   module.exports = DemoApp;
-
 }
