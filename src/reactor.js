@@ -35,12 +35,21 @@
     }
   };
 
+  const INIT = 'init';
+
+  const coreReducer = (state, command) => {
+    if (command.type === INIT) {
+      return command.state;
+    }
+    return state;
+  };
+
   const combineReducers = (...reducers) => {
     return (state, command) => {
-      let nextState = reducers.forEach(reducer => {
-        nextState = reducer(state, command);
-      })
-      return nextState;
+      reducers.forEach(reducer => {
+        state = reducer(state, command);
+      });
+      return state;
     }
   };
 
@@ -65,30 +74,18 @@
       }
       const rootComponent = new rootComponentClass();
 
-      const reducer = rootComponent.getReducer() // combineReducers([rootComponent.getReducer()]);
+      const reducer = combineReducers(coreReducer, rootComponent.getReducer());
 
       // connect
       rootComponent.dispatch = command => {
-        // TODO: move me
-        if (command.type === 'INIT') {
-          this.store.state = command.state;
-          return;
-        }
         const nextState = reducer(this.store.state, command);
         this.store.state = nextState;
-
-        this.updateDOM(rootComponent).then(() =>{
-          console.log('DOM updated after dispatch');
-        });
+        this.updateDOM(rootComponent);
       };
       // init
       rootComponent.dispatch({
-        type: 'INIT',
+        type: INIT,
         state: rootComponent.getInitialState()
-      });
-
-      this.updateDOM(rootComponent).then(() =>{
-        console.log('DOM created');
       });
     }
 

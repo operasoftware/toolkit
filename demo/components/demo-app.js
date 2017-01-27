@@ -1,6 +1,6 @@
 {
 
-  const NavigationPanel = require.defer('components/navigation/panel');
+  const NavigationPanel = require.defer('demo/components/navigation/panel');
 
   let reducer;
   let settings;
@@ -8,8 +8,8 @@
   const DemoApp = class extends Reactor.Component {
 
     static async init() {
-      reducer = await require('reducers/demo-reducer');
-      settings = await require('services/settings');
+      reducer = await require('demo/reducers/demo-reducer');
+      settings = await require('demo/services/settings');
     }
 
     getInitialState() {

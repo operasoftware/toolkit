@@ -5,7 +5,7 @@ const app = express();
 
 app.set('port', 3000);
 
-app.use('/', express.static('demo'));
+app.use('/demo', express.static('demo'));
 app.use('/src', express.static('src'));
 
 const server = app.listen(app.get('port'), () => {

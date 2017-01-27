@@ -27,7 +27,10 @@ class VirtualNode {
       .reduce((result, key) => {
         const attr = key.replace(/(?:^|\.?)([A-Z])/g,
           (x, y) => ('-' + y.toLowerCase()));
-        result[attr] = '' + props[key];
+        const value = props[key];
+        if (value) {
+          result[attr] = '' + value;
+        }
         return result;
       }, {});
     if (Object.keys(attributes).length > 0) {
