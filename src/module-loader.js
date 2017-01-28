@@ -45,7 +45,7 @@
     return loadPromise;
   };
 
-  window.require.defer = componentPath => {
+  window.require.def = componentPath => {
     const symbol = Symbol.for(componentPath);
     dependencies.push(symbol);
     registry.set(symbol, componentPath);

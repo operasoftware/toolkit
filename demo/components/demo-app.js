@@ -1,6 +1,4 @@
 {
-  const NavigationPanel = require.defer('demo/components/navigation/panel');
-
   let reducer;
   let settings;
 
@@ -35,6 +33,8 @@
       ];
     }
   };
+
+  const NavigationPanel = require.def('demo/components/navigation/panel');
 
   module.exports = DemoApp;
 }
