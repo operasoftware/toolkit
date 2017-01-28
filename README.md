@@ -14,8 +14,9 @@ It utilizes the Chromium engine’s latest features and simplifies the developme
 * **modular** - define each component, reducer, service as a separate module,
 * **dynamic** - build in discovery service, lazy-load required modules for flexibility or preload for performance,
 * **fast** - utilise virtual DOM, minimise the number of manipulations, benchmark all operations to ensure high performance,
-* **deterministic** - no race conditions, isolate all asynchronous operations,
 * **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and dispatch commands to update the model,
+* **isolated** - reduce globals usage to bare minimum (module loader and constants)
+* **deterministic** - no race conditions, understand all asynchronous operations,
 * **debuggable** - have fun during development, use live-reload, logging and time-saving "debug mode" tools.
 
 ### UI first
@@ -33,6 +34,21 @@ const app = Reactor.create(MyApp);
 // render in body element
 await demo.render(document.body);
 ```
+
+### Behind the scences
+
+Creation of an App is synchronous, it is instantiated together with all the internal components (store, core reducer, renderer). Definitions of dependencies are loaded.
+
+The initialisation is asynchronous and happens before the initial rendering. Required dependencies are resolved, the view model is created and fed with data provided by background services.
+
+Based on the initial state the virtual node tree is created, it is replicated into the DOM container. Event listeners are bound to the command dispatcher and an interactive app is ready to work with. From this point forward each user action and background data refresh result in a command dispatched to the App. The application processes the commands with the imported reducers, which calculate the next state. Any changes in the state trigger the DOM update.
+
+### Services, reducers and components
+
+There are a few main types of modules:
+* **services** - provide data and allow to subscribe to data changes,
+* **reducers** - process commands: `reducer = (state, command) => nextState`, but also provide an API for creation of commands which they can understand: `reducer.commands = { addItem, replaceItem, removeItem }`.
+* **components** - represent UI fragments, define what is rendered in the DOM.
 
 ### // TODO
 Write more...
