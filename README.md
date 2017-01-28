@@ -43,14 +43,64 @@ The initialisation is asynchronous and happens before the initial rendering. Req
 
 Based on the initial state the virtual node tree is created, it is replicated into the DOM container. Event listeners are bound to the command dispatcher and an interactive app is ready to work with. From this point forward each user action and background data refresh result in a command dispatched to the App. The application processes the commands with the imported reducers, which calculate the next state. Any changes in the state trigger the DOM update.
 
-### Services, reducers and components
+### Module types
 
 There are a few main types of modules:
-* **services** - provide data and allow to subscribe to data changes,
-* **reducers** - process commands: `reducer = (state, command) => nextState`, but also provide an API for creation of commands which they can understand: `reducer.commands = { addItem, replaceItem, removeItem }`.
-* **components** - represent UI fragments, define what is rendered in the DOM.
+* **components** - represent UI fragments, define what is rendered in the DOM
+```js
+const Subcomponent = require.defer('/components/subcomponent');
 
-### // TODO
-Write more...
+const Component = class extends Reactor.Component {
+  render() {
+    return [
+      'div', {
+        class: 'main'
+      },
+      [
+        Subcomponent, {
+          onClick: this.animate()
+        }
+      ]
+    ];
+  }
+};
+```
+* **reducers** - process commands but also provide an API for creation of commands that they can understand
+```js
+const reducer = (state, command) {
+  switch (command.type) {
+    case VALUE_CHANGED:
+      return {
+        settings: Object.assign({}, state.settings, {
+          [command.name]: command.value
+        });
+      };
+    default:
+      return state;
+  }
+};
+
+reducer.commands = {
+  valueChanged: (name, value) => ({
+    type: VALUE_CHANGED,
+    name,
+    value
+  })
+};
+```
+* **services** - provide data and allow to subscribe to data changes
+```js
+const service = class Service {
+  async getState() {
+    return await this.getSettings().toState();
+  }
+  subscribe(reducer) {
+    this.onSettingChange((name, value) => {
+      const command = reducer.valueChanged(name, value);
+      reducer(command);
+    });
+  }
+}
+```
 
 ## Coming when it's done!
