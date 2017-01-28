@@ -1,7 +1,4 @@
 {
-
-  const NavigationItem = require.defer('demo/components/navigation/item');
-
   const NavigationPanel = class extends Reactor.Component {
 
     static async init() {
@@ -23,6 +20,7 @@
     }
   };
 
-  module.exports = NavigationPanel;
+  const NavigationItem = require.def('demo/components/navigation/item');
 
+  module.exports = NavigationPanel;
 }

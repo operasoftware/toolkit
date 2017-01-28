@@ -28,7 +28,7 @@ The creation and execution of an App is as simple as possible:
 
 ```js
 // import app definition
-const MyApp = require.defer(‘apps/my-app’);
+const MyApp = require.def(‘apps/my-app’);
 // create new app
 const app = Reactor.create(MyApp);
 // render in body element
@@ -48,8 +48,6 @@ Based on the initial state the virtual node tree is created, it is replicated in
 There are a few main types of modules:
 * **components** - represent UI fragments, define what is rendered in the DOM
 ```js
-const Subcomponent = require.defer('/components/subcomponent');
-
 const Component = class extends Reactor.Component {
   render() {
     return [
@@ -64,6 +62,8 @@ const Component = class extends Reactor.Component {
     ];
   }
 };
+
+const Subcomponent = require.def('/components/subcomponent');
 ```
 * **reducers** - process commands but also provide an API for creation of commands that they can understand
 ```js
