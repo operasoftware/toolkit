@@ -21,15 +21,39 @@ class VirtualNode {
     return node;
   }
 
+  normalizeValue(key, value) {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    if (key === 'style') {
+      if (typeof value === 'object') {
+        const keys = Object.keys(value)
+          .filter(key => SUPPORTED_STYLES.includes(key));
+        if (keys.length === 0) {
+          return null;
+        }
+        const style = {};
+        for (let key of keys) {
+          const val = value[key];
+          if (val !== undefined && val !== null) {
+            style[key] = val;
+          }
+        }
+        return style;
+      }
+    }
+    return value + '';
+  }
+
   addAttributes(props = {}) {
     const attributes = Object.keys(props)
       .filter(key => SUPPORTED_ATTRIBUTES.includes(key))
       .reduce((result, key) => {
         const attr = key.replace(/(?:^|\.?)([A-Z])/g,
           (x, y) => ('-' + y.toLowerCase()));
-        const value = props[key];
+        const value = this.normalizeValue(key, props[key]);
         if (value) {
-          result[attr] = '' + value;
+          result[attr] = value;
         }
         return result;
       }, {});

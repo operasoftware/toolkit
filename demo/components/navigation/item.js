@@ -22,7 +22,9 @@
       return [
         'a', {
           onClick: this.props.onClick,
-          style: this.props.highlighted ? 'background-color: red' : undefined
+          style: {
+            backgroundColor: this.props.highlighted ? 'red' : null
+          }
         },
         this.props.text
       ];

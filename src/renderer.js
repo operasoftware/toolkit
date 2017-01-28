@@ -1,4 +1,3 @@
-
 class Renderer {
 
   static createElement(node) {
@@ -27,20 +26,26 @@ class Renderer {
       });
     }
     if (attrs) {
-      Object.keys(attrs).forEach(key => {
-        element.setAttribute(key, attrs[key]);
-      });
+      Object.keys(attrs)
+        .forEach(name => {
+          if (name === 'style') {
+            const style = attrs[name];
+            Object.keys(style)
+              .map(key => {
+                element.style[key] = style[key];
+              });
+          } else {
+            element.setAttribute(name, attrs[name]);
+          }
+        });
     }
     return element;
   };
 
   static renderInElement(rootElement, node) {
-
     const element = this.createElement(node);
     node.element = element;
-    
     rootElement.innerHTML = '';
     rootElement.appendChild(element);
   }
-
 };

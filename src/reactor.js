@@ -49,6 +49,7 @@
     }
 
     async render(container) {
+
       this.container = container;
 
       const RootClass = await require(this.path);
@@ -95,6 +96,11 @@
       return new ReactorApp(component);
     }
   };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.SUPPORTED_STYLES = [...getComputedStyle(document.body)]
+      .map(name => name.toLowerCase().replace(/-(.)/g, (match, group1) => group1.toUpperCase()));
+  }, false);
 
   Reactor.Component = class {
 
