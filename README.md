@@ -5,26 +5,26 @@ A framework for Chromium-based browsers for building their user interfaces
 
 ## What is it?
 
-Chromium Reactor is a framework intended for building browser Web UIs.
-It utilizes the Chromium engine’s latest features and simplifies the development of user interfaces by providing a way to build native, modular and dynamic Apps and an enjoyable development experience.
+Chromium Reactor is a framework intended for building Web UIs for Chromium-based browsers.
+It utilises the engine’s latest features and provides a convenient way to build native, modular and dynamic web apps.
 
 ## Design principles
 
 * **native** - take advantage of the latest Chromium engine features,
 * **modular** - define each component, reducer, service as a separate module,
 * **dynamic** - build in discovery service, lazy-load required modules for flexibility or preload for performance,
-* **fast** - utilise virtual DOM, minimise the number of manipulations, benchmark all operations to ensure high performance,
-* **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and dispatch commands to update the model,
-* **isolated** - reduce globals usage to bare minimum (module loader and constants)
-* **deterministic** - no race conditions, understand all asynchronous operations,
+* **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
+* **simple** - no millions of callbacks and events, utilise one-way model-view binding and dispatch commands to update the model,
+* **isolated** - reduce globals usage to bare minimum (module loader methods),
+* **deterministic** - no race conditions, control all asynchronous operations,
 * **debuggable** - have fun during development, use live-reload, logging and time-saving "debug mode" tools.
 
 ## UI first
 
-It is a framework for building user interfaces, what pretty much requires just two things: rendering the UI and the way to load and manipulate the data. The UI is built as an isolated App operating in the specified DOM element. All dependencies shared with other Apps are stateless and all stateful modules are instantiated within the app.
+Building user interfaces pretty much requires just two things: a mechanism to render the UI and the way to load and manipulate the data. In Reactor the UI is built as an encapsulated app operating in its own sandbox and rendering DOM elements in the specified container. All dependencies shared with other apps are stateless and all stateful modules are instantiated within the app.
 
-### Create an App
-The creation and execution of an App is as simple as possible:
+## Running an app
+The creation and execution of apps is as simple as possible:
 
 ```js
 // import app definition
@@ -37,17 +37,20 @@ await demo.render(document.body);
 
 ## Behind the scenes
 
-Creation of an App is synchronous, it is instantiated together with all its internal components (store, core reducer, renderer). Definitions of dependencies are loaded.
+Creation of an app is synchronous, it is instantiated together with all its internal components (store, core reducer, renderer). Definitions of components are loaded.
 
-The initialisation is asynchronous and happens before the initial rendering. Required dependencies are resolved, the view model is created and fed with data provided by the background services.
+The initialisation is asynchronous and it can be triggered manually or automatically before the initial rendering.
+During the initialisation all the required dependencies are resolved, the view model is created and fed with the initial state provided by the background services.
 
-Based on the initial state the component tree is used to create the virtual DOM, which gets mirrored as DOM element tree and inserted into the requested container. Event listeners are bound to the command dispatcher and the app is ready to work with. From this point forward any user action and background data refresh result in a command dispatched to the App.
-The application processes the commands with the defined reducers, which calculate the next state. Whenever the state is updated the next DOM update cycle is triggered.
+Te rendering cycle starts with the construction of the component tree. The component tree is based on the initial state and then used to create the virtual DOM, which gets mirrored as DOM element tree and inserted into the specified container element. Event listeners are bound to the app's command dispatcher. An interactive app is up and running.
+
+From this point forward background data changes and user actions result in commands dispatched to the App.
+The app processes the commands with the defined set of reducers, which calculate the transition to the next state. Each state update triggers the next rendering cycle.
 
 ## Dynamic nature
 
-Before anything is shown to the user, Reactor detects which modules are required for rendering and loads them.
-By default all modules are lazy-loaded in order to minimise the resources usage and maximise the battery life.
+Before anything is shown to the user, Reactor detects which modules are required for the initial rendering and loads them.
+By default all modules are lazy-loaded in order to minimise the memory usage.
 The dependencies are detected while traversing the component tree during rendering. Starting with the root component its  `render()` method is invoked to get a template defining the node structure. The template is calculated using the component properties (application state for the root component). It consists of static elements (like 'div', 'span') and definitions of subcomponents:
 
 ```js
@@ -69,7 +72,7 @@ const Application = class extends Reactor.Component {
 
 const NavigationMenu = require.def('/components/navigation/menu');
 ```
-If any component definitions are found in the returned template the components are loaded with their dependencies. The respective instances are created, they receive their own properties (as specified by the template) and the rendering continues:
+If any subcomponent definitions are found in the returned template the subcomponent classes are loaded together with their dependencies. The subcomponent instances are created and they receive their own properties (as specified by the parent component) and the rendering continues:
 
 ```js
 const NavigationMenu = class extends Reactor.Component {
@@ -87,8 +90,8 @@ const NavigationMenu = class extends Reactor.Component {
 const NavigationItem = require.def('/components/navigation/item');
 ```
 
-Components only receive properties they are interested in - usually fragments of the appliation state.
-All the properties on static elements are converted into event listeners and element attributes (based on built-in dictionaries):
+By design components only receive properties they are interested in, usually fragments of the appliation state.
+All the properties on static elements are converted into event listeners and element attributes (based on the built-in dictionaries):
 
 ```js
 const NavigationItem = class extends Reactor.Component {
@@ -105,15 +108,15 @@ const NavigationItem = class extends Reactor.Component {
 
 ## Performance
 
-Lazy loading and multiple asynchronous operations can significantly impact the application responsiveness, therefore any component tree fragment (with all related modules) can be preloaded at any point in time. This allows to synchronously render the particular element tree to get the best performance when needed.
+Lazy loading and multiple asynchronous operations can significantly impact the app's responsiveness, therefore any component tree fragment (with all related modules) can be preloaded at any point in time. This allows to synchronously render the particular element tree to get the best performance when needed.
 
-Preloading is very handy when user switches to a totally different view, which requires a different set of components and services. There only is a single expensive operation and after that all updates triggered by user actions are optimised and as performant as possible.
+Preloading is very handy when a switch to a totally different view happens, what usually requires a different set of components and services. There only is a single expensive operation and after that all updates triggered by user actions are optimised and as performant as possible.
 
-Both Virtual DOM and the renderer perform several optimisations to minimise the number of reflows and repaints. Components are not re-rendered if they receive the same properties and child nodes as in the previous cycle. DOM is not modified if only event listeners change on the components. Preloaded components and all the descendants update synchronously in a single stack frame.
+Both virtual DOM and the renderer perform several optimisations to minimise the number of reflows and repaints. Components are not re-rendered if they receive the same properties and child nodes as in the previous cycle. DOM is not modified if the structure and attributes remain the same and only event listeners change on the components. Preloaded components and all the descendants update synchronously in a single stack frame.
 
-## Module types
+## Modules
 
-There are a few main types of modules:
+Apps needs to read and write data, render the user interface and process commands representing user actions and data changes. There are three main module types needed to develop a fully fledged app:
 
 **Components** - represent UI fragments, define what is rendered in the DOM
 ```js
@@ -136,6 +139,8 @@ const Subcomponent = require.def('/components/subcomponent');
 ```
 **Reducers** - process commands but also provide an API for creation of commands that they can understand
 ```js
+const VALUE_CHANGED = Symbol('value-changed')
+
 const reducer = (state, command) {
   switch (command.type) {
     case VALUE_CHANGED:
@@ -157,7 +162,7 @@ reducer.commands = {
   })
 };
 ```
-**Services** - provide data and allow to subscribe to data changes
+**Services** - read and write data, allow to subscribe to data changes
 ```js
 const service = class Service {
   async getState() {
