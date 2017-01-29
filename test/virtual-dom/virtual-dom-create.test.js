@@ -1,10 +1,5 @@
-const consts = require('../src/core/consts.js');
-global.SUPPORTED_ATTRIBUTES = consts.SUPPORTED_ATTRIBUTES;
-global.SUPPORTED_EVENTS = consts.SUPPORTED_EVENTS;
-
-global.VirtualNode = require('../src/core/virtual-node.js');
-global.VirtualDOM = require('../src/core/virtual-dom.js');
-
+global.Reactor = createCore();
+const VirtualDOM = Reactor.VirtualDOM;
 const ItemType = VirtualDOM.ItemType;
 
 describe('Virtual DOM => create', () => {
@@ -36,17 +31,17 @@ describe('Virtual DOM => create', () => {
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode)
+    assert(rootNode instanceof Reactor.VirtualNode)
     assert.equal(rootNode.name, 'div');
     assert.equal(rootNode.children.length, 1);
 
     const spanNode = rootNode.children[0];
-    assert(spanNode instanceof VirtualNode);
+    assert(spanNode instanceof Reactor.VirtualNode);
     assert.equal(spanNode.name, 'span');
     assert.equal(spanNode.children.length, 1);
 
     const linkNode = spanNode.children[0];
-    assert(linkNode instanceof VirtualNode);
+    assert(linkNode instanceof Reactor.VirtualNode);
     assert.equal(linkNode.name, 'a');
     assert.equal(linkNode.text, 'Text');
   });
@@ -58,24 +53,22 @@ describe('Virtual DOM => create', () => {
     const B = Symbol.for('B');
     const component = createComponent(() => ([A]));
 
-    global.chrome = {
-      loader: {
-        construct: component => {
-          switch (component) {
-            case A:
-              return createComponent(() => ([B]));
-            case B:
-              return createComponent(() => (['div', 'Text']));
-          }
+    global.Reactor = Object.assign(Reactor, {
+      construct: component => {
+        switch (component) {
+          case A:
+            return createComponent(() => ([B]));
+          case B:
+            return createComponent(() => (['div', 'Text']));
         }
       }
-    };
+    });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
+    assert(rootNode instanceof Reactor.VirtualNode);
     assert.equal(rootNode.name, 'div');
     assert.equal(rootNode.text, 'Text');
     assert.equal(rootNode.children, undefined);
@@ -99,21 +92,19 @@ describe('Virtual DOM => create', () => {
       items: ['A', 'B', 'C', 'D', 'E']
     };
 
-    global.chrome = {
-      loader: {
-        construct: () => createComponent(function() {
-          return [
-            'span', 'Item ' + this.props.label
-          ];
-        })
-      }
-    };
+    global.Reactor = Object.assign(Reactor, {
+      construct: () => createComponent(function() {
+        return [
+          'span', 'Item ' + this.props.label
+        ];
+      })
+    });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
+    assert(rootNode instanceof Reactor.VirtualNode);
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 5);
     assert(rootNode.children[0].text, 'Item A');
@@ -135,23 +126,21 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.chrome = {
-      loader: {
-        construct: () => createComponent(function() {
-          return [
-            'div', ...this.children, [
-              'span', 'from child'
-            ]
-          ];
-        })
-      }
-    };
+    global.Reactor = Object.assign(Reactor, {
+      construct: () => createComponent(function() {
+        return [
+          'div', ...this.children, [
+            'span', 'from child'
+          ]
+        ];
+      })
+    });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
+    assert(rootNode instanceof Reactor.VirtualNode);
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 2);
 
@@ -179,28 +168,26 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.chrome = {
-      loader: {
-        construct: component => {
-          switch (component) {
-            case A:
-              return createComponent(function() {
-                return ['section', ['h1', 'A'], ...this.children];
-              });
-            case B:
-              return createComponent(function() {
-                return ['div', ['h2', 'B'], ...this.children];
-              });
-          }
+    global.Reactor = Object.assign(Reactor, {
+      construct: component => {
+        switch (component) {
+          case A:
+            return createComponent(function() {
+              return ['section', ['h1', 'A'], ...this.children];
+            });
+          case B:
+            return createComponent(function() {
+              return ['div', ['h2', 'B'], ...this.children];
+            });
         }
       }
-    };
+    });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
+    assert(rootNode instanceof Reactor.VirtualNode);
     assert.equal(rootNode.name, 'section');
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 2);

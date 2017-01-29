@@ -1,5 +1,5 @@
-const consts = require('../src/core/consts.js');
-global.Reactor = Object.assign({}, consts);
+global.Reactor = createCore();
+const VirtualNode = Reactor.VirtualNode;
 
 describe('Virtual Node => create', () => {
 
