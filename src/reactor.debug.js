@@ -5,9 +5,7 @@
 
   window.Reactor = {
     ready: async () => {
-      if (initialized) {
-        return;
-      } else {
+      if (!initialized) {
         const reactor = await require('core/reactor');
         const modules = await reactor.init();
         Object.assign(Reactor, modules);

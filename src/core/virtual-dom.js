@@ -1,5 +1,5 @@
 {
-  const VirtualDOM = class VirtualDOM {
+  const VirtualDOM = class {
 
     static get ItemType() {
       return {
@@ -14,12 +14,17 @@
       };
     }
 
+    static createInstance(def) {
+      const ComponentClass = require.preloaded(def);
+      return new ComponentClass();
+    }
+
     static create(component) {
 
       const createFromTemplate = template => {
         const definition = this.spread(template);
         if (definition.component) {
-          const child = Reactor.construct(definition.component);
+          const child = this.createInstance(definition.component);
           if (definition.props) {
             child.props = definition.props;
           }
@@ -52,7 +57,8 @@
       const createFromTemplate = async template => {
         const definition = this.spread(template);
         if (definition.component) {
-          const child = await Reactor.instantiate(definition.component);
+          const ComponentClass = await require(definition.component);
+          const child = new ComponentClass();
           if (definition.props) {
             child.props = definition.props;
           }

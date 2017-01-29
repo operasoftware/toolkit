@@ -1,4 +1,5 @@
 global.Reactor = createCore();
+const VirtualNode = Reactor.VirtualNode;
 const VirtualDOM = Reactor.VirtualDOM;
 const ItemType = VirtualDOM.ItemType;
 
@@ -31,17 +32,17 @@ describe('Virtual DOM => create', () => {
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof Reactor.VirtualNode)
+    assert(rootNode instanceof VirtualNode)
     assert.equal(rootNode.name, 'div');
     assert.equal(rootNode.children.length, 1);
 
     const spanNode = rootNode.children[0];
-    assert(spanNode instanceof Reactor.VirtualNode);
+    assert(spanNode instanceof VirtualNode);
     assert.equal(spanNode.name, 'span');
     assert.equal(spanNode.children.length, 1);
 
     const linkNode = spanNode.children[0];
-    assert(linkNode instanceof Reactor.VirtualNode);
+    assert(linkNode instanceof VirtualNode);
     assert.equal(linkNode.name, 'a');
     assert.equal(linkNode.text, 'Text');
   });
@@ -53,22 +54,20 @@ describe('Virtual DOM => create', () => {
     const B = Symbol.for('B');
     const component = createComponent(() => ([A]));
 
-    global.Reactor = Object.assign(Reactor, {
-      construct: component => {
-        switch (component) {
-          case A:
-            return createComponent(() => ([B]));
-          case B:
-            return createComponent(() => (['div', 'Text']));
-        }
+    VirtualDOM.createInstance = component => {
+      switch (component) {
+        case A:
+          return createComponent(() => ([B]));
+        case B:
+          return createComponent(() => (['div', 'Text']));
       }
-    });
+    };
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof Reactor.VirtualNode);
+    assert(rootNode instanceof VirtualNode);
     assert.equal(rootNode.name, 'div');
     assert.equal(rootNode.text, 'Text');
     assert.equal(rootNode.children, undefined);
@@ -92,19 +91,17 @@ describe('Virtual DOM => create', () => {
       items: ['A', 'B', 'C', 'D', 'E']
     };
 
-    global.Reactor = Object.assign(Reactor, {
-      construct: () => createComponent(function() {
-        return [
-          'span', 'Item ' + this.props.label
-        ];
-      })
+    VirtualDOM.createInstance = () => createComponent(function() {
+      return [
+        'span', 'Item ' + this.props.label
+      ];
     });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof Reactor.VirtualNode);
+    assert(rootNode instanceof VirtualNode);
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 5);
     assert(rootNode.children[0].text, 'Item A');
@@ -126,21 +123,19 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.Reactor = Object.assign(Reactor, {
-      construct: () => createComponent(function() {
-        return [
-          'div', ...this.children, [
-            'span', 'from child'
-          ]
-        ];
-      })
+    VirtualDOM.createInstance = () => createComponent(function() {
+      return [
+        'div', ...this.children, [
+          'span', 'from child'
+        ]
+      ];
     });
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof Reactor.VirtualNode);
+    assert(rootNode instanceof VirtualNode);
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 2);
 
@@ -168,26 +163,24 @@ describe('Virtual DOM => create', () => {
       ];
     });
 
-    global.Reactor = Object.assign(Reactor, {
-      construct: component => {
-        switch (component) {
-          case A:
-            return createComponent(function() {
-              return ['section', ['h1', 'A'], ...this.children];
-            });
-          case B:
-            return createComponent(function() {
-              return ['div', ['h2', 'B'], ...this.children];
-            });
-        }
+    VirtualDOM.createInstance = component => {
+      switch (component) {
+        case A:
+          return createComponent(function() {
+            return ['section', ['h1', 'A'], ...this.children];
+          });
+        case B:
+          return createComponent(function() {
+            return ['div', ['h2', 'B'], ...this.children];
+          });
       }
-    });
+    };
 
     // when
     const rootNode = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof Reactor.VirtualNode);
+    assert(rootNode instanceof VirtualNode);
     assert.equal(rootNode.name, 'section');
     assert(rootNode.children);
     assert.equal(rootNode.children.length, 2);
