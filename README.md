@@ -28,7 +28,7 @@ The creation and execution of an App is as simple as possible:
 
 ```js
 // import app definition
-const MyApp = require.def(‘apps/my-app’);
+const MyApp = require.def('apps/my-app');
 // create new app
 const app = Reactor.create(MyApp);
 // render in body element
@@ -37,16 +37,16 @@ await demo.render(document.body);
 
 ### Behind the scences
 
-Creation of an App is synchronous, it is instantiated together with all the internal components (store, core reducer, renderer). Definitions of dependencies are loaded.
+Creation of an App is synchronous, it is instantiated together with all its internal components (store, core reducer, renderer). Definitions of dependencies are loaded.
 
-The initialisation is asynchronous and happens before the initial rendering. Required dependencies are resolved, the view model is created and fed with data provided by background services.
+The initialisation is asynchronous and happens before the initial rendering. Required dependencies are resolved, the view model is created and fed with data provided by the background services.
 
-Based on the initial state the virtual node tree is created, it is replicated into the DOM container. Event listeners are bound to the command dispatcher and an interactive app is ready to work with. From this point forward each user action and background data refresh result in a command dispatched to the App. The application processes the commands with the imported reducers, which calculate the next state. Any changes in the state trigger the DOM update.
+Based on the initial state the component tree is used to create the virtual DOM, which gets replicated as DOM element tree and inserted into the requested container. Event listeners are bound to the command dispatcher and the app is ready to work with. From this point forward each user action and background data refresh result in a command dispatched to the App. The application processes the commands with the defined reducers, which calculate the next state. Whenever the state is updated the next DOM update cycle is triggered.
 
 ### Module types
 
 There are a few main types of modules:
-* **components** - represent UI fragments, define what is rendered in the DOM
+**Components** - represent UI fragments, define what is rendered in the DOM
 ```js
 const Component = class extends Reactor.Component {
   render() {
@@ -65,7 +65,7 @@ const Component = class extends Reactor.Component {
 
 const Subcomponent = require.def('/components/subcomponent');
 ```
-* **reducers** - process commands but also provide an API for creation of commands that they can understand
+**Reducers** - process commands but also provide an API for creation of commands that they can understand
 ```js
 const reducer = (state, command) {
   switch (command.type) {
@@ -88,7 +88,7 @@ reducer.commands = {
   })
 };
 ```
-* **services** - provide data and allow to subscribe to data changes
+**Services** - provide data and allow to subscribe to data changes
 ```js
 const service = class Service {
   async getState() {
