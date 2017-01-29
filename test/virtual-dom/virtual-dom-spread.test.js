@@ -1,3 +1,5 @@
+global.VirtualDOM = require('../../src/core/virtual-dom.js');
+
 describe('Virtual DOM => spread template', () => {
 
   it('detects component', () => {

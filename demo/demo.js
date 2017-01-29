@@ -1,4 +1,4 @@
-window.renderDemoApp = async () => {
+window.renderDemo = async () => {
 
   const DemoApp = require.def('demo/components/demo-app');
 

@@ -1,3 +1,6 @@
+const consts = require('../src/core/consts.js');
+global.Reactor = Object.assign({}, consts);
+
 describe('Virtual Node => create', () => {
 
   it('creates an empty element', () => {

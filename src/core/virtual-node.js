@@ -6,7 +6,7 @@ class VirtualNode {
     this.addListeners(props);
   }
 
-  static create(definition) { 
+  static create(definition) {
     const {
       name,
       props,
@@ -28,7 +28,7 @@ class VirtualNode {
     if (key === 'style') {
       if (typeof value === 'object') {
         const keys = Object.keys(value)
-          .filter(key => SUPPORTED_STYLES.includes(key));
+          .filter(key => Reactor.SUPPORTED_STYLES.includes(key));
         if (keys.length === 0) {
           return null;
         }
@@ -47,7 +47,7 @@ class VirtualNode {
 
   addAttributes(props = {}) {
     const attributes = Object.keys(props)
-      .filter(key => SUPPORTED_ATTRIBUTES.includes(key))
+      .filter(key => Reactor.SUPPORTED_ATTRIBUTES.includes(key))
       .reduce((result, key) => {
         const attr = key.replace(/(?:^|\.?)([A-Z])/g,
           (x, y) => ('-' + y.toLowerCase()));
@@ -64,7 +64,7 @@ class VirtualNode {
 
   addListeners(props = {}) {
     const eventListeners = Object.keys(props)
-      .filter(key => SUPPORTED_EVENTS.includes(key))
+      .filter(key => Reactor.SUPPORTED_EVENTS.includes(key))
       .reduce((result, key) => {
         const event = key.toLowerCase().slice(2);
         result[event] = props[key];
