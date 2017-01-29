@@ -1,4 +1,4 @@
-global.VirtualDOM = require('../../src/virtual-dom/virtual-dom.js');
+global.VirtualDOM = require('../../src/core/virtual-dom.js');
 const ItemType = VirtualDOM.ItemType;
 
 describe('Virtual DOM => get item type', () => {

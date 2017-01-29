@@ -3,6 +3,17 @@
   const cache = new Map();
   const dependencies = [];
 
+  const prefixes = new Map();
+
+  const getScriptPath = path => {
+    for (let [name, prefix] of prefixes) {
+      if (path.startsWith(name)) {
+        return `/${prefix}${path}.js`;
+      }
+    }
+    return `/${path}.js`;
+  }
+
   window.preload = async path => {
     console.log('Preloading:', path);
     const component = await require(path);
@@ -25,9 +36,8 @@
       return Promise.resolve(cache.get(componentPath));
     }
 
-    const getScriptPath = componentPath => '/' + componentPath + '.js';
-
     const loadPromise = new Promise(resolve => {
+      module.exports = null;
       dependencies.length = 0;
       console.time('=> script load time');
       const script = document.createElement('script');
@@ -37,12 +47,19 @@
         cache.set(componentPath, module.exports);
         console.log('(loader) Loaded script:', script.src);
         console.timeEnd('=> script load time');
+        if (module.exports === null) {
+          throw new Error(`No export found in module: '${componentPath}'`);
+        }
         resolve(module.exports);
       };
       document.head.appendChild(script);
     });
 
     return loadPromise;
+  };
+
+  window.require.prefix = (name, prefix) => {
+    prefixes.set(name, prefix);
   };
 
   window.require.def = componentPath => {

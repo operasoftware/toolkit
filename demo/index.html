@@ -2,16 +2,11 @@
 <html>
 <head>
   <title>Reactor demo</title>
-  <script src="/src/module-loader.js"></script>
-  <script src="/src/reactor.js"></script>
-  <script src="/src/virtual-dom/consts.js"></script>
-  <script src="/src/virtual-dom/virtual-dom.js"></script>
-  <script src="/src/virtual-dom/virtual-node.js"></script>
-  <script src="/src/renderer.js"></script>
   <link rel="stylesheet" href="./demo.css" />
+  <script src="/src/module-loader.js"></script>
+  <script src="/src/reactor.debug.js"></script>
   <script src="/demo/demo.js"></script>
 </head>
-<body onload='renderDemoApp()'>
-
+<body onload="Reactor.ready().then(() => renderDemo())"">
 </body>
 </html>
