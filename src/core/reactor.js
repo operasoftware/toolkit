@@ -1,5 +1,5 @@
 {
-  module.exports = {
+  const core = {
 
     init: async () => {
       const {
@@ -13,9 +13,7 @@
       const Renderer = await require('core/renderer');
       const VirtualNode = await require('core/virtual-node');
       const VirtualDOM = await require('core/virtual-dom');
-      const { combineReducers } = await require('core/reducer');
-
-      const create = component => new Reactor.App(component);
+      const { combineReducers, create } = await require('core/utils');
 
       return {
         // constants
@@ -27,4 +25,6 @@
       };
     }
   };
+
+  module.exports = core;
 }

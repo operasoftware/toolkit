@@ -17,5 +17,5 @@
     }
   };
 
-  module.exports = Store
+  module.exports = Store;
 }
