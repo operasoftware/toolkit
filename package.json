@@ -21,9 +21,9 @@
   "author": "Aleksander Świtalski",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aswitalski/readme-to-test/issues"
+    "url": "https://github.com/aswitalski/chromium-reactor/issues"
   },
-  "homepage": "https://github.com/aswitalski/readme-to-test#readme",
+  "homepage": "https://github.com/aswitalski/chromium-reactor#readme",
   "devDependencies": {
     "assert": "^1.4.1",
     "babel-plugin-transform-class-properties": "^6.19.0",
