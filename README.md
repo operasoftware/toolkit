@@ -35,7 +35,7 @@ const app = Reactor.create(MyApp);
 await demo.render(document.body);
 ```
 
-### Behind the scences
+### Behind the scenes
 
 Creation of an App is synchronous, it is instantiated together with all its internal components (store, core reducer, renderer). Definitions of dependencies are loaded.
 
@@ -43,9 +43,71 @@ The initialisation is asynchronous and happens before the initial rendering. Req
 
 Based on the initial state the component tree is used to create the virtual DOM, which gets replicated as DOM element tree and inserted into the requested container. Event listeners are bound to the command dispatcher and the app is ready to work with. From this point forward each user action and background data refresh result in a command dispatched to the App. The application processes the commands with the defined reducers, which calculate the next state. Whenever the state is updated the next DOM update cycle is triggered.
 
+### Dynamic nature
+
+Before anything is shown to the user, Reactor detects which modules are required for rendering and loads them.
+By default all modules are lazy-loaded in order to minimise the resources usage and maximise the battery life.
+The dependencies are detected while traversing the component tree during rendering. Starting with the root component its  `render()` method is invoked to get a template defining the node structure. The template is calculated using the component properties (application state for the root component). It consists of static elements (like 'div', 'span') and definitions of subcomponents:
+
+```js
+const Application = class extends Reactor.Component {
+  render() {
+    return [
+      'div', {
+        class: 'header'
+      },
+      [
+        'h1', this.props.title      
+      ],
+      [
+        NavigationMenu, this.props.navigation
+      ]
+    ];
+  }
+};
+
+const NavigationMenu = require.def('/components/navigation/menu');
+```
+If any component definitions are found in the returned template the components are loaded with their dependencies. The respective instances are created, they receive their own properties (as specified by the template) and the rendering continues:
+
+```js
+const NavigationMenu = class extends Reactor.Component {
+  render() {
+    return [
+      'div', {
+        class: 'navigation'
+      }, ...this.props.items.map(item => [
+        NavigationItem, { label: item.label, url: item.url }
+      ])
+    ];
+  }
+};
+
+const NavigationItem = require.def('/components/navigation/item');
+```
+
+Components only receive properties they are interested in - usually fragments of the appliation state.
+All the properties on static elements are converted into event listeners and element attributes (based on built-in dictionaries):
+
+```js
+const NavigationItem = class extends Reactor.Component {
+  render() {
+    return [
+      'a', {
+        class: 'item',
+        href: this.props.url
+      }, this.props.label
+    ];
+  }
+};
+```
+
+Such full rendering cycles can significantly impact the application responsiveness, therefore any component tree fragment can be preloaded at any point in time. This allows to synchronously render the DOM fragment to get the best performance when needed.
+
 ### Module types
 
 There are a few main types of modules:
+
 **Components** - represent UI fragments, define what is rendered in the DOM
 ```js
 const Component = class extends Reactor.Component {
