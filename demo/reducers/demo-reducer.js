@@ -1,12 +1,10 @@
 {
-  const Command = {
-    HIGHLIGHT_ITEM: 'highlight-item'
-  };
+  const HIGHLIGHT_ITEM = Symbol('highlight-item');
 
   const reducer = (state, command) => {
     switch (command.type) {
-      case Command.HIGHLIGHT_ITEM:
-        console.log('Highlight item:', command.index);
+      case HIGHLIGHT_ITEM:
+        console.log('Highlight item at index:', command.index);
         const nextState = Object.assign({}, state, {
           items: state.items.map((item, index) => {
             return {
@@ -23,7 +21,7 @@
 
   reducer.commands = {
     highlightItem: index => ({
-      type: Command.HIGHLIGHT_ITEM,
+      type: HIGHLIGHT_ITEM,
       index
     })
   };

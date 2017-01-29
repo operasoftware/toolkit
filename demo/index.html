@@ -7,6 +7,9 @@
   <script src="/src/reactor.debug.js"></script>
   <script src="/demo/demo.js"></script>
 </head>
-<body onload="Reactor.ready().then(() => renderDemo())"">
+<body>
+  <script>
+    Reactor.ready().then(renderDemo);
+  </script>
 </body>
 </html>
