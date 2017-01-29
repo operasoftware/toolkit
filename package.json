@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aswitalski/readme-to-test.git"
+    "url": "git+https://github.com/aswitalski/chromium-reactor.git"
   },
   "keywords": [
     "chromium",
