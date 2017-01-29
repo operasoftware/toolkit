@@ -33,8 +33,22 @@
 
   const create = component => new Reactor.App(component);
 
+  const construct = def => {
+    const ComponentClass = require.preloaded(def);
+    const component = new ComponentClass();
+    return component;
+  };
+
+  const instantiate = async def => {
+    const ComponentClass = await require(def);
+    const component = new ComponentClass();
+    return component;
+  };
+
   module.exports = {
     combineReducers,
-    create
+    create,
+    construct,
+    instantiate
   };
 }

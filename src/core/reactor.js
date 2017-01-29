@@ -13,7 +13,7 @@
       const Renderer = await require('core/renderer');
       const VirtualNode = await require('core/virtual-node');
       const VirtualDOM = await require('core/virtual-dom');
-      const { combineReducers, create } = await require('core/utils');
+      const { combineReducers, create, construct, instantiate } = await require('core/utils');
 
       return {
         // constants
@@ -21,7 +21,7 @@
         // core classes
         Component, Renderer, Store, App, VirtualNode, VirtualDOM,
         // utils
-        combineReducers, create
+        combineReducers, create, construct, instantiate
       };
     }
   };

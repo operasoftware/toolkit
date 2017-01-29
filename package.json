@@ -1,6 +1,6 @@
 {
   "name": "chromium-reactor",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A framework for Chromium-based browsers for building their user interfaces",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,10 @@
   },
   "keywords": [
     "chromium",
-    "react",
-    "redux",
-    "router"
+    "reactor",
+    "native",
+    "browser",
+    "user interface"
   ],
   "author": "Aleksander Świtalski",
   "license": "MIT",

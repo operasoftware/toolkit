@@ -37,9 +37,9 @@
 
     async createVirtualDOM() {
       if (this.preloaded) {
-        return VirtualDOM.create(this.root);
+        return Reactor.VirtualDOM.create(this.root);
       } else {
-        return await VirtualDOM.resolve(this.root);
+        return await Reactor.VirtualDOM.resolve(this.root);
       }
     }
 
