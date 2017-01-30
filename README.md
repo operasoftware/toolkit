@@ -21,7 +21,13 @@ It utilises the engine’s latest features and provides a convenient way to buil
 
 ## UI first
 
-Building user interfaces pretty much requires just two things: a mechanism to render the UI and the way to load and manipulate the data. In Reactor the UI is built as an encapsulated app operating in its own sandbox and rendering DOM elements in the specified container. All dependencies shared with other apps are stateless and all stateful modules are instantiated within the app.
+Building user interfaces for a browser requires pretty much two things: a mechanism to render the UI in the DOM and the way to load and manipulate the data utilised by that UI.
+
+Reactor builds the UI as an sandboxed app that renders DOM elements in the specified container.
+
+As a rule of thumb, no excess resources should be fetched unless they are needed to display the particular interface. Dependencies required for rendering particular UI fragment are defined within the UI components and resolved with the built-in module loader.
+
+All modules shared with other apps are stateless and all stateful components are encapsulated within the app.
 
 ## Running an app
 The creation and execution of apps is as simple as possible:
@@ -40,11 +46,11 @@ await demo.render(document.body);
 Creation of an app is synchronous, it is instantiated together with all its internal components (store, core reducer, renderer). Definitions of components are loaded.
 
 The initialisation is asynchronous and it can be triggered manually or automatically before the initial rendering.
-During the initialisation all the required dependencies are resolved, the view model is created and fed with the initial state provided by the background services.
+During the initialisation all the required dependencies are resolved, the view model is created and fed with the initial state provided by the data services.
 
-Te rendering cycle starts with the construction of the component tree. The component tree is based on the initial state and then used to create the virtual DOM, which gets mirrored as DOM element tree and inserted into the specified container element. Event listeners are bound to the app's command dispatcher. An interactive app is up and running.
+Te rendering cycle starts with the construction of the component tree. The component tree is based on the initial state and then used to create the virtual DOM, which gets mirrored as DOM element tree and inserted into the specified container. Event listeners are bound to the app's command dispatcher.
 
-From this point forward background data changes and user actions result in commands dispatched to the App.
+From this point forward background data changes and user actions result in commands dispatched to the app.
 The app processes the commands with the defined set of reducers, which calculate the transition to the next state. Each state update triggers the next rendering cycle.
 
 ## Dynamic nature
@@ -58,7 +64,7 @@ const Application = class extends Reactor.Component {
   render() {
     return [
       'div', {
-        class: 'header'
+        class: 'my-app'
       },
       [
         'h1', this.props.title      
