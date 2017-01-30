@@ -176,7 +176,7 @@ const service = class Service {
   }
   subscribe(reducer) {
     this.onSettingChange((name, value) => {
-      const command = reducer.valueChanged(name, value);
+      const command = reducer.commands.valueChanged(name, value);
       reducer(command);
     });
   }
