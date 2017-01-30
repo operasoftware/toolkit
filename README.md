@@ -38,7 +38,7 @@ const MyApp = require.def('apps/my-app');
 // create new app
 const app = Reactor.create(MyApp);
 // render in body element
-await demo.render(document.body);
+await app.render(document.body);
 ```
 
 ## Behind the scenes
