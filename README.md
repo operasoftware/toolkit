@@ -25,9 +25,9 @@ Building user interfaces for a browser requires pretty much two things: a mechan
 
 Reactor builds the UI as an sandboxed app that renders DOM elements in the specified container.
 
-As a rule of thumb, no excess resources should be fetched unless they are needed to display the particular interface. Dependencies required for rendering particular UI fragment are defined within the UI components and resolved with the built-in module loader.
+As a rule of thumb, no excess resources are fetched unless they are needed to render the user interface. Dependencies required for rendering particular UI fragments are defined within the UI components and resolved with the built-in module loader.
 
-All modules shared with other apps are stateless and all stateful components are encapsulated within the app.
+All dependencies shared with other apps are stateless and all stateful components are encapsulated within the app.
 
 ## Running an app
 The creation and execution of apps is as simple as possible:
@@ -183,4 +183,4 @@ const service = class Service {
 }
 ```
 
-## Coming when it's done!
+# Coming when it's done!
