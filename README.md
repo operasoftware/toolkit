@@ -12,12 +12,13 @@ It utilises the engine’s latest features and provides a convenient way to buil
 
 * **native** - take advantage of the latest Chromium engine features,
 * **modular** - define each component, reducer, service as a separate module,
-* **dynamic** - build in discovery service, lazy-load required modules for flexibility or preload for performance,
+* **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
 * **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
 * **simple** - no millions of callbacks and events, utilise one-way model-view binding and dispatch commands to update the model,
-* **isolated** - reduce globals usage to bare minimum (module loader methods),
-* **deterministic** - no race conditions, control all asynchronous operations,
-* **debuggable** - have fun during development, use live-reload, logging and time-saving "debug mode" tools.
+* **isolated** - encapsulate apps, reduce  usage of global variables to bare minimum,
+* **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations,
+* **testable** - unit test all your components with little effort,
+* **debuggable** - easily inspect your apps, use live reload and time saving debug tools.
 
 ## UI first
 
@@ -96,7 +97,7 @@ const NavigationMenu = class extends Reactor.Component {
 const NavigationItem = require.def('/components/navigation/item');
 ```
 
-By design components only receive properties they are interested in, usually fragments of the appliation state.
+By design components only receive properties they are interested in, usually fragments of the application state.
 All the properties on static elements are converted into event listeners and element attributes (based on the built-in dictionaries):
 
 ```js
@@ -143,7 +144,7 @@ const Component = class extends Reactor.Component {
 
 const Subcomponent = require.def('/components/subcomponent');
 ```
-**Reducers** - process commands but also provide an API for creation of commands that they can understand
+**Reducers** - process commands to update the application state, but also provide an API for creation of commands that they can understand
 ```js
 const VALUE_CHANGED = Symbol('value-changed')
 
@@ -181,6 +182,32 @@ const service = class Service {
     });
   }
 }
+```
+
+# Testing
+
+It is much easier to ensure high quality of developed apps if all of their components are fully testable.
+And of course if the framework they are build with is created from ground up with convenient testing in mind.
+
+Reactor simplifies unit testing by providing a dedicated module loader which automatically mocks dependencies of tested modules. UI components can also use shallow render mode not to rely on their subcomponents.
+
+The built-in assertion library allows to avoid boilerplate code in tests and improves their readability:
+```js
+// given
+const component = createComponent('/components/panel');
+component.props = {
+  active: true
+};
+
+// when
+const template = component.render();
+const node = shallowRender(template);
+
+// then
+assert(node.is('div'));
+assert(node.hasClass('active'));
+assert(node.hasChildren());
+assert(node.getFirstChild().is('span'));
 ```
 
 # Coming when it's done!
