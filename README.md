@@ -14,11 +14,11 @@ It utilises the engine’s latest features and provides a convenient way to buil
 * **modular** - define each component, reducer, service as a separate module,
 * **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
 * **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
-* **simple** - no millions of callbacks and events, utilise one-way model-view binding and dispatch commands to update the model,
+* **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,
 * **isolated** - encapsulate apps, reduce  usage of global variables to bare minimum,
-* **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations,
+* **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations properly,
 * **testable** - unit test all your components with little effort,
-* **debuggable** - easily inspect your apps, use live reload and time saving debug tools.
+* **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.
 
 ## UI first
 
@@ -26,9 +26,10 @@ Building user interfaces for a browser requires pretty much two things: a mechan
 
 Reactor builds the UI as an sandboxed app that renders DOM elements in the specified container.
 
-As a rule of thumb, no excess resources are fetched unless they are needed to render the user interface. Dependencies required for rendering particular UI fragments are defined within the UI components and resolved with the built-in module loader.
+As a rule of thumb, no excess resources are fetched unless they are needed to render the requested interface.
+Dependencies required for showing particular UI fragments are defined within the components responsible for rendering those fragments. All dependencies are resolved with the built-in discovery service and module loader.
 
-All dependencies shared with other apps are stateless and all stateful components are encapsulated within the app.
+Multiple apps can be rendered on the same page. They also can share dependencies, as these are stateless by design. All stateful components are encapsulated within apps.
 
 ## Running an app
 The creation and execution of apps is as simple as possible:
@@ -56,9 +57,8 @@ The app processes the commands with the defined set of reducers, which calculate
 
 ## Dynamic nature
 
-Before anything is shown to the user, Reactor detects which modules are required for the initial rendering and loads them.
-By default all modules are lazy-loaded in order to minimise the memory usage.
-The dependencies are detected while traversing the component tree during rendering. Starting with the root component its  `render()` method is invoked to get a template defining the node structure. The template is calculated using the component properties (application state for the root component). It consists of static elements (like 'div', 'span') and definitions of subcomponents:
+Before anything is shown to the user, Reactor loads all modules that are required for the initial rendering to start.
+All optional dependencies can be lazy-loaded in order to minimise the memory usage and can be discovered just-in-time while traversing the component tree during rendering. The rendering begins with the root component which defines the app itself. Its `render()` method is invoked to get a template defining the node structure. The template is calculated using the component properties (application state for the root component). It consists of static elements (like 'div' and 'span') and definitions of subcomponents.
 
 ```js
 const Application = class extends Reactor.Component {
@@ -119,11 +119,11 @@ Lazy loading and multiple asynchronous operations can significantly impact the a
 
 Preloading is very handy when a switch to a totally different view happens, what usually requires a different set of components and services. There only is a single expensive operation and after that all updates triggered by user actions are optimised and as performant as possible.
 
-Both virtual DOM and the renderer perform several optimisations to minimise the number of reflows and repaints. Components are not re-rendered if they receive the same properties and child nodes as in the previous cycle. DOM is not modified if the structure and attributes remain the same and only event listeners change on the components. Preloaded components and all the descendants update synchronously in a single stack frame.
+Both virtual DOM and the renderer perform several optimisations to minimise the number of reflows and repaints. Components are not re-rendered if they receive exactly the same properties and child nodes as in the previous cycle. DOM is not modified if the structure and attributes remain the same and only event listeners change on the components. Preloaded components and all the descendants update synchronously in a single stack frame.
 
 ## Modules
 
-Apps needs to read and write data, render the user interface and process commands representing user actions and data changes. There are three main module types needed to develop a fully fledged app:
+Apps needs to read and write data, render the user interface and process the commands representing user actions and data changes. There are three main module types needed to develop a fully fledged app:
 
 **Components** - represent UI fragments, define what is rendered in the DOM
 ```js
@@ -184,10 +184,24 @@ const service = class Service {
 }
 ```
 
-# Testing
+## Bundling apps
+
+All the app's dependencies are defined within the components it consists of. This allows to reuse the discovery service and module loader's mechanisms at build time to bundle up the all the required modules into production-ready files.
+
+Bunding doesn't use any transpilation or source maps and does nothing impacting the readability of the code. The original formatting is maintained. The only necessary amendment in the code is a change of the path-agnostic CommonJS pattern `module.exports = App` declarations into `define('/components/app', App)` to be able to package multiple modules from different paths into a single file.
+
+It's up to the developers how they want to bundle their apps, but there are several built-in strategies: generating a single script for the whole app, splitting the code by top-level view or bundling UI components and services separately.
+
+To bundle your app from command line with default settings just run:
+```
+node run bundle-app /components/my-app
+```
+Apps using bundled scripts in production don't loose their dynamic nature, service discovery and lazy loading can still be used if needed.
+
+## Testing
 
 It is much easier to ensure high quality of developed apps if all of their components are fully testable.
-And of course if the framework they are build with is created from ground up with convenient testing in mind.
+And of course if the framework they are built with is created from ground up with convenient testing in mind.
 
 Reactor simplifies unit testing by providing a dedicated module loader which automatically mocks dependencies of tested modules. UI components can also use shallow render mode not to rely on their subcomponents.
 
