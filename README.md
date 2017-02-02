@@ -123,7 +123,20 @@ Both virtual DOM and the renderer perform several optimisations to minimise the 
 
 ## Modules
 
-Apps needs to read and write data, render the user interface and process the commands representing user actions and data changes. There are three main module types needed to develop a fully fledged app:
+A module is a script defining the exported API using the CommonJS module format. As the execution environment is the browser and the scripts are loaded by insertion into the document, all its internal variables should be properly scoped not to pollute the global namespace:
+
+```js
+{
+  const privateVariable = 'I am properly isolated';
+  
+  module.exports = {
+    method: () => 'I am a part of the exported API'
+  };
+}
+```
+Modules can use static dependencies (resolved synchronously) on preloaded modules. They can also use dynamic dependencies, which can be resolved at the execution time. This feature gives a possibility of great dynamics, but should be used with moderation, as it can decrease the performance.
+
+There are three predefined module types, allowing in combination to construct a fully-fledged app:
 
 **Components** - represent UI fragments, define what is rendered in the DOM
 ```js
