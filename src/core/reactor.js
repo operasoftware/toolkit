@@ -13,13 +13,16 @@
       const Renderer = await require('core/renderer');
       const VirtualNode = await require('core/virtual-node');
       const VirtualDOM = await require('core/virtual-dom');
+      const ComponentTree = await require('core/component-tree');
       const { combineReducers, create } = await require('core/utils');
 
       return {
         // constants
         SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS, SUPPORTED_STYLES,
         // core classes
-        Component, Renderer, Store, App, VirtualNode, VirtualDOM,
+        Component, Renderer, Store,
+        // structure
+        App, VirtualNode, VirtualDOM, ComponentTree,
         // utils
         combineReducers, create
       };
