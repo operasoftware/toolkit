@@ -6,7 +6,7 @@ const Patch = Reactor.Patch;
 
 describe('Diff => calculate patches', () => {
 
-  describe('=> on an Element:', () => {
+  describe('=> on an Element', () => {
 
     const createTrees = (...templates) => {
       let currentTemplate;
@@ -167,6 +167,20 @@ describe('Diff => calculate patches', () => {
       assert(patches[0].target.isElement());
       assert.equal(patches[0].name, 'click');
       assert.equal(patches[0].listener, listener);
+    });
+
+    describe('=> child nodes update', () => {
+
+      it.skip('inserts element at the beginning');
+      it.skip('inserts element at the end');
+      it.skip('moves an element up');
+      it.skip('moves an element down');
+      it.skip('moves an element to the beginning');
+      it.skip('moves an element to the end');
+      it.skip('swaps two elements');
+      it.skip('swaps three elements');
+      it.skip('removes an element');
+      it.skip('removes and inserts elements');
     });
   });
 
@@ -341,7 +355,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[1].component.constructor, SubcomponentClass);      
     });
 
-    describe('replaces an element', () => {
+    describe('replaces a child element', () => {
 
       it('with an element', () => {
 
@@ -423,7 +437,7 @@ describe('Diff => calculate patches', () => {
 
     });
     
-    describe('replaces a component', () => {
+    describe('replaces a child component', () => {
       
       it('with an element', () => {
 
