@@ -106,4 +106,9 @@ describe('Virtual Node => create', () => {
     assert.equal(node.text, 'Opera Software');
     assert.equal(node.children, undefined);
   });
+
+  it.skip('ignores null and undefined attribute values');
+
+  it.skip('ignores listeners not being functions');
+
 });

@@ -10,6 +10,8 @@ global.createCore = () => ({
   VirtualNode: require('../../src/core/virtual-node.js'),
   VirtualDOM: require('../../src/core/virtual-dom.js'),
   ComponentTree: require('../../src/core/component-tree.js'),
+  Diff: require('../../src/core/diff.js'),
+  Patch: require('../../src/core/patch.js'),
   SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
   SUPPORTED_EVENTS: consts.SUPPORTED_EVENTS,
   create: utils.create

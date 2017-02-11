@@ -75,7 +75,22 @@
         this.listeners = eventListeners;
       }
     }
+    
+    isComponent() {
+      return false;
+    }
+
+    isElement() {
+      return true;
+    }
+
+    isCustomElement() {
+      return false;
+    }
+
   };
+
+
 
   module.exports = VirtualNode;
 }

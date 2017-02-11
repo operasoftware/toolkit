@@ -199,7 +199,7 @@
         return {
           types
         };
-      } else {
+      } else if (template !== null) {
         console.error('Specified template', template, 'is not an array!');
       }
     }

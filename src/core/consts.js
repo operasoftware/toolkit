@@ -104,7 +104,7 @@
     'checked',
     'cite',
     'classID',
-    'className',
+    'class',
     'colSpan',
     'cols',
     'content',
