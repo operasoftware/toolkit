@@ -28,7 +28,7 @@
     }
 
     static remove(item, at) {
-      return new Move(Name.INSERT, item, { at }, items => {
+      return new Move(Name.REMOVE, item, { at }, items => {
         items.splice(at, 1);
       });
     }
@@ -45,8 +45,11 @@
         move.make(array);
       };
 
-      for (let i = 0; i < next.length; i++) {
-
+      for (let i = 0; i < array.length; i++) {
+        const item = array[i];
+        if (!next.includes(item)) {
+          makeMove(Move.remove(item, i));
+        }
       }
       for (let i = 0; i < next.length; i++) {
         const item = next[i];
