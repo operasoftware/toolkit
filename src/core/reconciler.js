@@ -21,8 +21,11 @@
 
     static move(item, from, to) {
       return new Move(Name.MOVE, item, { from, to }, items => {
+        // console.log('Before:', items);
         items.splice(from, 1);
+        // console.log('After removed:', items);
         items.splice(to, 0, item);
+        // console.log('After inserted:', items);
       });
     }
 
@@ -49,20 +52,30 @@
         for (let i = 0; i < source.length; i++) {
           const item = source[i];
           if (!target.includes(item)) {
+            // console.log(`=> Remove '${item}' at ${i}, source:`, source);
             makeMove(Move.remove(item, i));
+          }
+        }
+        for (const item of target) {
+          if (!source.includes(item)) {
+            const index = target.indexOf(item);
+            // console.log(`=> Insert '${item}' at ${index}, source:`, source);
+            makeMove(Move.insert(item, index));
           }
         }
         const moveAndInsert = index => {
           const item = target[index];
           if (source[index] !== item) {
             if (source.includes(item)) {
-              const lastIndex = source.indexOf(item);
-              makeMove(Move.move(item, lastIndex, index));
+              const from = source.indexOf(item);
+              // console.log(`=> Move '${item}' from ${from} to ${index}, source:`, source);
+              makeMove(Move.move(item, from, index));
             } else {
-              makeMove(Move.insert(item, index));
+              throw 'Illegal state';
             }
           }
         };
+
         if (reversed) {
           for (let i = target.length - 1; i >= 0; i--) {
             moveAndInsert(i);
@@ -80,8 +93,13 @@
       if (moves.length <= 1) {
         return moves;
       }
-      const alt = makeMoves(true);
-      return moves.length <= alt.length ? moves : alt;
+      const reversedMoves = makeMoves(true);
+      if (reversedMoves === null || reversedMoves.length > moves.length) {
+        return moves;
+      } else {
+        return reversedMoves;
+      }
+      return moves;
     }
   };
 

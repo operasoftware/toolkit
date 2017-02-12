@@ -92,6 +92,8 @@
           continue;
       }
     }
+
+    // TODO: update and replace children
   };
 
   const calculatePatches = (current, next, parent = null, patches = []) => {

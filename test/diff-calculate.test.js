@@ -169,7 +169,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[0].listener, listener);
     });
 
-    describe.only('reconcile children', () => {
+    describe('reconcile children', () => {
 
       const assertInsertChildNode = (patch, name, at) => {
         assert.equal(patch.type, Patch.Type.INSERT_CHILD_NODE);
@@ -328,8 +328,8 @@ describe('Diff => calculate patches', () => {
 
           // then
           assert.equal(patches.length, 2);
-          assertMoveChildNode(patches[0], 'Y', 3, 1);          
-          assertMoveChildNode(patches[1], 'div', 3, 2);          
+          assertMoveChildNode(patches[0], 'X', 1, 3);          
+          assertMoveChildNode(patches[1], 'div', 1, 2);          
         });
 
         it('swaps three elements', () => {
@@ -391,6 +391,28 @@ describe('Diff => calculate patches', () => {
           assertRemoveChildNode(patches[0], 'X', 3);          
           assertInsertChildNode(patches[1], 'Y', 1);          
         });
+
+        it('inserts, moves and removes elements', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('X', 'section', 'p', 'div', 'Y', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'p', 'div', 'Z', 'span', 'X')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 4);
+          assertRemoveChildNode(patches[0], 'Y', 4);          
+          assertInsertChildNode(patches[1], 'Z', 3);
+          assertMoveChildNode(patches[2], 'X', 0, 5);          
+          assertMoveChildNode(patches[3], 'Z', 2, 3);          
+        });
       });
 
       describe('without keys', () => {
@@ -404,7 +426,7 @@ describe('Diff => calculate patches', () => {
         it.skip('inserts, moves and removes elements');
       });
 
-      describe.skip('with mixed keys', () => {
+      describe('with mixed keys', () => {
 
         it.skip('inserts an element');
         it.skip('moves an element up');

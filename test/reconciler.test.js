@@ -33,7 +33,7 @@ describe('Reconciler', () => {
     F = 'F',
     G = 'G',
     H = 'H';
-  const X = 'X';
+  const X = 'X', Y = 'Y', Z = 'Z';
 
   it('inserts item into an empty array', () => {
 
@@ -227,7 +227,7 @@ describe('Reconciler', () => {
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
-    assert.equal(moves.length, 4);
+    assert.equal(moves.length, 3);
     assert.deepEqual(moves.result, target);
   });
 
@@ -245,4 +245,43 @@ describe('Reconciler', () => {
     assert.deepEqual(moves.result, target);
   });
 
+  it('inserts, moves and removes items (1)', () => {
+
+    // given
+    const source = [X, A, B, C, Y, D];
+    const target = [A, B, C, Z, D, X];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assert.equal(moves.length, 4);
+    assert.deepEqual(moves.result, target);
+  });
+
+  it('inserts, moves and removes items (2)', () => {
+
+    // given
+    const source = [X, A, B, C, D, E, F, G, H, Y];
+    const target = [A, Z, B, C, D, E, F, G, H, X];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+    // then
+    assert.equal(moves.length, 4);
+    assert.deepEqual(moves.result, target);
+  });
+
+  it('inserts, moves and removes items (3)', () => {
+
+    // given
+    const source = [A, X, B, C, D, E, Y, F, G, H];
+    const target = [H, A, Y, B, D, E, F, Z, C];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+    // then
+    assert.equal(moves.length, 9);
+    assert.deepEqual(moves.result, target);
+  });
 });
