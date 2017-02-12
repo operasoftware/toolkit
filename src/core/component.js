@@ -7,6 +7,18 @@
       Component.prototype.constructor = VirtualNode;
     }
 
+    onCreated()  {
+    }
+
+    onAttached()  {
+    }
+
+    onUpdated()  {
+    }
+
+    onDetached()  {
+    }
+
     isComponent() {
       return true;
     }
