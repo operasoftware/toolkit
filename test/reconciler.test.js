@@ -2,7 +2,7 @@ global.Reactor = createCore();
 const Reconciler = Reactor.Reconciler;
 const MoveName = Reconciler.Move.Name;
 
-describe.only('Reconciler', () => {
+describe('Reconciler', () => {
 
   const assertSingleMove = moves => {
     assert(Array.isArray(moves));
@@ -25,66 +25,76 @@ describe.only('Reconciler', () => {
     assert.equal(move.at, at);
   };
 
+  const A = 'A',
+    B = 'B',
+    C = 'C',
+    D = 'D',
+    E = 'E',
+    F = 'F',
+    G = 'G',
+    H = 'H';
+  const X = 'X';
+
   it('inserts item into an empty array', () => {
 
     // given
     const source = [];
-    const target = ['X']
+    const target = [X]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertInsertItem(moves[0], 'X', 0);
+    assertInsertItem(moves[0], X, 0);
   });
 
   it('inserts item at specified index', () => {
 
     // given
-    const source = ['A', 'B', 'C', 'D'];
-    const target = ['A', 'B', 'X', 'C', 'D']
+    const source = [A, B, C, D];
+    const target = [A, B, X, C, D]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertInsertItem(moves[0], 'X', 2);
+    assertInsertItem(moves[0], X, 2);
   });
 
   it('inserts item at the beginning', () => {
 
     // given
-    const source = ['A', 'B', 'C', 'D'];
-    const target = ['X', 'A', 'B', 'C', 'D']
+    const source = [A, B, C, D];
+    const target = [X, A, B, C, D]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertInsertItem(moves[0], 'X', 0);
+    assertInsertItem(moves[0], X, 0);
   });
 
   it('inserts item at the end', () => {
 
     // given
-    const source = ['A', 'B', 'C', 'D'];
-    const target = ['A', 'B', 'C', 'D', 'X']
+    const source = [A, B, C, D];
+    const target = [A, B, C, D, X]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertInsertItem(moves[0], 'X', 4);
+    assertInsertItem(moves[0], X, 4);
   });
 
   it('removes a single item', () => {
 
     // given
-    const source = ['X'];
+    const source = [X];
     const target = []
 
     // when
@@ -92,108 +102,147 @@ describe.only('Reconciler', () => {
 
     // then
     assertSingleMove(moves);
-    assertRemoveItem(moves[0], 'X', 0);
+    assertRemoveItem(moves[0], X, 0);
   });
 
   it('removes item at specified index', () => {
 
     // given
-    const source = ['A', 'B', 'X', 'C', 'D'];
-    const target = ['A', 'B', 'C', 'D']
+    const source = [A, B, X, C, D];
+    const target = [A, B, C, D]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertRemoveItem(moves[0], 'X', 2);
+    assertRemoveItem(moves[0], X, 2);
   });
 
   it('removes item at the beginning', () => {
 
     // given
-    const source = ['X', 'A', 'B', 'C', 'D'];
-    const target = ['A', 'B', 'C', 'D']
+    const source = [X, A, B, C, D];
+    const target = [A, B, C, D]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertRemoveItem(moves[0], 'X', 0);
+    assertRemoveItem(moves[0], X, 0);
   });
 
   it('removes item at the end', () => {
 
     // given
-    const source = ['A', 'B', 'C', 'D', 'X'];
-    const target = ['A', 'B', 'C', 'D']
+    const source = [A, B, C, D, X];
+    const target = [A, B, C, D]
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertRemoveItem(moves[0], 'X', 4);
+    assertRemoveItem(moves[0], X, 4);
   });
 
   it('moves the item forward', () => {
-    
+
     // given
-    const source = ['A', 'X', 'B', 'C', 'D'];
-    const target = ['A', 'B', 'C', 'X', 'D'];
+    const source = [A, X, B, C, D];
+    const target = [A, B, C, X, D];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assertSingleMove(moves);
+    assertMoveItem(moves[0], X, 1, 3);
+  });
+
+  it('moves the item to the end', () => {
+
+    // given
+    const source = [X, A, B, C, D];
+    const target = [A, B, C, D, X];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assertSingleMove(moves);
+    assertMoveItem(moves[0], X, 0, 4);
+  });
+
+  it('moves the item backward', () => {
+
+    // given
+    const source = [A, B, C, X, D];
+    const target = [A, X, B, C, D];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assertSingleMove(moves);
+    assertMoveItem(moves[0], X, 3, 1);
+  });
+
+  it('moves the item to the beginning', () => {
+
+    // given
+    const source = [A, B, C, D, X];
+    const target = [X, A, B, C, D];
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assertSingleMove(moves);
+    assertMoveItem(moves[0], X, 4, 0);
+  });
+
+  it('moves the items around (1)', () => {
+
+    // given
+    const source = [A, B, C, D, E, F];
+    const target = [A, B, F, E, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assert.equal(moves.length, 2);
-    assertMoveItem(moves[0], 'B', 2, 1);
-    assertMoveItem(moves[1], 'C', 3, 2);
+    assert.deepEqual(moves.result, target);
   });
 
-  it('moves the item to the end', () => {
-  
+  it('moves the items around (2)', () => {
+
     // given
-    const source = ['X', 'A', 'B', 'C', 'D'];
-    const target = ['A', 'B', 'C', 'D', 'X'];
+    const source = [A, B, C, D, E, F];
+    const target = [B, C, D, A, G, E];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assert.equal(moves.length, 4);
-    assertMoveItem(moves[0], 'A', 1, 0);
-    assertMoveItem(moves[1], 'B', 2, 1);
-    assertMoveItem(moves[2], 'C', 3, 2);
-    assertMoveItem(moves[3], 'D', 4, 3);
+    assert.deepEqual(moves.result, target);
   });
 
-  it('moves the item backward', () => {
-    
+  it('moves the items around (3)', () => {
+
     // given
-    const source = ['A', 'B', 'C', 'X', 'D'];
-    const target = ['A', 'X', 'B', 'C', 'D'];
+    const source = [A, B, C, D, E, F];
+    const target = [C, D, E, F, B, A];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
-    assertSingleMove(moves);
-    assertMoveItem(moves[0], 'X', 3, 1);
+    assert.equal(moves.length, 2);
+    assert.deepEqual(moves.result, target);
   });
 
-  it('moves the item to the beginning', () => {
-    
-    // given
-    const source = ['A', 'B', 'C', 'D', 'X'];
-    const target = ['X', 'A', 'B', 'C', 'D'];
-
-    // when
-    const moves = Reconciler.calculateMoves(source, target);
-
-    // then
-    assertSingleMove(moves);
-    assertMoveItem(moves[0], 'X', 4, 0);
-  });
 });

@@ -169,18 +169,252 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[0].listener, listener);
     });
 
-    describe('=> child nodes update', () => {
+    describe.only('reconcile children', () => {
 
-      it.skip('inserts element at the beginning');
-      it.skip('inserts element at the end');
-      it.skip('moves an element up');
-      it.skip('moves an element down');
-      it.skip('moves an element to the beginning');
-      it.skip('moves an element to the end');
-      it.skip('swaps two elements');
-      it.skip('swaps three elements');
-      it.skip('removes an element');
-      it.skip('removes and inserts elements');
+      const assertInsertChildNode = (patch, name, at) => {
+        assert.equal(patch.type, Patch.Type.INSERT_CHILD_NODE);
+        assert.equal(patch.node.name, name);
+        assert.equal(patch.at, at);
+      };
+
+      const assertMoveChildNode = (patch, name, from, to) => {
+        assert.equal(patch.type, Patch.Type.MOVE_CHILD_NODE);
+        assert.equal(patch.node.name, name);
+        assert.equal(patch.from, from);
+        assert.equal(patch.to, to);
+      };
+
+      const assertRemoveChildNode = (patch, name, at) => {
+        assert.equal(patch.type, Patch.Type.REMOVE_CHILD_NODE);
+        assert.equal(patch.node.name, name);
+        assert.equal(patch.at, at);
+      };
+
+      describe('=> with keys', () => {
+
+        const getChildren = (...items) => items.map(name => [
+          name, {
+            key: name
+          }
+        ]);
+
+        it('inserts element at the beginning', () => {
+
+          // given
+          const template = [
+            'section', ...getChildren('div', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('X', 'div', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertInsertChildNode(patches[0], 'X', 0);
+        });
+
+        it('inserts element at the end', () => {
+
+          // given
+          const template = [
+            'section', ...getChildren('div', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('div', 'span', 'X')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertInsertChildNode(patches[0], 'X', 2);
+        });
+
+        it('moves an element up', () => {
+
+          // given
+          const template = [
+            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'X', 'p', 'div', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertMoveChildNode(patches[0], 'X', 3, 1);
+        });
+
+        it('moves an element down', () => {
+
+          // given
+          const template = [
+            'section', ...getChildren('section', 'X', 'p', 'div', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertMoveChildNode(patches[0], 'X', 1, 3);
+        });
+
+        it('moves an element to the beginning', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('section', 'p', 'div', 'span', 'X')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('X', 'section', 'p', 'div', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertMoveChildNode(patches[0], 'X', 4, 0);
+        });
+
+        it('moves an element to the end', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('X', 'section', 'p', 'div', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'p', 'div', 'span', 'X')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertMoveChildNode(patches[0], 'X', 0, 4);          
+        });
+
+        it('swaps two elements', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('section', 'X', 'div', 'Y', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'Y', 'div', 'X', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 2);
+          assertMoveChildNode(patches[0], 'Y', 3, 1);          
+          assertMoveChildNode(patches[1], 'div', 3, 2);          
+        });
+
+        it('swaps three elements', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('section', 'Z', 'p', 'X', 'div', 'Y', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'X', 'p', 'Y', 'div', 'Z', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 3);
+          assertMoveChildNode(patches[0], 'Z', 1, 5);          
+          assertMoveChildNode(patches[1], 'div', 3, 4);          
+          assertMoveChildNode(patches[2], 'p', 1, 2);          
+        });
+
+        it('removes an element', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'p', 'div', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 1);
+          assertRemoveChildNode(patches[0], 'X', 3);          
+        });
+
+        it('inserts and removes elements', () => {
+          
+          // given
+          const template = [
+            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
+          ];
+          const nextTemplate = [
+            'section', ...getChildren('section', 'Y', 'p', 'div', 'span')
+          ];
+
+          // when
+          const [tree, nextTree] = createTrees(template, nextTemplate);
+          const patches = Diff.calculate(tree, nextTree);
+
+          // then
+          assert.equal(patches.length, 2);
+          assertRemoveChildNode(patches[0], 'X', 3);          
+          assertInsertChildNode(patches[1], 'Y', 1);          
+        });
+      });
+
+      describe('without keys', () => {
+
+        it.skip('inserts an element');
+        it.skip('moves an element up');
+        it.skip('moves an element down');
+        it.skip('swaps two elements');
+        it.skip('removes an element');
+        it.skip('inserts and removes elements');
+        it.skip('inserts, moves and removes elements');
+      });
+
+      describe.skip('with mixed keys', () => {
+
+        it.skip('inserts an element');
+        it.skip('moves an element up');
+        it.skip('moves an element down');
+        it.skip('swaps two elements');
+        it.skip('removes an element');
+        it.skip('inserts and removes elements');
+        it.skip('inserts, moves and removes elements');
+        it.skip('handles duplicated keys');
+      });
     });
   });
 

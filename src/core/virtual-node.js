@@ -1,10 +1,13 @@
 {
   const VirtualNode = class {
 
-    constructor(name, props) {
+    constructor(name, props = {}) {
       this.name = name;
       this.addAttributes(props);
       this.addListeners(props);
+      if (props.key) {
+        this.key = props.key;
+      }
     }
 
     static create(definition) {

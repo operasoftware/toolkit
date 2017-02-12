@@ -21,7 +21,6 @@
 
     static move(item, from, to) {
       return new Move(Name.MOVE, item, { from, to }, items => {
-        // Reactor.assert(items[from] === item)
         items.splice(from, 1);
         items.splice(to, 0, item);
       });
@@ -37,36 +36,52 @@
   const Reconciler = class {
 
     static calculateMoves(current, next) {
-      const array = [...current];
-      const moves = [];
 
-      const makeMove = move => {
-        moves.push(move);
-        move.make(array);
-      };
+      const makeMoves = (reversed = false) => {
+        const source = [...current];
+        const target  = [...next];
+        const moves = [];
 
-      for (let i = 0; i < array.length; i++) {
-        const item = array[i];
-        if (!next.includes(item)) {
-          makeMove(Move.remove(item, i));
+        const makeMove = move => {
+          move.make(source);
+          moves.push(move);
+        };
+        for (let i = 0; i < source.length; i++) {
+          const item = source[i];
+          if (!target.includes(item)) {
+            makeMove(Move.remove(item, i));
+          }
         }
-      }
-      for (let i = 0; i < next.length; i++) {
-        const item = next[i];
-        if (array[i] !== item) {
-          // different items
-          if (array.includes(item)) {
-            const index = array.indexOf(item);
-            makeMove(Move.move(item, index, i));
-            moves.push();
-          } else {
-            makeMove(Move.insert(item, i));
+        const moveAndInsert = index => {
+          const item = target[index];
+          if (source[index] !== item) {
+            if (source.includes(item)) {
+              const lastIndex = source.indexOf(item);
+              makeMove(Move.move(item, lastIndex, index));
+            } else {
+              makeMove(Move.insert(item, index));
+            }
+          }
+        };
+        if (reversed) {
+          for (let i = target.length - 1; i >= 0; i--) {
+            moveAndInsert(i);
           }
         } else {
-          // no move needed
+          for (let i = 0; i < target.length; i++) {
+            moveAndInsert(i);
+          }
         }
+        moves.result = source;
+        return moves;
+      };
+
+      const moves = makeMoves();
+      if (moves.length <= 1) {
+        return moves;
       }
-      return moves;
+      const alt = makeMoves(true);
+      return moves.length <= alt.length ? moves : alt;
     }
   };
 
