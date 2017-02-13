@@ -150,15 +150,15 @@ describe('Reconciler', () => {
   it('moves the item forward', () => {
 
     // given
-    const source = [A, X, B, C, D];
-    const target = [A, B, C, X, D];
+    const source = [A, X, B, C, D, E, F, G, H];
+    const target = [A, B, C, D, E, F, G, X, H];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertMoveItem(moves[0], X, 1, 3);
+    assertMoveItem(moves[0], X, 1, 7);
   });
 
   it('moves the item to the end', () => {
@@ -178,15 +178,15 @@ describe('Reconciler', () => {
   it('moves the item backward', () => {
 
     // given
-    const source = [A, B, C, X, D];
-    const target = [A, X, B, C, D];
+    const source = [A, B, C, D, E, F, G, X, H];
+    const target = [A, X, B, C, D, E, F, G, H];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
 
     // then
     assertSingleMove(moves);
-    assertMoveItem(moves[0], X, 3, 1);
+    assertMoveItem(moves[0], X, 7, 1);
   });
 
   it('moves the item to the beginning', () => {

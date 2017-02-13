@@ -59,11 +59,25 @@
     }
   };
 
+  const reconcileNode = (current, next, patches) => {
+    if (current === next) {
+      return;
+    }
+    if (current.nodeType !== next.nodeType) {
+      // TODO: replace node
+    } else {
+      // TODO: reconcile compatible types
+    }
+  };
+
   const childrenPatches = (current = [], next = [], parent, patches) => {
 
-    const Patch = Reactor.Patch, MoveName = Reactor.Reconciler.Move.Name;
+    const Patch = Reactor.Patch;
+    const Move = Reactor.Reconciler.Move;
+
     const source = current.map(node => node.key);
     const target = next.map(node => node.key);
+
     const getNode = key => {
       if (source.includes(key)) {
         return current[source.indexOf(key)];
@@ -76,24 +90,28 @@
 
     const moves = Reactor.Reconciler.calculateMoves(source, target);
 
+    const children = [...current];
     for (const move of moves) {
+      const node = getNode(move.item);
       switch (move.name) {
-        case MoveName.INSERT:
-          patches.push(
-            Patch.insertChildNode(getNode(move.item), move.at, parent));
+        case Move.Name.INSERT:
+          patches.push(Patch.insertChildNode(node, move.at, parent));
+          Move.insert(node, move.at).make(children);
           continue;
-        case MoveName.MOVE:
-          patches.push(
-            Patch.moveChildNode(getNode(move.item), move.from, move.to, parent));
+        case Move.Name.MOVE:
+          patches.push(Patch.moveChildNode(node, move.from, move.to, parent));
+          Move.move(node, move.from, move.to).make(children);
           continue;
-        case MoveName.REMOVE:
-          patches.push(
-            Patch.removeChildNode(getNode(move.item), move.at, parent));
+        case Move.Name.REMOVE:
+          patches.push(Patch.removeChildNode(node, move.at, parent));
+          Move.remove(node, move.at).make(children);
           continue;
       }
     }
 
-    // TODO: update and replace children
+    for (const child of children) {
+      reconcileNode(child, next[children.indexOf(child)]);
+    }
   };
 
   const calculatePatches = (current, next, parent = null, patches = []) => {
