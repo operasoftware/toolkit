@@ -11,6 +11,9 @@
     ADD_LISTENER: Symbol('add-listener'),
     REPLACE_LISTENER: Symbol('replace-listener'),
     REMOVE_LISTENER: Symbol('remove-listener'),
+    INSERT_CHILD_NODE: Symbol('insert-child-node'),
+    MOVE_CHILD_NODE: Symbol('move-child-node'),
+    REMOVE_CHILD_NODE: Symbol('remove-child-node'),
   });
 
   const Patch = class {
@@ -115,6 +118,33 @@
         name, listener, target,
         apply: element => {
           element.removeEventListener(name, listener);
+        }
+      });
+    }
+
+    static insertChildNode(node, at, parent) {
+      return new Patch(Type.INSERT_CHILD_NODE, {
+        node, at, parent,
+        apply: element => {
+          // TODO: implement
+        }
+      });
+    }
+
+    static moveChildNode(node, from, to, parent) {
+      return new Patch(Type.MOVE_CHILD_NODE, {
+        node, from, to, parent,
+        apply: element => {
+          // TODO: implement
+        }
+      });
+    }
+
+    static removeChildNode(node, at, parent) {
+      return new Patch(Type.REMOVE_CHILD_NODE, {
+        node, at, parent,
+        apply: element => {
+          // TODO: implement
         }
       });
     }

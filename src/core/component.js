@@ -19,6 +19,10 @@
       return false;
     }
 
+    get nodeType() {
+      return 'component';
+    }
+
   };
 
   module.exports = Component;
