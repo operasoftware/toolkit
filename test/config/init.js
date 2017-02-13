@@ -12,6 +12,7 @@ global.createCore = () => ({
   ComponentTree: require('../../src/core/component-tree.js'),
   Diff: require('../../src/core/diff.js'),
   Patch: require('../../src/core/patch.js'),
+  Reconciler: require('../../src/core/reconciler.js'),
   SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
   SUPPORTED_EVENTS: consts.SUPPORTED_EVENTS,
   create: utils.create

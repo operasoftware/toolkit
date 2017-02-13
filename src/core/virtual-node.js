@@ -1,10 +1,13 @@
 {
   const VirtualNode = class {
 
-    constructor(name, props) {
+    constructor(name, props = {}) {
       this.name = name;
       this.addAttributes(props);
       this.addListeners(props);
+      if (props.key) {
+        this.key = props.key;
+      }
     }
 
     static create(definition) {
@@ -68,7 +71,10 @@
         .filter(key => Reactor.SUPPORTED_EVENTS.includes(key))
         .reduce((result, key) => {
           const event = key.toLowerCase().slice(2);
-          result[event] = props[key];
+          const listener = props[key];
+          if (typeof listener === 'function') {
+            result[event] = listener;
+          }
           return result;
         }, {});
       if (Object.keys(eventListeners).length > 0) {
@@ -86,6 +92,10 @@
 
     isCustomElement() {
       return false;
+    }
+
+    get nodeType() {
+      return 'element';
     }
 
   };
