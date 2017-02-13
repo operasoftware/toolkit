@@ -61,12 +61,8 @@
         const moveAndInsert = index => {
           const item = target[index];
           if (source[index] !== item) {
-            if (source.includes(item)) {
-              const from = source.indexOf(item);
-              makeMove(Move.move(item, from, index));
-            } else {
-              throw 'Illegal state';
-            }
+            const from = source.indexOf(item);
+            makeMove(Move.move(item, from, index));
           }
         };
 
@@ -84,14 +80,9 @@
       };
 
       const moves = makeMoves();
-      if (moves.length <= 1) {
-        return moves;
-      }
-      const reversedMoves = makeMoves(true);
-      if (reversedMoves === null || reversedMoves.length > moves.length) {
-        return moves;
-      } else {
-        return reversedMoves;
+      if (moves.filter(move => (move.name === Name.MOVE)).length > 1) {
+        const alternativeMoves = makeMoves(true);
+        return alternativeMoves.length < moves.length ? alternativeMoves : moves;
       }
       return moves;
     }
