@@ -15,10 +15,6 @@
     }
   };
 
-  const compareProps = (current, next, target = null, patches) => {
-
-  };
-
   const listenerPatches = (current = {}, next = {}, target = null, patches) => {
     const Patch = Reactor.Patch;
 
@@ -63,17 +59,93 @@
     }
   };
 
-  const calculatePatches = (current, next, parent = null, patches = []) => {
+  const areCompatible = (current, next) => {
+    if (current.nodeType !== next.nodeType) {
+      return false;
+    }
+    if (current.isComponent()) {
+      return current.constructor === next.constructor;
+    }
+    if (current.isElement()) {
+      return current.name === next.name;
+    }
+  };
+
+  const reconcileNode = (current, next, parent, index, patches) => {
 
     const Patch = Reactor.Patch;
 
-    const patch = (type, component) => {
-      patches.push({
-        type,
-        parent,
-        target: component
-      });
+    if (current === next) {
+      // already inserted
+      return;
+    }
+    if (areCompatible(current, next)) {
+      if (current.isElement()) {
+        attributePatches(current.attrs, next.attrs, current, patches);
+        listenerPatches(current.listeners, next.listeners, current, patches);
+        childrenPatches(current.children, next.children, current, patches);
+      } else if (current.isComponent()) {
+        if (!Diff.deepEqual(current.props, next.props)) {
+          patches.push(Patch.updateComponent(current, next.props));
+          calculatePatches(current.child, next.child, current, patches);
+        } else {
+          // no patch needed
+        }
+      }
+    } else {
+      patches.push(Patch.removeChildNode(current, index, parent));
+      patches.push(Patch.insertChildNode(next, index, parent));
+    }
+  };
+
+  const childrenPatches = (current = [], next = [], parent, patches) => {
+
+    const Patch = Reactor.Patch;
+    const Move = Reactor.Reconciler.Move;
+
+    const source = current.map((node, index) => node.key || index);
+    const target = next.map((node, index) => node.key || index);
+
+    const getNode = key => {
+      if (source.includes(key)) {
+        return current[source.indexOf(key)];
+      }
+      if (target.includes(key)) {
+        return next[target.indexOf(key)];
+      }
+      throw `Node not found for key: ${key}`;
     };
+
+    const moves = Reactor.Reconciler.calculateMoves(source, target);
+
+    const children = [...current];
+    for (const move of moves) {
+      const node = getNode(move.item);
+      switch (move.name) {
+        case Move.Name.INSERT:
+          patches.push(Patch.insertChildNode(node, move.at, parent));
+          Move.insert(node, move.at).make(children);
+          continue;
+        case Move.Name.MOVE:
+          patches.push(Patch.moveChildNode(node, move.from, move.to, parent));
+          Move.move(node, move.from, move.to).make(children);
+          continue;
+        case Move.Name.REMOVE:
+          patches.push(Patch.removeChildNode(node, move.at, parent));
+          Move.remove(node, move.at).make(children);
+          continue;
+      }
+    }
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      reconcileNode(child, next[i], parent, i, patches);
+    }
+  };
+
+  const calculatePatches = (current, next, parent = null, patches = []) => {
+
+    const Patch = Reactor.Patch;
 
     if (!current && !next) {
       return patches;
@@ -105,9 +177,7 @@
             patches.push(Patch.updateComponent(current, next.props));
             calculatePatches(current.child, next.child, current, patches);
           } else {
-            // no component props change
-            console.log('no patch needed');
-            console.trace();
+            // no component props change - no patch needed
           }
         } else {
           // different components
@@ -131,6 +201,7 @@
           // compatible elements
           attributePatches(current.attrs, next.attrs, current, patches);
           listenerPatches(current.listeners, next.listeners, current, patches);
+          childrenPatches(current.children, next.children, current, patches);
         } else {
           // different elements
           patches.push(Patch.removeElement(current, parent));

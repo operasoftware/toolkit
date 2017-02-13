@@ -6,12 +6,12 @@ describe('Virtual Node => create', () => {
   it('creates an empty element', () => {
 
     // given
-    const definition = {
+    const description = {
       name: 'span'
     };
 
     // when
-    const node = VirtualNode.create(definition);
+    const node = VirtualNode.create(description);
 
     // then
     assert(node instanceof VirtualNode);
@@ -26,7 +26,7 @@ describe('Virtual Node => create', () => {
 
     // given
     const onChangeListener = () => {};
-    const definition = {
+    const description = {
       name:'input',
       props: {
         type: 'text',
@@ -37,7 +37,7 @@ describe('Virtual Node => create', () => {
     };
 
     // when
-    const node = VirtualNode.create(definition);
+    const node = VirtualNode.create(description);
 
     // then
     assert(node instanceof VirtualNode);
@@ -57,13 +57,13 @@ describe('Virtual Node => create', () => {
   it('creates a text element', () => {
 
     // given
-    const definition = {
+    const description = {
       name: 'div',
       text: 'Text'
     };
 
     // when
-    const node = VirtualNode.create(definition);
+    const node = VirtualNode.create(description);
 
     // then
     assert(node instanceof VirtualNode);
@@ -78,7 +78,7 @@ describe('Virtual Node => create', () => {
 
     // given
     const onClickListener = () => {};
-    const definition = {
+    const description = {
       name: 'a',
       props: {
         href: 'http://www.opera.com/',
@@ -90,7 +90,7 @@ describe('Virtual Node => create', () => {
     };
 
     // when
-    const node = VirtualNode.create(definition);
+    const node = VirtualNode.create(description);
 
     // then
     assert(node instanceof VirtualNode);
@@ -107,8 +107,60 @@ describe('Virtual Node => create', () => {
     assert.equal(node.children, undefined);
   });
 
-  it.skip('ignores null and undefined attribute values');
+  it('ignores null and undefined attribute values', () => {
 
-  it.skip('ignores listeners not being functions');
+    // given
+    const description = {
+      name: 'a',
+      props: {
+        href: null,
+        target: undefined,
+        title: 'Test'
+      },
+      text: 'Text'
+    };
 
+    // when
+    const node = VirtualNode.create(description);
+
+    // then
+    assert(node instanceof VirtualNode);
+    assert.equal(node.name, 'a');
+    assert.deepEqual(node.attrs, {
+      'title': 'Test'
+    });
+    assert.equal(node.text, 'Text');
+    assert.equal(node.children, undefined);
+  });
+
+  it('ignores listeners not being functions', () => {
+
+    // given
+    const onClickListener = () => {};
+    const description = {
+      name: 'a',
+      props: {
+        onClick: onClickListener,
+        onChange: 1,
+        onSubmit: false,
+        onCopy: 'copy',
+        onPaste: null,
+        onCut: undefined
+      },
+      text: 'Link'
+    };
+
+    // when
+    const node = VirtualNode.create(description);
+
+    // then
+    assert(node instanceof VirtualNode);
+    assert.equal(node.name, 'a');
+    assert.deepEqual(node.attrs, undefined);
+    assert.deepEqual(node.listeners, {
+      'click': onClickListener
+    });
+    assert.equal(node.text, 'Link');
+    assert.equal(node.children, undefined);
+  });
 });
