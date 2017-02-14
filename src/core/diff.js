@@ -255,8 +255,8 @@
       }
     }
 
-    static calculate(tree, nextTree) {
-      return calculatePatches(tree, nextTree);
+    static calculate(tree, nextTree, root) {
+      return calculatePatches(tree, nextTree, root);
     }
   };
 

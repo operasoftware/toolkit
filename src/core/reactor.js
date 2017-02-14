@@ -14,6 +14,10 @@
       const VirtualNode = await require('core/virtual-node');
       const VirtualDOM = await require('core/virtual-dom');
       const ComponentTree = await require('core/component-tree');
+      const Diff = await require('core/diff');
+      const Patch = await require('core/patch');
+      const Reconciler = await require('core/reconciler');
+      const Document = await require('core/document');
       const { combineReducers, create } = await require('core/utils');
 
       return {
@@ -22,7 +26,8 @@
         // core classes
         Component, Renderer, Store,
         // structure
-        App, VirtualNode, VirtualDOM, ComponentTree,
+        App, VirtualNode, VirtualDOM,
+        ComponentTree, Diff, Patch, Reconciler, Document,
         // utils
         combineReducers, create
       };
