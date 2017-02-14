@@ -25,6 +25,17 @@
       return node;
     }
 
+    static createTree(root, props) {
+      console.time('component tree');
+      root.props = props;
+      const template = root.render();
+      try {
+        return this.createFromTemplate(template);
+      } finally {
+        console.timeEnd('component tree');
+      }
+    }
+
     static create(def, props = {}, children = []) {
 
       try {

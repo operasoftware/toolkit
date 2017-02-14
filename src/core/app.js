@@ -21,13 +21,14 @@
         await RootClass.init();
       }
       this.root = new RootClass();
+      this.root.ref = container;
+      this.root.child = null;
 
       this.reducer = Reactor.combineReducers(...this.root.getReducers());
 
       // connect
       this.root.dispatch = command => {
-        const nextState = this.reducer(this.store.state, command);
-        this.store.state = nextState;
+        this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
       };
 
@@ -44,10 +45,21 @@
     }
 
     async updateDOM() {
+
       console.time('render');
-      this.root.props = this.store.state;
-      const virtualDOM = await this.createVirtualDOM();
-      this.renderer.render(this.container, virtualDOM);
+
+      const componentTree = Reactor.ComponentTree.createTree(
+          this.root, this.store.state);
+      const patches = Reactor.Diff.calculate(
+          this.root.child, componentTree, this.root);
+
+      for (const patch of patches) {
+        patch.apply();
+      }
+
+      console.log('Patches:', patches.length);
+      // const virtualDOM = await this.createVirtualDOM();
+      // this.renderer.render(this.container, virtualDOM);
       console.timeEnd('render');
     }
   };

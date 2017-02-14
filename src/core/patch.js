@@ -27,15 +27,18 @@
     static updateComponent(target, props) {
       return new Patch(Type.UPDATE_COMPONENT, {
         target, props,
-        apply: () => {} 
+        apply: () => {
+          target.props = props;
+        } 
       });
     }
 
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element, parent,
-        apply: ({element, parent}) => {
-          parent.appendChild(element);
+        apply: () => {
+          parent.child = element;
+          parent.ref.appendChild(Reactor.Document.createTree(element));
         } 
       });
     }
@@ -43,8 +46,9 @@
     static removeElement(element, parent) {
       return new Patch(Type.REMOVE_ELEMENT, {
         element, parent,
-        apply: ({element, parent}) => {
-          element.remove();
+        apply: () => {
+          parent.child = null;
+          // element.remove();
         } 
       });
     }
@@ -52,8 +56,9 @@
     static addComponent(component, parent) {
       return new Patch(Type.ADD_COMPONENT, {
         component, parent,
-        apply: ({component}) => {
-          component.mount();
+        apply: () => {
+          parent.child = component;
+          // component.mount();
         } 
       });
     }
@@ -61,8 +66,9 @@
     static removeComponent(component, parent) {
       return new Patch(Type.REMOVE_COMPONENT, {
         component, parent,
-        apply: ({component}) => {
-          component.destroy();
+        apply: () => {
+          parent.child = null;
+          // component.destroy();
         } 
       });
     }
@@ -71,7 +77,8 @@
       return new Patch(Type.ADD_ATTRIBUTE, {
         name, value, target,
         apply: element => {
-          element.setAttribute(name, value);
+          console.log('add attribute');
+          // element.setAttribute(name, value);
         }
       });
     }
@@ -79,8 +86,10 @@
     static replaceAttribute(name, value, target) {
       return new Patch(Type.REPLACE_ATTRIBUTE, {
         name, value, target,
-        apply: element => {
-          element.setAttribute(name, value);
+        apply: () => {
+          target.attrs = target.attrs || [];
+          target.attrs[name] = value;
+          Reactor.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -89,7 +98,8 @@
       return new Patch(Type.REMOVE_ATTRIBUTE, {
         name, target,
         apply: element => {
-          element.removeAttribute(name, value);
+          console.log('remove attribute');
+          // element.removeAttribute(name, value);
         }
       });
     }
@@ -98,7 +108,7 @@
       return new Patch(Type.ADD_LISTENER, {
         name, listener, target,
         apply: element => {
-          element.addEventListener(name, listener);
+          // element.addEventListener(name, listener);
         }
       });
     }
@@ -107,8 +117,8 @@
       return new Patch(Type.REPLACE_LISTENER, {
         name, removed, added, target,
         apply: element => {
-          element.removeEventListener(name, removed);
-          element.addEventListener(name, added);
+          // element.removeEventListener(name, removed);
+          // element.addEventListener(name, added);
         }
       });
     }
@@ -117,7 +127,7 @@
       return new Patch(Type.REMOVE_LISTENER, {
         name, listener, target,
         apply: element => {
-          element.removeEventListener(name, listener);
+          // element.removeEventListener(name, listener);
         }
       });
     }
