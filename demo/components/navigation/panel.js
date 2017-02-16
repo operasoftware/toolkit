@@ -3,11 +3,12 @@
 
     render() {
       return [
-        'div', [
+        'div', {
+          onClick: this.props.onClick
+        }, [
           'span', 'Navigation Panel'
         ], ...this.props.items.map((item, index) => [
           NavigationItem, {
-           onClick: () => this.props.onItemClicked(index),
            text: item.label,
            highlighted: item.highlighted
           }

@@ -20,12 +20,18 @@
     }
 
     render() {
-      const onItemClicked = index => {
-        this.dispatch(reducer.commands.highlightItem(index));
+      const onItemClicked = event => {
+        const index = Array.from(event.target.parentNode.children)
+                          .filter(element => element.tagName === 'A')
+                          .indexOf(event.target);
+        if (~index) {
+          this.dispatch(reducer.commands.highlightItem(index));
+        }
       };
       return [
         'div', [
           NavigationPanel, {
+            onClick: onItemClicked,
             items: this.props.items,
             onItemClicked
           }

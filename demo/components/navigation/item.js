@@ -4,10 +4,10 @@
     render() {
       return [
         'a', {
-          onClick: this.props.onClick,
+          // onClick: this.props.onClick,
           style: {
             backgroundColor: this.props.highlighted ? 'red' : null
-          }
+          },
         },
         this.props.text
       ];
