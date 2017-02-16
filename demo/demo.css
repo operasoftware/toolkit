@@ -1,24 +1,76 @@
+:root, :host {
+  background-color: black;
+  --margin-size: 40px;
+}
+
 body {
+  background: url('./background.jpg');
+  background-size: cover;
+  background-attachment: fixed;
   border: 1px solid black;
   border-radius: 6px;
   font: menu;
   font-size: 12pt;
-  padding: 20px;
-  margin: 20px;
+  margin: 0;
+  padding: 0;
 }
 
-span {
+article {
+  display: flex;
+}
+
+section {
+  display: inline-block;
+  background-color: white;
+  border-radius: 10px;
+  margin: 40px;
+  padding: 15px;
+  flex: 1 1 50%;
+  height: calc(50vw - 60px);
+  width: calc(50vw - 60px);
+  overflow-y: scroll;
+}
+
+section:nth-child(even) {
+  margin-left: 0;
+}
+
+/* navigation */
+
+#navigation span {
   display: block;
   font-weight: 500;
   margin-bottom: 10px;
 }
 
-a {
+#navigation a {
   display: block;
   cursor: pointer;
   margin-top: 5px;
 }
 
-a:before {
+#navigation a:before {
   content: '- ';
+}
+
+/* bubbles */
+
+#bubbles {
+  background-color: black;
+}
+
+bubbles {
+  display: block;
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+bubble {
+  transition: all 0.5s ease-in-out;
+  border-radius: 50%;
+  display: block;
+  position: absolute;
+  background-image: url('/demo/bubbles/bubble.jpg');
+  background-size: cover;
 }
