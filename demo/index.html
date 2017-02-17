@@ -6,10 +6,18 @@
   <script src="/src/module-loader.js"></script>
   <script src="/src/reactor.debug.js"></script>
   <script src="/demo/demo.js"></script>
+  <script src="/demo/bubbles.js"></script>
 </head>
 <body>
+  <article>
+  <section id="navigation"></section>
+  <section id="bubbles"></section>
+  </article>
   <script>
-    Reactor.ready().then(renderDemo);
+    Reactor.ready().then(async () => {
+      await renderDemo($('navigation'));
+      await renderBubbles($('bubbles'));
+    });
   </script>
 </body>
 </html>

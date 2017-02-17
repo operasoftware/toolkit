@@ -384,8 +384,8 @@ describe('Diff => calculate patches', () => {
 
           // then
           assert.equal(patches.length, 2);
-          assertMoveChildNode(patches[0], 'X', 1, 3);
-          assertMoveChildNode(patches[1], 'div', 1, 2);
+          assertMoveChildNode(patches[0], 'Y', 3, 1);
+          assertMoveChildNode(patches[1], 'div', 3, 2);
         });
 
         it('swaps three elements', () => {

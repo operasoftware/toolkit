@@ -4,6 +4,9 @@ const MoveName = Reconciler.Move.Name;
 
 describe('Reconciler', () => {
 
+  const A = 'A', B = 'B', C = 'C', D = 'D', E = 'E', F = 'F', G = 'G', H = 'H';
+  const X = 'X', Y = 'Y', Z = 'Z';
+
   const assertSingleMove = moves => {
     assert(Array.isArray(moves));
     assert.equal(moves.length, 1);
@@ -25,16 +28,6 @@ describe('Reconciler', () => {
     assert.equal(move.at, at);
   };
 
-  const A = 'A',
-    B = 'B',
-    C = 'C',
-    D = 'D',
-    E = 'E',
-    F = 'F',
-    G = 'G',
-    H = 'H';
-  const X = 'X', Y = 'Y', Z = 'Z';
-
   it('inserts item into an empty array', () => {
 
     // given
@@ -47,6 +40,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertInsertItem(moves[0], X, 0);
+    assert.deepEqual(moves.result, target);
   });
 
   it('inserts item at specified index', () => {
@@ -61,6 +55,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertInsertItem(moves[0], X, 2);
+    assert.deepEqual(moves.result, target);
   });
 
   it('inserts item at the beginning', () => {
@@ -75,6 +70,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertInsertItem(moves[0], X, 0);
+    assert.deepEqual(moves.result, target);
   });
 
   it('inserts item at the end', () => {
@@ -89,6 +85,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertInsertItem(moves[0], X, 4);
+    assert.deepEqual(moves.result, target);
   });
 
   it('removes a single item', () => {
@@ -103,6 +100,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertRemoveItem(moves[0], X, 0);
+    assert.deepEqual(moves.result, target);
   });
 
   it('removes item at specified index', () => {
@@ -117,6 +115,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertRemoveItem(moves[0], X, 2);
+    assert.deepEqual(moves.result, target);
   });
 
   it('removes item at the beginning', () => {
@@ -131,6 +130,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertRemoveItem(moves[0], X, 0);
+    assert.deepEqual(moves.result, target);
   });
 
   it('removes item at the end', () => {
@@ -145,6 +145,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertRemoveItem(moves[0], X, 4);
+    assert.deepEqual(moves.result, target);
   });
 
   it('moves the item forward', () => {
@@ -159,6 +160,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertMoveItem(moves[0], X, 1, 7);
+    assert.deepEqual(moves.result, target);
   });
 
   it('moves the item to the end', () => {
@@ -173,6 +175,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertMoveItem(moves[0], X, 0, 4);
+    assert.deepEqual(moves.result, target);
   });
 
   it('moves the item backward', () => {
@@ -187,6 +190,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertMoveItem(moves[0], X, 7, 1);
+    assert.deepEqual(moves.result, target);
   });
 
   it('moves the item to the beginning', () => {
@@ -201,6 +205,7 @@ describe('Reconciler', () => {
     // then
     assertSingleMove(moves);
     assertMoveItem(moves[0], X, 4, 0);
+    assert.deepEqual(moves.result, target);
   });
 
   it('moves the items around (1)', () => {
@@ -267,6 +272,7 @@ describe('Reconciler', () => {
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
+
     // then
     assert.equal(moves.length, 4);
     assert.deepEqual(moves.result, target);
@@ -280,6 +286,7 @@ describe('Reconciler', () => {
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
+
     // then
     assert.equal(moves.length, 9);
     assert.deepEqual(moves.result, target);
