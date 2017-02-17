@@ -1,4 +1,4 @@
-window.renderDemo = async () => {
+window.renderDemo = async (container) => {
 
   const DemoApp = require.def('demo/components/demo-app');
 
@@ -9,5 +9,5 @@ window.renderDemo = async () => {
   await demo.preload();
 
   // render in body element
-  await demo.render(document.body);
+  await demo.render(container);
 };
