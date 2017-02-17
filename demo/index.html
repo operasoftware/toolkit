@@ -9,7 +9,9 @@
 </head>
 <body>
   <script>
-    Reactor.ready().then(renderDemo);
+    Reactor.ready().then(() => {
+      renderDemo();
+    });
   </script>
 </body>
 </html>
