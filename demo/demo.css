@@ -4,35 +4,52 @@
 }
 
 body {
-  background: url('./background.jpg');
-  background-size: cover;
-  background-attachment: fixed;
   border: 1px solid black;
   font: menu;
   font-size: 12pt;
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-article {
+.background {
+  background: url('./background.jpg');
+  background-size: cover;
+  background-attachment: fixed;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1
+}
+
+apps {
   display: flex;
+  height: 100%;
+  align-items: center;
+  z-index: 2;
 }
 
-section {
+app {
+  --margin: 50px;
+  --padding: 15px;
   display: inline-block;
   background-color: white;
   border-radius: 20px;
-  margin: 40px;
-  padding: 15px;
+  padding: var(--padding);
   flex: 1 1 50%;
-  height: calc(50vw - 60px);
-  width: calc(50vw - 60px);
+  height: calc(50vw - 2 * var(--padding) - 1.5 * var(--margin));
+  width: calc(50vw);
   overflow-y: scroll;
+  margin: var(--margin);
 }
 
-section:nth-child(even) {
+app:nth-child(even) {
   margin-left: 0;
 }
+
 
 /* navigation */
 

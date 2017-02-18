@@ -6,6 +6,7 @@
         'bubble', {
           id: this.props.id,
           style: {
+            transform: `rotate(#{Math.random() * 360}deg)`,
             width: `${this.props.radius * 200}%`,
             height: `${this.props.radius * 200}%`,
             left: `${this.props.x * 100}%`,

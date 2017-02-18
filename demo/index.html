@@ -9,10 +9,12 @@
   <script src="/demo/bubbles.js"></script>
 </head>
 <body>
-  <article>
-  <section id="navigation"></section>
-  <section id="bubbles"></section>
-  </article>
+  <div class="background">
+  <apps>
+    <app id="navigation"></app>
+    <app id="bubbles"></app>
+  </apps>
+  </div>
   <script>
     Reactor.ready().then(async () => {
       await renderDemo($('navigation'));

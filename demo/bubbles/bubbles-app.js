@@ -12,7 +12,7 @@
     }
 
     getInitialState() {
-      const count = 32;
+      const count = 16;
       return {
         bubbles: service.getState(count),
         config: {

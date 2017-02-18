@@ -8,7 +8,7 @@
         return Object.assign({}, state, {
           bubbles: state.bubbles.map((bubble, index) => {
             return Object.assign({}, bubble, command.state[index], {
-              radius: bubble.radius
+              // radius: bubble.radius
             });
           })
         });
