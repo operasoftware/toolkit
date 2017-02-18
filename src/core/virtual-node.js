@@ -29,24 +29,89 @@
       if (value === undefined || value === null) {
         return null;
       }
-      if (key === 'style') {
-        if (typeof value === 'object') {
-          const keys = Object.keys(value)
-            .filter(key => Reactor.SUPPORTED_STYLES.includes(key));
-          if (keys.length === 0) {
-            return null;
-          }
-          const style = {};
-          for (let key of keys) {
-            const val = value[key];
-            if (val !== undefined && val !== null) {
-              style[key] = val;
+      const getStyleValue = value => {
+        if (value.constructor === Array) {
+          return value.join('');
+        }
+        return value + '';
+      };
+      switch (key) {
+        case 'style':
+          {
+            if (typeof value === 'object') {
+              const keys = Object.keys(value)
+                .filter(key => Reactor.SUPPORTED_STYLES.includes(key));
+              if (Reactor.debug) {
+                const unsupportedKeys = Object.keys(value)
+                  .filter(key => !Reactor.SUPPORTED_STYLES.includes(key));
+                unsupportedKeys.forEach(key => {
+                  console.warn(`Unsupported style property "${key}", on:`, this);
+                });
+              }
+              if (keys.length === 0) {
+                return null;
+              }
+              const style = {};
+              for (let key of keys) {
+                const val = value[key];
+                if (val !== undefined && val !== null) {
+                  style[key] = this.normalizeValue(key, val);
+                }
+              }
+              return style;
             }
           }
-          return style;
-        }
+        case 'filter':
+          {
+            const filters = Object.keys(value)
+              .filter(key => Reactor.SUPPORTED_FILTERS.includes(key));
+            if (Reactor.debug) {
+              const unsupportedFilters = Object.keys(value)
+                .filter(key => !Reactor.SUPPORTED_FILTERS.includes(key));
+              unsupportedFilters.forEach(key => {
+                console.warn(`Unsupported filter "${key}", on:`, this);
+              });
+              if (filters.length === 0) {
+                return null;
+              }
+              const result = {};
+              for (let filter of filters) {
+                const val = value[filter];
+                if (val !== undefined && val !== null) {
+                  result[filter] = getStyleValue(val);
+                }
+              }
+              return Object.entries(result)
+                .map(([name, value]) => `${name}(${value})`).join(' ');
+            }
+          }
+        case 'transform':
+          {
+            const transforms = Object.keys(value)
+              .filter(key => Reactor.SUPPORTED_TRANSFORMS.includes(key));
+            if (Reactor.debug) {
+              const unsupportedTransforms = Object.keys(value)
+                .filter(key => !Reactor.SUPPORTED_TRANSFORMS.includes(key));
+              unsupportedTransforms.forEach(key => {
+                console.warn(`Unsupported transform "${key}", on:`, this);
+              });
+              if (transforms.length === 0) {
+                return null;
+              }
+              const result = {};
+              for (let transform of transforms) {
+                const val = value[transform];
+                if (val !== undefined && val !== null) {
+                  result[transform] = getStyleValue(val);
+                }
+              }
+              return Object.entries(result)
+                .map(([name, value]) => `${name}(${value})`).join(' ');
+            }
+          }
+        default:
+          return getStyleValue(value);
       }
-      return value + '';
     }
 
     addAttributes(props = {}) {
@@ -81,7 +146,7 @@
         this.listeners = eventListeners;
       }
     }
-    
+
     isComponent() {
       return false;
     }
@@ -100,8 +165,5 @@
 
   };
 
-
-
   module.exports = VirtualNode;
 }
-

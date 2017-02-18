@@ -26,5 +26,6 @@
   };
 
   window.$ = id => document.getElementById(id);
+  Reactor.debug = true;
 
 })();
