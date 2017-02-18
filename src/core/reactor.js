@@ -5,7 +5,9 @@
       const {
         SUPPORTED_ATTRIBUTES,
         SUPPORTED_EVENTS,
-        SUPPORTED_STYLES
+        SUPPORTED_STYLES,
+        SUPPORTED_FILTERS,
+        SUPPORTED_TRANSFORMS
       } = await require('core/consts');
       const App = await require('core/app');
       const Component = await require('core/component');
@@ -22,7 +24,8 @@
 
       return {
         // constants
-        SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS, SUPPORTED_STYLES,
+        SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
+        SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
         // core classes
         Component, Renderer, Store,
         // structure
