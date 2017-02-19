@@ -57,7 +57,7 @@
         patch.apply();
       }
 
-      console.log('Patches:', patches.length);
+      console.log('Patches:', patches.length, patches);
       // const virtualDOM = await this.createVirtualDOM();
       // this.renderer.render(this.container, virtualDOM);
       console.timeEnd('render');

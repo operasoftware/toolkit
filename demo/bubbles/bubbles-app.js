@@ -12,7 +12,7 @@
     }
 
     getInitialState() {
-      const count = 16;
+      const count = 1;
       return {
         bubbles: service.createBubbles(count),
         config: {
@@ -25,18 +25,30 @@
       return [reducer];
     }
 
+    onBubbleClicked(bubble) {
+      this.dispatch(reducer.commands.highlight(bubble.id));
+    }
+
     render() {
       return [
         'bubbles', {
-          onClick: () => {
+          onClick: event => {
+            // TODO: use a single dispatch
             this.dispatch(
               reducer.commands.move(service.moveBubbles(this.props.bubbles)))
+            const id = Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1;
+            const x = event.offsetX / event.target.offsetWidth;
+            const y = event.offsetY / event.target.offsetHeight;
+            this.dispatch(
+              reducer.commands.create(service.createBubble(id, x, y)));
           }
         },
         ...this.props.bubbles.map(bubble => [
           Bubble, Object.assign({}, bubble, {
-            onClick: () => this.dispatch(
-              reducer.commands.highlight(bubble.id))
+            onClick: event => {
+              this.onBubbleClicked(bubble);
+              // event.stopPropagation();
+            }
           })
         ])
       ];

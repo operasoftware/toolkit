@@ -74,6 +74,9 @@
     };
 
     static createTree(node) {
+      while (node.isComponent()) {
+        node = node.child;
+      }
       const element = this.createElement(node);
       if (node.children) {
         for (let child of node.children) {
