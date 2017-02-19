@@ -17,7 +17,7 @@
               rotate: [0, 'deg']
             },
           },
-          onClick: () => this.props.onClick(this.props.id)
+          onClick: this.props.onClick
         }
       ];
     }

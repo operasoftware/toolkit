@@ -26,58 +26,71 @@
 
     static updateComponent(target, props) {
       return new Patch(Type.UPDATE_COMPONENT, {
-        target, props,
+        target,
+        props,
         apply: () => {
           target.props = props;
-        } 
+        }
       });
     }
 
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
-        element, parent,
+        element,
+        parent,
         apply: () => {
           parent.child = element;
-          parent.ref.appendChild(Reactor.Document.createTree(element));
-        } 
+          parent.ref.appendChild(
+            Reactor.Document.createTree(element)
+          );
+        }
       });
     }
 
     static removeElement(element, parent) {
       return new Patch(Type.REMOVE_ELEMENT, {
-        element, parent,
+        element,
+        parent,
         apply: () => {
           parent.child = null;
-          // element.remove();
-        } 
+          throw 'Function "removeElement" not implemented!';
+          // parent.child.ref.remove();
+        }
       });
     }
 
     static addComponent(component, parent) {
       return new Patch(Type.ADD_COMPONENT, {
-        component, parent,
+        component,
+        parent,
         apply: () => {
           parent.child = component;
+          throw 'Function "addComponent" not implemented!';
           // component.mount();
-        } 
+        }
       });
     }
 
     static removeComponent(component, parent) {
       return new Patch(Type.REMOVE_COMPONENT, {
-        component, parent,
+        component,
+        parent,
         apply: () => {
           parent.child = null;
+          throw 'Function "removeComponent" not implemented!';
           // component.destroy();
-        } 
+        }
       });
     }
 
     static addAttribute(name, value, target) {
       return new Patch(Type.ADD_ATTRIBUTE, {
-        name, value, target,
+        name,
+        value,
+        target,
         apply: element => {
           console.log('add attribute');
+          throw 'Function "addAttribute" not implemented!';
           // element.setAttribute(name, value);
         }
       });
@@ -85,7 +98,9 @@
 
     static replaceAttribute(name, value, target) {
       return new Patch(Type.REPLACE_ATTRIBUTE, {
-        name, value, target,
+        name,
+        value,
+        target,
         apply: () => {
           target.attrs = target.attrs || [];
           target.attrs[name] = value;
@@ -96,9 +111,11 @@
 
     static removeAttribute(name, target) {
       return new Patch(Type.REMOVE_ATTRIBUTE, {
-        name, target,
+        name,
+        target,
         apply: element => {
           console.log('remove attribute');
+          throw 'Function "removeAttribute" not implemented!';
           // element.removeAttribute(name, value);
         }
       });
@@ -106,8 +123,11 @@
 
     static addListener(name, listener, target) {
       return new Patch(Type.ADD_LISTENER, {
-        name, listener, target,
+        name,
+        listener,
+        target,
         apply: element => {
+          throw 'Function "addListener" not implemented!';
           // element.addEventListener(name, listener);
         }
       });
@@ -115,18 +135,25 @@
 
     static replaceListener(name, removed, added, target) {
       return new Patch(Type.REPLACE_LISTENER, {
-        name, removed, added, target,
-        apply: element => {
-          // element.removeEventListener(name, removed);
-          // element.addEventListener(name, added);
+        name,
+        removed,
+        added,
+        target,
+        apply: () => {
+          target.listeners[name] = added;
+          target.ref.removeEventListener(name, removed);
+          target.ref.addEventListener(name, added);
         }
       });
     }
 
     static removeListener(name, listener, target) {
       return new Patch(Type.REMOVE_LISTENER, {
-        name, listener, target,
+        name,
+        listener,
+        target,
         apply: element => {
+          throw 'Function "removeListener" not implemented!';
           // element.removeEventListener(name, listener);
         }
       });
@@ -134,17 +161,26 @@
 
     static insertChildNode(node, at, parent) {
       return new Patch(Type.INSERT_CHILD_NODE, {
-        node, at, parent,
-        apply: element => {
-          // TODO: implement
+        node,
+        at,
+        parent,
+        apply: () => {
+          parent.children = parent.children || [];
+          parent.children[at] = node;
+          const element = Reactor.Document.createTree(node);
+          parent.ref.insertBefore(element, parent.ref.childNodes[at]);
         }
       });
     }
 
     static moveChildNode(node, from, to, parent) {
       return new Patch(Type.MOVE_CHILD_NODE, {
-        node, from, to, parent,
+        node,
+        from,
+        to,
+        parent,
         apply: element => {
+          throw 'Function "moveChildNode" not implemented!';
           // TODO: implement
         }
       });
@@ -152,8 +188,11 @@
 
     static removeChildNode(node, at, parent) {
       return new Patch(Type.REMOVE_CHILD_NODE, {
-        node, at, parent,
+        node,
+        at,
+        parent,
         apply: element => {
+          throw 'Function "removeChildNode" not implemented!';
           // TODO: implement
         }
       });
@@ -161,7 +200,7 @@
 
     static get Type() {
       return Object.assign({}, Type);
-    } 
+    }
   };
 
   module.exports = Patch;

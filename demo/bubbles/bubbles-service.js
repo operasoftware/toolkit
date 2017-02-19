@@ -1,18 +1,23 @@
 {
-  const randomPosition = radius => Math.random() * (1 - 2 * radius);
+  const randomRadius = () => Math.random() * 0.08 + 0.08;
+  const randomPosition = radius => Math.random() * (0.9 - 2 * radius) + 0.05;
 
   const BubblesService = class {
 
+    static createBubble(id, x, y) {
+      const radius = randomRadius();
+      return {
+        id,
+        radius,
+        x: x ? (x - radius) : randomPosition(radius),
+        y: y ? (y - radius) : randomPosition(radius),
+      };
+    }
+
     static createBubbles(count) {
-      return new Array(count).fill(null).map((item, index) => {
-        const radius = Math.random() * 0.08 + 0.08;
-        return {
-          id: index,
-          radius,
-          x: randomPosition(radius),
-          y: randomPosition(radius),
-        };
-      });
+      return new Array(count)
+        .fill(null)
+        .map((item, index) => this.createBubble(index));
     }
 
     static moveBubbles(bubbles) {
