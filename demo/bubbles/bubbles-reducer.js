@@ -2,37 +2,37 @@
   const MOVE = Symbol('move');
   const HIGHLIGHT = Symbol('hightlight');
 
+  const updateBubbles = (state, createBubble) => (Object.assign({}, {
+    bubbles: state.bubbles.map(bubble => createBubble(bubble))
+  }));
+  const createBubble = (...props) => Object.assign({}, ...props);
+
   const reducer = (state, command) => {
     switch (command.type) {
-      case MOVE: {
-        return Object.assign({}, state, {
-          bubbles: state.bubbles.map((bubble, index) => {
-            return Object.assign({}, bubble, command.state[index], {
-              // radius: bubble.radius
-            });
-          })
-        });
-      }
-      case HIGHLIGHT: {
-        return Object.assign({}, state, {
-          bubbles: state.bubbles.map(bubble => {
-            return Object.assign({}, bubble, {
-              highlighted: bubble.highlighted || bubble.id === command.id
-            });
-          })
-        });
-      }
+      case MOVE:
+        {
+          return updateBubbles(state,
+            bubble => createBubble(bubble, command.positions[bubble.id]))
+        }
+      case HIGHLIGHT:
+        {
+          return updateBubbles(state, bubble => createBubble(bubble, {
+            highlighted: bubble.highlighted || bubble.id === command.id,
+          }));
+        }
       default:
         return state;
     }
   };
 
   reducer.commands = {
-    move: state => ({
-      type: MOVE, state
+    move: positions => ({
+      type: MOVE,
+      positions
     }),
     highlight: id => ({
-      type: HIGHLIGHT, id
+      type: HIGHLIGHT,
+      id
     })
   };
 
