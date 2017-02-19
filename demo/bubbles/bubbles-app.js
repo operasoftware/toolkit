@@ -14,7 +14,7 @@
     getInitialState() {
       const count = 16;
       return {
-        bubbles: service.getState(count),
+        bubbles: service.createBubbles(count),
         config: {
           count
         }
@@ -30,7 +30,7 @@
         'bubbles', {
           onClick: () => {
             this.dispatch(
-              reducer.commands.move(service.getState(this.props.config.count)))
+              reducer.commands.move(service.moveBubbles(this.props.bubbles)))
           }
         },
         ...this.props.bubbles.map(bubble => [
