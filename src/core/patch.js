@@ -39,10 +39,10 @@
         element,
         parent,
         apply: () => {
+          const domElement = Reactor.Document.createBoundTree(element);
           parent.child = element;
-          parent.ref.appendChild(
-            Reactor.Document.createTree(element)
-          );
+          parent.child.ref = domElement;
+          parent.ref.appendChild(domElement);
         }
       });
     }
@@ -52,9 +52,9 @@
         element,
         parent,
         apply: () => {
+          parent.child.ref.remove();
+          parent.child.ref = null;
           parent.child = null;
-          throw 'Function "removeElement" not implemented!';
-          // parent.child.ref.remove();
         }
       });
     }
@@ -167,7 +167,7 @@
         apply: () => {
           parent.children = parent.children || [];
           parent.children[at] = node;
-          const element = Reactor.Document.createTree(node);
+          const element = Reactor.Document.createBoundTree(node);
           parent.ref.insertBefore(element, parent.ref.childNodes[at]);
         }
       });

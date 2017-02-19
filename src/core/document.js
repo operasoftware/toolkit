@@ -1,47 +1,34 @@
 {
-  const getClassName = value => {
 
-    if (!value) {
-      return '';
+  const extractElement = component => {
+    if (!component.child) {
+      return null;
     }
-
-    if (value.constructor === Object) {
-      value = Object.keys(value).map(key => value[key] && key);
+    if (component.child.isElement()) {
+      return component.child;
     }
-
-    if (value.constructor === Array) {
-      const classNames = [];
-      for (const item of value) {
-        const className = getClassName(item);
-        if (className) {
-          classNames.push(className);
-        }
-      }
-      value = classNames.join(' ');
-    }
-
-    if (value.constructor === String) {
-      return value.trim();
-    }
-
-    return null;
+    return extractElement(component.child);
   };
 
   const Document = class {
 
     static setAttribute(element, name, value) {
       switch (name) {
-        case 'style': {
-          element.style = '';
-          Object.keys(value)
+        case 'style':
+          {
+            element.style = '';
+            Object.keys(value)
             .map(key => {
               element.style[key] = value[key];
             });
-          return;
-        }
-        case 'class': {
-          element.setAttribute(name, getClassName(value));
-        }
+            return;
+          }
+        case 'class':
+          {
+            // TODO: ???
+            element.setAttribute(name, value);
+            return;
+          }
         default:
           element.setAttribute(name, value);
       }
@@ -52,14 +39,12 @@
         name,
         attrs,
         listeners,
-        props,
-        children,
         text
       } = node;
 
       const element = document.createElement(name);
       if (text) {
-        element.innerText = text;
+        element.textContent = text;
       }
       if (listeners) {
         Object.keys(listeners).forEach(key => {
@@ -73,24 +58,24 @@
       return element;
     };
 
-    static createTree(node) {
-      while (node.isComponent()) {
-        node = node.child;
+    static createBoundTree(node) {
+      if (node && node.isComponent()) {
+        node = extractElement(node);
       }
-      const element = this.createElement(node);
-      if (node.children) {
-        for (let child of node.children) {
-          while (child.isComponent()) {
-            child = child.child;
-          }
-          if (child.isElement()) {
-            element.appendChild(this.createTree(child));
-            continue;
+      if (node) {
+        const element = this.createElement(node);
+        if (node.children) {
+          for (let child of node.children) {
+            const childElement = this.createBoundTree(child);
+            if (childElement) {
+              element.appendChild(childElement);
+            }
           }
         }
+        node.ref = element;
+        return element;
       }
-      node.ref = element;
-      return element;
+      return null;
     }
   };
 

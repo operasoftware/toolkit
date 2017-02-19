@@ -1,5 +1,4 @@
 {
-
   const ComponentTree = class {
 
     static createInstance(def) {
