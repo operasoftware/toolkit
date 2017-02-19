@@ -1,4 +1,33 @@
 {
+
+  const getClassName = value => {
+
+    if (!value) {
+      return '';
+    }
+
+    if (value.constructor === Object) {
+      value = Object.keys(value).map(key => value[key] && key);
+    }
+
+    if (value.constructor === Array) {
+      const classNames = [];
+      for (const item of value) {
+        const className = getClassName(item);
+        if (className) {
+          classNames.push(className);
+        }
+      }
+      value = classNames.join(' ');
+    }
+
+    if (value.constructor === String) {
+      return value.trim();
+    }
+
+    return null;
+  };
+
   const VirtualNode = class {
 
     constructor(name, props = {}) {
@@ -26,7 +55,7 @@
     }
 
     normalizeValue(key, value) {
-      if (value === undefined || value === null) {
+      if (value === undefined || value === null || typeof value === 'function') {
         return null;
       }
       const getStyleValue = value => {
@@ -36,6 +65,10 @@
         return value + '';
       };
       switch (key) {
+        case 'class':
+          {
+            return getClassName(value);
+          }
         case 'style':
           {
             if (typeof value === 'object') {
@@ -51,11 +84,16 @@
               if (keys.length === 0) {
                 return null;
               }
-              const style = {};
+              let style = undefined;
               for (let key of keys) {
                 const val = value[key];
                 if (val !== undefined && val !== null) {
-                  style[key] = this.normalizeValue(key, val);
+                  if (typeof val !== 'function') {
+                    style = style || {};
+                    style[key] = this.normalizeValue(key, val);
+                  } else if (Reactor.debug) {
+                    console.warn('Invalid value:', val, ` for "${key}", on:`, this);
+                  }
                 }
               }
               return style;
@@ -71,19 +109,19 @@
               unsupportedFilters.forEach(key => {
                 console.warn(`Unsupported filter "${key}", on:`, this);
               });
-              if (filters.length === 0) {
-                return null;
-              }
-              const result = {};
-              for (let filter of filters) {
-                const val = value[filter];
-                if (val !== undefined && val !== null) {
-                  result[filter] = getStyleValue(val);
-                }
-              }
-              return Object.entries(result)
-                .map(([name, value]) => `${name}(${value})`).join(' ');
             }
+            if (filters.length === 0) {
+              return null;
+            }
+            const result = {};
+            for (let filter of filters) {
+              const val = value[filter];
+              if (val !== undefined && val !== null) {
+                result[filter] = getStyleValue(val);
+              }
+            }
+            return Object.entries(result)
+              .map(([name, value]) => `${name}(${value})`).join(' ');
           }
         case 'transform':
           {
@@ -95,19 +133,19 @@
               unsupportedTransforms.forEach(key => {
                 console.warn(`Unsupported transform "${key}", on:`, this);
               });
-              if (transforms.length === 0) {
-                return null;
-              }
-              const result = {};
-              for (let transform of transforms) {
-                const val = value[transform];
-                if (val !== undefined && val !== null) {
-                  result[transform] = getStyleValue(val);
-                }
-              }
-              return Object.entries(result)
-                .map(([name, value]) => `${name}(${value})`).join(' ');
             }
+            if (transforms.length === 0) {
+              return null;
+            }
+            const result = {};
+            for (let transform of transforms) {
+              const val = value[transform];
+              if (val !== undefined && val !== null) {
+                result[transform] = getStyleValue(val);
+              }
+            }
+            return Object.entries(result)
+              .map(([name, value]) => `${name}(${value})`).join(' ');
           }
         default:
           return getStyleValue(value);

@@ -510,7 +510,6 @@
   ];
 
   const SUPPORTED_TRANSFORMS = [
-    'none',
     'matrix',
     'matrix3d',
     'translate',
@@ -531,9 +530,7 @@
     'skew',
     'skewX',
     'skewY',
-    'perspective',
-    'initial',
-    'inherit'
+    'perspective'
   ];
 
   module.exports = {

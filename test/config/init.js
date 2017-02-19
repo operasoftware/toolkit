@@ -53,6 +53,9 @@ global.createCore = () => ({
   Reconciler: require('../../src/core/reconciler.js'),
   Document: require('../../src/core/document.js'),
   SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
+  SUPPORTED_STYLES: consts.SUPPORTED_STYLES,
+  SUPPORTED_FILTERS: consts.SUPPORTED_FILTERS,
+  SUPPORTED_TRANSFORMS: consts.SUPPORTED_TRANSFORMS,
   SUPPORTED_EVENTS: consts.SUPPORTED_EVENTS,
   create: utils.create
 });
