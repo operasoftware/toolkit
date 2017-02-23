@@ -28,6 +28,148 @@ describe('Document', () => {
     }
   };
 
+  describe('=> DOM operations', () => {
+
+    it('sets an attribute', () => {
+
+      // given
+      const element = document.createElement('div');
+
+      // when
+      Document.setAttribute(element, 'name', 'value');
+
+      // then
+      assert.equal(element.getAttribute('name'), 'value');
+      assert.equal(element.attributes.length, 1);
+    });
+
+    it('removes an attribute', () => {
+
+      // given
+      const element = document.createElement('span');
+      element.attributes.value = 'value';
+
+      // when
+      Document.removeAttribute(element, 'value');
+
+      // then
+      assert.equal(element.getAttribute('value'), undefined);
+      assert.equal(element.attributes.length, 0);
+    });
+
+    it('sets a data attribute', () => {
+
+      // given
+      const url = 'http://www.example.com';
+      const element = document.createElement('a');
+
+      // when
+      Document.setDataAttribute(element, 'targetUrl', url);
+
+      // then
+      assert.equal(element.dataset.targetUrl, url);
+      assert.equal(element.getAttribute('data-target-url'), url);
+      assert.equal(element.attributes.length, 1);
+    });
+
+    it('removes a data attribute', () => {
+
+      // given
+      const url = 'http://www.example.com';
+      const element = document.createElement('a');
+      element.dataset.someUrl = url;
+
+      // when
+      Document.removeDataAttribute(element, 'someUrl');
+
+      // then
+      assert.equal(element.dataset.someUrl, undefined);
+      assert.equal(element.getAttribute('data-some-url'), undefined);
+      assert.equal(element.attributes.length, 0);
+    });
+
+    it('sets a style property', () => {
+
+      // given
+      const element = document.createElement('span');
+
+      // when
+      Document.setStyleProperty(element, 'backgroundColor', 'red');
+
+      // then
+      assert.equal(element.style.backgroundColor, 'red');
+    });
+
+    it('removes a style property', () => {
+
+      // given
+      const element = document.createElement('span');
+      element.style.color = 'green';
+
+      // when
+      Document.removeStyleProperty(element, 'color');
+
+      // then
+      assert.equal(element.style.color, undefined);
+    });
+
+    it('adds a class name', () => {
+
+      // given
+      const element = document.createElement('section');
+
+      // when
+      Document.addClassName(element, 'some-name');
+
+      // then
+      assert.deepEqual(Array.from(element.classList), ['some-name']);
+    });
+
+    it('removes a class name', () => {
+
+      // given
+      const element = document.createElement('section');
+      Document.addClassName(element, 'to-be-removed');
+
+      // when
+      Document.removeClassName(element, 'to-be-removed');
+
+      // then
+      assert.deepEqual(Array.from(element.classList), []);
+    });
+
+    it('adds an event listener', () => {
+
+      // given
+      const listener = () => {};
+      const element = document.createElement('div');
+
+      // when
+      Document.addEventListener(element, 'click', listener);
+
+      // then
+      assert.deepEqual(element.eventListeners, {
+        click: [listener],
+      });
+    });
+
+    it('removes an event listener', () => {
+
+      // given
+      const listener = () => {};
+      const element = document.createElement('div');
+      Document.addEventListener(element, 'change', listener);
+
+      // when
+      Document.removeEventListener(element, 'change', listener);
+
+      // then
+      assert.deepEqual(element.eventListeners, {
+        change: [],
+      });
+    });
+  });
+
   describe('=> create element', () => {
 
     it('supports empty elements', () => {

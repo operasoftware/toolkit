@@ -1,70 +1,82 @@
 {
   const Document = class {
 
+    static setTextContent(element, text) {
+      element.textContent = text;
+    }
+
     static setAttribute(element, name, value) {
-      const key = Reactor.utils.lowerDash(name);
-      switch (name) {
-        case 'style':
-          {
-            element.style = '';
-            Object.keys(value)
-            .map(key => {
-              element.style[key] = value[key];
-            });
-            return;
-          }
-        case 'class':
-          {
-            element.setAttribute(key, value);
-            return;
-          }
-        default:
-          element.setAttribute(key, value);
-      }
+      const attr = Reactor.utils.lowerDash(name);
+      element.setAttribute(attr, value);
+    }
+
+    static removeAttribute(element, name) {
+      const attr = Reactor.utils.lowerDash(name);
+      element.removeAttribute(attr);
     }
 
     static setDataAttribute(element, name, value) {
       element.dataset[name] = value;
     }
 
-    static removeAttribute(element, name) {
-      const key = Reactor.utils.lowerDash(name);
-      element.removeAttribute(key);
+    static removeDataAttribute(element, name) {
+      delete element.dataset[name];
     }
 
-    static setStyleProperty(element, name, value) {
-      element.style[name] = value;
+    static setStyleProperty(element, prop, value) {
+      element.style[prop] = value;
+    }
+
+    static removeStyleProperty(element, prop, value) {
+      element.style[prop] = null;
     }
 
     static addClassName(element, className) {
       element.classList.add(className);
     }
 
+    static removeClassName(element, className) {
+      element.classList.remove(className);
+    }
+
+    static addEventListener(element, name, listener) {
+      element.addEventListener(name, listener);
+    }
+
+    static removeEventListener(element, name, listener) {
+      element.removeEventListener(name, listener);
+    }
+
     static createElement(node) {
       const {
         name,
+        text,
         attrs,
         dataset,
         listeners,
         style,
         classNames,
-        text
       } = node;
 
       const element = document.createElement(name);
       if (text) {
-        element.textContent = text;
+        this.setTextContent(element, text);
       }
-      Object.keys(listeners).forEach(key => {
-        element.addEventListener(key, listeners[key]);
+      Object.entries(listeners).forEach(([name, listener]) => {
+        this.addEventListener(element, name, listener);
       });
-      Object.entries(attrs)
-        .forEach(([name, value]) => this.setAttribute(element, name, value));
-      Object.entries(dataset)
-        .forEach(([name, value]) => this.setDataAttribute(element, name, value));
-      Object.entries(style)
-        .forEach(([name, value]) => this.setStyleProperty(element, name, value));
-      classNames.forEach(className => this.addClassName(element, className));
+      Object.entries(attrs).forEach(([attr, value]) => {
+        this.setAttribute(element, attr, value);
+      });
+      Object.entries(dataset).forEach(([attr, value]) => {
+        this.setDataAttribute(element, attr, value);
+      });
+      Object.entries(style).forEach(([prop, value]) => {
+        this.setStyleProperty(element, prop, value);
+      });
+      classNames.forEach(className => {
+        this.addClassName(element, className);
+      });
       return element;
     };
 

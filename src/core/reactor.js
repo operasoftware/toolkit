@@ -22,8 +22,9 @@
       const Reconciler = await require('core/reconciler');
       const Document = await require('core/document');
       const {
-        combineReducers, create, utils
+        combineReducers, utils
       } = await require('core/utils');
+      const create = root => new App(root);
 
       return {
         // constants
@@ -35,7 +36,7 @@
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
         // utils
-        combineReducers, create, utils
+        combineReducers, utils, create
       };
     }
   };

@@ -4,4 +4,4 @@
 --sort
 --reporter spec
 --compilers js:babel-register
-./**/*.test.js
+./test/**/*.test.js

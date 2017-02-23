@@ -1,11 +1,4 @@
 {
-  const getClassNames = value => {};
-
-  const getAttributeValue = value => {};
-
-  const getFilterValue = value => {};
-  const getTransformValue = value => {};
-
   const Template = class {
 
     static get ItemType() {
@@ -51,8 +44,7 @@
       classNames = classNames
         .replace(/( )+/g, ' ')
         .trim()
-        .split(' ')
-        .filter(item => item);
+        .split(' ');
       return [...new Set(classNames)];
     }
 

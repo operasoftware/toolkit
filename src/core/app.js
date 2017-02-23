@@ -1,6 +1,4 @@
 {
-  let createTree, calculateDiff;
-
   const App = class {
 
     constructor(path) {
@@ -42,9 +40,16 @@
     }
 
     calculatePatches() {
-      const componentTree = Reactor.ComponentTree.createTree(
+      if (Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
+        return [];
+      }
+      const updateRootPatch = Reactor.Patch.updateComponent(
         this.root, this.store.state);
-      return Reactor.Diff.calculate(this.root.child, componentTree, this.root);
+      const componentTree = Reactor.ComponentTree.createChildTree(
+        this.root, this.store.state);
+      const childTreePatches = Reactor.Diff.calculate(
+        this.root.child, componentTree, this.root);
+      return [updateRootPatch, ...childTreePatches];
     }
 
     async updateDOM() {

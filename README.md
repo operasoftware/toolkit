@@ -2,7 +2,7 @@
 A framework for Chromium-based browsers for building their user interfaces
 
 [![Build Status](https://travis-ci.org/aswitalski/chromium-reactor.svg?branch=master)](https://travis-ci.org/aswitalski/chromium-reactor)
-[![Coverage Status](https://coveralls.io/repos/github/aswitalski/chromium-reactor/badge.svg?branch=master)](https://coveralls.io/github/aswitalski/chromium-reactor?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/aswitalski/chromium-reactor/badge.svg)](https://coveralls.io/github/aswitalski/chromium-reactor)
 [![npm version](https://img.shields.io/npm/v/chromium-reactor.svg?style=flat)](https://www.npmjs.com/package/chromium-reactor)
 
 ## What is it?
@@ -17,7 +17,7 @@ It utilises the engine’s latest features and provides a convenient way to buil
 * **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
 * **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
 * **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,
-* **isolated** - encapsulate apps, reduce  usage of global variables to bare minimum,
+* **encapsulated** - isolate apps, reduce usage of global variables to bare minimum,
 * **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations properly,
 * **testable** - unit test all your components with little effort,
 * **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.

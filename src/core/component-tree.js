@@ -90,9 +90,11 @@
       return element;
     }
 
-    static createTree(root, props) {
-      root.props = props;
-      const template = root.render();
+    static createChildTree(root, props) {
+      const template = root.render.call({
+        props,
+        dispatch: root.dispatch,
+      });
       const tree = this.createFromTemplate(template);
       if (tree) {
         tree.parentNode = root;

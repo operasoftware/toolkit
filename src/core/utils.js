@@ -31,22 +31,16 @@
     return reducer;
   };
 
-  // TODO: clean up here
-  const lowerCamelCase = key => key.replace(/(?:^|\.?)([A-Z])/g,
-    (x, y) => ('-' + y.toLowerCase()));
-  const lowerDash = key => key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
-  const getDataAttributeName = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
+  const lowerDash = name => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
-  const getEventName = key => key.slice(2).toLowerCase();
-
-  const create = component => new Reactor.App(component);
+  const getEventName = name => name.slice(2).toLowerCase();
 
   module.exports = {
     combineReducers,
-    create,
     utils: {
-      lowerCamelCase,
+      addDataPrefix,
       lowerDash,
       getEventName,
     }

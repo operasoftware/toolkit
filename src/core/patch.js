@@ -208,7 +208,7 @@
         name,
         target,
         apply: () => {
-          target.attrs.class.push(name);
+          target.classNames.push(name);
           target.ref.classList.add(name);
         }
       });
@@ -219,8 +219,7 @@
         name,
         target,
         apply: () => {
-          target.attrs.class =
-            target.attrs.class.filter(className => name !== className);
+          target.classNames = target.classNames.filter(item => name !== item);
           target.ref.classList.remove(name);
         }
       });
