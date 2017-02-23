@@ -37,8 +37,41 @@
     }
   };
 
-  const attributePatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = Reactor.Patch;
+  const stylePatches = (current = {}, next = {}, target, patches) => {
+
+    const props = Object.keys(current);
+    const nextProps = Object.keys(next);
+
+    const added = nextProps.filter(prop => !props.includes(prop));
+    const removed = props.filter(prop => !nextProps.includes(prop));
+    const changed = props.filter(
+      prop => nextProps.includes(prop) && current[prop] !== next[prop]);
+
+    for (let prop of added) {
+      patches.push(Reactor.Patch.addStyleProperty(prop, next[prop], target));
+    }
+    for (let prop of removed) {
+      patches.push(Reactor.Patch.removeStyleProperty(prop, target));
+    }
+    for (let prop of changed) {
+      patches.push(Reactor.Patch.replaceStyleProperty(prop, next[prop], target));
+    }
+  };
+
+  const classNamePatches = (current = [], next = [], target, patches) => {
+
+    const added = next.filter(attr => !current.includes(attr));
+    const removed = current.filter(attr => !next.includes(attr));
+
+    for (let name of added) {
+      patches.push(Reactor.Patch.addClassName(name, target));
+    }
+    for (let name of removed) {
+      patches.push(Reactor.Patch.removeClassName(name, target));
+    }
+  };
+
+  const datasetPatches = (current = {}, next = {}, target, patches) => {
 
     const attrs = Object.keys(current);
     const nextAttrs = Object.keys(next);
@@ -49,13 +82,33 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(Patch.addAttribute(attr, next[attr], target));
+      patches.push(Reactor.Patch.addDataAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
-      patches.push(Patch.removeAttribute(attr, target));
+      patches.push(Reactor.Patch.removeDataAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(Patch.replaceAttribute(attr, next[attr], target));
+      patches.push(Reactor.Patch.replaceDataAttribute(attr, next[attr], target));
+    }
+  };
+
+  const attributePatches = (current = {}, next = {}, target = null, patches) => {
+    const attrs = Object.keys(current);
+    const nextAttrs = Object.keys(next);
+
+    const added = nextAttrs.filter(attr => !attrs.includes(attr));
+    const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+    const changed = attrs.filter(
+      attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+
+    for (let attr of added) {
+      patches.push(Reactor.Patch.addAttribute(attr, next[attr], target));
+    }
+    for (let attr of removed) {
+      patches.push(Reactor.Patch.removeAttribute(attr, target));
+    }
+    for (let attr of changed) {
+      patches.push(Reactor.Patch.replaceAttribute(attr, next[attr], target));
     }
   };
 
@@ -71,9 +124,16 @@
     }
   };
 
-  const reconcileNode = (current, next, parent, index, patches) => {
+  const elementPatches = (current, next, patches) => {
+    attributePatches(current.attrs, next.attrs, current, patches);
+    datasetPatches(current.dataset, next.dataset, current, patches);
+    stylePatches(current.style, next.style, current, patches);
+    classNamePatches(current.classNames, next.classNames, current, patches);
+    listenerPatches(current.listeners, next.listeners, current, patches);
+    childrenPatches(current.children, next.children, current, patches);
+  };
 
-    const Patch = Reactor.Patch;
+  const reconcileNode = (current, next, parent, index, patches) => {
 
     if (current === next) {
       // already inserted
@@ -81,20 +141,18 @@
     }
     if (areCompatible(current, next)) {
       if (current.isElement()) {
-        attributePatches(current.attrs, next.attrs, current, patches);
-        listenerPatches(current.listeners, next.listeners, current, patches);
-        childrenPatches(current.children, next.children, current, patches);
+        elementPatches(current, next, patches);
       } else if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
-          patches.push(Patch.updateComponent(current, next.props));
+          patches.push(Reactor.Patch.updateComponent(current, next.props));
           calculatePatches(current.child, next.child, current, patches);
         } else {
           // no patch needed
         }
       }
     } else {
-      patches.push(Patch.removeChildNode(current, index, parent));
-      patches.push(Patch.insertChildNode(next, index, parent));
+      patches.push(Reactor.Patch.removeChildNode(current, index, parent));
+      patches.push(Reactor.Patch.insertChildNode(next, index, parent));
     }
   };
 
@@ -199,9 +257,7 @@
       } else if (next.isElement()) {
         if (current.name === next.name) {
           // compatible elements
-          attributePatches(current.attrs, next.attrs, current, patches);
-          listenerPatches(current.listeners, next.listeners, current, patches);
-          childrenPatches(current.children, next.children, current, patches);
+          elementPatches(current, next, patches);
         } else {
           // different elements
           patches.push(Patch.removeElement(current, parent));

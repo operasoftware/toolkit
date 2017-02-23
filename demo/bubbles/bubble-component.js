@@ -14,7 +14,7 @@
               saturate: this.props.highlighted ? 2.5 : 1
             },
             transform: {
-              rotate: [0, 'deg']
+              rotate: [Math.random() * 15, 'deg']
             },
           },
           onClick: this.props.onClick

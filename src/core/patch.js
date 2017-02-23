@@ -1,16 +1,33 @@
 {
   const Type = Object.freeze({
+
     UPDATE_COMPONENT: Symbol('update-component'),
+
     ADD_ELEMENT: Symbol('add-element'),
     REMOVE_ELEMENT: Symbol('remove-element'),
+
     ADD_COMPONENT: Symbol('add-component'),
     REMOVE_COMPONENT: Symbol('remove-component'),
+
     ADD_ATTRIBUTE: Symbol('add-attribute'),
     REPLACE_ATTRIBUTE: Symbol('replace-attribute'),
     REMOVE_ATTRIBUTE: Symbol('remove-attribute'),
+
+    ADD_DATA_ATTRIBUTE: Symbol('add-data-attribute'),
+    REPLACE_DATA_ATTRIBUTE: Symbol('replace-data-attribute'),
+    REMOVE_DATA_ATTRIBUTE: Symbol('remove-data-attribute'),
+
+    ADD_STYLE_PROPERTY: Symbol('add-style-property'),
+    REPLACE_STYLE_PROPERTY: Symbol('replace-style-property'),
+    REMOVE_STYLE_PROPERTY: Symbol('remove-style-property'),
+
+    ADD_CLASS_NAME: Symbol('add-class-name'),
+    REMOVE_CLASS_NAME: Symbol('remove-class-name'),
+
     ADD_LISTENER: Symbol('add-listener'),
     REPLACE_LISTENER: Symbol('replace-listener'),
     REMOVE_LISTENER: Symbol('remove-listener'),
+
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
     REMOVE_CHILD_NODE: Symbol('remove-child-node'),
@@ -39,10 +56,9 @@
         element,
         parent,
         apply: () => {
-          const domElement = Reactor.Document.createBoundTree(element);
-          parent.child = element;
-          parent.child.ref = domElement;
-          parent.ref.appendChild(domElement);
+          parent.appendChild(element);
+          const tree = Reactor.Document.attachElementTree(element);
+          parent.parentElement.ref.appendChild(tree);
         }
       });
     }
@@ -52,9 +68,8 @@
         element,
         parent,
         apply: () => {
-          parent.child.ref.remove();
-          parent.child.ref = null;
-          parent.child = null;
+          parent.child.remove();
+          element.ref.remove();
         }
       });
     }
@@ -64,9 +79,8 @@
         component,
         parent,
         apply: () => {
-          parent.child = component;
-          throw 'Function "addComponent" not implemented!';
-          // component.mount();
+          parent.appendChild(component);
+          Reactor.Document.attachElementTree(component);
         }
       });
     }
@@ -76,9 +90,10 @@
         component,
         parent,
         apply: () => {
-          parent.child = null;
-          throw 'Function "removeComponent" not implemented!';
-          // component.destroy();
+          parent.child.remove();
+          if (component.childElement) {
+            component.childElement.ref.remove();
+          }
         }
       });
     }
@@ -88,10 +103,9 @@
         name,
         value,
         target,
-        apply: element => {
-          console.log('add attribute');
-          throw 'Function "addAttribute" not implemented!';
-          // element.setAttribute(name, value);
+        apply: () => {
+          target.setAttribute(name, value);
+          Reactor.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -102,7 +116,6 @@
         value,
         target,
         apply: () => {
-          target.attrs = target.attrs || [];
           target.attrs[name] = value;
           Reactor.Document.setAttribute(target.ref, name, value);
         }
@@ -113,10 +126,102 @@
       return new Patch(Type.REMOVE_ATTRIBUTE, {
         name,
         target,
-        apply: element => {
-          console.log('remove attribute');
-          throw 'Function "removeAttribute" not implemented!';
-          // element.removeAttribute(name, value);
+        apply: () => {
+          delete target.attrs[name];
+          Reactor.Document.removeAttribute(target.ref, name);
+        }
+      });
+    }
+
+    static addDataAttribute(name, value, target) {
+      return new Patch(Type.ADD_DATA_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setDataAttribute(name, value);
+          target.ref.dataset[name] = value;
+        }
+      });
+    }
+
+    static replaceDataAttribute(name, value, target) {
+      return new Patch(Type.REPLACE_DATA_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setDataAttribute(name, value);
+          target.ref.dataset[name] = value;
+        }
+      });
+    }
+
+    static removeDataAttribute(name, target) {
+      return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
+        name,
+        target,
+        apply: () => {
+          delete target.dataset[name];
+          delete target.ref.dataset[name];
+        }
+      });
+    }
+    static addStyleProperty(property, value, target) {
+      return new Patch(Type.ADD_STYLE_PROPERTY, {
+        property,
+        value,
+        target,
+        apply: () => {
+          target.attrs.style = target.attrs.style || {};
+          target.attrs.style[property] = value;
+          target.ref.style[property] = value;
+        }
+      });
+    }
+
+    static replaceStyleProperty(property, value, target) {
+      return new Patch(Type.REPLACE_STYLE_PROPERTY, {
+        property,
+        value,
+        target,
+        apply: () => {
+          target.setStyleProperty(property, value);
+          target.ref.style[property] = value;
+        }
+      });
+    }
+
+    static removeStyleProperty(property, target) {
+      return new Patch(Type.REMOVE_STYLE_PROPERTY, {
+        property,
+        target,
+        apply: () => {
+          target.removeStyleProperty(property);
+          target.ref.style[property] = null;
+        }
+      });
+    }
+
+    static addClassName(name, target) {
+      return new Patch(Type.ADD_CLASS_NAME, {
+        name,
+        target,
+        apply: () => {
+          target.attrs.class.push(name);
+          target.ref.classList.add(name);
+        }
+      });
+    }
+
+    static removeClassName(name, target) {
+      return new Patch(Type.REMOVE_CLASS_NAME, {
+        name,
+        target,
+        apply: () => {
+          target.attrs.class =
+            target.attrs.class.filter(className => name !== className);
+          target.ref.classList.remove(name);
         }
       });
     }
@@ -126,7 +231,7 @@
         name,
         listener,
         target,
-        apply: element => {
+        apply: () => {
           throw 'Function "addListener" not implemented!';
           // element.addEventListener(name, listener);
         }
@@ -152,7 +257,7 @@
         name,
         listener,
         target,
-        apply: element => {
+        apply: () => {
           throw 'Function "removeListener" not implemented!';
           // element.removeEventListener(name, listener);
         }
@@ -167,8 +272,14 @@
         apply: () => {
           parent.children = parent.children || [];
           parent.children[at] = node;
-          const element = Reactor.Document.createBoundTree(node);
-          parent.ref.insertBefore(element, parent.ref.childNodes[at]);
+          const element = Reactor.Document.attachElementTree(node);
+          if (element) {
+            parent.ref.insertBefore(element, parent.ref.childNodes[at]);
+          } else {
+           // TODO: check
+           const comment = document.createComment('placeholder');
+           parent.ref.insertBefore(comment, parent.ref.childNodes[at]);
+          }
         }
       });
     }
@@ -179,7 +290,7 @@
         from,
         to,
         parent,
-        apply: element => {
+        apply: () => {
           throw 'Function "moveChildNode" not implemented!';
           // TODO: implement
         }
@@ -191,7 +302,7 @@
         node,
         at,
         parent,
-        apply: element => {
+        apply: () => {
           throw 'Function "removeChildNode" not implemented!';
           // TODO: implement
         }

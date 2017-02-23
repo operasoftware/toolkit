@@ -88,10 +88,10 @@ describe('Document', () => {
     });
   });
 
-  describe('=> create bound tree', () => {
+  describe('=> attach element tree', () => {
 
     beforeEach(() => {
-      ComponentTree.createInstance = createDummyInstance;
+      ComponentTree.createComponentInstance = createDummyInstance;
     });
 
     it('creates a single element', () => {
@@ -102,7 +102,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -120,7 +120,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -146,7 +146,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -178,7 +178,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -209,7 +209,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -244,7 +244,7 @@ describe('Document', () => {
       ]);
 
       // when
-      const element = Document.createBoundTree(node);
+      const element = Document.attachElementTree(node);
 
       // then
       assert.equal(node.name, 'div');
@@ -253,7 +253,7 @@ describe('Document', () => {
 
       const componentNode = node.children[0];
       assert.equal(componentNode.constructor, ComponentClass);
-      assert(componentNode instanceof Reactor.Component);
+      assert(componentNode.isComponent());
 
       const spanNode = componentNode.child;
       const spanElement = element.childNodes[0];
@@ -264,7 +264,46 @@ describe('Document', () => {
       const subcomponentNode = spanNode.children[0];
       assert.equal(subcomponentNode.constructor, SubcomponentClass);
 
-      assert.equal(subcomponentNode.child, undefined);
+      assert.equal(subcomponentNode.child, null);
+    });
+
+    describe('creates a comment node', () => {
+
+      it('for a component with no child', () => {
+
+        // given
+        const node = ComponentTree.createFromTemplate([
+          Component
+        ]);
+
+        // when
+        const comment = Document.attachElementTree(node);
+
+        // then
+        assert(node.placeholder);
+        assert.equal(node.placeholder.text, 'ComponentClass');
+        assert.equal(node.placeholder.ref, comment);
+      });
+
+      it('for nested components with no child element', () => {
+
+        // given
+        const node = ComponentTree.createFromTemplate([
+          Component, [
+            Component, [
+              Subcomponent
+            ]
+          ]
+        ]);
+
+        // when
+        const comment = Document.attachElementTree(node);
+
+        // then
+        assert(node.placeholder);
+        assert.equal(node.placeholder.text, 'SubcomponentClass');
+        assert.equal(node.placeholder.ref, comment);
+      });
     });
   });
 });
