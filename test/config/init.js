@@ -3,59 +3,25 @@ global.assert = require('assert');
 global.sinon = require('sinon');
 
 const consts = require('../../src/core/consts.js');
-const utils = require('../../src/core/consts.js');
+const utils = require('../../src/core/utils.js');
 
-global.Element = class {
+require('../api/dom.js');
 
-  constructor(name) {
-    this.tagName = name.toUpperCase();
-    this.childNodes = [];
-    this.eventListeners = {};
-  }
+const CoreTypes = require('../../src/core/core-types.js');
 
-  setAttribute(name, value) {
-    throw new Error('Function "setAttribute" not implemented!');
-  }
-
-  removeAttribute(name) {
-    throw new Error('Function "removeAttribute" not implemented!');
-  }
-
-  appendChild(child) {
-    this.childNodes.push(child);
-  }
-
-  insertBefore(child) {
-    throw new Error('Function "insertBefore" not implemented!');
-  }
-
-  addEventListener(name, listener) {
-    this.eventListeners[name] = this.eventListeners[name] || [];
-    this.eventListeners[name].push(listener);
-  }
-
-  removeEventListener(name, listener) {
-    throw new Error('Function "removeEventListener" not implemented!');
-  }
-};
-
-global.document = {
-  createElement: name => new Element(name)
-};
-
-global.createCore = () => ({
-  Component: require('../../src/core/component.js'),
-  VirtualNode: require('../../src/core/virtual-node.js'),
-  VirtualDOM: require('../../src/core/virtual-dom.js'),
+global.createCore = () => (Object.assign({
   ComponentTree: require('../../src/core/component-tree.js'),
+  Template: require('../../src/core/template.js'),
   Diff: require('../../src/core/diff.js'),
   Patch: require('../../src/core/patch.js'),
   Reconciler: require('../../src/core/reconciler.js'),
   Document: require('../../src/core/document.js'),
+  VirtualDOM: require('../../src/core/virtual-dom.js'),
   SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
   SUPPORTED_STYLES: consts.SUPPORTED_STYLES,
   SUPPORTED_FILTERS: consts.SUPPORTED_FILTERS,
   SUPPORTED_TRANSFORMS: consts.SUPPORTED_TRANSFORMS,
   SUPPORTED_EVENTS: consts.SUPPORTED_EVENTS,
-  create: utils.create
-});
+  create: utils.create,
+  utils: utils.utils,
+}, CoreTypes));

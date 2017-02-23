@@ -1,19 +1,6 @@
 {
   const VirtualDOM = class {
 
-    static get ItemType() {
-      return {
-        STRING: 'string',
-        NUMBER: 'number',
-        BOOLEAN: 'boolean',
-        UNDEFINED: 'undefined',
-        NULL: 'null',
-        COMPONENT: 'component',
-        ELEMENT: 'element',
-        PROPS: 'props',
-      };
-    }
-
     static createInstance(def) {
       const ComponentClass = require.preloaded(def);
       return new ComponentClass();
@@ -22,26 +9,26 @@
     static create(component) {
 
       const createFromTemplate = template => {
-        const definition = this.spread(template);
-        if (definition.component) {
-          const child = this.createInstance(definition.component);
-          if (definition.props) {
-            child.props = definition.props;
+        const description = Reactor.Template.describe(template);
+        if (description.component) {
+          const child = this.createInstance(description.component);
+          if (description.props) {
+            child.props = description.props;
           }
-          if (definition.children) {
-            child.children = definition.children;
+          if (description.children) {
+            child.children = description.children;
           }
           return this.create(child);
         }
-        return createFromDefinition(definition);
+        return createFromDescription(description);
       };
 
-      const createFromDefinition = definition => {
-        const node = Reactor.VirtualNode.create(definition);
-        if (definition.children) {
-          node.children = definition.children.map(createFromTemplate);
+      const createFromDescription = description => {
+        const element = Reactor.ComponentTree.createElementInstance(description);
+        if (description.children) {
+          element.children = description.children.map(createFromTemplate);
         }
-        return node;
+        return element;
       };
 
       try {
@@ -55,31 +42,31 @@
     static async resolve(component) {
 
       const createFromTemplate = async template => {
-        const definition = this.spread(template);
-        if (definition.component) {
-          const ComponentClass = await require(definition.component);
+        const description = Reactor.Template.describe(template);
+        if (description.component) {
+          const ComponentClass = await require(description.component);
           const child = new ComponentClass();
-          if (definition.props) {
-            child.props = definition.props;
+          if (description.props) {
+            child.props = description.props;
           }
-          if (definition.children) {
-            child.children = definition.children;
+          if (description.children) {
+            child.children = description.children;
           }
           return await this.resolve(child);
         }
-        return await createFromDefinition(definition);
+        return await createFromDescription(description);
       };
 
-      const createFromDefinition = async definition => {
-        const node = Reactor.VirtualNode.create(definition);
-        if (definition.children) {
-          node.children = [];
-          for (let template of definition.children) {
+      const createFromDescription = async description => {
+        const element = Reactor.ComponentTree.createElementInstance(description);
+        if (description.children) {
+          element.children = [];
+          for (let template of description.children) {
             const child = await createFromTemplate(template);
-            node.children.push(child);
+            element.children.push(child);
           }
         }
-        return node;
+        return element;
       };
 
       try {
@@ -88,188 +75,6 @@
         console.error('Error resolving Virtual DOM:', component);
         throw e;
       }
-    }
-
-    static getItemType(item) {
-
-      const Type = VirtualDOM.ItemType;
-      const type = typeof item;
-
-      switch (type) {
-        case 'string':
-          return Type.STRING;
-        case 'number':
-          return Type.NUMBER;
-        case 'boolean':
-          return Type.BOOLEAN;
-        case 'undefined':
-          return Type.UNDEFINED;
-        case 'symbol':
-          return Type.COMPONENT;
-        case 'object':
-          if (item === null) {
-            return Type.NULL;
-          } else if (Array.isArray(item)) {
-            return Type.ELEMENT;
-          } else {
-            return Type.PROPS;
-          }
-        default:
-          console.error('Unknown type of:', item);
-      }
-    }
-
-    static validate(template) {
-      const Type = VirtualDOM.ItemType;
-      if (Array.isArray(template)) {
-        const types = template.map(this.getItemType);
-        if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-          console.error('Invalid element:', template[0],
-            ', expecting component or tag name');
-          const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
-          return {
-            error,
-            types
-          };
-        } else if (types.length > 1) {
-          switch (types[1]) {
-            case Type.STRING:
-              if (types.length > 2) {
-                const error = new Error('Text elements cannot have child nodes');
-                console.error('Text elements cannot have child nodes:', template.slice(1));
-                return {
-                  error,
-                  types
-                };
-              } else if (types[0] === Type.COMPONENT) {
-                const error = new Error('Subcomponents do not accept text content');
-                console.error('Subcomponents do not accept text content:', template[1]);
-                return {
-                  error,
-                  types
-                };
-              }
-            case Type.PROPS:
-            case Type.ELEMENT:
-              if (types.length > 2) {
-                if (types[2] === Type.STRING) {
-                  if (types.length > 3) {
-                    const error = new Error('Text elements cannot have child nodes');
-                    console.error('Text elements cannot have child nodes:',
-                      template.slice(2));
-                    return {
-                      error,
-                      types
-                    };
-                  } else if (types[0] === Type.COMPONENT) {
-                    const error = new Error('Subcomponents do not accept text content');
-                    console.error('Subcomponents do not accept text content:', template[2]);
-                    return {
-                      error,
-                      types
-                    };
-                  }
-                  return {
-                    types
-                  };
-                }
-                for (let i = 2; i < template.length; i++) {
-                  if (types[i] !== Type.ELEMENT) {
-                    const error = new Error(`Invalid parameter type: "${types[i]}" at index: ${i}`);
-                    console.error('Invalid parameter:', template[i],
-                      ', expecting child element');
-                    return {
-                      error,
-                      types
-                    };
-                  }
-                }
-              }
-              return {
-                types
-              };
-            default:
-              console.log('Invalid parameter', template[1], 'expecting properties object, text content or first child element');
-              return {
-                error,
-                types
-              };
-          }
-        }
-        return {
-          types
-        };
-      } else if (template !== null) {
-        console.error('Specified template', template, 'is not an array!');
-      }
-    }
-
-    static spread(template) {
-
-      const Type = VirtualDOM.ItemType;
-      const {
-        types,
-        error
-      } = this.validate(template);
-
-      if (error) {
-        console.error('Invalid template definition:', template);
-        throw error;
-      }
-
-      const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
-
-      switch (template.length) {
-        case 1:
-          return {
-            [type]: template[0],
-          };
-        case 2:
-          if (types[1] === Type.STRING) {
-            const text = template[1];
-            return {
-              [type]: template[0],
-              text,
-            };
-          } else if (types[1] === Type.PROPS) {
-            return {
-              [type]: template[0],
-              props: template[1]
-            };
-          } else if (types[1] === Type.ELEMENT) {
-            return {
-              [type]: template[0],
-              children: template.slice(1),
-            };
-          }
-        default:
-          if (types[1] === Type.PROPS) {
-            if (types[2] === Type.STRING) {
-              return {
-                [type]: template[0],
-                props: template[1],
-                text: template[2],
-              };
-            }
-            return {
-              [type]: template[0],
-              props: template[1],
-              children: template.slice(2),
-            };
-          }
-          return {
-            [type]: template[0],
-            children: template.slice(1),
-          };
-      }
-    }
-
-    static calculateDiff(prev, next) {
-      if (prev === null) {
-        return next;
-      }
-      // TODO: calculate diff
-      return next;
     }
   };
 

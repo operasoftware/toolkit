@@ -49,11 +49,11 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'span', {}
+        'input', {}
       ];
       const nextTemplate = [
-        'span', {
-          class: 'next'
+        'input', {
+          value: 'next'
         }
       ];
 
@@ -65,7 +65,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.ADD_ATTRIBUTE);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].name, 'class');
+      assert.equal(patches[0].name, 'value');
       assert.equal(patches[0].value, 'next');
     });
 
@@ -116,6 +116,209 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[0].type, Patch.Type.REMOVE_ATTRIBUTE);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].name, 'name');
+    });
+
+    it('adds a data attribute', () => {
+
+      // given
+      const template = [
+        'input', {}
+      ];
+      const nextTemplate = [
+        'input', {
+          dataset: {
+            reactorId: 666
+          }
+        }
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.ADD_DATA_ATTRIBUTE);
+      assert.equal(patches[0].name, 'reactorId');
+      assert.equal(patches[0].value, '666');
+      assert(patches[0].target.isElement());
+    });
+
+    it('replaces a data attribute', () => {
+
+      // given
+      const template = [
+        'div', {
+          dataset: {
+            customAttrName: 'foo',
+          },
+        },
+      ];
+      const nextTemplate = [
+        'div', {
+          dataset: {
+            customAttrName: ['foo', 'bar'],
+          },
+        },
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REPLACE_DATA_ATTRIBUTE);
+      assert.equal(patches[0].name, 'customAttrName');
+      assert.equal(patches[0].value, 'foobar');
+      assert(patches[0].target.isElement());
+    });
+
+    it('removes a data attribute', () => {
+
+      // given
+      const template = [
+        'div', {
+          dataset: {
+            id: 42,
+          },
+        },
+      ];
+      const nextTemplate = [
+        'div'
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_DATA_ATTRIBUTE);
+      assert.equal(patches[0].name, 'id');
+      assert(patches[0].target.isElement());
+    });
+
+    it('adds a style property', () => {
+
+      // given
+      const template = [
+        'input', {}
+      ];
+      const nextTemplate = [
+        'input', {
+          style: {
+            width: [100, 'px']
+          }
+        }
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.ADD_STYLE_PROPERTY);
+      assert.equal(patches[0].property, 'width');
+      assert.equal(patches[0].value, '100px');
+      assert(patches[0].target.isElement());
+    });
+
+    it('replaces a style property', () => {
+
+      // given
+      const template = [
+        'div', {
+          style: {
+            height: '100%',
+          },
+        },
+      ];
+      const nextTemplate = [
+        'div', {
+          style: {
+            height: '50%',
+          },
+        },
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REPLACE_STYLE_PROPERTY);
+      assert.equal(patches[0].property, 'height');
+      assert.equal(patches[0].value, '50%');
+      assert(patches[0].target.isElement());
+    });
+
+    it('removes a style property', () => {
+
+      // given
+      const template = [
+        'div', {
+          style: {
+            animationDelay: '.666s',
+          },
+        },
+      ];
+      const nextTemplate = [
+        'div'
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_STYLE_PROPERTY);
+      assert.equal(patches[0].property, 'animationDelay');
+      assert(patches[0].target.isElement());
+    });
+
+    it('adds a class name', () => {
+
+      // given
+      const template = [
+        'div', {
+          class: 'one',
+        },
+      ];
+      const nextTemplate = [
+        'div', {
+          class: 'one two',
+        },
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.ADD_CLASS_NAME);
+      assert.equal(patches[0].name, 'two');
+      assert(patches[0].target.isElement());
+    });
+
+    it('removes a class name', () => {
+
+      // given
+      const template = [
+        'div', {
+          class: 'some-name',
+        },
+      ];
+      const nextTemplate = [
+        'div', {
+        },
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_CLASS_NAME);
+      assert.equal(patches[0].name, 'some-name');
+      assert(patches[0].target.isElement());
     });
 
     it('adds a listener', () => {
@@ -478,7 +681,7 @@ describe('Diff => calculate patches', () => {
         }).from(...items);
 
         beforeEach(() => {
-          ComponentTree.createInstance = createDummyInstance;
+          ComponentTree.createComponentInstance = createDummyInstance;
         });
 
         it('inserts an element', () => {
@@ -790,7 +993,7 @@ describe('Diff => calculate patches', () => {
     };
 
     beforeEach(() => {
-      ComponentTree.createInstance = createDummyInstance;
+      ComponentTree.createComponentInstance = createDummyInstance;
     });
 
     const assertComponentUpdate = (patch, component, props) => {

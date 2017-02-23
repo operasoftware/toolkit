@@ -1,6 +1,6 @@
-const VirtualDOM = require('../../src/core/virtual-dom.js');
+const Template = require('../src/core/template.js');
 
-describe('Virtual DOM => spread template', () => {
+describe('Template => describe', () => {
 
   it('detects component', () => {
 
@@ -11,7 +11,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -31,7 +31,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -56,7 +56,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -74,7 +74,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -93,7 +93,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -112,7 +112,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -134,7 +134,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -157,7 +157,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {
@@ -182,7 +182,7 @@ describe('Virtual DOM => spread template', () => {
     ];
 
     // when
-    const definition = VirtualDOM.spread(template);
+    const definition = Template.describe(template);
 
     // then
     assert.deepEqual(definition, {

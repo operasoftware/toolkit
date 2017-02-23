@@ -1,5 +1,5 @@
 global.Reactor = createCore();
-const VirtualNode = Reactor.VirtualNode;
+const VirtualElement = Reactor.VirtualElement;
 const VirtualDOM = Reactor.VirtualDOM;
 const ItemType = VirtualDOM.ItemType;
 
@@ -29,22 +29,22 @@ describe('Virtual DOM => create', () => {
     ));
 
     // when
-    const rootNode = VirtualDOM.create(component);
+    const rootElement = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode)
-    assert.equal(rootNode.name, 'div');
-    assert.equal(rootNode.children.length, 1);
+    assert(rootElement instanceof VirtualElement)
+    assert.equal(rootElement.name, 'div');
+    assert.equal(rootElement.children.length, 1);
 
-    const spanNode = rootNode.children[0];
-    assert(spanNode instanceof VirtualNode);
-    assert.equal(spanNode.name, 'span');
-    assert.equal(spanNode.children.length, 1);
+    const spanElement = rootElement.children[0];
+    assert(spanElement instanceof VirtualElement);
+    assert.equal(spanElement.name, 'span');
+    assert.equal(spanElement.children.length, 1);
 
-    const linkNode = spanNode.children[0];
-    assert(linkNode instanceof VirtualNode);
-    assert.equal(linkNode.name, 'a');
-    assert.equal(linkNode.text, 'Text');
+    const linkElement = spanElement.children[0];
+    assert(linkElement instanceof VirtualElement);
+    assert.equal(linkElement.name, 'a');
+    assert.equal(linkElement.text, 'Text');
   });
 
   it('supports nested components', () => {
@@ -64,15 +64,15 @@ describe('Virtual DOM => create', () => {
     };
 
     // when
-    const rootNode = VirtualDOM.create(component);
+    const rootElement = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
-    assert.equal(rootNode.name, 'div');
-    assert.equal(rootNode.text, 'Text');
-    assert.equal(rootNode.children, undefined);
-    assert.equal(rootNode.attrs, undefined);
-    assert.equal(rootNode.listeners, undefined);
+    assert(rootElement instanceof VirtualElement);
+    assert.equal(rootElement.name, 'div');
+    assert.equal(rootElement.text, 'Text');
+    assert.deepEqual(rootElement.children, []);
+    assert.deepEqual(rootElement.attrs, {});
+    assert.deepEqual(rootElement.listeners, {});
   });
 
   it('supports passing props to subcomponents', () => {
@@ -98,17 +98,17 @@ describe('Virtual DOM => create', () => {
     });
 
     // when
-    const rootNode = VirtualDOM.create(component);
+    const rootElement = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
-    assert(rootNode.children);
-    assert.equal(rootNode.children.length, 5);
-    assert(rootNode.children[0].text, 'Item A');
-    assert(rootNode.children[1].text, 'Item B');
-    assert(rootNode.children[2].text, 'Item C');
-    assert(rootNode.children[3].text, 'Item D');
-    assert(rootNode.children[4].text, 'Item E');
+    assert(rootElement instanceof VirtualElement);
+    assert(rootElement.children);
+    assert.equal(rootElement.children.length, 5);
+    assert(rootElement.children[0].text, 'Item A');
+    assert(rootElement.children[1].text, 'Item B');
+    assert(rootElement.children[2].text, 'Item C');
+    assert(rootElement.children[3].text, 'Item D');
+    assert(rootElement.children[4].text, 'Item E');
   });
 
   it('supports passing children to subcomponents', () => {
@@ -132,18 +132,18 @@ describe('Virtual DOM => create', () => {
     });
 
     // when
-    const rootNode = VirtualDOM.create(component);
+    const rootElement = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
-    assert(rootNode.children);
-    assert.equal(rootNode.children.length, 2);
+    assert(rootElement instanceof VirtualElement);
+    assert(rootElement.children);
+    assert.equal(rootElement.children.length, 2);
 
-    assert.equal(rootNode.children.length, 2);
-    assert.equal(rootNode.children[0].name, 'span');
-    assert.equal(rootNode.children[0].text, 'from parent');
-    assert.equal(rootNode.children[1].name, 'span');
-    assert.equal(rootNode.children[1].text, 'from child');
+    assert.equal(rootElement.children.length, 2);
+    assert.equal(rootElement.children[0].name, 'span');
+    assert.equal(rootElement.children[0].text, 'from parent');
+    assert.equal(rootElement.children[1].name, 'span');
+    assert.equal(rootElement.children[1].text, 'from child');
   });
 
   it('supports mixing subcomponents and static markup', () => {
@@ -177,26 +177,26 @@ describe('Virtual DOM => create', () => {
     };
 
     // when
-    const rootNode = VirtualDOM.create(component);
+    const rootElement = VirtualDOM.create(component);
 
     // then
-    assert(rootNode instanceof VirtualNode);
-    assert.equal(rootNode.name, 'section');
-    assert(rootNode.children);
-    assert.equal(rootNode.children.length, 2);
-    assert.equal(rootNode.children[0].name, 'h1');
-    assert.equal(rootNode.children[0].text, 'A');
+    assert(rootElement instanceof VirtualElement);
+    assert.equal(rootElement.name, 'section');
+    assert(rootElement.children);
+    assert.equal(rootElement.children.length, 2);
+    assert.equal(rootElement.children[0].name, 'h1');
+    assert.equal(rootElement.children[0].text, 'A');
 
-    const paragraphNode = rootNode.children[1];
-    assert.equal(paragraphNode.name, 'p');
-    assert(paragraphNode.children);
-    assert.equal(paragraphNode.children.length, 1);
+    const paragraphElement = rootElement.children[1];
+    assert.equal(paragraphElement.name, 'p');
+    assert(paragraphElement.children);
+    assert.equal(paragraphElement.children.length, 1);
 
-    const divNode = paragraphNode.children[0];
-    assert.equal(divNode.name, 'div');
-    assert(divNode.children);
-    assert.equal(divNode.children[0].name, 'h2');
-    assert.equal(divNode.children[1].name, 'span');
-    assert.equal(divNode.children[1].text, 'root');
+    const divElement = paragraphElement.children[0];
+    assert.equal(divElement.name, 'div');
+    assert(divElement.children);
+    assert.equal(divElement.children[0].name, 'h2');
+    assert.equal(divElement.children[1].name, 'span');
+    assert.equal(divElement.children[1].text, 'root');
   });
 });

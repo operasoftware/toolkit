@@ -4,7 +4,7 @@
 
   const Bubble = require.def('demo/bubbles/bubble-component');
 
-  const BubblesApp = class extends Reactor.Component {
+  const BubblesApp = class extends Reactor.Root {
 
     static async init() {
       reducer = await require('demo/bubbles/bubbles-reducer');
@@ -47,7 +47,7 @@
           Bubble, Object.assign({}, bubble, {
             onClick: event => {
               this.onBubbleClicked(bubble);
-              // event.stopPropagation();
+              event.stopPropagation();
             }
           })
         ])
