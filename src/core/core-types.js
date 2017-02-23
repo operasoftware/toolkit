@@ -75,7 +75,7 @@
       if (this.comment) {
         return this.comment;
       }
-      if (this.child.isComponent()) {
+      if (this.child && this.child.isComponent()) {
         return this.child.placeholder;
       }
       return null;
@@ -198,7 +198,9 @@
       if (index >= 0) {
         this.children.splice(index, 1);
         child.parentNode = null;
+        return true;
       }
+      return false;
     }
 
     get nodeType() {
@@ -224,6 +226,10 @@
   };
 
   module.exports = {
-    VirtualNode, Component, Root, VirtualElement, Comment,
+    VirtualNode,
+    Component,
+    Root,
+    VirtualElement,
+    Comment,
   };
 }

@@ -1,4 +1,14 @@
 {
+
+  // TODO: use a subclass of an Array
+  Array.prototype.add = Array.prototype.push;
+  Array.prototype.remove = function(element) {
+    const index = this.indexOf(element);
+    if (index >= 0) {
+      this.splice(index, 1);
+    }
+  };
+
   const Node = class {
 
     constructor() {
@@ -15,16 +25,47 @@
     }
   }
 
+  const Attributes = class {
+
+    get length() {
+      return Object.keys(this).length;
+    }
+  };
+
+  const DOMTokenList = class {
+
+    constructor() {
+      this.array = [];
+      this[Symbol.iterator] = function* () {
+        for (const item of this.array) {
+          yield item;
+        }
+      };
+    }
+
+    add(item) {
+      this.array.push(item);
+    }
+
+    remove(item) {
+      const index = this.array.indexOf(item);
+      if (index >= 0) {
+        this.array.splice(index, 1);
+      }
+    }
+  };
+
   global.Element = class extends Node {
 
     constructor(name) {
       super();
+      // TODO: move to utils
       const dataAttr = attr => {
         return ('data' + attr[0].toUpperCase() + attr.slice(1))
           .replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
       };
       this.tagName = name.toUpperCase();
-      this.attributes = {};
+      this.attributes = new Attributes();
       this.dataset = new Proxy({}, {
         set: (target, attr, value) => {
           target[attr] = String(value);
@@ -38,11 +79,16 @@
         }
       });
       this.style = {};
+      this.classList = new DOMTokenList();
       this.eventListeners = {};
     }
 
     setAttribute(name, value) {
       this.attributes[name] = String(value);
+    }
+
+    getAttribute(name) {
+      return this.attributes[name];
     }
 
     removeAttribute(name) {

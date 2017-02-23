@@ -226,9 +226,9 @@ describe('Patch => apply', () => {
     });
 
     // when
-    Patch.addAttribute('name', 'value', element).apply();
-    Patch.addAttribute('noValidate', 'true', element).apply();
-    Patch.addAttribute('minLength', '100px', element).apply();
+    Patch.replaceAttribute('name', 'value', element).apply();
+    Patch.replaceAttribute('noValidate', 'true', element).apply();
+    Patch.replaceAttribute('minLength', '100px', element).apply();
 
     // then
     assert.equal(Object.entries(element.attrs).length, 3);
@@ -411,12 +411,46 @@ describe('Patch => apply', () => {
     });
   });
 
-  it.skip('adds class name', () => {
+  it('adds class name', () => {
 
+    // given
+    const element = ComponentTree.createFromTemplate([
+      'div', {
+        class: {},
+      }
+    ]);
+    Document.attachElementTree(element);
+
+    assert.deepEqual(element.classNames, []);
+    assert.deepEqual(Array.from(element.ref.classList), []);
+
+    // when
+    Patch.addClassName('test', element).apply();
+
+    // then
+    assert.deepEqual(element.classNames, ['test']);
+    assert.deepEqual(Array.from(element.ref.classList), ['test']);
   });
 
-  it.skip('removes class name', () => {
+  it('removes class name', () => {
 
+    // given
+    const element = ComponentTree.createFromTemplate([
+      'div', {
+        class: 'test',
+      }
+    ]);
+    Document.attachElementTree(element);
+
+    assert.deepEqual(element.classNames, ['test']);
+    assert.deepEqual(Array.from(element.ref.classList), ['test']);
+
+    // when
+    Patch.removeClassName('test', element).apply();
+
+    // then
+    assert.deepEqual(element.classNames, []);
+    assert.deepEqual(Array.from(element.ref.classList), []);
   });
 
   it.skip('adds listener', () => {

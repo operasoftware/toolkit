@@ -96,6 +96,7 @@ describe('DOM stub', () => {
 
         // then
         assert.equal(element.attributes.name, 'null')
+        assert.equal(element.getAttribute('name'), 'null');
       });
 
       it('replaces an attribute', () => {
@@ -111,6 +112,7 @@ describe('DOM stub', () => {
 
         // then
         assert.equal(element.attributes.name, 'true')
+        assert.equal(element.getAttribute('name'), 'true');
       });
     });
 
@@ -129,6 +131,7 @@ describe('DOM stub', () => {
 
         // then
         assert.equal(element.attributes.id, undefined);
+        assert.equal(element.getAttribute('id'), undefined);
       });
     });
 

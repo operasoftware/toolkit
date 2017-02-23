@@ -25,10 +25,6 @@
       return [reducer];
     }
 
-    onBubbleClicked(bubble) {
-      this.dispatch(reducer.commands.highlight(bubble.id));
-    }
-
     render() {
       return [
         'bubbles', {
@@ -46,7 +42,7 @@
         ...this.props.bubbles.map(bubble => [
           Bubble, Object.assign({}, bubble, {
             onClick: event => {
-              this.onBubbleClicked(bubble);
+              this.dispatch(reducer.commands.highlight(bubble.id));
               event.stopPropagation();
             }
           })

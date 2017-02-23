@@ -242,6 +242,38 @@ describe('Core Types', () => {
 
   describe('Component', () => {
 
+    describe('render', () => {
+
+      it('returns undefined by default', () => {
+
+        // given
+        const component = new Reactor.Root();
+
+        // then
+        assert.equal(component.render(), undefined);
+      });
+    });
+
+    describe('lifecycle methods', () => {
+
+      const methods = [
+        'onCreated',
+        'onAttached',
+        'onUpdated',
+        'onDetached',
+      ];
+
+      const component = new Reactor.Root();
+
+      methods.forEach(method => {
+
+        it(`defines ${method}()`, () => {
+          assert.equal(typeof component[method], 'function');
+          assert.equal(component[method](), undefined);
+        })
+      });
+    });
+
     describe('append child', () => {
 
       it('removes the comment', () => {
@@ -454,6 +486,25 @@ describe('Core Types', () => {
         assert(component.placeholder);
         assert(component.placeholder.isComment());
         assert.equal(component.placeholder, component.comment);
+      });
+    });
+  });
+
+  describe('Root', () => {
+
+    const component = new Reactor.Root();
+
+    describe('get initial state', () => {
+
+      it('by default returns an empty object', () => {
+        assert.deepEqual(component.getInitialState(), {});
+      });
+    });
+
+    describe('get reducers', () => {
+
+      it('by default returns an empty array', () => {
+        assert.deepEqual(component.getReducers(), []);
       });
     });
   });
