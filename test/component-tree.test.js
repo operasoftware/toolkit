@@ -18,7 +18,7 @@ describe('Component Tree => create', () => {
       }
     };
 
-    ComponentTree.createInstance = def => {
+    ComponentTree.createComponentInstance = def => {
       return new LeafElement();
     };
 
@@ -30,8 +30,11 @@ describe('Component Tree => create', () => {
     });
 
     // then
-    assert(component instanceof Reactor.Component);
-    assert(component.child instanceof Reactor.VirtualNode);
+    assert(component.isComponent());
+    assert(component.childElement, component.child);
+
+    assert(component.child.isElement());
+    assert(component.child.parentNode, component);
 
     assert.equal(component.child.name, 'a');
     assert.equal(component.child.text, label);
@@ -59,7 +62,7 @@ describe('Component Tree => create', () => {
       }
     };
 
-    ComponentTree.createInstance = def => {
+    ComponentTree.createComponentInstance = def => {
       return new NestedElements();
     };
 
@@ -73,21 +76,33 @@ describe('Component Tree => create', () => {
     });
 
     // then
-    assert(component instanceof Reactor.Component);
-    assert(component.child instanceof Reactor.VirtualNode);
-
     const divElement = component.child;
+    const spanElement = divElement.children[0];
+    const linkElement = spanElement.children[0];
+
+    assert(component.isComponent());
+    assert.equal(component.childElement, divElement);
+
+    assert(divElement.isElement());
+    assert.equal(divElement.parentNode, component);
+
     assert.equal(divElement.name, 'div');
     assert(divElement.children);
     assert.equal(divElement.children.length, 1);
 
-    const spanElement = divElement.children[0];
+    assert(spanElement.isElement());
+    assert.equal(spanElement.parentNode, divElement);
+    assert.equal(spanElement.parentElement, divElement);
+
     assert.equal(spanElement.name, 'span');
     assert.equal(spanElement.listeners['click'], onClick);
     assert(spanElement.children);
     assert.equal(spanElement.children.length, 1);
 
-    const linkElement = spanElement.children[0];
+    assert(linkElement.isElement());
+    assert.equal(linkElement.parentNode, spanElement);
+    assert.equal(linkElement.parentElement, spanElement);
+
     assert.equal(linkElement.name, 'a');
     assert(linkElement.attrs.href, url);
     assert(linkElement.text, label);
@@ -134,7 +149,7 @@ describe('Component Tree => create', () => {
       }
     };
 
-    ComponentTree.createInstance = def => {
+    ComponentTree.createComponentInstance = def => {
       switch (def) {
         case ApplicationComponent:
           return new Application();
@@ -149,25 +164,35 @@ describe('Component Tree => create', () => {
     const component = ComponentTree.create(ApplicationComponent);
 
     // then
-    assert(component instanceof Reactor.Component);
-    assert(component.constructor === Application);
+    assert(component.isComponent());
+    assert.equal(component.constructor, Application);
 
     const parent = component.child;
-    assert(parent instanceof Reactor.Component);
-    assert(parent.constructor === Parent);
+    assert(parent.isComponent());
+    assert.equal(parent.constructor, Parent);
 
     const child = parent.child;
-    assert(child instanceof Reactor.Component);
-    assert(child.constructor === Child);
+    assert(child.isComponent());
+    assert.equal(child.constructor, Child);
 
     const spanElement = child.child;
-    assert(spanElement instanceof Reactor.VirtualNode);
+    assert(spanElement.isElement());
 
     const divElement = spanElement.children[0];
-    assert(divElement instanceof Reactor.VirtualNode);
+    assert(divElement.isElement());
 
-    const pElement = divElement.children[0];
-    assert(pElement instanceof Reactor.VirtualNode);
+    const paragraphElement = divElement.children[0];
+    assert(paragraphElement.isElement());
+
+    assert.equal(component.childElement, spanElement);
+    assert.equal(parent.childElement, spanElement);
+    assert.equal(child.childElement, spanElement);
+
+    assert.equal(parent.parentNode, component);
+    assert.equal(child.parentNode, parent);
+    assert.equal(spanElement.parentNode, child);
+    assert.equal(divElement.parentNode, spanElement);
+    assert.equal(paragraphElement.parentNode, divElement);
   });
 
 });

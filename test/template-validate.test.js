@@ -1,6 +1,6 @@
-const VirtualDOM = require('../../src/core/virtual-dom.js');
+const Template = require('../src/core/template.js');
 
-describe('Virtual DOM => validate template', () => {
+describe('Template => validate', () => {
 
   beforeEach(() => {
     sinon.stub(console, 'error');
@@ -18,7 +18,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -35,7 +35,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -52,7 +52,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -69,7 +69,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -88,7 +88,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -113,7 +113,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -133,7 +133,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -159,7 +159,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -178,7 +178,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -199,7 +199,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -226,7 +226,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -245,7 +245,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -267,7 +267,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -294,7 +294,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
@@ -306,7 +306,7 @@ describe('Virtual DOM => validate template', () => {
   it('rejects a number as a parameter', () => {
 
     // when
-    const result = VirtualDOM.validate([5]);
+    const result = Template.validate([5]);
 
     // then
     assert(result.error instanceof Error);
@@ -317,7 +317,7 @@ describe('Virtual DOM => validate template', () => {
   it('rejects a boolean as a parameter', () => {
 
     // when
-    const result = VirtualDOM.validate([true]);
+    const result = Template.validate([true]);
 
     // then
     assert(result.error instanceof Error);
@@ -328,7 +328,7 @@ describe('Virtual DOM => validate template', () => {
   it('rejects null as a parameter', () => {
 
     // when
-    const result = VirtualDOM.validate([null]);
+    const result = Template.validate([null]);
 
     // then
     assert(result.error instanceof Error);
@@ -339,7 +339,7 @@ describe('Virtual DOM => validate template', () => {
   it('rejects undefined as a parameter', () => {
 
     // when
-    const result = VirtualDOM.validate([undefined]);
+    const result = Template.validate([undefined]);
 
     // then
     assert(result.error instanceof Error);
@@ -357,7 +357,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert(result.error instanceof Error);
@@ -375,7 +375,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert(result.error instanceof Error);
@@ -392,7 +392,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert(result.error instanceof Error);
@@ -412,7 +412,7 @@ describe('Virtual DOM => validate template', () => {
     ];
 
     // when
-    const result = VirtualDOM.validate(template);
+    const result = Template.validate(template);
 
     // then
     assert(result.error instanceof Error);

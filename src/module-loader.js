@@ -18,7 +18,7 @@
     console.log('Preloading:', path);
     const component = await require(path);
     const pendingDependencies = Array.from(dependencies);
-    if (component.prototype instanceof Reactor.Component) {
+    if (component.prototype instanceof Reactor.Component && component.init) {
       await component.init();
     }
     for (let dependency of pendingDependencies) {
@@ -38,14 +38,14 @@
 
     const loadPromise = new Promise(resolve => {
       dependencies.length = 0;
-      console.time('=> script load time');
+      // console.time('=> script load time');
       const script = document.createElement('script');
       script.src = getScriptPath(componentPath);
       script.setAttribute('data-component-path', componentPath);
       script.onload = () => {
         cache.set(componentPath, module.exports);
-        console.log('(loader) Loaded script:', script.src);
-        console.timeEnd('=> script load time');
+        // console.log('(loader) Loaded script:', script.src);
+        // console.timeEnd('=> script load time');
         resolve(module.exports);
       };
       document.head.appendChild(script);

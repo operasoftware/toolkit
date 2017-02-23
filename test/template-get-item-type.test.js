@@ -1,12 +1,12 @@
-const VirtualDOM = require('../../src/core/virtual-dom.js');
-const ItemType = VirtualDOM.ItemType;
+const Template = require('../src/core/template.js');
+const ItemType = Template.ItemType;
 
-describe('Virtual DOM => get item type', () => {
+describe('Template => get item type', () => {
 
   it('returns "string" for a string', () => {
 
     // when
-    const type = VirtualDOM.getItemType('string');
+    const type = Template.getItemType('string');
 
     // then
     assert.equal(type, ItemType.STRING);
@@ -15,7 +15,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "number" for a number', () => {
 
     // when
-    const type = VirtualDOM.getItemType(13);
+    const type = Template.getItemType(13);
 
     // then
     assert.equal(type, ItemType.NUMBER);
@@ -24,7 +24,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "boolean" for a boolean', () => {
 
     // when
-    const type = VirtualDOM.getItemType(true);
+    const type = Template.getItemType(true);
 
     // then
     assert.equal(type, ItemType.BOOLEAN);
@@ -33,7 +33,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "component" for a symbol', () => {
 
     // when
-    const type = VirtualDOM.getItemType(Symbol.for('component'));
+    const type = Template.getItemType(Symbol.for('component'));
 
     // then
     assert.equal(type, ItemType.COMPONENT);
@@ -42,7 +42,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "null" for null', () => {
 
     // when
-    const type = VirtualDOM.getItemType(null);
+    const type = Template.getItemType(null);
 
     // then
     assert.equal(type, ItemType.NULL);
@@ -51,7 +51,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "undefined" for undefined', () => {
 
     // when
-    const type = VirtualDOM.getItemType(undefined);
+    const type = Template.getItemType(undefined);
 
     // then
     assert.equal(type, ItemType.UNDEFINED);
@@ -60,7 +60,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "element" for an array', () => {
 
     // when
-    const type = VirtualDOM.getItemType([]);
+    const type = Template.getItemType([]);
 
     // then
     assert.equal(type, ItemType.ELEMENT);
@@ -69,7 +69,7 @@ describe('Virtual DOM => get item type', () => {
   it('returns "props" for an object', () => {
 
     // when
-    const type = VirtualDOM.getItemType({});
+    const type = Template.getItemType({});
 
     // then
     assert.equal(type, ItemType.PROPS);

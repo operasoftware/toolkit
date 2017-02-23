@@ -1,14 +1,16 @@
 {
+  let createTree, calculateDiff;
+
   const App = class {
 
     constructor(path) {
       this.path = path;
       this.store = new Reactor.Store();
-      this.renderer = new Reactor.Renderer();
     }
 
     async preload() {
       this.preloaded = true;
+      console.log('--------------------------------------------------------')
       await window.preload(this.path);
     }
 
@@ -20,20 +22,15 @@
       if (!this.preloaded) {
         await RootClass.init();
       }
-      this.root = new RootClass();
-      this.root.ref = container;
-      this.root.child = null;
 
-      this.reducer = Reactor.combineReducers(...this.root.getReducers());
-
-      // connect
-      this.root.dispatch = command => {
+      this.root = new RootClass(container, command => {
         this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
-      };
+      });
 
-      // init
-      this.root.dispatch(this.reducer.commands.init(this.root.getInitialState()));
+      this.reducer = Reactor.combineReducers(...this.root.getReducers());
+      this.root.dispatch(
+        this.reducer.commands.init(this.root.getInitialState()));
     }
 
     async createVirtualDOM() {
@@ -44,23 +41,21 @@
       }
     }
 
-    async updateDOM() {
-
-      console.time('render');
-
+    calculatePatches() {
       const componentTree = Reactor.ComponentTree.createTree(
-          this.root, this.store.state);
-      const patches = Reactor.Diff.calculate(
-          this.root.child, componentTree, this.root);
+        this.root, this.store.state);
+      return Reactor.Diff.calculate(this.root.child, componentTree, this.root);
+    }
 
+    async updateDOM() {
+      console.time('=> Render');
+      const patches = this.calculatePatches();
       for (const patch of patches) {
         patch.apply();
       }
-
-      console.log('Patches:', patches.length, patches);
-      // const virtualDOM = await this.createVirtualDOM();
-      // this.renderer.render(this.container, virtualDOM);
-      console.timeEnd('render');
+      console.log('--------------------------------------------------------')
+      console.log('Patches:', patches.length);
+      console.timeEnd('=> Render');
     }
   };
 

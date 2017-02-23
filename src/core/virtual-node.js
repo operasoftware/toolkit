@@ -1,41 +1,65 @@
 {
-
-  const getClassName = value => {
-
-    if (!value) {
-      return '';
-    }
-
-    if (value.constructor === Object) {
-      value = Object.keys(value).map(key => value[key] && key);
-    }
-
-    if (value.constructor === Array) {
-      const classNames = [];
-      for (const item of value) {
-        const className = getClassName(item);
-        if (className) {
-          classNames.push(className);
-        }
-      }
-      value = classNames.join(' ');
-    }
-
-    if (value.constructor === String) {
-      return value.trim();
-    }
-
-    return null;
-  };
-
   const VirtualNode = class {
 
     constructor(name, props = {}) {
       this.name = name;
-      this.addAttributes(props);
-      this.addListeners(props);
       if (props.key) {
         this.key = props.key;
+      }
+      this.attrs = {};
+      this.addAttributes(props);
+      this.dataset = {};
+      this.addDataAttributes(props.dataset);
+      this.listeners = {};
+      this.addListeners(props);
+    }
+
+    addAttributes(props = {}) {
+      Object.keys(props)
+        .filter(key => Reactor.SUPPORTED_ATTRIBUTES.includes(key))
+        .forEach(key => {
+          this.setAttribute(key, props[key]);
+        });
+    }
+
+    setAttribute(key, value) {
+      if (Reactor.SUPPORTED_ATTRIBUTES.includes(key)) {
+        value = this.normalizeValue(key, value);
+        if (value) {
+          this.attrs[key] = value;
+        }
+      } else if (Reactor.debug) {
+        console.warn(`Unsupported attribute name "${key}" on:`, this);
+      }
+    }
+
+    addDataAttributes(dataset = {}) {
+      Object.keys(dataset)
+        .forEach(key => {
+          this.setDataAttribute(key, dataset[key]);
+        });
+    }
+
+    setDataAttribute(key, value) {
+      this.dataset[key] = this.getStyleValue(value);
+    }
+
+    addListeners(props = {}) {
+      Object.keys(props)
+        .filter(key => Reactor.SUPPORTED_EVENTS.includes(key))
+        .forEach(key => {
+          this.addListener(key, props[key]);
+        });
+    }
+
+    addListener(key, listener) {
+      if (Reactor.SUPPORTED_EVENTS.includes(key)) {
+        const name = Reactor.utils.getEventName(key);
+        if (typeof listener === 'function') {
+          this.listeners[name] = listener;
+        }
+      } else if (Reactor.debug) {
+        console.warn(`Unsupported listener name "${key}" on:`, this);
       }
     }
 
@@ -54,20 +78,43 @@
       return node;
     }
 
+    getStyleValue(value) {
+      if (value.constructor === Array) {
+        return value.join('');
+      }
+      return value + '';
+    };
+
     normalizeValue(key, value) {
       if (value === undefined || value === null || typeof value === 'function') {
         return null;
       }
-      const getStyleValue = value => {
-        if (value.constructor === Array) {
-          return value.join('');
-        }
-        return value + '';
-      };
       switch (key) {
         case 'class':
           {
-            return getClassName(value);
+            const getClassNamesString = value => {
+              if (!value) {
+                return '';
+              }
+              if (value.constructor === Object) {
+                value = Object.keys(value).map(key => value[key] && key);
+              }
+              if (value.constructor === Array) {
+                const classNames = [];
+                for (const item of value) {
+                  const className = getClassNamesString(item);
+                  if (className) {
+                    classNames.push(className);
+                  }
+                }
+                value = classNames.join(' ');
+              }
+              if (value.constructor === String) {
+                return value.trim();
+              }
+              return null;
+            };
+            return getClassNamesString(value).split(' ');
           }
         case 'style':
           {
@@ -99,6 +146,7 @@
               return style;
             }
           }
+        // TODO: get rid of redundance
         case 'filter':
           {
             const filters = Object.keys(value)
@@ -117,12 +165,13 @@
             for (let filter of filters) {
               const val = value[filter];
               if (val !== undefined && val !== null) {
-                result[filter] = getStyleValue(val);
+                result[filter] = this.getStyleValue(val);
               }
             }
             return Object.entries(result)
               .map(([name, value]) => `${name}(${value})`).join(' ');
           }
+        // TODO: get rid of redundance
         case 'transform':
           {
             const transforms = Object.keys(value)
@@ -141,47 +190,14 @@
             for (let transform of transforms) {
               const val = value[transform];
               if (val !== undefined && val !== null) {
-                result[transform] = getStyleValue(val);
+                result[transform] = this.getStyleValue(val);
               }
             }
             return Object.entries(result)
               .map(([name, value]) => `${name}(${value})`).join(' ');
           }
         default:
-          return getStyleValue(value);
-      }
-    }
-
-    addAttributes(props = {}) {
-      const attributes = Object.keys(props)
-        .filter(key => Reactor.SUPPORTED_ATTRIBUTES.includes(key))
-        .reduce((result, key) => {
-          const attr = key.replace(/(?:^|\.?)([A-Z])/g,
-            (x, y) => ('-' + y.toLowerCase()));
-          const value = this.normalizeValue(key, props[key]);
-          if (value) {
-            result[attr] = value;
-          }
-          return result;
-        }, {});
-      if (Object.keys(attributes).length > 0) {
-        this.attrs = attributes;
-      }
-    }
-
-    addListeners(props = {}) {
-      const eventListeners = Object.keys(props)
-        .filter(key => Reactor.SUPPORTED_EVENTS.includes(key))
-        .reduce((result, key) => {
-          const event = key.toLowerCase().slice(2);
-          const listener = props[key];
-          if (typeof listener === 'function') {
-            result[event] = listener;
-          }
-          return result;
-        }, {});
-      if (Object.keys(eventListeners).length > 0) {
-        this.listeners = eventListeners;
+          return this.getStyleValue(value);
       }
     }
 

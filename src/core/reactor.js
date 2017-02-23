@@ -9,30 +9,33 @@
         SUPPORTED_FILTERS,
         SUPPORTED_TRANSFORMS
       } = await require('core/consts');
+      const {
+        VirtualNode, Root, Component, VirtualElement, Comment,
+      } = await require('core/core-types');
+
       const App = await require('core/app');
-      const Component = await require('core/component');
       const Store = await require('core/store');
-      const Renderer = await require('core/renderer');
-      const VirtualNode = await require('core/virtual-node');
-      const VirtualDOM = await require('core/virtual-dom');
+      const Template = await require('core/template');
       const ComponentTree = await require('core/component-tree');
       const Diff = await require('core/diff');
       const Patch = await require('core/patch');
       const Reconciler = await require('core/reconciler');
       const Document = await require('core/document');
-      const { combineReducers, create } = await require('core/utils');
+      const {
+        combineReducers, create, utils
+      } = await require('core/utils');
 
       return {
         // constants
         SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
         SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
         // core classes
-        Component, Renderer, Store,
-        // structure
-        App, VirtualNode, VirtualDOM,
-        ComponentTree, Diff, Patch, Reconciler, Document,
+        Store, App, ComponentTree, Document,
+        Diff, Patch, Reconciler, Template,
+        // core types
+        VirtualNode, Root, Component, VirtualElement, Comment,
         // utils
-        combineReducers, create
+        combineReducers, create, utils
       };
     }
   };

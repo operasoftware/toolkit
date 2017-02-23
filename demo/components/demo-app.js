@@ -2,7 +2,7 @@
   let reducer;
   let settings;
 
-  const DemoApp = class extends Reactor.Component {
+  const DemoApp = class extends Reactor.Root {
 
     static async init() {
       reducer = await require('demo/reducers/demo-reducer');
@@ -24,7 +24,9 @@
         this.dispatch(reducer.commands.highlightItem(index));
       };
       return [
-        'div', [
+        'div', {
+          class: 'navigation'
+        }, [
           NavigationPanel, {
             items: this.props.items,
             onItemClicked
