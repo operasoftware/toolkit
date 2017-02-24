@@ -204,6 +204,28 @@ describe('Document', () => {
       assert.equal(element.textContent, 'Text');
     });
 
+    it('supports style attribute', () => {
+
+      // given
+      const node = ComponentTree.createFromTemplate([
+        'span', {
+          style: {
+            color: 'red',
+          }
+        }
+      ]);
+
+      // when
+      const element = Document.createElement(node);
+
+      // then
+      assert(element instanceof Element);
+      assert.equal(element.tagName, 'SPAN')
+      assert.deepEqual(element.style, {
+        color: 'red',
+      });
+    });
+
     it('supports adding event listeners', () => {
 
       // given

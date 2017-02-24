@@ -11,6 +11,7 @@
         COMPONENT: 'component',
         ELEMENT: 'element',
         PROPS: 'props',
+        FUNCTION: 'function',
       };
     }
 
@@ -110,6 +111,8 @@
           return Type.UNDEFINED;
         case 'symbol':
           return Type.COMPONENT;
+        case 'function':
+          return Type.FUNCTION;
         case 'object':
           if (item === null) {
             return Type.NULL;
@@ -118,8 +121,6 @@
           } else {
             return Type.PROPS;
           }
-        default:
-          console.error('Unknown type of:', item);
       }
     }
 
@@ -179,7 +180,7 @@
                 }
                 for (let i = 2; i < template.length; i++) {
                   if (types[i] !== Type.ELEMENT) {
-                    const error = new Error(`Invalid parameter type: "${types[i]}" at index: ${i}`);
+                    const error = new Error(`Invalid parameter type "${types[i]}" at index ${i}`);
                     console.error('Invalid parameter:', template[i],
                       ', expecting child element');
                     return {
@@ -193,7 +194,8 @@
                 types
               };
             default:
-              console.log('Invalid parameter', template[1], 'expecting properties object, text content or first child element');
+              const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
+              console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
               return {
                 error,
                 types
@@ -203,8 +205,12 @@
         return {
           types
         };
-      } else if (template !== null) {
+      } else {
+        const error = new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
+        return {
+          error
+        };
       }
     }
 

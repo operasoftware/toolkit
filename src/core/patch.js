@@ -51,6 +51,171 @@
       });
     }
 
+    static addAttribute(name, value, target) {
+      return new Patch(Type.ADD_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setAttribute(name, value);
+          Reactor.Document.setAttribute(target.ref, name, value);
+        }
+      });
+    }
+
+    static replaceAttribute(name, value, target) {
+      return new Patch(Type.REPLACE_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setAttribute(name, value);
+          Reactor.Document.setAttribute(target.ref, name, value);
+        }
+      });
+    }
+
+    static removeAttribute(name, target) {
+      return new Patch(Type.REMOVE_ATTRIBUTE, {
+        name,
+        target,
+        apply: () => {
+          target.removeAttribute(name);
+          Reactor.Document.removeAttribute(target.ref, name);
+        }
+      });
+    }
+
+    static addDataAttribute(name, value, target) {
+      return new Patch(Type.ADD_DATA_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setDataAttribute(name, value);
+          Reactor.Document.setDataAttribute(target.ref, name, value);
+        }
+      });
+    }
+
+    static replaceDataAttribute(name, value, target) {
+      return new Patch(Type.REPLACE_DATA_ATTRIBUTE, {
+        name,
+        value,
+        target,
+        apply: () => {
+          target.setDataAttribute(name, value);
+          Reactor.Document.setDataAttribute(target.ref, name, value);
+        }
+      });
+    }
+
+    static removeDataAttribute(name, target) {
+      return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
+        name,
+        target,
+        apply: () => {
+          target.removeDataAttribute(name);
+          Reactor.Document.removeDataAttribute(target.ref, name);
+        }
+      });
+    }
+    static addStyleProperty(property, value, target) {
+      return new Patch(Type.ADD_STYLE_PROPERTY, {
+        property,
+        value,
+        target,
+        apply: () => {
+          target.setStyleProperty(property, value);
+          Reactor.Document.setStyleProperty(target.ref, property, value);
+        }
+      });
+    }
+
+    static replaceStyleProperty(property, value, target) {
+      return new Patch(Type.REPLACE_STYLE_PROPERTY, {
+        property,
+        value,
+        target,
+        apply: () => {
+          target.setStyleProperty(property, value);
+          Reactor.Document.setStyleProperty(target.ref, property, value);
+        }
+      });
+    }
+
+    static removeStyleProperty(property, target) {
+      return new Patch(Type.REMOVE_STYLE_PROPERTY, {
+        property,
+        target,
+        apply: () => {
+          target.removeStyleProperty(property);
+          Reactor.Document.removeStyleProperty(target.ref, property);
+        }
+      });
+    }
+
+    static addClassName(name, target) {
+      return new Patch(Type.ADD_CLASS_NAME, {
+        name,
+        target,
+        apply: () => {
+          target.addClassName(name);
+          Reactor.Document.addClassName(target.ref, name);
+        }
+      });
+    }
+
+    static removeClassName(name, target) {
+      return new Patch(Type.REMOVE_CLASS_NAME, {
+        name,
+        target,
+        apply: () => {
+          target.removeClassName(name);
+          Reactor.Document.removeClassName(target.ref, name);
+        }
+      });
+    }
+
+    static addListener(event, listener, target) {
+      return new Patch(Type.ADD_LISTENER, {
+        event,
+        listener,
+        target,
+        apply: () => {
+          target.addListener(event, listener);
+          Reactor.Document.addEventListener(target.ref, event, listener);
+        }
+      });
+    }
+
+    static replaceListener(event, removed, added, target) {
+      return new Patch(Type.REPLACE_LISTENER, {
+        event,
+        removed,
+        added,
+        target,
+        apply: () => {
+          target.removeListener(event, removed);
+          Reactor.Document.removeEventListener(target.ref, event, removed);
+          target.addListener(event, added);
+          Reactor.Document.addEventListener(target.ref, event, added);
+        }
+      });
+    }
+
+    static removeListener(event, listener, target) {
+      return new Patch(Type.REMOVE_LISTENER, {
+        event,
+        listener,
+        target,
+        apply: () => {
+          target.removeListener(event, listener);
+          Reactor.Document.removeEventListener(target.ref, event, listener);
+        }
+      });
+    }
+
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element,
@@ -94,171 +259,6 @@
           if (component.childElement) {
             component.childElement.ref.remove();
           }
-        }
-      });
-    }
-
-    static addAttribute(name, value, target) {
-      return new Patch(Type.ADD_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: () => {
-          target.setAttribute(name, value);
-          Reactor.Document.setAttribute(target.ref, name, value);
-        }
-      });
-    }
-
-    static replaceAttribute(name, value, target) {
-      return new Patch(Type.REPLACE_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: () => {
-          target.attrs[name] = value;
-          Reactor.Document.setAttribute(target.ref, name, value);
-        }
-      });
-    }
-
-    static removeAttribute(name, target) {
-      return new Patch(Type.REMOVE_ATTRIBUTE, {
-        name,
-        target,
-        apply: () => {
-          delete target.attrs[name];
-          Reactor.Document.removeAttribute(target.ref, name);
-        }
-      });
-    }
-
-    static addDataAttribute(name, value, target) {
-      return new Patch(Type.ADD_DATA_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: () => {
-          target.setDataAttribute(name, value);
-          target.ref.dataset[name] = value;
-        }
-      });
-    }
-
-    static replaceDataAttribute(name, value, target) {
-      return new Patch(Type.REPLACE_DATA_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: () => {
-          target.setDataAttribute(name, value);
-          target.ref.dataset[name] = value;
-        }
-      });
-    }
-
-    static removeDataAttribute(name, target) {
-      return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
-        name,
-        target,
-        apply: () => {
-          delete target.dataset[name];
-          delete target.ref.dataset[name];
-        }
-      });
-    }
-    static addStyleProperty(property, value, target) {
-      return new Patch(Type.ADD_STYLE_PROPERTY, {
-        property,
-        value,
-        target,
-        apply: () => {
-          target.attrs.style = target.attrs.style || {};
-          target.attrs.style[property] = value;
-          target.ref.style[property] = value;
-        }
-      });
-    }
-
-    static replaceStyleProperty(property, value, target) {
-      return new Patch(Type.REPLACE_STYLE_PROPERTY, {
-        property,
-        value,
-        target,
-        apply: () => {
-          target.setStyleProperty(property, value);
-          target.ref.style[property] = value;
-        }
-      });
-    }
-
-    static removeStyleProperty(property, target) {
-      return new Patch(Type.REMOVE_STYLE_PROPERTY, {
-        property,
-        target,
-        apply: () => {
-          target.removeStyleProperty(property);
-          target.ref.style[property] = null;
-        }
-      });
-    }
-
-    static addClassName(name, target) {
-      return new Patch(Type.ADD_CLASS_NAME, {
-        name,
-        target,
-        apply: () => {
-          target.classNames.push(name);
-          target.ref.classList.add(name);
-        }
-      });
-    }
-
-    static removeClassName(name, target) {
-      return new Patch(Type.REMOVE_CLASS_NAME, {
-        name,
-        target,
-        apply: () => {
-          target.classNames = target.classNames.filter(item => name !== item);
-          target.ref.classList.remove(name);
-        }
-      });
-    }
-
-    static addListener(name, listener, target) {
-      return new Patch(Type.ADD_LISTENER, {
-        name,
-        listener,
-        target,
-        apply: () => {
-          throw 'Function "addListener" not implemented!';
-          // element.addEventListener(name, listener);
-        }
-      });
-    }
-
-    static replaceListener(name, removed, added, target) {
-      return new Patch(Type.REPLACE_LISTENER, {
-        name,
-        removed,
-        added,
-        target,
-        apply: () => {
-          target.listeners[name] = added;
-          target.ref.removeEventListener(name, removed);
-          target.ref.addEventListener(name, added);
-        }
-      });
-    }
-
-    static removeListener(name, listener, target) {
-      return new Patch(Type.REMOVE_LISTENER, {
-        name,
-        listener,
-        target,
-        apply: () => {
-          throw 'Function "removeListener" not implemented!';
-          // element.removeEventListener(name, listener);
         }
       });
     }

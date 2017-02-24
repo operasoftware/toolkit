@@ -167,11 +167,9 @@
     const getNode = key => {
       if (source.includes(key)) {
         return current[source.indexOf(key)];
-      }
-      if (target.includes(key)) {
+      } else {
         return next[target.indexOf(key)];
       }
-      throw `Node not found for key: ${key}`;
     };
 
     const moves = Reactor.Reconciler.calculateMoves(source, target);
@@ -246,8 +244,6 @@
         // replace component with an element
         patches.push(Patch.removeComponent(current, parent));
         patches.push(Patch.addElement(next, parent));
-      } else {
-        throw 'Unknown operation';
       }
     } else if (current.isElement()) {
       if (next.isComponent()) {

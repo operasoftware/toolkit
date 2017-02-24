@@ -191,4 +191,10 @@ describe('Template => describe', () => {
       children
     });
   });
+
+  it('rejects invalid template', () => {
+    assert.throws(() => {
+      Template.describe(null);
+    });
+  });
 });

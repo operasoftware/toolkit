@@ -85,21 +85,13 @@
       return undefined;
     }
 
-    onCreated() {
+    onCreated() {}
 
-    }
+    onAttached() {}
 
-    onAttached() {
+    onUpdated() {}
 
-    }
-
-    onUpdated() {
-
-    }
-
-    onDetached() {
-
-    }
+    onDetached() {}
 
     get nodeType() {
       return 'component';
@@ -145,6 +137,7 @@
       this.listeners = {};
       this.children = [];
       this.text = null;
+      this.key = null;
       this.ref = null;
     }
 
@@ -160,7 +153,7 @@
       this.dataset[name] = String(value);
     }
 
-    removeDataAttibute(name) {
+    removeDataAttribute(name) {
       delete this.dataset[name];
     }
 
