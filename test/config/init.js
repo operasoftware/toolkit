@@ -1,11 +1,11 @@
 require('babel-polyfill');
+require('dom-test');
+
 global.assert = require('assert');
 global.sinon = require('sinon');
 
 const consts = require('../../src/core/consts.js');
 const utils = require('../../src/core/utils.js');
-
-require('../api/dom.js');
 
 const CoreTypes = require('../../src/core/core-types.js');
 
