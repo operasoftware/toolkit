@@ -45,7 +45,7 @@
     constructor() {
       super();
       this.child = null;
-      this.comment = new Comment(this.constructor.name);
+      this.comment = new Comment(this.constructor.name, this);
     }
 
     appendChild(child) {
@@ -58,8 +58,7 @@
     removeChild() {
       this.child.parentNode = null;
       this.child = null;
-      this.comment = new Comment(this.constructor.name);
-      this.comment.parentNode = this; // TODO: unit test
+      this.comment = new Comment(this.constructor.name, this);
     }
 
     get childElement() {
@@ -206,9 +205,10 @@
 
   const Comment = class extends VirtualNode {
 
-    constructor(text) {
+    constructor(text, parentNode) {
       super();
       this.text = text;
+      this.parentNode = parentNode;
       this.ref = null;
     }
 

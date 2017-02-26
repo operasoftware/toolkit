@@ -89,24 +89,27 @@
       return element;
     };
 
-    static attachElementTree(node) {
+    static attachElementTree(node, callback) {
       const element = node.isComponent() ? node.childElement : node;
+      let domNode;
       if (element) {
-        const domElement = this.createElement(element);
+        domNode = this.createElement(element);
         if (element.children) {
           for (let child of element.children) {
-            const childElement = this.attachElementTree(child);
-            if (childElement) {
-              domElement.appendChild(childElement);
-            }
+            this.attachElementTree(child, childNode => {
+              domNode.appendChild(childNode);
+            });
           }
         }
-        element.ref = domElement;
-        return domElement;
+        element.ref = domNode;
+      } else {
+        domNode = document.createComment(node.placeholder.text);
+        node.placeholder.ref = domNode;
       }
-      const comment = document.createComment(node.placeholder.text);
-      node.placeholder.ref = comment;
-      return comment;
+      if (callback) {
+        callback(domNode);
+      }
+      return domNode;
     }
   };
 

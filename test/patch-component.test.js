@@ -40,6 +40,19 @@ describe('Patch component => apply', () => {
     };
   });
 
+  const createApp = template => {
+    const app = new App();
+    let node = null;
+    if (template) {
+      node = ComponentTree.createFromTemplate(template);
+      Document.attachElementTree(node, domNode => {
+        container.appendChild(domNode);
+      });
+      app.appendChild(node);
+    }
+    return [app, node];
+  };
+
   it('updates component', () => {
 
     // given
@@ -92,8 +105,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a component', () => {
 
       // given
-      const app = new App();
-      const divElement = ComponentTree.createFromTemplate([
+      const [app, divElement] = createApp([
         'div', [
           'span'
         ],
@@ -104,8 +116,6 @@ describe('Patch component => apply', () => {
           'span'
         ]
       ]);
-      app.appendChild(divElement);
-      Reactor.Document.attachElementTree(divElement);
 
       assert(divElement.ref);
 
@@ -114,6 +124,8 @@ describe('Patch component => apply', () => {
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
+
+      assert.equal(component.placeholder.ref.parentNode, divElement.ref);
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
@@ -152,8 +164,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a subcomponent', () => {
 
       // given
-      const app = new App();
-      const divElement = ComponentTree.createFromTemplate([
+      const [app, divElement] = createApp([
         'div', [
           'span'
         ],
@@ -166,8 +177,6 @@ describe('Patch component => apply', () => {
           'span'
         ]
       ]);
-      app.appendChild(divElement);
-      Reactor.Document.attachElementTree(divElement);
 
       assert(divElement.ref);
 
@@ -240,8 +249,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a component', () => {
 
       // given
-      const app = new App();
-      const divElement = ComponentTree.createFromTemplate([
+      const [app, divElement] = createApp([
         'div', [
           'span'
         ],
@@ -252,8 +260,6 @@ describe('Patch component => apply', () => {
           'span'
         ]
       ]);
-      app.appendChild(divElement);
-      Reactor.Document.attachElementTree(divElement);
 
       assert(divElement.ref);
 
@@ -262,6 +268,8 @@ describe('Patch component => apply', () => {
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
+
+      assert.equal(component.placeholder.ref.parentNode, divElement.ref);
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
@@ -294,8 +302,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a subcomponent', () => {
 
       // given
-      const app = new App();
-      const divElement = ComponentTree.createFromTemplate([
+      const [app, divElement] = createApp([
         'div', [
           'span'
         ],
@@ -308,8 +315,6 @@ describe('Patch component => apply', () => {
           'span'
         ]
       ]);
-      app.appendChild(divElement);
-      Reactor.Document.attachElementTree(divElement);
 
       assert(divElement.ref);
 
@@ -377,9 +382,19 @@ describe('Patch component => apply', () => {
     it('adds element to a component ', () => {
 
       // given
-      const app = new App();
-      const component = ComponentTree.create(Component);
-      app.appendChild(component);
+      const [app, component] = createApp([
+        Component
+      ]);
+
+      assert(component.placeholder);
+      assert(component.placeholder.isComment());
+
+      assert(component.parentElement);
+
+      assert.equal(component.placeholder.ref.parentNode, container);
+
+      assert(component.placeholder.ref);
+      assert.equal(component.placeholder.ref.textContent, 'ComponentClass');
 
       const element = ComponentTree.createFromTemplate([
         'div', [
@@ -391,8 +406,6 @@ describe('Patch component => apply', () => {
       Patch.addElement(element, component).apply();
 
       // then
-      assert(component.parentElement);
-      assert.equal(component.parentElement.ref, container);
       assert.equal(element.parentElement.ref, container);
 
       assert.equal(app.child, component);
@@ -410,14 +423,11 @@ describe('Patch component => apply', () => {
   it('removes element', () => {
 
     // given
-    const parent = new App();
-    const element = ComponentTree.createFromTemplate([
+    const [parent, element] = createApp([
       'div', [
         'span'
       ]
     ]);
-    Document.attachElementTree(element);
-    parent.appendChild(element);
 
     // when
     Patch.removeElement(element, parent).apply();
@@ -431,14 +441,11 @@ describe('Patch component => apply', () => {
   it('removes component', () => {
 
     // given
-    const parent = new App();
-    const component = ComponentTree.createFromTemplate([
+    const [parent, component] = createApp([
       Component, [
         'span'
       ]
     ]);
-    Document.attachElementTree(component);
-    parent.appendChild(component);
 
     // when
     Patch.removeComponent(component, parent).apply();

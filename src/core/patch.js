@@ -222,8 +222,9 @@
         parent,
         apply: () => {
           parent.appendChild(element);
-          const tree = Reactor.Document.attachElementTree(element);
-          parent.parentElement.ref.appendChild(tree);
+          Reactor.Document.attachElementTree(element, domElement => {
+            parent.parentElement.ref.appendChild(domElement);
+          });
         }
       });
     }
@@ -244,16 +245,18 @@
         component,
         parent,
         apply: () => {
-          const domNode = Reactor.Document.attachElementTree(component);
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
             parent.appendChild(component);
-            Reactor.Document.appendChild(domNode, parentDomNode);
+            Reactor.Document.attachElementTree(component, domNode => {
+              Reactor.Document.appendChild(domNode, parentDomNode);
+            });
           } else {
-            const index = parent.parentElement.ref.childNodes.indexOf(
-              parent.placeholder.ref);
+            const at = parentDomNode.childNodes.indexOf(parent.placeholder.ref);
             parent.appendChild(component);
-            Reactor.Document.replaceChild(domNode, parentDomNode, index);
+            Reactor.Document.attachElementTree(component, domNode => {
+              Reactor.Document.replaceChild(domNode, parentDomNode, at);
+            });
           }
         }
       });
@@ -280,14 +283,9 @@
         apply: () => {
           parent.children = parent.children || [];
           parent.children[at] = node;
-          const element = Reactor.Document.attachElementTree(node);
-          if (element) {
-            parent.ref.insertBefore(element, parent.ref.childNodes[at]);
-          } else {
-            // TODO: check
-            const comment = document.createComment('placeholder');
-            parent.ref.insertBefore(comment, parent.ref.childNodes[at]);
-          }
+          Reactor.Document.attachElementTree(node, domNode => {
+            parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
+          });
         }
       });
     }

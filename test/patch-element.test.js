@@ -5,13 +5,18 @@ const ComponentTree = Reactor.ComponentTree;
 
 describe('Patch element => apply', () => {
 
+  const createTree = template => {
+    const element = ComponentTree.createFromTemplate(template);
+    Document.attachElementTree(element);
+    return element;
+  };
+
   it('adds attribute', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div'
     ]);
-    Document.attachElementTree(element);
 
     // when
     Patch.addAttribute('name', 'value', element).apply();
@@ -35,14 +40,13 @@ describe('Patch element => apply', () => {
   it('replaces attribute', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         name: 'name',
         noValidate: false,
         minLength: '50px',
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.deepEqual(element.attrs, {
       name: 'name',
@@ -77,14 +81,13 @@ describe('Patch element => apply', () => {
   it('removes attribute', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         name: 'name',
         noValidate: false,
         minLength: '50px',
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.deepEqual(element.attrs, {
       name: 'name',
@@ -111,10 +114,9 @@ describe('Patch element => apply', () => {
   it('adds data attributes', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div'
     ]);
-    Document.attachElementTree(element);
 
     // when
     Patch.addDataAttribute('id', '10', element).apply();
@@ -136,7 +138,7 @@ describe('Patch element => apply', () => {
   it('replaces data attributes', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         dataset: {
           reactorId: 15,
@@ -144,7 +146,6 @@ describe('Patch element => apply', () => {
         },
       }
     ]);
-    Document.attachElementTree(element);
 
     const dataset = {
       reactorId: '15',
@@ -176,7 +177,7 @@ describe('Patch element => apply', () => {
   it('removes data attribute', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         dataset: {
           name: 'name',
@@ -184,7 +185,6 @@ describe('Patch element => apply', () => {
         }
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.equal(Object.entries(element.dataset).length, 2);
     const dataset = {
@@ -207,10 +207,9 @@ describe('Patch element => apply', () => {
   it('adds style property', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div'
     ]);
-    Document.attachElementTree(element);
 
     // when
     Patch.addStyleProperty('color', 'black', element).apply();
@@ -223,14 +222,13 @@ describe('Patch element => apply', () => {
   it('replaces style property', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         style: {
           textDecoration: 'underline',
         },
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.equal(element.style.textDecoration, 'underline');
     assert.equal(element.ref.style.textDecoration, 'underline');
@@ -246,14 +244,13 @@ describe('Patch element => apply', () => {
   it('removes style property', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         style: {
           visibility: 'hidden',
         },
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.equal(element.style.visibility, 'hidden');
     assert.equal(element.ref.style.visibility, 'hidden');
@@ -269,12 +266,11 @@ describe('Patch element => apply', () => {
   it('adds class name', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         class: {},
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.deepEqual(element.classNames, []);
     assert.deepEqual(Array.from(element.ref.classList), []);
@@ -290,12 +286,11 @@ describe('Patch element => apply', () => {
   it('removes class name', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         class: 'test',
       }
     ]);
-    Document.attachElementTree(element);
 
     assert.deepEqual(element.classNames, ['test']);
     assert.deepEqual(Array.from(element.ref.classList), ['test']);
@@ -311,11 +306,10 @@ describe('Patch element => apply', () => {
   it('adds listener', () => {
 
     // given
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div'
     ]);
     const onClick = () => {};
-    Document.attachElementTree(element);
 
     // when
     Patch.addListener('click', onClick, element).apply();
@@ -330,12 +324,11 @@ describe('Patch element => apply', () => {
     // given
     const doSomething = () => {};
     const doSomethingElse = () => {};
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         onClick: doSomething,
       }
     ]);
-    Document.attachElementTree(element);
 
     // then
     assert.equal(element.listeners.click, doSomething);
@@ -354,12 +347,11 @@ describe('Patch element => apply', () => {
 
     // given
     const onClick = () => {};
-    const element = ComponentTree.createFromTemplate([
+    const element = createTree([
       'div', {
         onClick
       }
     ]);
-    Document.attachElementTree(element);
 
     // then
     assert.equal(element.listeners.click, onClick);
