@@ -4,6 +4,8 @@ const ComponentTree = Reactor.ComponentTree;
 
 describe('Component Tree', () => {
 
+  suppressConsoleErrors();
+
   describe('=> create component instance', () => {
 
     const root = Symbol.for('Root');

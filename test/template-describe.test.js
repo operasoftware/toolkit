@@ -2,6 +2,8 @@ const Template = require('../src/core/template.js');
 
 describe('Template => describe', () => {
 
+  suppressConsoleErrors();
+
   it('detects component', () => {
 
     // given

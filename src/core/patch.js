@@ -244,8 +244,17 @@
         component,
         parent,
         apply: () => {
-          parent.appendChild(component);
-          Reactor.Document.attachElementTree(component);
+          const domNode = Reactor.Document.attachElementTree(component);
+          const parentDomNode = parent.parentElement.ref;
+          if (parent.isRoot()) {
+            parent.appendChild(component);
+            Reactor.Document.appendChild(domNode, parentDomNode);
+          } else {
+            const index = parent.parentElement.ref.childNodes.indexOf(
+              parent.placeholder.ref);
+            parent.appendChild(component);
+            Reactor.Document.replaceChild(domNode, parentDomNode, index);
+          }
         }
       });
     }
@@ -275,9 +284,9 @@
           if (element) {
             parent.ref.insertBefore(element, parent.ref.childNodes[at]);
           } else {
-           // TODO: check
-           const comment = document.createComment('placeholder');
-           parent.ref.insertBefore(comment, parent.ref.childNodes[at]);
+            // TODO: check
+            const comment = document.createComment('placeholder');
+            parent.ref.insertBefore(comment, parent.ref.childNodes[at]);
           }
         }
       });

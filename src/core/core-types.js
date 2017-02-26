@@ -51,6 +51,7 @@
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
+      this.comment.parentNode = null; // TODO: unit test
       this.comment = null;
     }
 
@@ -58,6 +59,7 @@
       this.child.parentNode = null;
       this.child = null;
       this.comment = new Comment(this.constructor.name);
+      this.comment.parentNode = this; // TODO: unit test
     }
 
     get childElement() {
@@ -107,9 +109,10 @@
     }
 
     get parentElement() {
-      return {
-        ref: this.container
-      };
+      const containerElement = new VirtualElement('root');
+      containerElement.children.push(this);
+      containerElement.ref = this.container;
+      return containerElement;
     }
 
     getInitialState() {

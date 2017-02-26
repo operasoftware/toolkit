@@ -24,3 +24,16 @@ global.createCore = () => (Object.assign({
   create: utils.create,
   utils: utils.utils,
 }, CoreTypes));
+
+global.suppressConsoleErrors = () => {
+
+  let consoleError;
+  beforeEach(() => {
+    consoleError = console.error;
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    console.error = consoleError;
+  });
+};
