@@ -5,7 +5,7 @@ const ComponentTree = Reactor.ComponentTree;
 
 describe('Patch element => apply', () => {
 
-  const createTree = template => {
+  const createElement = template => {
     const element = ComponentTree.createFromTemplate(template);
     Document.attachElementTree(element);
     return element;
@@ -14,7 +14,7 @@ describe('Patch element => apply', () => {
   it('adds attribute', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div'
     ]);
 
@@ -40,7 +40,7 @@ describe('Patch element => apply', () => {
   it('replaces attribute', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         name: 'name',
         noValidate: false,
@@ -81,7 +81,7 @@ describe('Patch element => apply', () => {
   it('removes attribute', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         name: 'name',
         noValidate: false,
@@ -114,7 +114,7 @@ describe('Patch element => apply', () => {
   it('adds data attributes', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div'
     ]);
 
@@ -138,7 +138,7 @@ describe('Patch element => apply', () => {
   it('replaces data attributes', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         dataset: {
           reactorId: 15,
@@ -177,7 +177,7 @@ describe('Patch element => apply', () => {
   it('removes data attribute', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         dataset: {
           name: 'name',
@@ -207,7 +207,7 @@ describe('Patch element => apply', () => {
   it('adds style property', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div'
     ]);
 
@@ -222,7 +222,7 @@ describe('Patch element => apply', () => {
   it('replaces style property', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         style: {
           textDecoration: 'underline',
@@ -244,7 +244,7 @@ describe('Patch element => apply', () => {
   it('removes style property', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         style: {
           visibility: 'hidden',
@@ -266,7 +266,7 @@ describe('Patch element => apply', () => {
   it('adds class name', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         class: {},
       }
@@ -286,7 +286,7 @@ describe('Patch element => apply', () => {
   it('removes class name', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div', {
         class: 'test',
       }
@@ -306,7 +306,7 @@ describe('Patch element => apply', () => {
   it('adds listener', () => {
 
     // given
-    const element = createTree([
+    const element = createElement([
       'div'
     ]);
     const onClick = () => {};
@@ -324,7 +324,7 @@ describe('Patch element => apply', () => {
     // given
     const doSomething = () => {};
     const doSomethingElse = () => {};
-    const element = createTree([
+    const element = createElement([
       'div', {
         onClick: doSomething,
       }
@@ -347,7 +347,7 @@ describe('Patch element => apply', () => {
 
     // given
     const onClick = () => {};
-    const element = createTree([
+    const element = createElement([
       'div', {
         onClick
       }
