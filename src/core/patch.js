@@ -269,11 +269,10 @@
         component,
         parent,
         apply: () => {
+          const domChildNode = (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
           parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
-          // TODO: fix me
-          parent.parentElement.ref.replaceChild(
-             parent.placeholder.ref, parent.parentElement.ref.firstChild);
+          parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
         }
       });
     }
