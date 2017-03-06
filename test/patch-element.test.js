@@ -30,11 +30,9 @@ describe('Patch element => apply', () => {
       noValidate: 'true',
       minLength: '100px',
     });
-    assert.deepEqual(element.ref.attributes, {
-      'name': 'value',
-      'no-validate': 'true',
-      'min-length': '100px',
-    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
   });
 
   it('replaces attribute', () => {
@@ -53,11 +51,9 @@ describe('Patch element => apply', () => {
       noValidate: 'false',
       minLength: '50px',
     });
-    assert.deepEqual(element.ref.attributes, {
-      'name': 'name',
-      'no-validate': 'false',
-      'min-length': '50px',
-    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
 
     // when
     Patch.replaceAttribute('name', 'value', element).apply();
@@ -71,11 +67,9 @@ describe('Patch element => apply', () => {
       noValidate: 'true',
       minLength: '100px',
     });
-    assert.deepEqual(element.ref.attributes, {
-      'name': 'value',
-      'no-validate': 'true',
-      'min-length': '100px',
-    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
   });
 
   it('removes attribute', () => {
@@ -94,11 +88,9 @@ describe('Patch element => apply', () => {
       noValidate: 'false',
       minLength: '50px',
     });
-    assert.deepEqual(element.ref.attributes, {
-      'name': 'name',
-      'no-validate': 'false',
-      'min-length': '50px',
-    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
 
     // when
     Patch.removeAttribute('name', element).apply();
@@ -129,7 +121,10 @@ describe('Patch element => apply', () => {
       customAttribute: 'true',
     };
     assert.deepEqual(element.dataset, dataset);
-    assert.deepEqual(element.ref.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('id'), '10');
+    assert.equal(element.ref.dataset.map_.get('customAttribute'), 'true');
 
     assert.equal(element.ref.getAttribute('data-id'), '10');
     assert.equal(element.ref.getAttribute('data-custom-attribute'), 'true');
@@ -152,7 +147,10 @@ describe('Patch element => apply', () => {
       someName: 'Some Name',
     };
     assert.deepEqual(element.dataset, dataset);
-    assert.deepEqual(element.ref.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('reactorId'), '15');
+    assert.equal(element.ref.dataset.map_.get('someName'), 'Some Name');
 
     assert.equal(element.ref.getAttribute('data-reactor-id'), '15');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
@@ -168,7 +166,10 @@ describe('Patch element => apply', () => {
       someName: 'Other Name',
     };
     assert.deepEqual(element.dataset, nextDataset);
-    assert.deepEqual(element.ref.dataset, nextDataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('reactorId'), '23');
+    assert.equal(element.ref.dataset.map_.get('someName'), 'Other Name');
 
     assert.equal(element.ref.getAttribute('data-reactor-id'), '23');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name');
@@ -192,7 +193,10 @@ describe('Patch element => apply', () => {
       anything: 'true',
     };
     assert.deepEqual(element.dataset, dataset);
-    assert.deepEqual(element.ref.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('name'), 'name');
+    assert.equal(element.ref.dataset.map_.get('anything'), 'true');
 
     // when
     Patch.removeDataAttribute('name', element).apply();
@@ -201,7 +205,7 @@ describe('Patch element => apply', () => {
     // then
     assert.equal(Object.entries(element.dataset).length, 0);
     assert.deepEqual(element.dataset, {});
-    assert.deepEqual(element.ref.dataset, {});
+    assert.equal(element.ref.dataset.map_.size, 0);
   });
 
   it('adds style property', () => {
@@ -253,14 +257,14 @@ describe('Patch element => apply', () => {
     ]);
 
     assert.equal(element.style.visibility, 'hidden');
-    assert.equal(element.ref.style.visibility, 'hidden');
+    assert.equal(element.ref.style.map_.get('visibility'), 'hidden');
 
     // when
     Patch.removeStyleProperty('visibility', element).apply();
 
     // then
     assert.equal(element.style.visibility, undefined);
-    assert.equal(element.ref.style.visibility, undefined);
+    assert.equal(element.ref.style.visibility, '');
   });
 
   it('adds class name', () => {
@@ -316,7 +320,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, onClick);
-    assert.deepEqual(element.ref.eventListeners.click, [onClick]);
+    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
   });
 
   it('replaces listener', () => {
@@ -332,7 +336,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, doSomething);
-    assert.deepEqual(element.ref.eventListeners.click, [doSomething]);
+    assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
 
     // when
     Patch.replaceListener('click', doSomething, doSomethingElse, element)
@@ -340,7 +344,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, doSomethingElse);
-    assert.deepEqual(element.ref.eventListeners.click, [doSomethingElse]);
+    assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
   });
 
   it('removes listener', () => {
@@ -355,14 +359,14 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, onClick);
-    assert.deepEqual(element.ref.eventListeners.click, [onClick]);
+    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
 
     // when
     Patch.removeListener('click', onClick, element).apply();
 
     // then
     assert.equal(element.listeners.click, undefined);
-    assert.deepEqual(element.ref.eventListeners.click, []);
+    assert.deepEqual(element.ref.eventListeners_.click, []);
   });
 
   it.skip('inserts child node', () => {

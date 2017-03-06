@@ -51,9 +51,8 @@
       parent.appendChild(child);
     }
 
-    static replaceChild(child, parent, index) {
-      parent.childNodes[index].remove();
-      parent.insertBefore(child, parent.childNodes[index]);
+    static replaceChild(child, replaced, parent) {
+      parent.replaceChild(child, replaced);
     }
 
     static createElement(node) {

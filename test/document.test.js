@@ -47,7 +47,9 @@ describe('Document', () => {
 
       // given
       const element = document.createElement('span');
-      element.attributes.value = 'value';
+      const attr = document.createAttribute('value');
+      attr.value = 'anything';
+      element.attributes.map_.set('value', attr);
 
       // when
       Document.removeAttribute(element, 'value');
@@ -104,13 +106,13 @@ describe('Document', () => {
 
       // given
       const element = document.createElement('span');
-      element.style.color = 'green';
+      element.style.map_.set('color', 'green');
 
       // when
       Document.removeStyleProperty(element, 'color');
 
       // then
-      assert.equal(element.style.color, undefined);
+      assert.equal(element.style.color, '');
     });
 
     it('adds a class name', () => {
@@ -148,7 +150,7 @@ describe('Document', () => {
       Document.addEventListener(element, 'click', listener);
 
       // then
-      assert.deepEqual(element.eventListeners, {
+      assert.deepEqual(element.eventListeners_, {
         click: [listener],
       });
     });
@@ -164,7 +166,7 @@ describe('Document', () => {
       Document.removeEventListener(element, 'change', listener);
 
       // then
-      assert.deepEqual(element.eventListeners, {
+      assert.deepEqual(element.eventListeners_, {
         change: [],
       });
     });
@@ -221,9 +223,8 @@ describe('Document', () => {
       // then
       assert(element instanceof Element);
       assert.equal(element.tagName, 'SPAN')
-      assert.deepEqual(element.style, {
-        color: 'red',
-      });
+      assert.equal(element.style.length, 1);
+      assert.deepEqual(element.style.color, 'red');
     });
 
     it('supports adding event listeners', () => {
@@ -245,7 +246,7 @@ describe('Document', () => {
       assert(element instanceof Element);
       assert.equal(element.tagName, 'SPAN')
       assert.equal(element.textContent, 'Text');
-      assert.deepEqual(element.eventListeners, {
+      assert.deepEqual(element.eventListeners_, {
         click: [onClick],
         change: [onChange],
       });

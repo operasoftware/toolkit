@@ -245,6 +245,7 @@
         component,
         parent,
         apply: () => {
+          const comment = parent.placeholder.ref;
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
             parent.appendChild(component);
@@ -252,10 +253,9 @@
               Reactor.Document.appendChild(domNode, parentDomNode);
             });
           } else {
-            const at = parentDomNode.childNodes.indexOf(parent.placeholder.ref);
             parent.appendChild(component);
             Reactor.Document.attachElementTree(component, domNode => {
-              Reactor.Document.replaceChild(domNode, parentDomNode, at);
+              Reactor.Document.replaceChild(domNode, comment, parentDomNode);
             });
           }
         }
