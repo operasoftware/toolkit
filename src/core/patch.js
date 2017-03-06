@@ -234,7 +234,7 @@
         element,
         parent,
         apply: () => {
-          parent.child.remove();
+          parent.removeChild(element);
           element.ref.remove();
         }
       });

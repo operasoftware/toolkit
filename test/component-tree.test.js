@@ -276,6 +276,25 @@ describe('Component Tree', () => {
       assert.equal(child.parentNode, app);
       assert.equal(child.name, 'div');
     });
+
+    it('handles null tree', () => {
+
+      // given
+      const Empty = class extends Reactor.Root {
+        render() {
+          return null;
+        }
+      };
+      const app = new Empty();
+      const props = {};
+
+      // when
+      const child = ComponentTree.createChildTree(app, props);
+
+      // then
+      assert.equal(child, null);
+      assert.equal(app.child, null);
+    });
   });
 
   describe('=> create', () => {

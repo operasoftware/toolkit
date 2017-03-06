@@ -142,7 +142,8 @@
     if (areCompatible(current, next)) {
       if (current.isElement()) {
         elementPatches(current, next, patches);
-      } else if (current.isComponent()) {
+      }
+      if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
           patches.push(Reactor.Patch.updateComponent(current, next.props));
           calculatePatches(current.child, next.child, current, patches);

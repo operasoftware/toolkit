@@ -13,10 +13,6 @@
       return null;
     }
 
-    get childElement() {
-      return null;
-    }
-
     remove() {
       // TODO: support parent elements!
       this.parentNode.child = null;
@@ -55,7 +51,8 @@
       this.comment = null;
     }
 
-    removeChild() {
+    removeChild(child) {
+      console.assert(this.child === child);
       this.child.parentNode = null;
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
@@ -65,7 +62,8 @@
       if (this.child) {
         if (this.child.isComponent()) {
           return this.child.childElement;
-        } else if (this.child.isElement()) {
+        }
+        if (this.child.isElement()) {
           return this.child;
         }
       }

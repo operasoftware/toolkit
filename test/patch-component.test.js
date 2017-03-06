@@ -416,43 +416,162 @@ describe('Patch component => apply', () => {
       assert.equal(component.childElement.ref.tagName, 'DIV');
     });
 
-    it.skip('adds element to a subcomponent');
+    it('adds element to a subcomponent', () => {
+
+      // given
+      const [app, component] = createApp([
+        Component, [
+          Subcomponent
+        ]
+      ]);
+
+      assert(component.placeholder);
+      assert(component.placeholder.isComment());
+
+      assert(component.parentElement);
+
+      assert.equal(component.placeholder.ref.parentNode, container);
+
+      const subcomponent = component.child;
+
+      assert(subcomponent.comment);
+
+      assert(component.placeholder.ref);
+      assert.equal(component.placeholder.ref.textContent, 'SubcomponentClass');
+
+      const element = ComponentTree.createFromTemplate([
+        'div', [
+          'span'
+        ]
+      ]);
+
+      // when
+      Patch.addElement(element, subcomponent).apply();
+
+      // then
+      assert.equal(element.parentElement.ref, container);
+
+      assert.equal(app.child, component);
+      assert.equal(app.childElement, element);
+      assert.equal(component.childElement, element);
+      assert.equal(subcomponent.child, element);
+      assert.equal(subcomponent.childElement, element);
+      assert.equal(element.parentNode, subcomponent);
+      assert.equal(component.childElement.ref.tagName, 'DIV');
+    });
+  });
+
+  describe('remove element', () => {
+
+    it('removes element from root', () => {
+
+      // given
+      const [app, element] = createApp([
+        'div'
+      ]);
+
+      // then
+      assert.equal(element.parentElement.ref, container);
+      const domElement = element.ref;
+      assert.equal(domElement.parentElement, container);
+      assert.equal(container.firstChild, domElement);
+
+      // when
+      Patch.removeElement(element, app).apply();
+
+      // then
+      assert(app.placeholder);
+      assert(app.placeholder.isComment());
+      assert.equal(app.placeholder.text, 'App');
+
+      assert.equal(app.child, null);
+
+      assert.equal(element.parentNode, null);
+      assert.equal(element.ref.parentNode, null);
+      assert.equal(element.parentElement, null);
+      assert.equal(element.ref.parentElement, null);
+    });
+
+    it('removes element from component', () => {
+
+      // given
+      const [app, component] = createApp([
+        Component, [
+          'div'
+        ]
+      ]);
+      const element = component.child;
+
+      // then
+      assert.equal(element.parentElement.ref, container);
+      const domElement = element.ref;
+      assert.equal(domElement.parentElement, container);
+      assert.equal(container.firstChild, domElement);
+
+      // when
+      Patch.removeElement(element, component).apply();
+
+      // then
+      assert(app.placeholder);
+      assert(app.placeholder.isComment());
+      assert.equal(app.placeholder.text, 'ComponentClass');
+
+      assert.equal(component.child, null);
+
+      assert.equal(element.parentNode, null);
+      assert.equal(element.ref.parentNode, null);
+      assert.equal(element.parentElement, null);
+      assert.equal(element.ref.parentElement, null);
+    });
+
+    it('removes element from subcomponent', () => {
+
+      // given
+      const [app, component] = createApp([
+        Component, [
+          Subcomponent, [
+            'div'
+          ]
+        ]
+      ]);
+      const subcomponent = component.child;
+      const element = subcomponent.child;
+
+      // then
+      assert.equal(element.parentElement.ref, container);
+      const domElement = element.ref;
+      assert.equal(domElement.parentElement, container);
+      assert.equal(container.firstChild, domElement);
+
+      // when
+      Patch.removeElement(element, subcomponent).apply();
+
+      // then
+      assert(app.placeholder);
+      assert(app.placeholder.isComment());
+      assert.equal(app.placeholder.text, 'SubcomponentClass');
+
+      assert.equal(subcomponent.child, null);
+
+      assert.equal(element.parentNode, null);
+      assert.equal(element.ref.parentNode, null);
+      assert.equal(element.parentElement, null);
+      assert.equal(element.ref.parentElement, null);
+    });
 
   });
 
-  it('removes element', () => {
+  describe('remove component', () => {
 
-    // given
-    const [parent, element] = createApp([
-      'div', [
-        'span'
-      ]
-    ]);
+    it.skip('removes component from root'), () => {};
 
-    // when
-    Patch.removeElement(element, parent).apply();
+    it.skip('removes empty component from parent component'), () => {};
 
-    // then
-    assert.equal(parent.parentElement.ref, container);
-    assert.equal(parent.child, null);
-    assert.equal(element.ref.parentNode, null);
+    it.skip('removes component with child element from component'), () => {};
+
+    it.skip('removes empty component from subcomponent'), () => {};
+
+    it.skip('removes component with child element from subcomponent'), () => {};
   });
 
-  it('removes component', () => {
-
-    // given
-    const [parent, component] = createApp([
-      Component, [
-        'span'
-      ]
-    ]);
-
-    // when
-    Patch.removeComponent(component, parent).apply();
-
-    // then
-    assert.equal(parent.parentElement.ref, container);
-    assert.equal(parent.child, null);
-    assert.equal(component.parentNode, null);
-  });
 });
