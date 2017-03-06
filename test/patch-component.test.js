@@ -45,9 +45,6 @@ describe('Patch component => apply', () => {
     let node = null;
     if (template) {
       node = ComponentTree.createFromTemplate(template);
-      Document.attachElementTree(node, domNode => {
-        container.appendChild(domNode);
-      });
       if (node.isElement()) {
         Patch.addElement(node, app).apply();
       }
@@ -565,7 +562,7 @@ describe('Patch component => apply', () => {
     });
   });
 
-  describe.only('remove component', () => {
+  describe('remove component', () => {
 
     it('removes empty component from root', () => {
 
