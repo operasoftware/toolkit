@@ -250,6 +250,7 @@
           if (parent.isRoot()) {
             parent.appendChild(component);
             Reactor.Document.attachElementTree(component, domNode => {
+              parentDomNode.childNodes.array_.length = 0;
               Reactor.Document.appendChild(domNode, parentDomNode);
             });
           } else {
@@ -267,10 +268,15 @@
         component,
         parent,
         apply: () => {
-          parent.child.remove();
-          if (component.childElement) {
-            component.childElement.ref.remove();
-          }
+          const domChildNode = (parent.childElement || parent.placeholder).ref;
+          parent.removeChild(component);
+          parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
+          // parent.parentElement.ref.replaceChild(
+          //   domChildNode, parent.placeholder.ref);
+
+          console.log('Parent placeholder:', parent.placeholder);
+          console.log('Bound:', parent.parentElement.ref.firstChild);
+
         }
       });
     }

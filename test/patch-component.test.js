@@ -48,7 +48,12 @@ describe('Patch component => apply', () => {
       Document.attachElementTree(node, domNode => {
         container.appendChild(domNode);
       });
-      app.appendChild(node);
+      if (node.isElement()) {
+        Patch.addElement(node, app).apply();
+      }
+      if (node.isComponent()) {
+        Patch.addComponent(node, app).apply();
+      }
     }
     return [app, node];
   };
@@ -558,20 +563,46 @@ describe('Patch component => apply', () => {
       assert.equal(element.parentElement, null);
       assert.equal(element.ref.parentElement, null);
     });
-
   });
 
-  describe('remove component', () => {
+  describe.only('remove component', () => {
 
-    it.skip('removes component from root'), () => {};
+    it('removes empty component from root', () => {
 
-    it.skip('removes empty component from parent component'), () => {};
+      // given
+      const [app, component] = createApp([
+        Component
+      ]);
 
-    it.skip('removes component with child element from component'), () => {};
+      // then
+      assert.equal(component.parentElement.ref, container);
+      assert.equal(container.firstChild, app.placeholder.ref);
+      assert.equal(app.placeholder.text, 'ComponentClass');
 
-    it.skip('removes empty component from subcomponent'), () => {};
+      // when
+      Patch.removeComponent(component, app).apply();
 
-    it.skip('removes component with child element from subcomponent'), () => {};
+      // then
+      // assert(app.placeholder);
+      // assert(app.placeholder.isComment());
+      // assert.equal(app.placeholder.text, 'App');
+
+      // assert.equal(app.child, null);
+      // assert.equal(component.parentNode, null);
+
+      // assert(app.placeholder.ref);
+
+    });
+
+    it.skip('removes component with child element from root', () => {});
+
+    it.skip('removes empty component from parent component', () => {});
+
+    it.skip('removes component with child element from component', () => {});
+
+    it.skip('removes empty component from subcomponent', () => {});
+
+    it.skip('removes component with child element from subcomponent', () => {});
   });
 
 });

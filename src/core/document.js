@@ -88,6 +88,10 @@
       return element;
     };
 
+    static createComment(placeholder) {
+      return document.createComment(placeholder.text);
+    }
+
     static attachElementTree(node, callback) {
       const element = node.isComponent() ? node.childElement : node;
       let domNode;
@@ -102,7 +106,7 @@
         }
         element.ref = domNode;
       } else {
-        domNode = document.createComment(node.placeholder.text);
+        domNode = this.createComment(node.placeholder);
         node.placeholder.ref = domNode;
       }
       if (callback) {
