@@ -583,15 +583,14 @@ describe('Patch component => apply', () => {
       Patch.removeComponent(component, app).apply();
 
       // then
-      // assert(app.placeholder);
-      // assert(app.placeholder.isComment());
-      // assert.equal(app.placeholder.text, 'App');
+      assert(app.placeholder);
+      assert(app.placeholder.isComment());
+      assert.equal(app.placeholder.text, 'App');
 
-      // assert.equal(app.child, null);
-      // assert.equal(component.parentNode, null);
+      assert.equal(app.child, null);
+      assert.equal(component.parentNode, null);
 
-      // assert(app.placeholder.ref);
-
+      assert(app.placeholder.ref);
     });
 
     it.skip('removes component with child element from root', () => {});

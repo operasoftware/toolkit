@@ -250,6 +250,7 @@
           if (parent.isRoot()) {
             parent.appendChild(component);
             Reactor.Document.attachElementTree(component, domNode => {
+              // TODO: fix me
               parentDomNode.childNodes.array_.length = 0;
               Reactor.Document.appendChild(domNode, parentDomNode);
             });
@@ -268,15 +269,11 @@
         component,
         parent,
         apply: () => {
-          const domChildNode = (parent.childElement || parent.placeholder).ref;
           parent.removeChild(component);
           parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
-          // parent.parentElement.ref.replaceChild(
-          //   domChildNode, parent.placeholder.ref);
-
-          console.log('Parent placeholder:', parent.placeholder);
-          console.log('Bound:', parent.parentElement.ref.firstChild);
-
+          // TODO: fix me
+          parent.parentElement.ref.replaceChild(
+             parent.placeholder.ref, parent.parentElement.ref.firstChild);
         }
       });
     }
