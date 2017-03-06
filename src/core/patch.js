@@ -250,9 +250,13 @@
           if (parent.isRoot()) {
             parent.appendChild(component);
             Reactor.Document.attachElementTree(component, domNode => {
-              // TODO: fix me
-              parentDomNode.childNodes.array_.length = 0;
-              Reactor.Document.appendChild(domNode, parentDomNode);
+              if (parentDomNode.hasChildNodes()) {
+                // TODO: does this work??
+                Reactor.Document.replaceChild(
+                  domNode, parentDomNode.firstChild, parentDomNode);
+              } else {
+                Reactor.Document.appendChild(domNode, parentDomNode);
+              }
             });
           } else {
             parent.appendChild(component);
