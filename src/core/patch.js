@@ -51,53 +51,6 @@
       });
     }
 
-    static addElement(element, parent) {
-      return new Patch(Type.ADD_ELEMENT, {
-        element,
-        parent,
-        apply: () => {
-          parent.appendChild(element);
-          const tree = Reactor.Document.attachElementTree(element);
-          parent.parentElement.ref.appendChild(tree);
-        }
-      });
-    }
-
-    static removeElement(element, parent) {
-      return new Patch(Type.REMOVE_ELEMENT, {
-        element,
-        parent,
-        apply: () => {
-          parent.child.remove();
-          element.ref.remove();
-        }
-      });
-    }
-
-    static addComponent(component, parent) {
-      return new Patch(Type.ADD_COMPONENT, {
-        component,
-        parent,
-        apply: () => {
-          parent.appendChild(component);
-          Reactor.Document.attachElementTree(component);
-        }
-      });
-    }
-
-    static removeComponent(component, parent) {
-      return new Patch(Type.REMOVE_COMPONENT, {
-        component,
-        parent,
-        apply: () => {
-          parent.child.remove();
-          if (component.childElement) {
-            component.childElement.ref.remove();
-          }
-        }
-      });
-    }
-
     static addAttribute(name, value, target) {
       return new Patch(Type.ADD_ATTRIBUTE, {
         name,
@@ -116,7 +69,7 @@
         value,
         target,
         apply: () => {
-          target.attrs[name] = value;
+          target.setAttribute(name, value);
           Reactor.Document.setAttribute(target.ref, name, value);
         }
       });
@@ -127,7 +80,7 @@
         name,
         target,
         apply: () => {
-          delete target.attrs[name];
+          target.removeAttribute(name);
           Reactor.Document.removeAttribute(target.ref, name);
         }
       });
@@ -140,7 +93,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          target.ref.dataset[name] = value;
+          Reactor.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -152,7 +105,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          target.ref.dataset[name] = value;
+          Reactor.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -162,8 +115,8 @@
         name,
         target,
         apply: () => {
-          delete target.dataset[name];
-          delete target.ref.dataset[name];
+          target.removeDataAttribute(name);
+          Reactor.Document.removeDataAttribute(target.ref, name);
         }
       });
     }
@@ -173,9 +126,8 @@
         value,
         target,
         apply: () => {
-          target.attrs.style = target.attrs.style || {};
-          target.attrs.style[property] = value;
-          target.ref.style[property] = value;
+          target.setStyleProperty(property, value);
+          Reactor.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -187,7 +139,7 @@
         target,
         apply: () => {
           target.setStyleProperty(property, value);
-          target.ref.style[property] = value;
+          Reactor.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -198,7 +150,7 @@
         target,
         apply: () => {
           target.removeStyleProperty(property);
-          target.ref.style[property] = null;
+          Reactor.Document.removeStyleProperty(target.ref, property);
         }
       });
     }
@@ -208,8 +160,8 @@
         name,
         target,
         apply: () => {
-          target.classNames.push(name);
-          target.ref.classList.add(name);
+          target.addClassName(name);
+          Reactor.Document.addClassName(target.ref, name);
         }
       });
     }
@@ -219,46 +171,111 @@
         name,
         target,
         apply: () => {
-          target.classNames = target.classNames.filter(item => name !== item);
-          target.ref.classList.remove(name);
+          target.removeClassName(name);
+          Reactor.Document.removeClassName(target.ref, name);
         }
       });
     }
 
-    static addListener(name, listener, target) {
+    static addListener(event, listener, target) {
       return new Patch(Type.ADD_LISTENER, {
-        name,
+        event,
         listener,
         target,
         apply: () => {
-          throw 'Function "addListener" not implemented!';
-          // element.addEventListener(name, listener);
+          target.addListener(event, listener);
+          Reactor.Document.addEventListener(target.ref, event, listener);
         }
       });
     }
 
-    static replaceListener(name, removed, added, target) {
+    static replaceListener(event, removed, added, target) {
       return new Patch(Type.REPLACE_LISTENER, {
-        name,
+        event,
         removed,
         added,
         target,
         apply: () => {
-          target.listeners[name] = added;
-          target.ref.removeEventListener(name, removed);
-          target.ref.addEventListener(name, added);
+          target.removeListener(event, removed);
+          Reactor.Document.removeEventListener(target.ref, event, removed);
+          target.addListener(event, added);
+          Reactor.Document.addEventListener(target.ref, event, added);
         }
       });
     }
 
-    static removeListener(name, listener, target) {
+    static removeListener(event, listener, target) {
       return new Patch(Type.REMOVE_LISTENER, {
-        name,
+        event,
         listener,
         target,
         apply: () => {
-          throw 'Function "removeListener" not implemented!';
-          // element.removeEventListener(name, listener);
+          target.removeListener(event, listener);
+          Reactor.Document.removeEventListener(target.ref, event, listener);
+        }
+      });
+    }
+
+    static addElement(element, parent) {
+      return new Patch(Type.ADD_ELEMENT, {
+        element,
+        parent,
+        apply: () => {
+          parent.appendChild(element);
+          Reactor.Document.attachElementTree(element, domElement => {
+            parent.parentElement.ref.appendChild(domElement);
+          });
+        }
+      });
+    }
+
+    static removeElement(element, parent) {
+      return new Patch(Type.REMOVE_ELEMENT, {
+        element,
+        parent,
+        apply: () => {
+          parent.removeChild(element);
+          element.ref.remove();
+        }
+      });
+    }
+
+    static addComponent(component, parent) {
+      return new Patch(Type.ADD_COMPONENT, {
+        component,
+        parent,
+        apply: () => {
+          const comment = parent.placeholder.ref;
+          const parentDomNode = parent.parentElement.ref;
+          if (parent.isRoot()) {
+            parent.appendChild(component);
+            Reactor.Document.attachElementTree(component, domNode => {
+              if (parentDomNode.hasChildNodes()) {
+                Reactor.Document.replaceChild(
+                  domNode, parentDomNode.firstChild, parentDomNode);
+              } else {
+                Reactor.Document.appendChild(domNode, parentDomNode);
+              }
+            });
+          } else {
+            parent.appendChild(component);
+            Reactor.Document.attachElementTree(component, domNode => {
+              Reactor.Document.replaceChild(domNode, comment, parentDomNode);
+            });
+          }
+        }
+      });
+    }
+
+    static removeComponent(component, parent) {
+      return new Patch(Type.REMOVE_COMPONENT, {
+        component,
+        parent,
+        apply: () => {
+          const domChildNode = (component.childElement || component.placeholder).ref;
+          parent.removeChild(component);
+          parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
+          parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
         }
       });
     }
@@ -269,16 +286,10 @@
         at,
         parent,
         apply: () => {
-          parent.children = parent.children || [];
-          parent.children[at] = node;
-          const element = Reactor.Document.attachElementTree(node);
-          if (element) {
-            parent.ref.insertBefore(element, parent.ref.childNodes[at]);
-          } else {
-           // TODO: check
-           const comment = document.createComment('placeholder');
-           parent.ref.insertBefore(comment, parent.ref.childNodes[at]);
-          }
+          parent.insertChild(node, at);
+          Reactor.Document.attachElementTree(node, domNode => {
+            parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
+          });
         }
       });
     }
@@ -290,8 +301,8 @@
         to,
         parent,
         apply: () => {
-          throw 'Function "moveChildNode" not implemented!';
-          // TODO: implement
+          parent.moveChild(node, from, to);
+          Reactor.Document.moveChild(node.ref, from, to, parent.ref);
         }
       });
     }
@@ -302,8 +313,8 @@
         at,
         parent,
         apply: () => {
-          throw 'Function "removeChildNode" not implemented!';
-          // TODO: implement
+          parent.removeChild(node);
+          Reactor.Document.removeChild(node.ref, parent.ref);
         }
       });
     }

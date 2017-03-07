@@ -238,6 +238,15 @@ describe('Core Types', () => {
       assert(child.isElement());
       assert.equal(child.parentElement, parent);
     });
+
+    it('returns null for detached element', () => {
+
+      // given
+      const component = new Reactor.Component();
+
+      // then
+      assert.equal(component.parentElement, null);
+    });
   });
 
   describe('Component', () => {
@@ -418,6 +427,25 @@ describe('Core Types', () => {
         assert(element.isElement());
         assert.equal(app.childElement, element);
         assert.equal(component.childElement, element);
+      });
+
+      it('returns null for empty component', () => {
+
+        // when
+        const component = new Reactor.Component();
+
+        // then
+        assert.equal(component.childElement, null);
+      });
+
+      it('returns null for component with comment node', () => {
+
+        // when
+        const component = new Reactor.Component();
+        component.appendChild(new Reactor.Comment());
+
+        // then
+        assert.equal(component.childElement, null);
       });
     });
 
@@ -631,6 +659,18 @@ describe('Core Types', () => {
         // then
         assert.deepEqual(parent.children, []);
         assert.equal(child.parentNode, null);
+      });
+
+      it('ignores node not being child', () => {
+
+        const parent = new Reactor.VirtualElement();
+        const node = new Reactor.Component();
+
+        // when
+        parent.removeChild(node);
+
+        // then
+        assert.deepEqual(parent.children, []);
       });
     });
   });

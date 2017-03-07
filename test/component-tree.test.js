@@ -4,14 +4,16 @@ const ComponentTree = Reactor.ComponentTree;
 
 describe('Component Tree', () => {
 
+  suppressConsoleErrors();
+
   describe('=> create component instance', () => {
 
     const root = Symbol.for('Root');
 
-    it.skip('creates a new instance of preloaded component', () => {
+    it('creates a new instance of preloaded component', () => {
 
       // given
-      require.preloaded = def => {
+      global.resolve = def => {
         switch (def) {
           case root:
             return Reactor.Root;
@@ -19,7 +21,6 @@ describe('Component Tree', () => {
             throw new Error('Unknown definition: ' + def);
         }
       };
-      console.log(require.preloaded);
       const instance = ComponentTree.createComponentInstance(root);
 
       // then
@@ -31,14 +32,224 @@ describe('Component Tree', () => {
 
   describe('=> create element instance', () => {
 
-    it.skip('creates empty element');
-    it.skip('creates element with a key');
-    it.skip('creates element with text content');
-    it.skip('creates element with attributes');
-    it.skip('creates element with data attributes');
-    it.skip('creates element with class names');
-    it.skip('creates element with style');
-    it.skip('creates element with listeners');
+    it('creates empty element', () => {
+
+      // given
+      const description = {
+        name: 'div',
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'div');
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with a key', () => {
+
+      // given
+      const description = {
+        name: 'span',
+        props: {
+          key: 'key',
+        },
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'span');
+      assert.equal(element.text, null);
+      assert.equal(element.key, 'key');
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with text content', () => {
+
+      // given
+      const description = {
+        name: 'span',
+        text: 'Text',
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'span');
+      assert.equal(element.text, 'Text');
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with attributes', () => {
+
+      // given
+      const description = {
+        name: 'input',
+        props: {
+          value: 'value',
+          id: 'some-id',
+          unknown: true,
+        },
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'input');
+      assert.deepEqual(element.attrs, {
+        value: 'value',
+        id: 'some-id',
+      });
+      assert.deepEqual(element.dataset, {});
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with data attributes', () => {
+
+      // given
+      const description = {
+        name: 'input',
+        props: {
+          dataset: {
+            custom: true,
+            another: 17,
+          },
+        },
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'input');
+      assert.deepEqual(element.attrs, {});
+      assert.deepEqual(element.dataset, {
+        custom: 'true',
+        another: '17',
+      });
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with class names', () => {
+
+      // given
+      const description = {
+        name: 'div',
+        props: {
+          class: ['foo', {
+              bar: true,
+            },
+            [
+              [
+                ['nested']
+              ],
+              [
+                [() => {}]
+              ]
+            ]
+          ],
+        }
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'div');
+      assert.deepEqual(element.attrs, {});
+      assert.deepEqual(element.dataset, {});
+      assert.deepEqual(element.classNames, ['foo', 'bar', 'nested']);
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with style', () => {
+
+      // given
+      const description = {
+        name: 'div',
+        props: {
+          style: {
+            color: 'red',
+            backgroundColor: 'black',
+            unknown: 'green',
+          },
+        }
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'div');
+      assert.deepEqual(element.attrs, {});
+      assert.deepEqual(element.dataset, {});
+      assert.deepEqual(element.style, {
+        color: 'red',
+        backgroundColor: 'black',
+      });
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
+
+    it('creates element with listeners', () => {
+
+      // given
+      const onClick = () => {};
+      const onChange = () => {};
+      const description = {
+        name: 'div',
+        props: {
+          onClick,
+          onChange,
+        }
+      };
+
+      // when
+      const element = ComponentTree.createElementInstance(description);
+
+      // then
+      assert(element);
+      assert(element.isElement());
+      assert.equal(element.name, 'div');
+      assert.deepEqual(element.attrs, {});
+      assert.deepEqual(element.dataset, {});
+      assert.deepEqual(element.listeners, {
+        click: onClick,
+        change: onChange,
+      });
+      assert.equal(element.text, null);
+      assert.equal(element.key, null);
+      assert.equal(element.ref, null);
+    });
   });
 
   describe('=> create child tree', () => {
@@ -64,6 +275,25 @@ describe('Component Tree', () => {
       assert(child);
       assert.equal(child.parentNode, app);
       assert.equal(child.name, 'div');
+    });
+
+    it('handles null tree', () => {
+
+      // given
+      const Empty = class extends Reactor.Root {
+        render() {
+          return null;
+        }
+      };
+      const app = new Empty();
+      const props = {};
+
+      // when
+      const child = ComponentTree.createChildTree(app, props);
+
+      // then
+      assert.equal(child, null);
+      assert.equal(app.child, null);
     });
   });
 
@@ -272,10 +502,41 @@ describe('Component Tree', () => {
       // then
       assert.throws(ComponentTree.create, Error, 'Error');
     });
-
   });
 
   describe('=> create from template', () => {
+
+    it('supports nested markup', () => {
+
+      // given
+      const template = [
+        'div', [
+          'span', [
+            'a', {
+              href: 'http://www.example.com'
+            }, 'Text'
+          ]
+        ]
+      ];
+
+      // when
+      const divElement = ComponentTree.createFromTemplate(template);
+
+      // then
+      assert(divElement.isElement())
+      assert.equal(divElement.name, 'div');
+      assert.equal(divElement.children.length, 1);
+
+      const spanElement = divElement.children[0];
+      assert(spanElement.isElement());
+      assert.equal(spanElement.name, 'span');
+      assert.equal(spanElement.children.length, 1);
+
+      const linkElement = spanElement.children[0];
+      assert(linkElement.isElement());
+      assert.equal(linkElement.name, 'a');
+      assert.equal(linkElement.text, 'Text');
+    });
 
     it('returns null for template === null', () => {
       assert.equal(ComponentTree.createFromTemplate(null), null);
@@ -293,7 +554,6 @@ describe('Component Tree', () => {
       assert.throws(ComponentTree.createFromTemplate, Error,
         'Invalid undefined template!');
     });
-
   });
 
 });
