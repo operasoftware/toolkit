@@ -13,12 +13,6 @@
       return null;
     }
 
-    remove() {
-      // TODO: support parent elements!
-      this.parentNode.child = null;
-      this.parentNode = null;
-    }
-
     isRoot() {
       return this instanceof Root;
     }

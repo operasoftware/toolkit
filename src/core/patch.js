@@ -251,7 +251,6 @@
             parent.appendChild(component);
             Reactor.Document.attachElementTree(component, domNode => {
               if (parentDomNode.hasChildNodes()) {
-                // TODO: does this work??
                 Reactor.Document.replaceChild(
                   domNode, parentDomNode.firstChild, parentDomNode);
               } else {
