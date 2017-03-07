@@ -1,9 +1,10 @@
-global.Reactor = createCore();
-const Patch = Reactor.Patch;
-const Document = Reactor.Document;
-const ComponentTree = Reactor.ComponentTree;
+// global.Reactor = createCore();
 
 describe('Patch element => apply', () => {
+
+  const Patch = Reactor.Patch;
+  const Document = Reactor.Document;
+  const ComponentTree = Reactor.ComponentTree;
 
   const createElement = template => {
     const element = ComponentTree.createFromTemplate(template);

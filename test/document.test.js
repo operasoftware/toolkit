@@ -1,9 +1,10 @@
-global.Reactor = createCore();
-const VirtualNode = Reactor.VirtualNode;
-const ComponentTree = Reactor.ComponentTree;
-const Document = Reactor.Document;
+// global.Reactor = createCore();
 
 describe('Document', () => {
+
+  const VirtualNode = Reactor.VirtualNode;
+  const ComponentTree = Reactor.ComponentTree;
+  const Document = Reactor.Document;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');

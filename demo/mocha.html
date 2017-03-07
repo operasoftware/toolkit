@@ -1,0 +1,78 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="mocha"></div>
+
+  <script src="https://cdn.rawgit.com/jquery/jquery/2.1.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+  <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+
+  <script>
+    global = window;
+    global.Reactor = {};
+    global.createCore = () => Reactor;
+  </script>
+  <script src="../test/assert.js"></script>
+  <script src="../src/module-loader.js"></script>
+
+  <script src="../src/core/consts.js"></script>
+  <script>
+    Object.assign(Reactor, module.exports);
+  </script>
+
+  <script src="../src/core/utils.js"></script>
+  <script>
+    Object.assign(Reactor, {
+      utils: module.exports.utils
+    });
+  </script>
+
+  <script src="../src/core/template.js"></script>
+  <script>
+    Object.assign(Reactor, {
+      Template: module.exports
+    });
+  </script>
+
+  <script src="../src/core/document.js"></script>
+  <script>
+    Object.assign(Reactor, {
+      Document: module.exports
+    });
+  </script>
+
+  <script src="../src/core/patch.js"></script>
+  <script>
+    Object.assign(Reactor, {
+      Patch: module.exports
+    });
+  </script>
+
+  <script src="../src/core/core-types.js"></script>
+  <script>
+    Object.assign(Reactor, module.exports);
+  </script>
+  <script src="../src/core/component-tree.js"></script>
+  <script>
+    Object.assign(Reactor, {
+      ComponentTree: module.exports
+    });
+  </script>
+
+  <script>
+    mocha.setup('bdd')
+
+  </script>
+  <script src="../test/core-types.test.js"></script>
+  <script src="../test/patch-component.test.js"></script>
+  <script src="../test/patch-element.test.js"></script>
+  <script>
+    mocha.checkLeaks();
+    mocha.run();
+  </script>
+</body>
+</html>
