@@ -336,6 +336,17 @@ describe('Template => validate', () => {
     assert(console.error.called);
   });
 
+  it('rejects function as a parameter', () => {
+
+    // when
+    const result = Template.validate([() => {}]);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message, 'Invalid parameter type "function" at index 0');
+    assert(console.error.called);
+  });
+
   it('rejects undefined as a parameter', () => {
 
     // when
@@ -344,6 +355,30 @@ describe('Template => validate', () => {
     // then
     assert(result.error instanceof Error);
     assert.equal(result.error.message, 'Invalid parameter type "undefined" at index 0');
+    assert(console.error.called);
+  });
+
+  it('rejects second parameter', () => {
+
+    // when
+    const result = Template.validate(['span', null]);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message,
+      'Invalid parameter type "null" at index 1, ' +
+      'expecting: properties object, text content or first child element');
+    assert(console.error.called);
+  });
+
+  it('rejects third parameter', () => {
+
+    // when
+    const result = Template.validate(['span', {}, () => {}]);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message, 'Invalid parameter type "function" at index 2');
     assert(console.error.called);
   });
 
@@ -417,6 +452,34 @@ describe('Template => validate', () => {
     // then
     assert(result.error instanceof Error);
     assert.equal(result.error.message, 'Subcomponents do not accept text content');
+    assert(console.error.called);
+  });
+
+  it('rejects null template', () => {
+
+    // given
+    const template = null;
+
+    // when
+    const result = Template.validate(null);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message, 'Specified template: "null" is not an array!');
+    assert(console.error.called);
+  });
+
+  it('rejects false template', () => {
+
+    // given
+    const template = false;
+
+    // when
+    const result = Template.validate(false);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message, 'Specified template: "false" is not an array!');
     assert(console.error.called);
   });
 });

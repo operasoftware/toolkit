@@ -16,7 +16,6 @@ global.createCore = () => (Object.assign({
   Patch: require('../../src/core/patch.js'),
   Reconciler: require('../../src/core/reconciler.js'),
   Document: require('../../src/core/document.js'),
-  VirtualDOM: require('../../src/core/virtual-dom.js'),
   SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
   SUPPORTED_STYLES: consts.SUPPORTED_STYLES,
   SUPPORTED_FILTERS: consts.SUPPORTED_FILTERS,
@@ -25,3 +24,16 @@ global.createCore = () => (Object.assign({
   create: utils.create,
   utils: utils.utils,
 }, CoreTypes));
+
+global.suppressConsoleErrors = () => {
+
+  let consoleError;
+  beforeEach(() => {
+    consoleError = console.error;
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    console.error = consoleError;
+  });
+};

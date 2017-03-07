@@ -142,7 +142,8 @@
     if (areCompatible(current, next)) {
       if (current.isElement()) {
         elementPatches(current, next, patches);
-      } else if (current.isComponent()) {
+      }
+      if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
           patches.push(Reactor.Patch.updateComponent(current, next.props));
           calculatePatches(current.child, next.child, current, patches);
@@ -167,11 +168,9 @@
     const getNode = key => {
       if (source.includes(key)) {
         return current[source.indexOf(key)];
-      }
-      if (target.includes(key)) {
+      } else {
         return next[target.indexOf(key)];
       }
-      throw `Node not found for key: ${key}`;
     };
 
     const moves = Reactor.Reconciler.calculateMoves(source, target);
@@ -246,8 +245,6 @@
         // replace component with an element
         patches.push(Patch.removeComponent(current, parent));
         patches.push(Patch.addElement(next, parent));
-      } else {
-        throw 'Unknown operation';
       }
     } else if (current.isElement()) {
       if (next.isComponent()) {

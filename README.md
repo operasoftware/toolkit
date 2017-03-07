@@ -2,7 +2,7 @@
 A framework for Chromium-based browsers for building their user interfaces
 
 [![Build Status](https://travis-ci.org/aswitalski/chromium-reactor.svg?branch=master)](https://travis-ci.org/aswitalski/chromium-reactor)
-[![Coverage Status](https://coveralls.io/repos/github/aswitalski/chromium-reactor/badge.svg)](https://coveralls.io/github/aswitalski/chromium-reactor)
+[![Coverage Status](https://coveralls.io/repos/github/aswitalski/chromium-reactor/badge.svg?branch=patches)](https://coveralls.io/github/aswitalski/chromium-reactor?branch=patches)
 [![npm version](https://img.shields.io/npm/v/chromium-reactor.svg?style=flat)](https://www.npmjs.com/package/chromium-reactor)
 
 ## What is it?

@@ -47,6 +47,23 @@
       element.removeEventListener(name, listener);
     }
 
+    static appendChild(child, parent) {
+      parent.appendChild(child);
+    }
+
+    static replaceChild(child, replaced, parent) {
+      parent.replaceChild(child, replaced);
+    }
+
+    static removeChild(child, parent) {
+      parent.removeChild(child);
+    }
+
+    static moveChild(child, from, to, parent) {
+      parent.removeChild(child);
+      parent.insertBefore(child, parent.childNodes[to]);
+    }
+
     static createElement(node) {
       const {
         name,
@@ -80,24 +97,31 @@
       return element;
     };
 
-    static attachElementTree(node) {
+    static createComment(placeholder) {
+      return document.createComment(placeholder.text);
+    }
+
+    static attachElementTree(node, callback) {
       const element = node.isComponent() ? node.childElement : node;
+      let domNode;
       if (element) {
-        const domElement = this.createElement(element);
+        domNode = this.createElement(element);
         if (element.children) {
           for (let child of element.children) {
-            const childElement = this.attachElementTree(child);
-            if (childElement) {
-              domElement.appendChild(childElement);
-            }
+            this.attachElementTree(child, childNode => {
+              domNode.appendChild(childNode);
+            });
           }
         }
-        element.ref = domElement;
-        return domElement;
+        element.ref = domNode;
+      } else {
+        domNode = this.createComment(node.placeholder);
+        node.placeholder.ref = domNode;
       }
-      const comment = document.createComment(node.placeholder.text);
-      node.placeholder.ref = comment;
-      return comment;
+      if (callback) {
+        callback(domNode);
+      }
+      return domNode;
     }
   };
 

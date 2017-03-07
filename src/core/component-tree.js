@@ -2,7 +2,7 @@
   const ComponentTree = class {
 
     static createComponentInstance(def) {
-      const ComponentClass = require.preloaded(def);
+      const ComponentClass = resolve(def);
       return new ComponentClass();
     }
 
