@@ -2,6 +2,8 @@ const Template = require('../src/core/template.js');
 
 describe('Template => describe', () => {
 
+  suppressConsoleErrors();
+
   it('detects component', () => {
 
     // given
@@ -189,6 +191,12 @@ describe('Template => describe', () => {
       name,
       props,
       children
+    });
+  });
+
+  it('rejects invalid template', () => {
+    assert.throws(() => {
+      Template.describe(null);
     });
   });
 });

@@ -13,16 +13,6 @@
       return null;
     }
 
-    get childElement() {
-      return null;
-    }
-
-    remove() {
-      // TODO: support parent elements!
-      this.parentNode.child = null;
-      this.parentNode = null;
-    }
-
     isRoot() {
       return this instanceof Root;
     }
@@ -45,26 +35,29 @@
     constructor() {
       super();
       this.child = null;
-      this.comment = new Comment(this.constructor.name);
+      this.comment = new Comment(this.constructor.name, this);
     }
 
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
+      this.comment.parentNode = null; // TODO: unit test
       this.comment = null;
     }
 
-    removeChild() {
+    removeChild(child) {
+      console.assert(this.child === child);
       this.child.parentNode = null;
       this.child = null;
-      this.comment = new Comment(this.constructor.name);
+      this.comment = new Comment(this.constructor.name, this);
     }
 
     get childElement() {
       if (this.child) {
         if (this.child.isComponent()) {
           return this.child.childElement;
-        } else if (this.child.isElement()) {
+        }
+        if (this.child.isElement()) {
           return this.child;
         }
       }
@@ -85,21 +78,13 @@
       return undefined;
     }
 
-    onCreated() {
+    onCreated() {}
 
-    }
+    onAttached() {}
 
-    onAttached() {
+    onUpdated() {}
 
-    }
-
-    onUpdated() {
-
-    }
-
-    onDetached() {
-
-    }
+    onDetached() {}
 
     get nodeType() {
       return 'component';
@@ -115,9 +100,10 @@
     }
 
     get parentElement() {
-      return {
-        ref: this.container
-      };
+      const containerElement = new VirtualElement('root');
+      containerElement.children.push(this);
+      containerElement.ref = this.container;
+      return containerElement;
     }
 
     getInitialState() {
@@ -145,6 +131,7 @@
       this.listeners = {};
       this.children = [];
       this.text = null;
+      this.key = null;
       this.ref = null;
     }
 
@@ -160,7 +147,7 @@
       this.dataset[name] = String(value);
     }
 
-    removeDataAttibute(name) {
+    removeDataAttribute(name) {
       delete this.dataset[name];
     }
 
@@ -203,6 +190,12 @@
       return false;
     }
 
+    moveChild(child, from, to) {
+      console.assert(this.children[from] === child);
+      this.children.splice(from, 1);
+      this.children.splice(to, 0, child);
+    }
+
     get nodeType() {
       return 'element';
     }
@@ -210,9 +203,10 @@
 
   const Comment = class extends VirtualNode {
 
-    constructor(text) {
+    constructor(text, parentNode) {
       super();
       this.text = text;
+      this.parentNode = parentNode;
       this.ref = null;
     }
 

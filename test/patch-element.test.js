@@ -1,0 +1,475 @@
+global.Reactor = createCore();
+const Patch = Reactor.Patch;
+const Document = Reactor.Document;
+const ComponentTree = Reactor.ComponentTree;
+
+describe('Patch element => apply', () => {
+
+  const createElement = template => {
+    const element = ComponentTree.createFromTemplate(template);
+    Document.attachElementTree(element);
+    return element;
+  };
+
+  it('adds attribute', () => {
+
+    // given
+    const element = createElement([
+      'div'
+    ]);
+
+    // when
+    Patch.addAttribute('name', 'value', element).apply();
+    Patch.addAttribute('noValidate', 'true', element).apply();
+    Patch.addAttribute('minLength', '100px', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.attrs).length, 3);
+    assert.deepEqual(element.attrs, {
+      name: 'value',
+      noValidate: 'true',
+      minLength: '100px',
+    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
+  });
+
+  it('replaces attribute', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        name: 'name',
+        noValidate: false,
+        minLength: '50px',
+      }
+    ]);
+
+    assert.deepEqual(element.attrs, {
+      name: 'name',
+      noValidate: 'false',
+      minLength: '50px',
+    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
+
+    // when
+    Patch.replaceAttribute('name', 'value', element).apply();
+    Patch.replaceAttribute('noValidate', 'true', element).apply();
+    Patch.replaceAttribute('minLength', '100px', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.attrs).length, 3);
+    assert.deepEqual(element.attrs, {
+      name: 'value',
+      noValidate: 'true',
+      minLength: '100px',
+    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
+  });
+
+  it('removes attribute', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        name: 'name',
+        noValidate: false,
+        minLength: '50px',
+      }
+    ]);
+
+    assert.deepEqual(element.attrs, {
+      name: 'name',
+      noValidate: 'false',
+      minLength: '50px',
+    });
+    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
+    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
+    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
+
+    // when
+    Patch.removeAttribute('name', element).apply();
+    Patch.removeAttribute('noValidate', element).apply();
+    Patch.removeAttribute('minLength', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.attrs).length, 0);
+    assert.deepEqual(element.attrs, {});
+    assert.deepEqual(element.ref.attributes, {});
+  });
+
+  it('adds data attributes', () => {
+
+    // given
+    const element = createElement([
+      'div'
+    ]);
+
+    // when
+    Patch.addDataAttribute('id', '10', element).apply();
+    Patch.addDataAttribute('customAttribute', 'true', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.dataset).length, 2);
+    const dataset = {
+      id: '10',
+      customAttribute: 'true',
+    };
+    assert.deepEqual(element.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('id'), '10');
+    assert.equal(element.ref.dataset.map_.get('customAttribute'), 'true');
+
+    assert.equal(element.ref.getAttribute('data-id'), '10');
+    assert.equal(element.ref.getAttribute('data-custom-attribute'), 'true');
+  });
+
+  it('replaces data attributes', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        dataset: {
+          reactorId: 15,
+          someName: 'Some Name',
+        },
+      }
+    ]);
+
+    const dataset = {
+      reactorId: '15',
+      someName: 'Some Name',
+    };
+    assert.deepEqual(element.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('reactorId'), '15');
+    assert.equal(element.ref.dataset.map_.get('someName'), 'Some Name');
+
+    assert.equal(element.ref.getAttribute('data-reactor-id'), '15');
+    assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
+
+    // when
+    Patch.replaceDataAttribute('reactorId', '23', element).apply();
+    Patch.replaceDataAttribute('someName', 'Other Name', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.dataset).length, 2);
+    const nextDataset = {
+      reactorId: '23',
+      someName: 'Other Name',
+    };
+    assert.deepEqual(element.dataset, nextDataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('reactorId'), '23');
+    assert.equal(element.ref.dataset.map_.get('someName'), 'Other Name');
+
+    assert.equal(element.ref.getAttribute('data-reactor-id'), '23');
+    assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name');
+  });
+
+  it('removes data attribute', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        dataset: {
+          name: 'name',
+          anything: 'true',
+        }
+      }
+    ]);
+
+    assert.equal(Object.entries(element.dataset).length, 2);
+    const dataset = {
+      name: 'name',
+      anything: 'true',
+    };
+    assert.deepEqual(element.dataset, dataset);
+
+    assert.equal(element.ref.dataset.map_.size, 2);
+    assert.equal(element.ref.dataset.map_.get('name'), 'name');
+    assert.equal(element.ref.dataset.map_.get('anything'), 'true');
+
+    // when
+    Patch.removeDataAttribute('name', element).apply();
+    Patch.removeDataAttribute('anything', element).apply();
+
+    // then
+    assert.equal(Object.entries(element.dataset).length, 0);
+    assert.deepEqual(element.dataset, {});
+    assert.equal(element.ref.dataset.map_.size, 0);
+  });
+
+  it('adds style property', () => {
+
+    // given
+    const element = createElement([
+      'div'
+    ]);
+
+    // when
+    Patch.addStyleProperty('color', 'black', element).apply();
+
+    // then
+    assert.equal(element.style.color, 'black');
+    assert.equal(element.ref.style.color, 'black');
+  });
+
+  it('replaces style property', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        style: {
+          textDecoration: 'underline',
+        },
+      }
+    ]);
+
+    assert.equal(element.style.textDecoration, 'underline');
+    assert.equal(element.ref.style.textDecoration, 'underline');
+
+    // when
+    Patch.replaceStyleProperty('textDecoration', 'overline', element).apply();
+
+    // then
+    assert.equal(element.style.textDecoration, 'overline');
+    assert.equal(element.ref.style.textDecoration, 'overline');
+  });
+
+  it('removes style property', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        style: {
+          visibility: 'hidden',
+        },
+      }
+    ]);
+
+    assert.equal(element.style.visibility, 'hidden');
+    assert.equal(element.ref.style.map_.get('visibility'), 'hidden');
+
+    // when
+    Patch.removeStyleProperty('visibility', element).apply();
+
+    // then
+    assert.equal(element.style.visibility, undefined);
+    assert.equal(element.ref.style.visibility, '');
+  });
+
+  it('adds class name', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        class: {},
+      }
+    ]);
+
+    assert.deepEqual(element.classNames, []);
+    assert.deepEqual(Array.from(element.ref.classList), []);
+
+    // when
+    Patch.addClassName('test', element).apply();
+
+    // then
+    assert.deepEqual(element.classNames, ['test']);
+    assert.deepEqual(Array.from(element.ref.classList), ['test']);
+  });
+
+  it('removes class name', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        class: 'test',
+      }
+    ]);
+
+    assert.deepEqual(element.classNames, ['test']);
+    assert.deepEqual(Array.from(element.ref.classList), ['test']);
+
+    // when
+    Patch.removeClassName('test', element).apply();
+
+    // then
+    assert.deepEqual(element.classNames, []);
+    assert.deepEqual(Array.from(element.ref.classList), []);
+  });
+
+  it('adds listener', () => {
+
+    // given
+    const element = createElement([
+      'div'
+    ]);
+    const onClick = () => {};
+
+    // when
+    Patch.addListener('click', onClick, element).apply();
+
+    // then
+    assert.equal(element.listeners.click, onClick);
+    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
+  });
+
+  it('replaces listener', () => {
+
+    // given
+    const doSomething = () => {};
+    const doSomethingElse = () => {};
+    const element = createElement([
+      'div', {
+        onClick: doSomething,
+      }
+    ]);
+
+    // then
+    assert.equal(element.listeners.click, doSomething);
+    assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
+
+    // when
+    Patch.replaceListener('click', doSomething, doSomethingElse, element)
+      .apply();
+
+    // then
+    assert.equal(element.listeners.click, doSomethingElse);
+    assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
+  });
+
+  it('removes listener', () => {
+
+    // given
+    const onClick = () => {};
+    const element = createElement([
+      'div', {
+        onClick
+      }
+    ]);
+
+    // then
+    assert.equal(element.listeners.click, onClick);
+    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
+
+    // when
+    Patch.removeListener('click', onClick, element).apply();
+
+    // then
+    assert.equal(element.listeners.click, undefined);
+    assert.deepEqual(element.ref.eventListeners_.click, []);
+  });
+
+  it('inserts child node', () => {
+
+    // given
+    const element = createElement([
+      'div', [
+        'span',
+      ],
+      [
+        'span'
+      ],
+      [
+        'span'
+      ],
+    ]);
+    const link = new Reactor.VirtualElement('a');
+
+    // then
+    assert.equal(element.children.length, 3);
+    assert.equal(element.ref.childNodes.length, 3);
+
+    // when
+    Patch.insertChildNode(link, 0, element).apply();
+
+    // then
+    assert.equal(element.children.length, 4);
+    assert.equal(element.ref.childNodes.length, 4);
+
+    assert.equal(element.children[0], link);
+    assert(link.ref);
+    assert.equal(element.ref.firstElementChild, link.ref);
+  });
+
+  it('moves child node', () => {
+
+    // given
+    const element = createElement([
+      'div', [
+        'p',
+      ],
+      [
+        'div'
+      ],
+      [
+        'span'
+      ],
+    ]);
+    const paragraph = element.children[0];
+
+    // then
+    assert.equal(element.children.length, 3);
+    assert.equal(element.ref.childNodes.length, 3);
+
+    // when
+    Patch.moveChildNode(paragraph, 0, 2, element).apply();
+
+    // then
+    assert.equal(element.children.length, 3);
+    assert.equal(element.ref.childNodes.length, 3);
+
+    assert.equal(element.children[0].name, 'div');
+    assert.equal(element.ref.childNodes[0].tagName, 'DIV');
+
+    assert.equal(element.children[1].name, 'span');
+    assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+
+    assert.equal(element.children[2].name, 'p');
+    assert.equal(element.ref.childNodes[2].tagName, 'P');
+  });
+
+  it('removes child node', () => {
+
+    // given
+    const element = createElement([
+      'div', [
+        'p',
+      ],
+      [
+        'div'
+      ],
+      [
+        'span'
+      ],
+    ]);
+    const div = element.children[1];
+
+    // then
+    assert.equal(element.children.length, 3);
+    assert.equal(element.ref.childNodes.length, 3);
+
+    // when
+    Patch.removeChildNode(div, 1, element).apply();
+
+    // then
+    assert.equal(element.children.length, 2);
+    assert.equal(element.ref.childNodes.length, 2);
+
+    assert.equal(element.children[0].name, 'p');
+    assert.equal(element.ref.childNodes[0].tagName, 'P');
+
+    assert.equal(element.children[1].name, 'span');
+    assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+  });
+
+});

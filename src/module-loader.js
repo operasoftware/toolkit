@@ -65,7 +65,7 @@
     return symbol;
   };
 
-  require.preloaded = def => {
+  const resolve = def => {
     const componentPath = registry.get(def);
     return cache.get(componentPath);
   };
@@ -75,6 +75,7 @@
   // globals
   Object.assign(window, {
     require,
+    resolve,
     preload,
     module
   });

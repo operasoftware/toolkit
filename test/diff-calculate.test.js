@@ -343,7 +343,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.ADD_LISTENER);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].name, 'click');
+      assert.equal(patches[0].event, 'click');
       assert.equal(patches[0].listener, listener);
     });
 
@@ -372,7 +372,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.REPLACE_LISTENER);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].name, 'click');
+      assert.equal(patches[0].event, 'click');
       assert.equal(patches[0].removed, listener);
       assert.equal(patches[0].added, anotherListener);
     });
@@ -399,7 +399,7 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.REMOVE_LISTENER);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].name, 'click');
+      assert.equal(patches[0].event, 'click');
       assert.equal(patches[0].listener, listener);
     });
 
@@ -976,7 +976,7 @@ describe('Diff => calculate patches', () => {
           // then
           assert.equal(patches.length, 1);
           assert.equal(patches[0].type, Patch.Type.ADD_LISTENER);
-          assert.equal(patches[0].name, 'click');
+          assert.equal(patches[0].event, 'click');
           assert.equal(patches[0].listener, onClick);
         });
       });
