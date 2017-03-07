@@ -107,7 +107,7 @@ describe('Document', () => {
 
       // given
       const element = document.createElement('span');
-      element.style.map_.set('color', 'green');
+      element.style.color = 'green';
 
       // when
       Document.removeStyleProperty(element, 'color');
