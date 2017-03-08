@@ -1,9 +1,8 @@
-const utils = require('../src/core/utils.js');
-const lowerDash = utils.utils.lowerDash;
-const getEventName = utils.utils.getEventName;
-const addDataPrefix = utils.utils.addDataPrefix;
-
 describe('Utils', () => {
+
+  const lowerDash = Reactor.utils.lowerDash;
+  const getEventName = Reactor.utils.getEventName;
+  const addDataPrefix = Reactor.utils.addDataPrefix;
 
   describe('core reducer', () => {
 
@@ -13,7 +12,7 @@ describe('Utils', () => {
       const state = {
         foo: 'bar'
       };
-      const reducer = utils.combineReducers();
+      const reducer = Reactor.utils.combineReducers();
       const command = reducer.commands.init(state);
 
       // when
@@ -68,7 +67,7 @@ describe('Utils', () => {
     it('chains reducers and merges commands', () => {
 
       // given
-      const reducer = utils.combineReducers(doubleReducer, tripleReducer);
+      const reducer = Reactor.utils.combineReducers(doubleReducer, tripleReducer);
 
       // when
       const initCommand = reducer.commands.init({

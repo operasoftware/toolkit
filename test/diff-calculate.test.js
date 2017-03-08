@@ -1,10 +1,9 @@
-global.Reactor = createCore();
-const VirtualNode = Reactor.VirtualNode;
-const ComponentTree = Reactor.ComponentTree;
-const Diff = Reactor.Diff;
-const Patch = Reactor.Patch;
-
 describe('Diff => calculate patches', () => {
+
+  const VirtualNode = Reactor.VirtualNode;
+  const ComponentTree = Reactor.ComponentTree;
+  const Diff = Reactor.Diff;
+  const Patch = Reactor.Patch;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');

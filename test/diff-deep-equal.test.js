@@ -1,4 +1,3 @@
-global.Reactor = createCore();
 const Diff = Reactor.Diff;
 
 describe('Diff => deep equal', () => {

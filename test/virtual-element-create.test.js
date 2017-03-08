@@ -1,7 +1,6 @@
-global.Reactor = createCore();
-const VirtualElement = Reactor.VirtualElement;
-
 describe('Virtual Element => create', () => {
+
+  const VirtualElement = Reactor.VirtualElement;
 
   const createElement = Reactor.ComponentTree.createElementInstance;
 

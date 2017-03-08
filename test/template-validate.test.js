@@ -1,6 +1,6 @@
-const Template = require('../src/core/template.js');
-
 describe('Template => validate', () => {
+
+  const Template = Reactor.Template;
 
   beforeEach(() => {
     sinon.stub(console, 'error');
