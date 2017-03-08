@@ -1,9 +1,8 @@
-global.Reactor = createCore();
-const Patch = Reactor.Patch;
-const Document = Reactor.Document;
-const ComponentTree = Reactor.ComponentTree;
-
 describe('Patch element => apply', () => {
+
+  const Patch = Reactor.Patch;
+  const Document = Reactor.Document;
+  const ComponentTree = Reactor.ComponentTree;
 
   const createElement = template => {
     const element = ComponentTree.createFromTemplate(template);
@@ -30,9 +29,9 @@ describe('Patch element => apply', () => {
       noValidate: 'true',
       minLength: '100px',
     });
-    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
-    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
-    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
+    assert.equal(element.ref.attributes['name'].value, 'value');
+    assert.equal(element.ref.attributes['no-validate'].value, 'true');
+    assert.equal(element.ref.attributes['min-length'].value, '100px');
   });
 
   it('replaces attribute', () => {
@@ -51,9 +50,9 @@ describe('Patch element => apply', () => {
       noValidate: 'false',
       minLength: '50px',
     });
-    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
-    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
-    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
+    assert.equal(element.ref.attributes['name'].value, 'name');
+    assert.equal(element.ref.attributes['no-validate'].value, 'false');
+    assert.equal(element.ref.attributes['min-length'].value, '50px');
 
     // when
     Patch.replaceAttribute('name', 'value', element).apply();
@@ -67,9 +66,9 @@ describe('Patch element => apply', () => {
       noValidate: 'true',
       minLength: '100px',
     });
-    assert.equal(element.ref.attributes.map_.get('name').value, 'value');
-    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'true');
-    assert.equal(element.ref.attributes.map_.get('min-length').value, '100px');
+    assert.equal(element.ref.attributes['name'].value, 'value');
+    assert.equal(element.ref.attributes['no-validate'].value, 'true');
+    assert.equal(element.ref.attributes['min-length'].value, '100px');
   });
 
   it('removes attribute', () => {
@@ -88,9 +87,9 @@ describe('Patch element => apply', () => {
       noValidate: 'false',
       minLength: '50px',
     });
-    assert.equal(element.ref.attributes.map_.get('name').value, 'name');
-    assert.equal(element.ref.attributes.map_.get('no-validate').value, 'false');
-    assert.equal(element.ref.attributes.map_.get('min-length').value, '50px');
+    assert.equal(element.ref.attributes['name'].value, 'name');
+    assert.equal(element.ref.attributes['no-validate'].value, 'false');
+    assert.equal(element.ref.attributes['min-length'].value, '50px');
 
     // when
     Patch.removeAttribute('name', element).apply();
@@ -122,9 +121,9 @@ describe('Patch element => apply', () => {
     };
     assert.deepEqual(element.dataset, dataset);
 
-    assert.equal(element.ref.dataset.map_.size, 2);
-    assert.equal(element.ref.dataset.map_.get('id'), '10');
-    assert.equal(element.ref.dataset.map_.get('customAttribute'), 'true');
+    assert.equal(Object.keys(element.ref.dataset).length, 2);
+    assert.equal(element.ref.dataset.id, '10');
+    assert.equal(element.ref.dataset.customAttribute, 'true');
 
     assert.equal(element.ref.getAttribute('data-id'), '10');
     assert.equal(element.ref.getAttribute('data-custom-attribute'), 'true');
@@ -148,9 +147,9 @@ describe('Patch element => apply', () => {
     };
     assert.deepEqual(element.dataset, dataset);
 
-    assert.equal(element.ref.dataset.map_.size, 2);
-    assert.equal(element.ref.dataset.map_.get('reactorId'), '15');
-    assert.equal(element.ref.dataset.map_.get('someName'), 'Some Name');
+    assert.equal(Object.keys(element.ref.dataset).length, 2);
+    assert.equal(element.ref.dataset.reactorId, '15');
+    assert.equal(element.ref.dataset.someName, 'Some Name');
 
     assert.equal(element.ref.getAttribute('data-reactor-id'), '15');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
@@ -167,9 +166,9 @@ describe('Patch element => apply', () => {
     };
     assert.deepEqual(element.dataset, nextDataset);
 
-    assert.equal(element.ref.dataset.map_.size, 2);
-    assert.equal(element.ref.dataset.map_.get('reactorId'), '23');
-    assert.equal(element.ref.dataset.map_.get('someName'), 'Other Name');
+    assert.equal(Object.keys(element.ref.dataset).length, 2);
+    assert.equal(element.ref.dataset.reactorId, '23');
+    assert.equal(element.ref.dataset.someName, 'Other Name');
 
     assert.equal(element.ref.getAttribute('data-reactor-id'), '23');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name');
@@ -194,18 +193,17 @@ describe('Patch element => apply', () => {
     };
     assert.deepEqual(element.dataset, dataset);
 
-    assert.equal(element.ref.dataset.map_.size, 2);
-    assert.equal(element.ref.dataset.map_.get('name'), 'name');
-    assert.equal(element.ref.dataset.map_.get('anything'), 'true');
+    assert.equal(Object.keys(element.ref.dataset).length, 2);
+    assert.equal(element.ref.dataset.name, 'name');
+    assert.equal(element.ref.dataset.anything, 'true');
 
     // when
     Patch.removeDataAttribute('name', element).apply();
     Patch.removeDataAttribute('anything', element).apply();
 
     // then
-    assert.equal(Object.entries(element.dataset).length, 0);
+    assert.equal(Object.keys(element.dataset).length, 0);
     assert.deepEqual(element.dataset, {});
-    assert.equal(element.ref.dataset.map_.size, 0);
   });
 
   it('adds style property', () => {
@@ -257,7 +255,7 @@ describe('Patch element => apply', () => {
     ]);
 
     assert.equal(element.style.visibility, 'hidden');
-    assert.equal(element.ref.style.map_.get('visibility'), 'hidden');
+    assert.equal(element.ref.style.visibility, 'hidden');
 
     // when
     Patch.removeStyleProperty('visibility', element).apply();
@@ -320,7 +318,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, onClick);
-    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
+    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
   });
 
   it('replaces listener', () => {
@@ -336,7 +334,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, doSomething);
-    assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
+    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
 
     // when
     Patch.replaceListener('click', doSomething, doSomethingElse, element)
@@ -344,7 +342,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, doSomethingElse);
-    assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
+    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
   });
 
   it('removes listener', () => {
@@ -359,14 +357,14 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.listeners.click, onClick);
-    assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
+    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
 
     // when
     Patch.removeListener('click', onClick, element).apply();
 
     // then
     assert.equal(element.listeners.click, undefined);
-    assert.deepEqual(element.ref.eventListeners_.click, []);
+    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, []);
   });
 
   it('inserts child node', () => {

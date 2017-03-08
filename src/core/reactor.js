@@ -21,9 +21,7 @@
       const Patch = await require('core/patch');
       const Reconciler = await require('core/reconciler');
       const Document = await require('core/document');
-      const {
-        combineReducers, utils
-      } = await require('core/utils');
+      const utils = await require('core/utils');
       const create = root => new App(root);
 
       return {
@@ -36,7 +34,7 @@
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
         // utils
-        combineReducers, utils, create
+        utils, create
       };
     }
   };

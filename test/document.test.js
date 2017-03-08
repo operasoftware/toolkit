@@ -1,9 +1,8 @@
-global.Reactor = createCore();
-const VirtualNode = Reactor.VirtualNode;
-const ComponentTree = Reactor.ComponentTree;
-const Document = Reactor.Document;
-
 describe('Document', () => {
+
+  const VirtualNode = Reactor.VirtualNode;
+  const ComponentTree = Reactor.ComponentTree;
+  const Document = Reactor.Document;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
@@ -49,7 +48,8 @@ describe('Document', () => {
       const element = document.createElement('span');
       const attr = document.createAttribute('value');
       attr.value = 'anything';
-      element.attributes.map_.set('value', attr);
+      // TODO: element.attributes.value = attr;
+      element.attributes.setNamedItem(attr);
 
       // when
       Document.removeAttribute(element, 'value');
@@ -106,7 +106,7 @@ describe('Document', () => {
 
       // given
       const element = document.createElement('span');
-      element.style.map_.set('color', 'green');
+      element.style.color = 'green';
 
       // when
       Document.removeStyleProperty(element, 'color');
@@ -150,7 +150,7 @@ describe('Document', () => {
       Document.addEventListener(element, 'click', listener);
 
       // then
-      assert.deepEqual(element.eventListeners_, {
+      !(global.window) && assert.deepEqual(element.eventListeners_, {
         click: [listener],
       });
     });
@@ -166,7 +166,7 @@ describe('Document', () => {
       Document.removeEventListener(element, 'change', listener);
 
       // then
-      assert.deepEqual(element.eventListeners_, {
+      !(global.window) && assert.deepEqual(element.eventListeners_, {
         change: [],
       });
     });
@@ -187,7 +187,8 @@ describe('Document', () => {
       // then
       assert(element instanceof Element);
       assert.equal(element.tagName, 'SPAN')
-      assert.equal(element.textContent, undefined);
+      // TODO: assert.equal(element.textContent, '');
+      assert(!element.textContent);
     });
 
     it('supports text elements', () => {
@@ -246,7 +247,7 @@ describe('Document', () => {
       assert(element instanceof Element);
       assert.equal(element.tagName, 'SPAN')
       assert.equal(element.textContent, 'Text');
-      assert.deepEqual(element.eventListeners_, {
+      !(global.window) && assert.deepEqual(element.eventListeners_, {
         click: [onClick],
         change: [onChange],
       });

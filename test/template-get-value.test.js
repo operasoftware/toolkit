@@ -1,7 +1,6 @@
-global.Reactor = createCore();
-const Template = Reactor.Template;
-
 describe('Template => get value', () => {
+
+  const Template = Reactor.Template;
 
   const resolved = [
     [ undefined, null ],

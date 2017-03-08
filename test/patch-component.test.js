@@ -1,9 +1,8 @@
-global.Reactor = createCore();
-const Patch = Reactor.Patch;
-const Document = Reactor.Document;
-const ComponentTree = Reactor.ComponentTree;
-
 describe('Patch component => apply', () => {
+
+  const Patch = Reactor.Patch;
+  const Document = Reactor.Document;
+  const ComponentTree = Reactor.ComponentTree;
 
   let container;
 

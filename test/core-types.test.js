@@ -1,7 +1,6 @@
-global.Reactor = createCore();
-const ComponentTree = Reactor.ComponentTree;
-
 describe('Core Types', () => {
+
+  const ComponentTree = Reactor.ComponentTree;
 
   const Component = Symbol.for('Component');
 
