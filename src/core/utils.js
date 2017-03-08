@@ -39,10 +39,8 @@
 
   module.exports = {
     combineReducers,
-    utils: {
-      addDataPrefix,
-      lowerDash,
-      getEventName,
-    }
+    addDataPrefix,
+    lowerDash,
+    getEventName,
   };
 }

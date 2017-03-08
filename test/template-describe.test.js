@@ -1,6 +1,6 @@
-const Template = require('../src/core/template.js');
-
 describe('Template => describe', () => {
+
+  const Template = Reactor.Template;;
 
   suppressConsoleErrors();
 

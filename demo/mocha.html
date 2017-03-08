@@ -1,0 +1,57 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Chromium Reactor Tests</title>
+  <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="mocha"></div>
+
+  <script src="https://cdn.rawgit.com/jquery/jquery/2.1.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+  <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+
+  <script src="../test/setup/assert.js"></script>
+  <script src="../test/setup/sinon.js"></script>
+  <script src="../test/setup/mocha-module-loader.js"></script>
+  <script>
+    (async () => {
+      require.prefix('core', '../src/')
+      const core = await require('core/reactor');
+      global.Reactor = await core.init();
+      mocha.setup('bdd');
+
+      global.suppressConsoleErrors = () => {
+
+        let consoleError;
+        beforeEach(() => {
+          consoleError = console.error;
+          console.error = () => {};
+        });
+
+        afterEach(() => {
+          console.error = consoleError;
+        });
+      };
+
+      await require('test/component-tree.test');
+      await require('test/core-types.test');
+      await require('test/diff-calculate.test');
+      await require('test/diff-deep-equal.test');
+      await require('test/document.test');
+      await require('test/patch-component.test');
+      await require('test/patch-element.test');
+      await require('test/reconciler.test');
+      await require('test/template-describe.test');
+      await require('test/template-get-item-type.test');
+      await require('test/template-get-value.test');
+      await require('test/template-validate.test');
+      await require('test/utils.test');
+      await require('test/virtual-element-create.test');
+      
+      // mocha.checkLeaks();
+      mocha.run();
+    })();
+  </script>
+</body>
+</html>

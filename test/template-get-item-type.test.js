@@ -1,7 +1,7 @@
-const Template = require('../src/core/template.js');
-const ItemType = Template.ItemType;
-
 describe('Template => get item type', () => {
+
+  const Template = Reactor.Template;
+  const ItemType = Template.ItemType;
 
   it('returns "string" for a string', () => {
 

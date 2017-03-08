@@ -26,7 +26,7 @@
         this.updateDOM();
       });
 
-      this.reducer = Reactor.combineReducers(...this.root.getReducers());
+      this.reducer = Reactor.utils.combineReducers(...this.root.getReducers());
       this.root.dispatch(
         this.reducer.commands.init(this.root.getInitialState()));
     }

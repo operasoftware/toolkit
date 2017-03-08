@@ -1,8 +1,7 @@
-global.Reactor = createCore();
-const VirtualNode = Reactor.VirtualNode;
-const ComponentTree = Reactor.ComponentTree;
-
 describe('Component Tree', () => {
+
+  const VirtualNode = Reactor.VirtualNode;
+  const ComponentTree = Reactor.ComponentTree;
 
   suppressConsoleErrors();
 
