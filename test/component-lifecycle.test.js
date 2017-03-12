@@ -4,8 +4,30 @@ describe('Component Lifecycle', () => {
   const ComponentLifecycle = Reactor.ComponentLifecycle;
 
   describe('on created', () => {
+
     describe('=> is called when: ', () => {
-      it.skip('creating root component');
+
+      it('creating root component', () => {
+
+        // given
+        const stub = sinon.mock();
+        const Root = class extends Reactor.Root {
+          onCreated() {
+            stub();
+          }
+        };
+        const component = new Root();
+        const patches = [
+          Reactor.Patch.createRootComponent(component)
+        ];
+
+        // when
+        ComponentLifecycle.beforeUpdate(patches);
+
+        // then
+        assert(stub.called);
+      });
+
       it.skip('adding component');
       it.skip('adding nested components');
       it.skip('adding element containing component');
