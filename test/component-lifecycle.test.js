@@ -28,11 +28,11 @@ describe('Component Lifecycle', () => {
   });
 
   describe('on props received', () => {
-
+    it.skip('=> is called when before updating component');
   });
 
   describe('on updated', () => {
-
+    it.skip('=> is called when after updating component');
   });
 
   describe('on destroyed', () => {
@@ -42,5 +42,4 @@ describe('Component Lifecycle', () => {
   describe('on detached', () => {
 
   });
-
 });
