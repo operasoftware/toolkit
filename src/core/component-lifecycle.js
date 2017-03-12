@@ -53,7 +53,7 @@
       }
     }
 
-    static onComponentReceivedProps() {
+    static onComponentReceivedProps(component) {
       component.onPropsReceived();
     }
 
@@ -63,24 +63,59 @@
 
     static onComponentDestroyed(component) {
       component.onDestroyed();
+      if (component.child) {
+        this.onNodeDestroyed(component.child);
+      }
     }
 
     static onElementDestroyed(element) {
+      for (const child of element.children) {
+        this.onNodeDestroyed(child);
+      }
+    }
 
+    static onNodeDestroyed(node) {
+      switch (node.nodeType) {
+        case 'component':
+          return this.onComponentDestroyed(node);
+        case 'element':
+          return this.onElementDestroyed(node);
+        default:
+          throw new Error('Unsupported node type:' + node.nodeType);
+      }
     }
 
     static onComponentDetached(component) {
       component.onDetached();
+      if (component.child) {
+        this.onNodeDetached(component.child);
+      }
     }
 
     static onElementDetached(element) {
+      for (const child of element.children) {
+        this.onNodeDetached(child);
+      }
+    }
 
+    static onNodeDetached(node) {
+      switch (node.nodeType) {
+        case 'component':
+          return this.onComponentDetached(node);
+        case 'element':
+          return this.onElementDetached(node);
+        default:
+          throw new Error('Unsupported node type:' + node.nodeType);
+      }
     }
 
     static beforePatchApplied(patch) {
+      const Type = Reactor.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentReceivedProps(patch.target);
+        case Type.CREATE_ROOT_COMPONENT:
+          return this.onComponentCreated(patch.root);
         case Type.ADD_COMPONENT:
           return this.onComponentCreated(patch.component);
         case Type.ADD_ELEMENT:
@@ -104,16 +139,18 @@
     }
 
     static beforeUpdate(patches) {
-      const Type = Reactor.Patch.Type;
       for (const patch of patches) {
         this.beforePatchApplied(patch);
       }
     }
 
     static afterPatchApplied(patch) {
+      const Type = Reactor.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentUpdated(patch.target);
+        case Type.CREATE_ROOT_COMPONENT:
+          return this.onComponentAttached(patch.root);
         case Type.ADD_COMPONENT:
           return this.onComponentAttached(patch.component);
         case Type.ADD_ELEMENT:
@@ -137,7 +174,6 @@
     }
 
     static afterUpdate(patches) {
-      const Type = Reactor.Patch.Type;
       for (const patch of patches) {
         this.afterPatchApplied(patch);
       }

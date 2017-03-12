@@ -40,16 +40,19 @@
     }
 
     calculatePatches() {
-      if (Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
-        return [];
+      const patches = [];
+      if (!Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
+        if (this.root.props === undefined) {
+          patches.push(Reactor.Patch.createRootComponent(this.root));
+        }
+        patches.push(Reactor.Patch.updateComponent(this.root, this.store.state));
+        const componentTree = Reactor.ComponentTree.createChildTree(
+          this.root, this.store.state);
+        const childTreePatches = Reactor.Diff.calculate(
+          this.root.child, componentTree, this.root);
+        patches.push(...childTreePatches);
       }
-      const updateRootPatch = Reactor.Patch.updateComponent(
-        this.root, this.store.state);
-      const componentTree = Reactor.ComponentTree.createChildTree(
-        this.root, this.store.state);
-      const childTreePatches = Reactor.Diff.calculate(
-        this.root.child, componentTree, this.root);
-      return [updateRootPatch, ...childTreePatches];
+      return patches;
     }
 
     async updateDOM() {
