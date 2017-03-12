@@ -55,9 +55,9 @@
     async updateDOM() {
       console.time('=> Render');
       const patches = this.calculatePatches();
-      for (const patch of patches) {
-        patch.apply();
-      }
+      Reactor.ComponentLifecycle.beforeUpdate(patches);
+      for (const patch of patches) patch.apply();
+      Reactor.ComponentLifecycle.afterUpdate(patches);
       console.log('--------------------------------------------------------')
       console.log('Patches:', patches.length);
       console.timeEnd('=> Render');
