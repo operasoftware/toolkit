@@ -53,12 +53,12 @@
       }
     }
 
-    static onComponentReceivedProps(component) {
-      component.onPropsReceived();
+    static onComponentReceivedProps(component, props) {
+      component.onPropsReceived(props);
     }
 
-    static onComponentUpdated(component) {
-      component.onUpdated();
+    static onComponentUpdated(component, props) {
+      component.onUpdated(props);
     }
 
     static onComponentDestroyed(component) {
@@ -113,7 +113,7 @@
       const Type = Reactor.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
-          return this.onComponentReceivedProps(patch.target);
+          return this.onComponentReceivedProps(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
           return this.onComponentCreated(patch.root);
         case Type.ADD_COMPONENT:
@@ -148,7 +148,7 @@
       const Type = Reactor.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target);
+          return this.onComponentUpdated(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
           return this.onComponentAttached(patch.root);
         case Type.ADD_COMPONENT:

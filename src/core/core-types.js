@@ -82,7 +82,7 @@
 
     onAttached() {}
 
-    onPropsReceived() {}
+    onPropsReceived(props) {}
 
     onUpdated() {}
 
