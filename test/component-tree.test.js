@@ -9,7 +9,7 @@ describe('Component Tree', () => {
 
     const root = Symbol.for('Root');
 
-    it('creates a new instance of preloaded component', () => {
+    it.skip('creates a new instance of preloaded component', () => {
 
       // given
       global.resolve = def => {

@@ -1,4 +1,4 @@
-describe.only('Component Lifecycle', () => {
+describe('Component Lifecycle', () => {
 
   const ComponentTree = Reactor.ComponentTree;
   const ComponentLifecycle = Reactor.ComponentLifecycle;
@@ -518,9 +518,73 @@ describe.only('Component Lifecycle', () => {
 
   describe('on destroyed', () => {
 
+    const assertOnDestroyedCalled = (...components) => {
+      assertCalled(components.map(component => ['onDestroyed', component]));
+    };
+
+    describe('=> is called when: ', () => {
+
+      it('removing component', () => {
+
+        // given
+        const [app, component] = createApp([
+          Component
+        ]);
+        const patches = [Patch.removeComponent(component, app)];
+
+        // when
+        ComponentLifecycle.beforeUpdate(patches);
+
+        // then
+        assertOnDestroyedCalled(ComponentClass);
+      });
+
+      it.skip('removed nested components');
+      it.skip('removed element containing component');
+      it.skip('removed element containing nested components');
+
+      describe('from element:', () => {
+        it.skip('removed component from element');
+        it.skip('removed nested components from element');
+        it.skip('removed element containing component');
+        it.skip('removed element containing nested components');
+      });
+    });
   });
 
   describe('on detached', () => {
 
+    const assertOnDetachedCalled = (...components) => {
+      assertCalled(components.map(component => ['onDetached', component]));
+    };
+
+    describe('=> is called when: ', () => {
+
+      it('removed component', () => {
+
+        // given
+        const [app, component] = createApp([
+          Component
+        ]);
+        const patches = [Patch.removeComponent(component, app)];
+
+        // when
+        ComponentLifecycle.afterUpdate(patches);
+
+        // then
+        assertOnDetachedCalled(ComponentClass);
+      });
+
+      it.skip('removed nested components');
+      it.skip('removed element containing component');
+      it.skip('removed element containing nested components');
+
+      describe('from element:', () => {
+        it.skip('removed component from element');
+        it.skip('removed nested components from element');
+        it.skip('removed element containing component');
+        it.skip('removed element containing nested components');
+      });
+    });
   });
 });
