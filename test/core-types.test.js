@@ -22,12 +22,16 @@ describe('Core Types', () => {
   };
 
   beforeEach(() => {
-    ComponentTree.createComponentInstance = def => {
+    sinon.stub(ComponentTree, 'createComponentInstance', def => {
       switch (def) {
         case Component:
           return new ComponentClass();
       }
-    };
+    });
+  });
+
+  afterEach(() => {
+    ComponentTree.createComponentInstance.restore();
   });
 
   describe('get node type', () => {
