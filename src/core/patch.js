@@ -1,6 +1,7 @@
 {
   const Type = Object.freeze({
 
+    CREATE_ROOT_COMPONENT: Symbol('init-root-component'),
     UPDATE_COMPONENT: Symbol('update-component'),
 
     ADD_ELEMENT: Symbol('add-element'),
@@ -39,6 +40,15 @@
       Object.assign(this, {
         type
       }, props);
+    }
+
+    static createRootComponent(root) {
+      return new Patch(Type.CREATE_ROOT_COMPONENT, {
+        root,
+        apply: () => {
+          root.props = null;
+        }
+      });
     }
 
     static updateComponent(target, props) {

@@ -17,6 +17,7 @@
       const Store = await require('core/store');
       const Template = await require('core/template');
       const ComponentTree = await require('core/component-tree');
+      const ComponentLifecycle = await require('core/component-lifecycle');
       const Diff = await require('core/diff');
       const Patch = await require('core/patch');
       const Reconciler = await require('core/reconciler');
@@ -29,7 +30,7 @@
         SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
         SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
         // core classes
-        Store, App, ComponentTree, Document,
+        Store, App, ComponentTree, ComponentLifecycle, Document,
         Diff, Patch, Reconciler, Template,
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
