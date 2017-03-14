@@ -3,12 +3,12 @@
 
     constructor(path) {
       this.path = path;
+      this.preloaded = false;
       this.store = new Reactor.Store();
     }
 
     async preload() {
       this.preloaded = true;
-      console.log('--------------------------------------------------------')
       await window.preload(this.path);
     }
 
@@ -31,34 +31,28 @@
         this.reducer.commands.init(this.root.getInitialState()));
     }
 
-    async createVirtualDOM() {
-      if (this.preloaded) {
-        return Reactor.VirtualDOM.create(this.root);
-      } else {
-        return await Reactor.VirtualDOM.resolve(this.root);
-      }
-    }
-
     calculatePatches() {
-      if (Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
-        return [];
+      const patches = [];
+      if (!Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
+        if (this.root.props === undefined) {
+          patches.push(Reactor.Patch.createRootComponent(this.root));
+        }
+        patches.push(Reactor.Patch.updateComponent(this.root, this.store.state));
+        const componentTree = Reactor.ComponentTree.createChildTree(
+          this.root, this.store.state);
+        const childTreePatches = Reactor.Diff.calculate(
+          this.root.child, componentTree, this.root);
+        patches.push(...childTreePatches);
       }
-      const updateRootPatch = Reactor.Patch.updateComponent(
-        this.root, this.store.state);
-      const componentTree = Reactor.ComponentTree.createChildTree(
-        this.root, this.store.state);
-      const childTreePatches = Reactor.Diff.calculate(
-        this.root.child, componentTree, this.root);
-      return [updateRootPatch, ...childTreePatches];
+      return patches;
     }
 
     async updateDOM() {
       console.time('=> Render');
       const patches = this.calculatePatches();
-      for (const patch of patches) {
-        patch.apply();
-      }
-      console.log('--------------------------------------------------------')
+      Reactor.ComponentLifecycle.beforeUpdate(patches);
+      for (const patch of patches) patch.apply();
+      Reactor.ComponentLifecycle.afterUpdate(patches);
       console.log('Patches:', patches.length);
       console.timeEnd('=> Render');
     }

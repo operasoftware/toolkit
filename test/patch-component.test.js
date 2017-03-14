@@ -27,7 +27,7 @@ describe('Patch component => apply', () => {
 
   beforeEach(() => {
     container = document.createElement('app');
-    ComponentTree.createComponentInstance = def => {
+    sinon.stub(ComponentTree, 'createComponentInstance', def => {
       switch (def) {
         case Component:
           return new ComponentClass();
@@ -36,7 +36,11 @@ describe('Patch component => apply', () => {
         default:
           throw new Error('Unknown definition: ' + def);
       }
-    };
+    });
+  });
+
+  afterEach(() => {
+    ComponentTree.createComponentInstance.restore();
   });
 
   const createApp = template => {
@@ -53,6 +57,18 @@ describe('Patch component => apply', () => {
     }
     return [app, node];
   };
+
+  it('creates root component', () => {
+
+    // given
+    const component = new App();
+
+    // when
+    Patch.createRootComponent(component).apply();
+
+    // then
+    assert.equal(component.props, null);
+  });
 
   it('updates component', () => {
 

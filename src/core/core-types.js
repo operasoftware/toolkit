@@ -82,7 +82,11 @@
 
     onAttached() {}
 
+    onPropsReceived(props) {}
+
     onUpdated() {}
+
+    onDestroyed() {}
 
     onDetached() {}
 
