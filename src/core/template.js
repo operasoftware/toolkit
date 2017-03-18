@@ -80,7 +80,7 @@
       }
       if (value === '') {
         return allowEmptyString ? '' : null;
-      } 
+      }
       return String(value);
     }
 

@@ -223,11 +223,13 @@
 
   };
 
-  module.exports = {
+  const CoreTypes = {
     VirtualNode,
     Component,
     Root,
     VirtualElement,
     Comment,
   };
+
+  module.exports = CoreTypes;
 }

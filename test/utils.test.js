@@ -3,6 +3,7 @@ describe('Utils', () => {
   const lowerDash = Reactor.utils.lowerDash;
   const getEventName = Reactor.utils.getEventName;
   const addDataPrefix = Reactor.utils.addDataPrefix;
+  const createUUID = Reactor.utils.createUUID;
 
   describe('core reducer', () => {
 
@@ -144,4 +145,12 @@ describe('Utils', () => {
       });
     });
   });
+
+  describe('create UUID', () => {
+
+    it('creates valid UUID', () => {
+      const uuid = createUUID();
+      assert.equal(/........\-....\-....\-............/.test(uuid), true);
+    });
+  })
 });

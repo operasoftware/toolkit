@@ -533,11 +533,13 @@
     'perspective'
   ];
 
-  module.exports = {
+  const Consts = {
     SUPPORTED_ATTRIBUTES,
     SUPPORTED_EVENTS,
     SUPPORTED_STYLES,
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS
   };
+
+  module.exports = Consts;
 }
