@@ -38,12 +38,13 @@ const Patch = normalizeModule('core/patch');
 const Reconciler = normalizeModule('core/reconciler');
 const Document = normalizeModule('core/document');
 const utils = normalizeModule('core/utils');
+const DevToolsHook = normalizeModule('core/devtools-hook');
 
 const Release = loadModule('release');
 
 const release = merge(
   ModuleLoader, Consts, CoreTypes, App, Store, Template, ComponentTree,
-  ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
+  ComponentLifecycle, Diff, Patch, Reconciler, Document, utils, DevToolsHook,
   Release
 );
 

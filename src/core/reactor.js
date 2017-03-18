@@ -23,7 +23,13 @@
       const Reconciler = await loader.require('core/reconciler');
       const Document = await loader.require('core/document');
       const utils = await loader.require('core/utils');
-      const create = root => new App(root);
+      const DevToolsHook = await loader.require('core/devtools-hook');
+
+      const create = root =>  {
+        const app = new App(root);
+        DevToolsHook.registerApp(app);
+        return app;
+      };
 
       return {
         // constants
@@ -35,7 +41,9 @@
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
         // utils
-        utils, create
+        utils, create,
+        // dev tools
+        __devtools_hook__: DevToolsHook,
       };
     }
   };

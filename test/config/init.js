@@ -25,7 +25,8 @@ global.Reactor = {
   // utils
   utils: utils,
   // core
-  // App: require('../../src/core/app.js'),
+  App: require('../../src/core/app.js'),
+  Store: require('../../src/core/store.js'),
   ComponentTree: require('../../src/core/component-tree.js'),
   ComponentLifecycle: require('../../src/core/component-lifecycle.js'),
   Template: require('../../src/core/template.js'),
@@ -33,6 +34,8 @@ global.Reactor = {
   Patch: require('../../src/core/patch.js'),
   Reconciler: require('../../src/core/reconciler.js'),
   Document: require('../../src/core/document.js'),
+  // devtools
+  __devtools_hook__: require('../../src/core/devtools-hook.js')
 };
 
 global.suppressConsoleErrors = () => {

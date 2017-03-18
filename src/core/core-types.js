@@ -1,7 +1,14 @@
 {
+  const ID = Symbol('id');
+
   const VirtualNode = class {
 
+    get id() {
+      return this[ID];
+    }
+
     constructor() {
+      this[ID] = Reactor.utils.createUUID();
       this.parentNode = null;
     }
 

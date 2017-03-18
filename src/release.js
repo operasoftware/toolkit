@@ -22,7 +22,13 @@
   const Reconciler = loader.get('core/reconciler');
   const Document = loader.get('core/document');
   const utils = loader.get('core/utils');
-  const create = root => new App(root);
+  const DevToolsHook = loader.get('core/devtools-hook');
+
+  const create = root => {
+    const app = new App(root);
+    DevToolsHook.registerApp(app);
+    return app;
+  };
 
   const Reactor = {
     // constants
@@ -35,6 +41,8 @@
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils
     utils, create,
+    // devtools
+    DevToolsHook,
 
     debug: false,
     ready: () => Promise.resolve(),

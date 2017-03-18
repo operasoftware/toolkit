@@ -35,7 +35,7 @@
         });
       };
 
-      // await require('test/app.test');
+      await loader.require('test/app.test');
       await loader.require('test/component-lifecycle.test');
       await loader.require('test/component-tree.test');
       await loader.require('test/core-types.test');
@@ -51,6 +51,7 @@
       await loader.require('test/template-validate.test');
       await loader.require('test/utils.test');
       await loader.require('test/virtual-element-create.test');
+      await loader.require('test/devtools-hook.test');
       
       // mocha.checkLeaks();
       mocha.run();

@@ -797,9 +797,16 @@
 }
 
 {
+  const ID = Symbol('id');
+
   const VirtualNode = class {
 
+    get id() {
+      return this[ID];
+    }
+
     constructor() {
+      this[ID] = Reactor.utils.createUUID();
       this.parentNode = null;
     }
 
@@ -1033,12 +1040,19 @@
 }
 
 {
+  const ID = Symbol('id');
+
   const App = class {
 
     constructor(path) {
+      this[ID] = Reactor.utils.createUUID();
       this.path = path;
       this.preloaded = false;
       this.store = new Reactor.Store();
+    }
+
+    get id() {
+      return this[ID];
     }
 
     async preload() {
@@ -1082,13 +1096,17 @@
     }
 
     async updateDOM() {
-      console.time('=> Render');
+      if (Reactor.debug) {
+        console.time('=> Render');
+      }
       const patches = this.calculatePatches();
       Reactor.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       Reactor.ComponentLifecycle.afterUpdate(patches);
-      console.log('Patches:', patches.length);
-      console.timeEnd('=> Render');
+      if (Reactor.debug) {
+        console.log('Patches:', patches.length);
+        console.timeEnd('=> Render');
+      }
     }
   };
 
@@ -1553,6 +1571,7 @@
 
     static onNodeCreated(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentCreated(node);
         case 'element':
@@ -1577,6 +1596,7 @@
 
     static onNodeAttached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentAttached(node);
         case 'element':
@@ -1609,6 +1629,7 @@
 
     static onNodeDestroyed(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDestroyed(node);
         case 'element':
@@ -1633,6 +1654,7 @@
 
     static onNodeDetached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDetached(node);
         case 'element':
@@ -2651,6 +2673,98 @@
   loader.define('core/utils', Utils);
 }
 
+{
+  const apps = new Map();
+
+  const DevToolsHook = class {
+
+    static describeApp(app) {
+      return {
+        name: app.root.constructor.name,
+        id: app.id,
+        path: app.path.toString().slice(7, -1),
+      }
+    }
+
+    static describeProps(props) {
+      return props;
+    }
+
+    static describeComponent(component) {
+      const description = {
+        type: 'component',
+        name: component.constructor.name,
+        props: this.describeProps(component.props),
+      };
+      if (component.child) {
+        description.children = [this.describeNode(component.child)];
+      }
+      return description;
+    }
+
+    static describeElement(element) {
+      const description = {
+        type: 'element',
+        name: element.name,
+        classNames: element.classNames,
+      }
+      if (element.children.length) {
+        description.children = element.children.map(
+          node => this.describeNode(node));
+      }
+      if (element.text) {
+        description.text = element.text;
+      }
+      return description;
+    }
+
+    static describeNode(node) {
+      if (node.isComponent()) {
+        return this.describeComponent(node);
+      }
+      if (node.isElement()) {
+        return this.describeElement(node);
+      }
+      return null;
+    }
+
+    static registerApp(app) {
+      apps.set(app.id, app);
+    }
+
+    static getApps() {
+      return Array.from(apps.values()).map(app => this.describeApp(app));
+    }
+
+    static getApp(uuid) {
+      const app = apps.get(uuid);
+      if (app) {
+        return this.describeNode(app.root);
+      }
+      return null;
+    }
+
+    static getBoundingRect(uuid) {
+      const element = this.getElement(uuid);
+      const rect = element.getBoundingClientRect();
+      return {
+        top: rect.top,
+        left: rect.left,
+        height: rect.height,
+        width: rect.width,
+      };
+    }
+
+    static getElement(uuid) {
+      const app = apps.get(uuid);
+      if (app) {
+        return app.root.parentElement.ref;
+      }
+    }
+  };
+
+  loader.define('core/devtools-hook', DevToolsHook);
+}
 
 {
   loader.prefix('core', '/src/');
@@ -2676,7 +2790,13 @@
   const Reconciler = loader.get('core/reconciler');
   const Document = loader.get('core/document');
   const utils = loader.get('core/utils');
-  const create = root => new App(root);
+  const DevToolsHook = loader.get('core/devtools-hook');
+
+  const create = root => {
+    const app = new App(root);
+    DevToolsHook.registerApp(app);
+    return app;
+  };
 
   const Reactor = {
     // constants
@@ -2689,6 +2809,8 @@
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils
     utils, create,
+    // devtools
+    DevToolsHook,
 
     debug: false,
     ready: () => Promise.resolve(),

@@ -1,10 +1,17 @@
 {
+  const ID = Symbol('id');
+
   const App = class {
 
     constructor(path) {
+      this[ID] = Reactor.utils.createUUID();
       this.path = path;
       this.preloaded = false;
       this.store = new Reactor.Store();
+    }
+
+    get id() {
+      return this[ID];
     }
 
     async preload() {
@@ -48,13 +55,17 @@
     }
 
     async updateDOM() {
-      console.time('=> Render');
+      if (Reactor.debug) {
+        console.time('=> Render');
+      }
       const patches = this.calculatePatches();
       Reactor.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       Reactor.ComponentLifecycle.afterUpdate(patches);
-      console.log('Patches:', patches.length);
-      console.timeEnd('=> Render');
+      if (Reactor.debug) {
+        console.log('Patches:', patches.length);
+        console.timeEnd('=> Render');
+      }
     }
   };
 
