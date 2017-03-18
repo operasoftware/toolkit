@@ -26,6 +26,11 @@
     }
   };
 
+  const define = (componentPath, module) => {
+    registry.set(Symbol.for(componentPath), componentPath);
+    cache.set(componentPath, module);
+  };
+
   const require = componentPath => {
 
     if (typeof componentPath === 'symbol') {
@@ -74,6 +79,7 @@
 
   // globals
   Object.assign(window, {
+    define,
     require,
     resolve,
     preload,

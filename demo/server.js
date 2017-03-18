@@ -7,6 +7,7 @@ app.set('port', 3000);
 
 app.use('/demo', express.static('demo'));
 app.use('/src', express.static('src'));
+app.use('/dist', express.static('dist'));
 app.use('/test', express.static('test'));
 
 const server = app.listen(app.get('port'), () => {

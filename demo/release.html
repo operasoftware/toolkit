@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reactor demo</title>
+  <link rel="stylesheet" href="./demo.css" />
+  <script src="/dist/reactor.release.js"></script>
+  <script src="/demo/demo.js"></script>
+  <script src="/demo/bubbles.js"></script>
+</head>
+<body>
+  <div class="background">
+  <apps>
+    <app id="navigation"></app>
+    <app id="bubbles"></app>
+  </apps>
+  </div>
+  <script>
+    Reactor.ready().then(async () => {
+      await renderDemo($('navigation'));
+      await renderBubbles($('bubbles'));
+    });
+  </script>
+</body>
+</html>
