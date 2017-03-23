@@ -9,14 +9,14 @@
 
     async preload() {
       this.preloaded = true;
-      await window.preload(this.path);
+      await loader.preload(this.path);
     }
 
     async render(container) {
 
       this.container = container;
 
-      const RootClass = await require(this.path);
+      const RootClass = await loader.resolve(this.path);
       if (!this.preloaded) {
         await RootClass.init();
       }

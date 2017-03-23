@@ -1,6 +1,6 @@
 window.renderBubbles = async (container) => {
 
-  const BubblesApp = require.def('demo/bubbles/bubbles-app');
+  const BubblesApp = loader.symbol('demo/bubbles/bubbles-app');
 
   // create new app
   const bubbles = Reactor.create(BubblesApp);

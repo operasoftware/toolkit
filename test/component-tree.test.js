@@ -12,12 +12,14 @@ describe('Component Tree', () => {
     it('creates a new instance of preloaded component', () => {
 
       // given
-      global.resolve = def => {
-        switch (def) {
-          case root:
-            return Reactor.Root;
-          default:
-            throw new Error('Unknown definition: ' + def);
+      global.loader = {
+        get: symbol => {
+          switch (symbol) {
+            case root:
+              return Reactor.Root;
+            default:
+              throw new Error('Unknown definition: ' + symbol);
+          }
         }
       };
       const instance = ComponentTree.createComponentInstance(root);

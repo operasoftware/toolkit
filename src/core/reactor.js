@@ -8,21 +8,21 @@
         SUPPORTED_STYLES,
         SUPPORTED_FILTERS,
         SUPPORTED_TRANSFORMS
-      } = await require('core/consts');
+      } = await loader.require('core/consts');
       const {
         VirtualNode, Root, Component, VirtualElement, Comment,
-      } = await require('core/core-types');
+      } = await loader.require('core/core-types');
 
-      const App = await require('core/app');
-      const Store = await require('core/store');
-      const Template = await require('core/template');
-      const ComponentTree = await require('core/component-tree');
-      const ComponentLifecycle = await require('core/component-lifecycle');
-      const Diff = await require('core/diff');
-      const Patch = await require('core/patch');
-      const Reconciler = await require('core/reconciler');
-      const Document = await require('core/document');
-      const utils = await require('core/utils');
+      const App = await loader.require('core/app');
+      const Store = await loader.require('core/store');
+      const Template = await loader.require('core/template');
+      const ComponentTree = await loader.require('core/component-tree');
+      const ComponentLifecycle = await loader.require('core/component-lifecycle');
+      const Diff = await loader.require('core/diff');
+      const Patch = await loader.require('core/patch');
+      const Reconciler = await loader.require('core/reconciler');
+      const Document = await loader.require('core/document');
+      const utils = await loader.require('core/utils');
       const create = root => new App(root);
 
       return {

@@ -5,8 +5,8 @@
   const DemoApp = class extends Reactor.Root {
 
     static async init() {
-      reducer = await require('demo/reducers/demo-reducer');
-      settings = await require('demo/services/settings');
+      reducer = await loader.require('demo/reducers/demo-reducer');
+      settings = await loader.require('demo/services/settings');
     }
 
     getInitialState() {
@@ -36,7 +36,7 @@
     }
   };
 
-  const NavigationPanel = require.def('demo/components/navigation/panel');
+  const NavigationPanel = loader.symbol('demo/components/navigation/panel');
 
   module.exports = DemoApp;
 }

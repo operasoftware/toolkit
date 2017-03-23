@@ -1,7 +1,5 @@
 {
-  require.prefix('core', 'src/');
-
-  const get = componentPath => resolve(Symbol.for(componentPath));
+  loader.prefix('core', 'src/');
 
   const {
     SUPPORTED_ATTRIBUTES,
@@ -9,21 +7,21 @@
     SUPPORTED_STYLES,
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS
-  } = get('core/consts');
+  } = loader.get('core/consts');
   const {
     VirtualNode, Root, Component, VirtualElement, Comment,
-  } = get('core/core-types');
+  } = loader.get('core/core-types');
 
-  const App = get('core/app');
-  const Store = get('core/store');
-  const Template = get('core/template');
-  const ComponentTree = get('core/component-tree');
-  const ComponentLifecycle = get('core/component-lifecycle');
-  const Diff = get('core/diff');
-  const Patch = get('core/patch');
-  const Reconciler = get('core/reconciler');
-  const Document = get('core/document');
-  const utils = get('core/utils');
+  const App = loader.get('core/app');
+  const Store = loader.get('core/store');
+  const Template = loader.get('core/template');
+  const ComponentTree = loader.get('core/component-tree');
+  const ComponentLifecycle = loader.get('core/component-lifecycle');
+  const Diff = loader.get('core/diff');
+  const Patch = loader.get('core/patch');
+  const Reconciler = loader.get('core/reconciler');
+  const Document = loader.get('core/document');
+  const utils = loader.get('core/utils');
   const create = root => new App(root);
 
   const Reactor = {

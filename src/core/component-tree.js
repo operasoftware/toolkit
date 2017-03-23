@@ -2,7 +2,7 @@
   const ComponentTree = class {
 
     static createComponentInstance(def) {
-      const ComponentClass = resolve(def);
+      const ComponentClass = loader.get(def);
       return new ComponentClass();
     }
 
@@ -102,10 +102,10 @@
       return tree;
     }
 
-    static create(def, props = {}, children = []) {
+    static create(symbol, props = {}, children = []) {
 
       try {
-        const instance = this.createComponentInstance(def);
+        const instance = this.createComponentInstance(symbol);
         instance.props = props;
         const template = instance.render.call({
           props,
@@ -117,7 +117,7 @@
         }
         return instance;
       } catch (e) {
-        console.error('Error creating Component Tree:', def);
+        console.error('Error creating Component Tree:', symbol);
         throw e;
       }
     }
