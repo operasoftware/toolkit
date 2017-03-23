@@ -1,7 +1,9 @@
 {
+  /** Path => module mapping. */
   const registry = new Map();
-  const cache = new Map();
-  const dependencies = [];
+
+  /** Path => module dependency symbols mapping */
+  const dependencySymbols = new Map();
 
   const prefixes = new Map();
 
@@ -14,77 +16,103 @@
     return `/${path}.js`;
   }
 
-  const preload = async path => {
-    console.log('Preloading:', path);
-    const component = await require(path);
-    const pendingDependencies = Array.from(dependencies);
-    if (component.prototype instanceof Reactor.Component && component.init) {
-      await component.init();
+  const loadModule = async path => {
+    if ('object' === typeof window) {
+      return await new Promise(resolve => {
+        const script = document.createElement('script');
+        script.src = getScriptPath(path);
+        script.onload = () => {
+          registry.set(path, module.exports);
+          resolve(module.exports);
+        };
+        document.head.appendChild(script);
+      });
     }
-    for (let dependency of pendingDependencies) {
-      await preload(dependency);
+    return require('./test/' + path + '.js');
+  };
+
+  const getPath = symbol => String(symbol).slice(7, -1);
+
+  let currentPath = null;
+
+  const ModuleLoader = class {
+
+    static prefix(name, prefix) {
+      prefixes.set(name, prefix);
+    };
+
+    static symbol(path, modulePath = currentPath) {
+      const symbol = Symbol.for(path);
+      let moduleSymbols = dependencySymbols.get(modulePath);
+      if (!moduleSymbols) {
+        moduleSymbols = [];
+        dependencySymbols.set(currentPath, moduleSymbols);
+      }
+      moduleSymbols.push(symbol);
+      return symbol;
+    }
+
+    static define(path, module) {
+      registry.set(path, module);
+    }
+
+    static get(path) {
+      if ('symbol' === typeof path) {
+        path = getPath(path);
+      }
+      const module = registry.get(path);
+      if (module) {
+        return module;
+      }
+      throw new Error(`No module found for path '${path}'`);
+    }
+
+    static async require(path) {
+      let module = registry.get(path);
+      if (module) {
+        return module;
+      }
+      currentPath = path;
+      module = await loadModule(path);
+      if (module.init) {
+        const result = module.init();
+        if ('object' === typeof result && 'function' === typeof result.then) {
+          await result;
+        }
+      }
+      registry.set(path, module);
+      return module;
+    }
+
+    static async resolve(symbol) {
+      const path = getPath(symbol);
+      return this.require(path);
+    }
+
+    static async preload(symbol) {
+      const path = getPath(symbol);
+      const module = await this.require(path);
+      const symbols = dependencySymbols.get(path) || [];
+      for (const symbol of symbols) {
+        await this.preload(symbol);
+      }
+      return module;
+    }
+
+    static get data_() {
+      return {
+        getSymbols: path => dependencySymbols.get(path) || [],
+        getModules: () => Array.from(registry.entries()),
+      }
     }
   };
 
-  const define = (componentPath, module) => {
-    registry.set(Symbol.for(componentPath), componentPath);
-    cache.set(componentPath, module);
-  };
-
-  const require = componentPath => {
-
-    if (typeof componentPath === 'symbol') {
-      componentPath = registry.get(componentPath);
-    }
-
-    if (cache.get(componentPath)) {
-      return Promise.resolve(cache.get(componentPath));
-    }
-
-    const loadPromise = new Promise(resolve => {
-      dependencies.length = 0;
-      // console.time('=> script load time');
-      const script = document.createElement('script');
-      script.src = getScriptPath(componentPath);
-      script.setAttribute('data-component-path', componentPath);
-      script.onload = () => {
-        cache.set(componentPath, module.exports);
-        // console.log('(loader) Loaded script:', script.src);
-        // console.timeEnd('=> script load time');
-        resolve(module.exports);
-      };
-      document.head.appendChild(script);
-    });
-
-    return loadPromise;
-  };
-
-  require.prefix = (name, prefix) => {
-    prefixes.set(name, prefix);
-  };
-
-  require.def = componentPath => {
-    const symbol = Symbol.for(componentPath);
-    dependencies.push(symbol);
-    registry.set(symbol, componentPath);
-    return symbol;
-  };
-
-  const resolve = def => {
-    const componentPath = registry.get(def);
-    return cache.get(componentPath);
-  };
-
-  const module = {};
-
-  // globals
-  Object.assign(window, {
-    define,
-    require,
-    resolve,
-    preload,
-    module
-  });
+  if ('object' === typeof window) {
+    window.loader = ModuleLoader;
+    window.module = {};
+  } else {
+    module.exports = ModuleLoader;
+  }
 }
 
 {
@@ -630,7 +658,7 @@
     SUPPORTED_TRANSFORMS
   };
 
-  define('core/consts', Consts);
+  loader.define('core/consts', Consts);
 }
 
 
@@ -867,7 +895,7 @@
     Comment,
   };
 
-  define('core/core-types', CoreTypes);
+  loader.define('core/core-types', CoreTypes);
 }
 
 {
@@ -881,14 +909,14 @@
 
     async preload() {
       this.preloaded = true;
-      await window.preload(this.path);
+      await loader.preload(this.path);
     }
 
     async render(container) {
 
       this.container = container;
 
-      const RootClass = await require(this.path);
+      const RootClass = await loader.resolve(this.path);
       if (!this.preloaded) {
         await RootClass.init();
       }
@@ -930,7 +958,7 @@
     }
   };
 
-  define('core/app', App);
+  loader.define('core/app', App);
 }
 
 {
@@ -952,7 +980,7 @@
     }
   };
 
-  define('core/store', Store);
+  loader.define('core/store', Store);
 }
 
 
@@ -1233,14 +1261,14 @@
     }
   };
 
-  define('core/template', Template);
+  loader.define('core/template', Template);
 }
 
 {
   const ComponentTree = class {
 
     static createComponentInstance(def) {
-      const ComponentClass = resolve(def);
+      const ComponentClass = loader.get(def);
       return new ComponentClass();
     }
 
@@ -1340,10 +1368,10 @@
       return tree;
     }
 
-    static create(def, props = {}, children = []) {
+    static create(symbol, props = {}, children = []) {
 
       try {
-        const instance = this.createComponentInstance(def);
+        const instance = this.createComponentInstance(symbol);
         instance.props = props;
         const template = instance.render.call({
           props,
@@ -1355,7 +1383,7 @@
         }
         return instance;
       } catch (e) {
-        console.error('Error creating Component Tree:', def);
+        console.error('Error creating Component Tree:', symbol);
         throw e;
       }
     }
@@ -1365,7 +1393,7 @@
     }
   };
 
-  define('core/component-tree', ComponentTree);
+  loader.define('core/component-tree', ComponentTree);
 }
 
 
@@ -1537,7 +1565,7 @@
     }
   }
 
-  define('core/component-lifecycle', ComponentLifecycle);
+  loader.define('core/component-lifecycle', ComponentLifecycle);
 }
 
 
@@ -1856,7 +1884,7 @@
     }
   };
 
-  define('core/diff', Diff);
+  loader.define('core/diff', Diff);
 }
 
 {
@@ -2195,7 +2223,7 @@
     }
   };
 
-  define('core/patch', Patch);
+  loader.define('core/patch', Patch);
 }
 
 
@@ -2292,7 +2320,7 @@
   Reconciler.Move = Move;
   Reconciler.Move.Name = Name;
 
-  define('core/reconciler', Reconciler);
+  loader.define('core/reconciler', Reconciler);
 }
 
 
@@ -2423,7 +2451,7 @@
     }
   };
 
-  define('core/document', Document);
+  loader.define('core/document', Document);
 }
 
 
@@ -2481,14 +2509,12 @@
     createUUID,
   };
 
-  define('core/utils', Utils);
+  loader.define('core/utils', Utils);
 }
 
 
 {
-  require.prefix('core', 'src/');
-
-  const get = componentPath => resolve(Symbol.for(componentPath));
+  loader.prefix('core', 'src/');
 
   const {
     SUPPORTED_ATTRIBUTES,
@@ -2496,21 +2522,21 @@
     SUPPORTED_STYLES,
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS
-  } = get('core/consts');
+  } = loader.get('core/consts');
   const {
     VirtualNode, Root, Component, VirtualElement, Comment,
-  } = get('core/core-types');
+  } = loader.get('core/core-types');
 
-  const App = get('core/app');
-  const Store = get('core/store');
-  const Template = get('core/template');
-  const ComponentTree = get('core/component-tree');
-  const ComponentLifecycle = get('core/component-lifecycle');
-  const Diff = get('core/diff');
-  const Patch = get('core/patch');
-  const Reconciler = get('core/reconciler');
-  const Document = get('core/document');
-  const utils = get('core/utils');
+  const App = loader.get('core/app');
+  const Store = loader.get('core/store');
+  const Template = loader.get('core/template');
+  const ComponentTree = loader.get('core/component-tree');
+  const ComponentLifecycle = loader.get('core/component-lifecycle');
+  const Diff = loader.get('core/diff');
+  const Patch = loader.get('core/patch');
+  const Reconciler = loader.get('core/reconciler');
+  const Document = loader.get('core/document');
+  const utils = loader.get('core/utils');
   const create = root => new App(root);
 
   const Reactor = {

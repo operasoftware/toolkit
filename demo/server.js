@@ -5,6 +5,7 @@ const app = express();
 
 app.set('port', 3000);
 
+app.use('/lazy', express.static('node_modules/lazy-module-loader/'));
 app.use('/demo', express.static('demo'));
 app.use('/src', express.static('src'));
 app.use('/dist', express.static('dist'));

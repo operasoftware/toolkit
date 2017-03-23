@@ -1,6 +1,6 @@
 (async () => {
 
-  require.prefix('core', 'src/');
+  loader.prefix('core', 'src/');
 
   let initialized = false;
   let readyPromise = Promise.resolve();
@@ -9,7 +9,7 @@
     if (initialized) {
       return;
     }
-    const reactor = await require('core/reactor');
+    const reactor = await loader.require('core/reactor');
     const modules = await reactor.init();
     Object.assign(Reactor, modules);
     Object.freeze(Reactor);

@@ -1,6 +1,6 @@
 window.renderDemo = async (container) => {
 
-  const DemoApp = require.def('demo/components/demo-app');
+  const DemoApp = loader.symbol('demo/components/demo-app');
 
   // create new app
   const demo = Reactor.create(DemoApp);
