@@ -38,7 +38,7 @@ The creation and execution of apps is as simple as possible:
 
 ```js
 // import app definition
-const MyApp = require.def('apps/my-app');
+const MyApp = loader.symbol('apps/my-app');
 // create new app
 const app = Reactor.create(MyApp);
 // render in body element
@@ -79,7 +79,7 @@ const Application = class extends Reactor.Component {
   }
 };
 
-const NavigationMenu = require.def('/components/navigation/menu');
+const NavigationMenu = loader.symbol('/components/navigation/menu');
 ```
 If any subcomponent definitions are found in the returned template the subcomponent classes are loaded together with their dependencies. The subcomponent instances are created and they receive their own properties (as specified by the parent component) and the rendering continues:
 
@@ -96,7 +96,7 @@ const NavigationMenu = class extends Reactor.Component {
   }
 };
 
-const NavigationItem = require.def('/components/navigation/item');
+const NavigationItem = loader.symbol('/components/navigation/item');
 ```
 
 By design components only receive properties they are interested in, usually fragments of the application state.
@@ -144,7 +144,7 @@ const Component = class extends Reactor.Component {
   }
 };
 
-const Subcomponent = require.def('/components/subcomponent');
+const Subcomponent = loader.symbol('/components/subcomponent');
 ```
 **Reducers** - process commands to update the application state, but also provide an API for creation of commands that they can understand
 ```js

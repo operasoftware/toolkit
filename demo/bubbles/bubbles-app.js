@@ -2,13 +2,13 @@
   let reducer;
   let service;
 
-  const Bubble = require.def('demo/bubbles/bubble-component');
+  const Bubble = loader.symbol('demo/bubbles/bubble-component');
 
   const BubblesApp = class extends Reactor.Root {
 
     static async init() {
-      reducer = await require('demo/bubbles/bubbles-reducer');
-      service = await require('demo/bubbles/bubbles-service');
+      reducer = await loader.require('demo/bubbles/bubbles-reducer');
+      service = await loader.require('demo/bubbles/bubbles-service');
     }
 
     getInitialState() {

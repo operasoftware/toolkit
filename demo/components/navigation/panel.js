@@ -1,5 +1,5 @@
 {
-  const NavigationItem = require.def('demo/components/navigation/item');
+  const NavigationItem = loader.symbol('demo/components/navigation/item');
 
   const NavigationPanel = class extends Reactor.Component {
 

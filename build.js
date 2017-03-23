@@ -8,7 +8,7 @@ const convertModuleExportsToDefine = (script, path) => {
   const moduleExportsRegExp = /module\.exports\ \=\ (.+?);/;
   const match = script.match(moduleExportsRegExp);
   if (match) {
-    const normalized = script.replace(match[0], `define('${path}', ${match[1]});`);
+    const normalized = script.replace(match[0], `loader.define('${path}', ${match[1]});`);
     return normalized;
   } else {
     throw new Error('No module.exports statement found in: ' + path);
@@ -24,7 +24,7 @@ const merge = (...contents) => contents.join('\n\n');
 
 const package = loadJSON('./package.json');
 
-const ModuleLoader = loadModule('module-loader');
+const ModuleLoader = loadModule('../node_modules/lazy-module-loader/module-loader');
 
 const Consts = normalizeModule('core/consts');
 const CoreTypes = normalizeModule('core/core-types');
@@ -49,13 +49,17 @@ const release = merge(
 
 fs.writeFileSync('./dist/reactor.release.js', release, 'utf8');
 
-const size = String(release.length).replace(/(\d{3})$/g, ',$1');
+const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
+
+const size = formatNumber(release.length);
+const lines = formatNumber(release.split('\n').length);
 
 console.log();
 console.log('-------------------------------------------------------');
 console.log(' Finished bundling release version of Chromium Reactor');
 console.log('-------------------------------------------------------');
-console.log(` Version: ${package.version}`);
-console.log(` Size: ${size} bytes`);
+console.log(` => Version: ${package.version}`);
+console.log(` => Lines: ${lines}`);
+console.log(` => Size: ${size} bytes`);
 console.log('-------------------------------------------------------');
 console.log();
