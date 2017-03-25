@@ -7,46 +7,57 @@
 
   const prefixes = new Map();
 
-  const getScriptPath = path => {
+  const getResourcePath = path => {
     for (let [name, prefix] of prefixes) {
       if (path.startsWith(name)) {
-        return `/${prefix}${path}.js`;
+        return `${prefix}${path}.js`;
       }
     }
-    return `/${path}.js`;
+    return `${path}.js`;
+  }
+
+  const appendScriptToHead = async path => {
+    return new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = getResourcePath(path);
+      script.onload = () => {
+        registry.set(path, module.exports);
+        resolve(module.exports);
+      };
+      document.head.appendChild(script);
+    });
+  };
+
+  const requireUncached = path => {
+    const resourcePath = getResourcePath(path);
+    decache(resourcePath);
+    return require(resourcePath);
   }
 
   const loadModule = async path => {
     if ('object' === typeof window) {
-      return await new Promise(resolve => {
-        const script = document.createElement('script');
-        script.src = getScriptPath(path);
-        script.onload = () => {
-          registry.set(path, module.exports);
-          resolve(module.exports);
-        };
-        document.head.appendChild(script);
-      });
+      return appendScriptToHead(path);
     }
-    return require('./test/' + path + '.js');
+    return requireUncached(path);
   };
 
   const getPath = symbol => String(symbol).slice(7, -1);
 
-  let currentPath = null;
+  let context = null;
 
   const ModuleLoader = class {
 
     static prefix(name, prefix) {
       prefixes.set(name, prefix);
+      return this;
     };
 
-    static symbol(path, modulePath = currentPath) {
+    static symbol(path, ctx = context) {
       const symbol = Symbol.for(path);
-      let moduleSymbols = dependencySymbols.get(modulePath);
+      let moduleSymbols = dependencySymbols.get(ctx);
       if (!moduleSymbols) {
         moduleSymbols = [];
-        dependencySymbols.set(currentPath, moduleSymbols);
+        dependencySymbols.set(ctx, moduleSymbols);
       }
       moduleSymbols.push(symbol);
       return symbol;
@@ -72,7 +83,7 @@
       if (module) {
         return module;
       }
-      currentPath = path;
+      context = path;
       module = await loadModule(path);
       if (module.init) {
         const result = module.init();
@@ -91,7 +102,11 @@
 
     static async preload(symbol) {
       const path = getPath(symbol);
-      const module = await this.require(path);
+      let module = registry.get(path);
+      if (module) {
+        return module;
+      }
+      module = await this.require(path);
       const symbols = dependencySymbols.get(path) || [];
       for (const symbol of symbols) {
         await this.preload(symbol);
@@ -99,10 +114,14 @@
       return module;
     }
 
-    static get data_() {
+    static get debug_() {
       return {
         getSymbols: path => dependencySymbols.get(path) || [],
         getModules: () => Array.from(registry.entries()),
+        reset: () => {
+          registry.clear();
+          dependencySymbols.clear();
+        }
       }
     }
   };
@@ -111,9 +130,10 @@
     window.loader = ModuleLoader;
     window.module = {};
   } else {
-    module.exports = ModuleLoader;
+    global.loader = ModuleLoader;
   }
 }
+
 
 {
   const SUPPORTED_EVENTS = [
@@ -137,6 +157,7 @@
     'onInput',
     'onSubmit',
     // mouse events
+    'onAuxClick',
     'onClick',
     'onContextMenu',
     'onDoubleClick',
@@ -328,6 +349,12 @@
   ];
 
   const SUPPORTED_STYLES = [
+    'alignContent',
+    'alignItems',
+    'alignSelf',
+    'alignmentBaseline',
+    'all',
+    'animation',
     'animationDelay',
     'animationDirection',
     'animationDuration',
@@ -336,6 +363,8 @@
     'animationName',
     'animationPlayState',
     'animationTimingFunction',
+    'backfaceVisibility',
+    'background',
     'backgroundAttachment',
     'backgroundBlendMode',
     'backgroundClip',
@@ -343,250 +372,220 @@
     'backgroundImage',
     'backgroundOrigin',
     'backgroundPosition',
+    'backgroundPositionX',
+    'backgroundPositionY',
     'backgroundRepeat',
+    'backgroundRepeatX',
+    'backgroundRepeatY',
     'backgroundSize',
+    'baselineShift',
+    'blockSize',
+    'border',
+    'borderBottom',
     'borderBottomColor',
     'borderBottomLeftRadius',
     'borderBottomRightRadius',
     'borderBottomStyle',
     'borderBottomWidth',
     'borderCollapse',
+    'borderColor',
+    'borderImage',
     'borderImageOutset',
     'borderImageRepeat',
     'borderImageSlice',
     'borderImageSource',
     'borderImageWidth',
+    'borderLeft',
     'borderLeftColor',
     'borderLeftStyle',
     'borderLeftWidth',
+    'borderRadius',
+    'borderRight',
     'borderRightColor',
     'borderRightStyle',
     'borderRightWidth',
+    'borderSpacing',
+    'borderStyle',
+    'borderTop',
     'borderTopColor',
     'borderTopLeftRadius',
     'borderTopRightRadius',
     'borderTopStyle',
     'borderTopWidth',
+    'borderWidth',
     'bottom',
     'boxShadow',
     'boxSizing',
     'breakAfter',
     'breakBefore',
     'breakInside',
+    'bufferedRendering',
     'captionSide',
+    'caretColor',
     'clear',
     'clip',
+    'clipPath',
+    'clipRule',
     'color',
-    'content',
-    'cursor',
-    'direction',
-    'display',
-    'emptyCells',
-    'float',
-    'fontFamily',
-    'fontKerning',
-    'fontSize',
-    'fontStretch',
-    'fontStyle',
-    'fontVariant',
-    'fontVariantLigatures',
-    'fontVariantCaps',
-    'fontVariantNumeric',
-    'fontWeight',
-    'height',
-    'imageRendering',
-    'isolation',
-    'justifyItems',
-    'justifySelf',
-    'left',
-    'letterSpacing',
-    'lineHeight',
-    'listStyleImage',
-    'listStylePosition',
-    'listStyleType',
-    'marginBottom',
-    'marginLeft',
-    'marginRight',
-    'marginTop',
-    'maxHeight',
-    'maxWidth',
-    'minHeight',
-    'minWidth',
-    'mixBlendMode',
-    'objectFit',
-    'objectPosition',
-    'offsetDistance',
-    'offsetPath',
-    'offsetRotate',
-    'offsetRotation',
-    'opacity',
-    'orphans',
-    'outlineColor',
-    'outlineOffset',
-    'outlineStyle',
-    'outlineWidth',
-    'overflowAnchor',
-    'overflowWrap',
-    'overflowX',
-    'overflowY',
-    'paddingBottom',
-    'paddingLeft',
-    'paddingRight',
-    'paddingTop',
-    'pointerEvents',
-    'position',
-    'resize',
-    'right',
-    'speak',
-    'tableLayout',
-    'tabSize',
-    'textAlign',
-    'textAlignLast',
-    'textDecoration',
-    'textDecorationLine',
-    'textDecorationStyle',
-    'textDecorationColor',
-    'textDecorationSkip',
-    'textUnderlinePosition',
-    'textIndent',
-    'textRendering',
-    'textShadow',
-    'textSizeAdjust',
-    'textOverflow',
-    'textTransform',
-    'top',
-    'touchAction',
-    'transitionDelay',
-    'transitionDuration',
-    'transitionProperty',
-    'transitionTimingFunction',
-    'unicodeBidi',
-    'verticalAlign',
-    'visibility',
-    'whiteSpace',
-    'widows',
-    'width',
-    'willChange',
-    'wordBreak',
-    'wordSpacing',
-    'wordWrap',
-    'zIndex',
-    'zoom',
-    'WebkitAppearance',
-    'backfaceVisibility',
-    'WebkitBackgroundClip',
-    'WebkitBackgroundOrigin',
-    'WebkitBorderHorizontalSpacing',
-    'WebkitBorderImage',
-    'WebkitBorderVerticalSpacing',
-    'WebkitBoxAlign',
-    'WebkitBoxDecorationBreak',
-    'WebkitBoxDirection',
-    'WebkitBoxFlex',
-    'WebkitBoxFlexGroup',
-    'WebkitBoxLines',
-    'WebkitBoxOrdinalGroup',
-    'WebkitBoxOrient',
-    'WebkitBoxPack',
-    'WebkitBoxReflect',
+    'colorInterpolation',
+    'colorInterpolationFilters',
+    'colorRendering',
     'columnCount',
+    'columnFill',
     'columnGap',
+    'columnRule',
     'columnRuleColor',
     'columnRuleStyle',
     'columnRuleWidth',
     'columnSpan',
     'columnWidth',
-    'alignContent',
-    'alignItems',
-    'alignSelf',
-    'flexBasis',
-    'flexGrow',
-    'flexShrink',
-    'flexDirection',
-    'flexWrap',
-    'justifyContent',
-    'WebkitFontSmoothing',
-    'gridAutoColumns',
-    'gridAutoFlow',
-    'gridAutoRows',
-    'gridColumnEnd',
-    'gridColumnStart',
-    'gridTemplateAreas',
-    'gridTemplateColumns',
-    'gridTemplateRows',
-    'gridRowEnd',
-    'gridRowStart',
-    'gridColumnGap',
-    'gridRowGap',
-    'WebkitHighlight',
-    'hyphens',
-    'WebkitHyphenateCharacter',
-    'WebkitLineBreak',
-    'WebkitLineClamp',
-    'WebkitLocale',
-    'WebkitMarginBeforeCollapse',
-    'WebkitMarginAfterCollapse',
-    'WebkitMaskBoxImage',
-    'WebkitMaskBoxImageOutset',
-    'WebkitMaskBoxImageRepeat',
-    'WebkitMaskBoxImageSlice',
-    'WebkitMaskBoxImageSource',
-    'WebkitMaskBoxImageWidth',
-    'WebkitMaskClip',
-    'WebkitMaskComposite',
-    'WebkitMaskImage',
-    'WebkitMaskOrigin',
-    'WebkitMaskPosition',
-    'WebkitMaskRepeat',
-    'WebkitMaskSize',
-    'order',
-    'perspective',
-    'perspectiveOrigin',
-    'WebkitPrintColorAdjust',
-    'WebkitRtlOrdering',
-    'shapeOutside',
-    'shapeImageThreshold',
-    'shapeMargin',
-    'WebkitTapHighlightColor',
-    'WebkitTextCombine',
-    'WebkitTextDecorationsInEffect',
-    'WebkitTextEmphasisColor',
-    'WebkitTextEmphasisPosition',
-    'WebkitTextEmphasisStyle',
-    'WebkitTextFillColor',
-    'WebkitTextOrientation',
-    'WebkitTextSecurity',
-    'WebkitTextStrokeColor',
-    'WebkitTextStrokeWidth',
-    'transform',
-    'transformOrigin',
-    'transformStyle',
-    'WebkitUserDrag',
-    'WebkitUserModify',
-    'userSelect',
-    'WebkitWritingMode',
-    'WebkitAppRegion',
-    'bufferedRendering',
-    'clipPath',
-    'clipRule',
-    'mask',
-    'filter',
-    'floodColor',
-    'floodOpacity',
-    'lightingColor',
-    'stopColor',
-    'stopOpacity',
-    'colorInterpolation',
-    'colorInterpolationFilters',
-    'colorRendering',
+    'columns',
+    'contain',
+    'content',
+    'counterIncrement',
+    'counterReset',
+    'cursor',
+    'cx',
+    'cy',
+    'd',
+    'direction',
+    'display',
+    'dominantBaseline',
+    'emptyCells',
     'fill',
     'fillOpacity',
     'fillRule',
+    'filter',
+    'flex',
+    'flexBasis',
+    'flexDirection',
+    'flexFlow',
+    'flexGrow',
+    'flexShrink',
+    'flexWrap',
+    'float',
+    'floodColor',
+    'floodOpacity',
+    'font',
+    'fontFamily',
+    'fontFeatureSettings',
+    'fontKerning',
+    'fontSize',
+    'fontStretch',
+    'fontStyle',
+    'fontVariant',
+    'fontVariantCaps',
+    'fontVariantLigatures',
+    'fontVariantNumeric',
+    'fontWeight',
+    'grid',
+    'gridArea',
+    'gridAutoColumns',
+    'gridAutoFlow',
+    'gridAutoRows',
+    'gridColumn',
+    'gridColumnEnd',
+    'gridColumnGap',
+    'gridColumnStart',
+    'gridGap',
+    'gridRow',
+    'gridRowEnd',
+    'gridRowGap',
+    'gridRowStart',
+    'gridTemplate',
+    'gridTemplateAreas',
+    'gridTemplateColumns',
+    'gridTemplateRows',
+    'height',
+    'hyphens',
+    'imageRendering',
+    'inlineSize',
+    'isolation',
+    'justifyContent',
+    'justifyItems',
+    'justifySelf',
+    'left',
+    'letterSpacing',
+    'lightingColor',
+    'lineHeight',
+    'listStyle',
+    'listStyleImage',
+    'listStylePosition',
+    'listStyleType',
+    'margin',
+    'marginBottom',
+    'marginLeft',
+    'marginRight',
+    'marginTop',
+    'marker',
     'markerEnd',
     'markerMid',
     'markerStart',
+    'mask',
     'maskType',
+    'maxBlockSize',
+    'maxHeight',
+    'maxInlineSize',
+    'maxWidth',
+    'maxZoom',
+    'minBlockSize',
+    'minHeight',
+    'minInlineSize',
+    'minWidth',
+    'minZoom',
+    'mixBlendMode',
+    'motion',
+    'objectFit',
+    'objectPosition',
+    'offset',
+    'offsetDistance',
+    'offsetPath',
+    'offsetRotate',
+    'offsetRotation',
+    'opacity',
+    'order',
+    'orientation',
+    'orphans',
+    'outline',
+    'outlineColor',
+    'outlineOffset',
+    'outlineStyle',
+    'outlineWidth',
+    'overflow',
+    'overflowAnchor',
+    'overflowWrap',
+    'overflowX',
+    'overflowY',
+    'padding',
+    'paddingBottom',
+    'paddingLeft',
+    'paddingRight',
+    'paddingTop',
+    'page',
+    'pageBreakAfter',
+    'pageBreakBefore',
+    'pageBreakInside',
+    'paintOrder',
+    'perspective',
+    'perspectiveOrigin',
+    'placeContent',
+    'pointerEvents',
+    'position',
+    'quotes',
+    'r',
+    'resize',
+    'right',
+    'rx',
+    'ry',
+    'shapeImageThreshold',
+    'shapeMargin',
+    'shapeOutside',
     'shapeRendering',
+    'size',
+    'speak',
+    'src',
+    'stopColor',
+    'stopOpacity',
     'stroke',
     'strokeDasharray',
     'strokeDashoffset',
@@ -595,22 +594,158 @@
     'strokeMiterlimit',
     'strokeOpacity',
     'strokeWidth',
-    'alignmentBaseline',
-    'baselineShift',
-    'dominantBaseline',
+    'tabSize',
+    'tableLayout',
+    'textAlign',
+    'textAlignLast',
     'textAnchor',
-    'writingMode',
+    'textCombineUpright',
+    'textDecoration',
+    'textDecorationColor',
+    'textDecorationLine',
+    'textDecorationSkip',
+    'textDecorationStyle',
+    'textIndent',
+    'textOrientation',
+    'textOverflow',
+    'textRendering',
+    'textShadow',
+    'textSizeAdjust',
+    'textTransform',
+    'textUnderlinePosition',
+    'top',
+    'touchAction',
+    'transform',
+    'transformOrigin',
+    'transformStyle',
+    'transition',
+    'transitionDelay',
+    'transitionDuration',
+    'transitionProperty',
+    'transitionTimingFunction',
+    'unicodeBidi',
+    'unicodeRange',
+    'userSelect',
+    'userZoom',
     'vectorEffect',
-    'paintOrder',
-    'd',
-    'cx',
-    'cy',
+    'verticalAlign',
+    'visibility',
+    'webkitAppRegion',
+    'webkitAppearance',
+    'webkitBackgroundClip',
+    'webkitBackgroundOrigin',
+    'webkitBorderAfter',
+    'webkitBorderAfterColor',
+    'webkitBorderAfterStyle',
+    'webkitBorderAfterWidth',
+    'webkitBorderBefore',
+    'webkitBorderBeforeColor',
+    'webkitBorderBeforeStyle',
+    'webkitBorderBeforeWidth',
+    'webkitBorderEnd',
+    'webkitBorderEndColor',
+    'webkitBorderEndStyle',
+    'webkitBorderEndWidth',
+    'webkitBorderHorizontalSpacing',
+    'webkitBorderImage',
+    'webkitBorderStart',
+    'webkitBorderStartColor',
+    'webkitBorderStartStyle',
+    'webkitBorderStartWidth',
+    'webkitBorderVerticalSpacing',
+    'webkitBoxAlign',
+    'webkitBoxDecorationBreak',
+    'webkitBoxDirection',
+    'webkitBoxFlex',
+    'webkitBoxFlexGroup',
+    'webkitBoxLines',
+    'webkitBoxOrdinalGroup',
+    'webkitBoxOrient',
+    'webkitBoxPack',
+    'webkitBoxReflect',
+    'webkitColumnBreakAfter',
+    'webkitColumnBreakBefore',
+    'webkitColumnBreakInside',
+    'webkitFontSizeDelta',
+    'webkitFontSmoothing',
+    'webkitHighlight',
+    'webkitHyphenateCharacter',
+    'webkitLineBreak',
+    'webkitLineClamp',
+    'webkitLocale',
+    'webkitLogicalHeight',
+    'webkitLogicalWidth',
+    'webkitMarginAfter',
+    'webkitMarginAfterCollapse',
+    'webkitMarginBefore',
+    'webkitMarginBeforeCollapse',
+    'webkitMarginBottomCollapse',
+    'webkitMarginCollapse',
+    'webkitMarginEnd',
+    'webkitMarginStart',
+    'webkitMarginTopCollapse',
+    'webkitMask',
+    'webkitMaskBoxImage',
+    'webkitMaskBoxImageOutset',
+    'webkitMaskBoxImageRepeat',
+    'webkitMaskBoxImageSlice',
+    'webkitMaskBoxImageSource',
+    'webkitMaskBoxImageWidth',
+    'webkitMaskClip',
+    'webkitMaskComposite',
+    'webkitMaskImage',
+    'webkitMaskOrigin',
+    'webkitMaskPosition',
+    'webkitMaskPositionX',
+    'webkitMaskPositionY',
+    'webkitMaskRepeat',
+    'webkitMaskRepeatX',
+    'webkitMaskRepeatY',
+    'webkitMaskSize',
+    'webkitMaxLogicalHeight',
+    'webkitMaxLogicalWidth',
+    'webkitMinLogicalHeight',
+    'webkitMinLogicalWidth',
+    'webkitPaddingAfter',
+    'webkitPaddingBefore',
+    'webkitPaddingEnd',
+    'webkitPaddingStart',
+    'webkitPerspectiveOriginX',
+    'webkitPerspectiveOriginY',
+    'webkitPrintColorAdjust',
+    'webkitRtlOrdering',
+    'webkitRubyPosition',
+    'webkitTapHighlightColor',
+    'webkitTextCombine',
+    'webkitTextDecorationsInEffect',
+    'webkitTextEmphasis',
+    'webkitTextEmphasisColor',
+    'webkitTextEmphasisPosition',
+    'webkitTextEmphasisStyle',
+    'webkitTextFillColor',
+    'webkitTextOrientation',
+    'webkitTextSecurity',
+    'webkitTextStroke',
+    'webkitTextStrokeColor',
+    'webkitTextStrokeWidth',
+    'webkitTransformOriginX',
+    'webkitTransformOriginY',
+    'webkitTransformOriginZ',
+    'webkitUserDrag',
+    'webkitUserModify',
+    'webkitWritingMode',
+    'whiteSpace',
+    'widows',
+    'width',
+    'willChange',
+    'wordBreak',
+    'wordSpacing',
+    'wordWrap',
+    'writingMode',
     'x',
     'y',
-    'r',
-    'rx',
-    'ry',
-    'caretColor'
+    'zIndex',
+    'zoom'
   ];
 
   const SUPPORTED_FILTERS = [
@@ -660,7 +795,6 @@
 
   loader.define('core/consts', Consts);
 }
-
 
 {
   const VirtualNode = class {
@@ -2492,8 +2626,13 @@
 
   const lowerDash = name => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
-  const getEventName = name => name.slice(2).toLowerCase();
-
+  const getEventName = name => {
+    switch (name) {
+      case 'onDoubleClick':
+        return  'dblclick';
+    }
+    return name.slice(2).toLowerCase();
+  }
   const createUUID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
       .toString(16).substring(1);
@@ -2514,7 +2653,7 @@
 
 
 {
-  loader.prefix('core', 'src/');
+  loader.prefix('core', '/src/');
 
   const {
     SUPPORTED_ATTRIBUTES,

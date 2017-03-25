@@ -1,6 +1,6 @@
 (async () => {
 
-  loader.prefix('core', 'src/');
+  loader.prefix('core', '/src/');
 
   let initialized = false;
   let readyPromise = Promise.resolve();
