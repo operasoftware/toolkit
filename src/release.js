@@ -1,5 +1,5 @@
 {
-  loader.prefix('core', 'src/');
+  loader.prefix('core', '/src/');
 
   const {
     SUPPORTED_ATTRIBUTES,

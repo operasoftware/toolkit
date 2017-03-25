@@ -120,6 +120,7 @@ describe('Utils', () => {
 
     const convertions = [
       ['onClick', 'click'],
+      ['onDoubleClick', 'dblclick'],
       ['onContextMenu', 'contextmenu'],
       ['onCanPlayThrough', 'canplaythrough'],
     ]

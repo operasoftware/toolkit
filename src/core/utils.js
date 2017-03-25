@@ -35,8 +35,13 @@
 
   const lowerDash = name => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
-  const getEventName = name => name.slice(2).toLowerCase();
-
+  const getEventName = name => {
+    switch (name) {
+      case 'onDoubleClick':
+        return  'dblclick';
+    }
+    return name.slice(2).toLowerCase();
+  }
   const createUUID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
       .toString(16).substring(1);
