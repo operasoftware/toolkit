@@ -35,6 +35,17 @@
     isComment() {
       return this instanceof Comment;
     }
+
+    findDescendant(nodeId) {
+      return null;
+    }
+
+    findNode(nodeId) {
+      if (this.id === nodeId) {
+        return this;
+      }
+      return this.findDescendant(nodeId);
+    }
   };
 
   const Component = class extends VirtualNode {
@@ -96,6 +107,10 @@
     onDestroyed() {}
 
     onDetached() {}
+
+    findDescendant(nodeId) {
+      return this.child.findNode(nodeId);
+    }
 
     get nodeType() {
       return 'component';
@@ -205,6 +220,16 @@
       console.assert(this.children[from] === child);
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
+    }
+
+    findDescendant(nodeId) {
+      for (const child of this.children) {
+        const node = child.findNode(nodeId);
+        if (node) {
+          return node;
+        }
+      }
+      return null;
     }
 
     get nodeType() {

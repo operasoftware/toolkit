@@ -17,6 +17,7 @@
 
     static describeComponent(component) {
       const description = {
+        id: component.id,
         type: 'component',
         name: component.constructor.name,
         props: this.describeProps(component.props),
@@ -29,6 +30,7 @@
 
     static describeElement(element) {
       const description = {
+        id: element.id,
         type: 'element',
         name: element.name,
         classNames: element.classNames,
@@ -61,16 +63,16 @@
       return Array.from(apps.values()).map(app => this.describeApp(app));
     }
 
-    static getApp(uuid) {
-      const app = apps.get(uuid);
+    static getApp(appId) {
+      const app = apps.get(appId);
       if (app) {
         return this.describeNode(app.root);
       }
       return null;
     }
 
-    static getBoundingRect(uuid) {
-      const element = this.getElement(uuid);
+    static getBoundingRect(appId, nodeId) {
+      const element = this.getElement(appId, nodeId);
       const rect = element.getBoundingClientRect();
       return {
         top: rect.top,
@@ -80,10 +82,45 @@
       };
     }
 
-    static getElement(uuid) {
-      const app = apps.get(uuid);
+    static getElement(appId, nodeId) {
+      const app = apps.get(appId);
       if (app) {
+        if (nodeId) {
+          const node = app.root.findNode(nodeId);
+          if (node.isElement()) {
+            return node.ref;
+          }
+          if (node.isComponent()) {
+            return node.childElement.ref;
+          }
+          return null;
+        }
         return app.root.parentElement.ref;
+      }
+    }
+
+    static getComponent(appId, nodeId) {
+      const app = apps.get(appId);
+      if (app) {
+        const node = app.root.findNode(nodeId);
+        if (node && node.isComponent()) {
+          return node;
+        }
+      }
+      return null;
+    }
+
+    static getComponentName(appId, nodeId) {
+      const component = this.getComponent(appId, nodeId);
+      if (component) {
+        return component.constructor.name;
+      }
+    }
+
+    static getRenderFunction(appId, nodeId) {
+      const component = this.getComponent(appId, nodeId);
+      if (component) {
+        return component.render;
       }
     }
   };
