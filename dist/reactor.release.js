@@ -2715,11 +2715,18 @@
       return props;
     }
 
+    static getPath(component) {
+      const loaderEntry = loader.debug_.getModules()
+        .find(([path, module]) => module === component.constructor);
+      return location.href + loaderEntry[0] + '.js';
+    }
+
     static describeComponent(component) {
       const description = {
         id: component.id,
         type: 'component',
         name: component.constructor.name,
+        path: this.getPath(component),
         props: this.describeProps(component.props),
       };
       if (component.child) {
