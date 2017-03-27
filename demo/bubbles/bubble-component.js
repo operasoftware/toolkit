@@ -11,7 +11,8 @@
             left: [this.props.x * 100, '%'],
             top: [this.props.y * 100, '%'],
             filter: {
-              saturate: this.props.highlighted ? 2.5 : 1
+              saturate: this.props.highlighted ? 2.5 : 1,
+              opacity: 1.0,
             },
             transform: {
               rotate: [this.props.rotation, 'deg']

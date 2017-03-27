@@ -142,6 +142,12 @@
         return component.context.render;
       }
     }
+
+    static reloadApps() {
+      for (const app of Array.from(apps.values())) {
+        app.reload();
+      }
+    }
   };
 
   module.exports = DevToolsHook;

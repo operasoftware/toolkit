@@ -38,6 +38,12 @@
         this.reducer.commands.init(this.root.getInitialState()));
     }
 
+    async reload() {
+      // TODO: this is evil!
+      this.root.props.reload = Math.random();
+      this.updateDOM();
+    }
+
     calculatePatches() {
       const patches = [];
       if (!Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
