@@ -798,6 +798,7 @@
 
 {
   const ID = Symbol('id');
+  const CONTEXT = Symbol('context');
 
   const VirtualNode = class {
 
@@ -850,8 +851,20 @@
 
     constructor() {
       super();
+      this[CONTEXT] = this.createContext();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+    }
+
+    createContext() {
+      const context = {};
+      context.render = this.render.bind(context);
+      context.render.bound = true;
+      return context;
+    }
+
+    get context() {
+      return this[CONTEXT];
     }
 
     appendChild(child) {
@@ -1127,6 +1140,7 @@
       const patches = this.calculatePatches();
       Reactor.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
+      Reactor.__devtools_hook__.publishUpdate(this)
       Reactor.ComponentLifecycle.afterUpdate(patches);
       if (Reactor.debug) {
         console.log('Patches:', patches.length);
@@ -1534,10 +1548,9 @@
     }
 
     static createChildTree(root, props) {
-      const template = root.render.call({
-        props,
-        dispatch: root.dispatch,
-      });
+      root.context.props = props;
+      root.context.dispatch = root.dispatch;
+      const template = root.context.render();
       const tree = this.createFromTemplate(template);
       if (tree) {
         tree.parentNode = root;
@@ -1550,10 +1563,9 @@
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
-        const template = instance.render.call({
-          props,
-          children
-        });
+        instance.context.props = props;
+        instance.context.children = children;
+        const template = instance.context.render();
         if (template) {
           // TODO: handle undefined, false, null
           instance.appendChild(this.createFromTemplate(template));
@@ -2703,6 +2715,18 @@
 
   const DevToolsHook = class {
 
+    static publishUpdate(app) {
+      setTimeout(() => {
+        window.postMessage({
+          source: 'Reactor',
+          type: 'update-app',
+          data:  {
+            appId: app.id,
+          },
+        }, '*');
+      });
+    }
+
     static describeApp(app) {
       return {
         name: app.root.constructor.name,
@@ -2827,7 +2851,7 @@
     static getRenderFunction(appId, nodeId) {
       const component = this.getComponent(appId, nodeId);
       if (component) {
-        return component.render;
+        return component.context.render;
       }
     }
   };

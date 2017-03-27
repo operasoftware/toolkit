@@ -29,9 +29,8 @@
       return [
         'bubbles', {
           onClick: event => {
-            // TODO: use a single dispatch
-            this.dispatch(
-              reducer.commands.move(service.moveBubbles(this.props.bubbles)))
+            //this.dispatch(
+            //  reducer.commands.move(service.moveBubbles(this.props.bubbles)))
             const id = Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1;
             const x = event.offsetX / event.target.offsetWidth;
             const y = event.offsetY / event.target.offsetHeight;

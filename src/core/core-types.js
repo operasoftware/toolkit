@@ -1,5 +1,6 @@
 {
   const ID = Symbol('id');
+  const CONTEXT = Symbol('context');
 
   const VirtualNode = class {
 
@@ -52,8 +53,20 @@
 
     constructor() {
       super();
+      this[CONTEXT] = this.createContext();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+    }
+
+    createContext() {
+      const context = {};
+      context.render = this.render.bind(context);
+      context.render.bound = true;
+      return context;
+    }
+
+    get context() {
+      return this[CONTEXT];
     }
 
     appendChild(child) {

@@ -61,6 +61,7 @@
       const patches = this.calculatePatches();
       Reactor.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
+      Reactor.__devtools_hook__.publishUpdate(this)
       Reactor.ComponentLifecycle.afterUpdate(patches);
       if (Reactor.debug) {
         console.log('Patches:', patches.length);

@@ -3,6 +3,18 @@
 
   const DevToolsHook = class {
 
+    static publishUpdate(app) {
+      setTimeout(() => {
+        window.postMessage({
+          source: 'Reactor',
+          type: 'update-app',
+          data:  {
+            appId: app.id,
+          },
+        }, '*');
+      });
+    }
+
     static describeApp(app) {
       return {
         name: app.root.constructor.name,
@@ -127,7 +139,7 @@
     static getRenderFunction(appId, nodeId) {
       const component = this.getComponent(appId, nodeId);
       if (component) {
-        return component.render;
+        return component.context.render;
       }
     }
   };

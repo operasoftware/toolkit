@@ -1,6 +1,7 @@
 {
   const randomRadius = () => Math.random() * 0.08 + 0.08;
   const randomPosition = radius => Math.random() * (0.9 - 2 * radius) + 0.05;
+  const randomRotation = () => Math.random() * 60;
 
   const BubblesService = class {
 
@@ -11,6 +12,7 @@
         radius,
         x: x ? (x - radius) : randomPosition(radius),
         y: y ? (y - radius) : randomPosition(radius),
+        rotation: randomRotation(),
       };
     }
 
