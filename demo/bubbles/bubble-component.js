@@ -1,6 +1,10 @@
 {
   const Bubble = class extends Reactor.Component {
 
+    onCreated() {
+      // console.log('New bubble created');
+    }
+
     render() {
       return [
         'bubble', {
@@ -12,7 +16,7 @@
             top: [this.props.y * 100, '%'],
             filter: {
               saturate: this.props.highlighted ? 2.5 : 1,
-              opacity: 1.0,
+              opacity: 1,
             },
             transform: {
               rotate: [this.props.rotation, 'deg']

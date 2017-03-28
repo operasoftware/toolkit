@@ -6,7 +6,12 @@
     render() {
       return [
         'div', [
-          'span', 'Navigation Panel'
+          'span', {
+            style: {
+              backgroundColor: 'white',
+              color: 'black',
+            }
+          },'Navigation Panel'
         ], ...this.props.items.map((item, index) => [
           NavigationItem, {
             onClick: () => this.props.onItemClicked(index),
