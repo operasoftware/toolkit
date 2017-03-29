@@ -42,7 +42,7 @@
     // utils
     utils, create,
     // devtools
-    DevToolsHook,
+    __devtools_hook__: DevToolsHook,
 
     debug: false,
     ready: () => Promise.resolve(),

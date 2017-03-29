@@ -2,7 +2,11 @@
   const Bubble = class extends Reactor.Component {
 
     onCreated() {
-      // console.log('New bubble created');
+      // console.log('=> New bubble created');
+    }
+
+    onUpdated() {
+      // console.log('=> Bubble updated');
     }
 
     render() {
@@ -19,7 +23,7 @@
               opacity: 1,
             },
             transform: {
-              rotate: [this.props.rotation, 'deg']
+              rotate: [this.props.rotation , 'deg']
             },
           },
           onClick: this.props.onClick

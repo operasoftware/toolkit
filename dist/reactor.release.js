@@ -52,15 +52,19 @@
       return this;
     };
 
-    static symbol(path, ctx = context) {
+    static symbol(path) {
       const symbol = Symbol.for(path);
-      let moduleSymbols = dependencySymbols.get(ctx);
+      let moduleSymbols = dependencySymbols.get(context);
       if (!moduleSymbols) {
         moduleSymbols = [];
-        dependencySymbols.set(ctx, moduleSymbols);
+        dependencySymbols.set(context, moduleSymbols);
       }
       moduleSymbols.push(symbol);
       return symbol;
+    }
+
+    static setContext(currentContext) {
+      context = currentContext;
     }
 
     static define(path, module) {
@@ -2915,7 +2919,7 @@
     // utils
     utils, create,
     // devtools
-    DevToolsHook,
+    __devtools_hook__: DevToolsHook,
 
     debug: false,
     ready: () => Promise.resolve(),
