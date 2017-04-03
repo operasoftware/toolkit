@@ -110,7 +110,7 @@
     }
 
     static beforePatchApplied(patch) {
-      const Type = Reactor.Patch.Type;
+      const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentReceivedProps(patch.target, patch.props);
@@ -138,7 +138,7 @@
     }
 
     static afterPatchApplied(patch) {
-      const Type = Reactor.Patch.Type;
+      const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentUpdated(patch.target, patch.props);

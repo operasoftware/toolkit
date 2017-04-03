@@ -1,25 +1,25 @@
 describe('Patch component => apply', () => {
 
-  const Patch = Reactor.Patch;
-  const Document = Reactor.Document;
-  const ComponentTree = Reactor.ComponentTree;
+  const Patch = opr.Toolkit.Patch;
+  const Document = opr.Toolkit.Document;
+  const ComponentTree = opr.Toolkit.ComponentTree;
 
   let container;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
 
-  const App = class extends Reactor.Root {
+  const App = class extends opr.Toolkit.Root {
     constructor() {
       super(container);
     }
   };
-  const ComponentClass = class extends Reactor.Component {
+  const ComponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends Reactor.Component {
+  const SubcomponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }

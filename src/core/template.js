@@ -87,9 +87,9 @@
     static getStyleValue(value, prop = null) {
       switch (prop) {
         case 'filter':
-          return this.getCompositeValue(value, Reactor.SUPPORTED_FILTERS);
+          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
         case 'transform':
-          return this.getCompositeValue(value, Reactor.SUPPORTED_TRANSFORMS);
+          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_TRANSFORMS);
         default:
           return this.getAttributeValue(value);
       }

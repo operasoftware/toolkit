@@ -1,7 +1,7 @@
 describe('Component Tree', () => {
 
-  const VirtualNode = Reactor.VirtualNode;
-  const ComponentTree = Reactor.ComponentTree;
+  const VirtualNode = opr.Toolkit.VirtualNode;
+  const ComponentTree = opr.Toolkit.ComponentTree;
 
   suppressConsoleErrors();
 
@@ -16,7 +16,7 @@ describe('Component Tree', () => {
         get: symbol => {
           switch (symbol) {
             case root:
-              return Reactor.Root;
+              return opr.Toolkit.Root;
             default:
               throw new Error('Unknown definition: ' + symbol);
           }
@@ -255,7 +255,7 @@ describe('Component Tree', () => {
 
   describe('=> create child tree', () => {
 
-    const App = class extends Reactor.Root {
+    const App = class extends opr.Toolkit.Root {
       render() {
         return [
           'div',
@@ -281,7 +281,7 @@ describe('Component Tree', () => {
     it('handles null tree', () => {
 
       // given
-      const Empty = class extends Reactor.Root {
+      const Empty = class extends opr.Toolkit.Root {
         render() {
           return null;
         }
@@ -303,7 +303,7 @@ describe('Component Tree', () => {
     it('creates a leaf with a single element', () => {
 
       // given
-      const LeafElement = class extends Reactor.Component {
+      const LeafElement = class extends opr.Toolkit.Component {
         render() {
           return [
             'a', {
@@ -340,7 +340,7 @@ describe('Component Tree', () => {
     it('creates a leaf with nested elements', () => {
 
       // given
-      const NestedElements = class extends Reactor.Component {
+      const NestedElements = class extends opr.Toolkit.Component {
         render() {
           return [
             'div', [
@@ -411,7 +411,7 @@ describe('Component Tree', () => {
       const ChildComponent = Symbol.for('child');
 
       // given
-      const Application = class extends Reactor.Component {
+      const Application = class extends opr.Toolkit.Component {
         render() {
           return [
             ParentComponent, [
@@ -423,7 +423,7 @@ describe('Component Tree', () => {
         }
       };
 
-      const Parent = class extends Reactor.Component {
+      const Parent = class extends opr.Toolkit.Component {
         render() {
           return [
             ChildComponent, [
@@ -435,7 +435,7 @@ describe('Component Tree', () => {
         }
       };
 
-      const Child = class extends Reactor.Component {
+      const Child = class extends opr.Toolkit.Component {
         render() {
           return [
             'span', {

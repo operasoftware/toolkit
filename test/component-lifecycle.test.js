@@ -1,8 +1,8 @@
 describe('Component Lifecycle', () => {
 
-  const ComponentTree = Reactor.ComponentTree;
-  const ComponentLifecycle = Reactor.ComponentLifecycle;
-  const Patch = Reactor.Patch;
+  const ComponentTree = opr.Toolkit.ComponentTree;
+  const ComponentLifecycle = opr.Toolkit.ComponentLifecycle;
+  const Patch = opr.Toolkit.Patch;
 
   let container;
   let stub = sinon.spy();
@@ -10,7 +10,7 @@ describe('Component Lifecycle', () => {
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
 
-  const AbstractComponent = class extends Reactor.Component {
+  const AbstractComponent = class extends opr.Toolkit.Component {
     onCreated() {
       stub('onCreated', this);
     }
@@ -31,7 +31,7 @@ describe('Component Lifecycle', () => {
     }
   };
 
-  const App = class extends Reactor.Root {
+  const App = class extends opr.Toolkit.Root {
     constructor() {
       super(container);
     }

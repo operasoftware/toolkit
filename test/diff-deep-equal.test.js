@@ -1,4 +1,4 @@
-const Diff = Reactor.Diff;
+const Diff = opr.Toolkit.Diff;
 
 describe('Diff => deep equal', () => {
 

@@ -7,14 +7,14 @@
     }
 
     static createElementInstance(description) {
-      const element = new Reactor.VirtualElement(description.name);
+      const element = new opr.Toolkit.VirtualElement(description.name);
       if (description.props) {
         const props = description.props;
         // attributes
         Object.keys(props)
-          .filter(attr => Reactor.SUPPORTED_ATTRIBUTES.includes(attr))
+          .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
           .forEach(attr => {
-            const value = Reactor.Template.getAttributeValue(props[attr]);
+            const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
             if (value !== null && value !== undefined) {
               element.setAttribute(attr, value);
             }
@@ -23,29 +23,29 @@
         const dataset = props.dataset || {};
         Object.keys(dataset)
           .forEach(attr => {
-            const value = Reactor.Template.getAttributeValue(dataset[attr]);
+            const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
             element.setDataAttribute(attr, value);
           });
         // class names
-        const classNames = Reactor.Template.getClassNames(props.class);
+        const classNames = opr.Toolkit.Template.getClassNames(props.class);
         classNames.forEach(className => {
           element.addClassName(className);
         });
         // style
         const style = props.style || {};
         Object.keys(style)
-          .filter(prop => Reactor.SUPPORTED_STYLES.includes(prop))
+          .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
           .forEach(prop => {
-            const value = Reactor.Template.getStyleValue(style[prop], prop);
+            const value = opr.Toolkit.Template.getStyleValue(style[prop], prop);
             if (value !== null && value !== undefined) {
               element.setStyleProperty(prop, value);
             }
           });
         // listeners
         Object.keys(props)
-          .filter(event => Reactor.SUPPORTED_EVENTS.includes(event))
+          .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
           .forEach(event => {
-            const name = Reactor.utils.getEventName(event);
+            const name = opr.Toolkit.utils.getEventName(event);
             const listener = props[event];
             if (typeof listener === 'function') {
               element.addListener(name, listener);
@@ -70,7 +70,7 @@
       if (template === null || template === false || template.length === 0) {
         return null;
       }
-      const description = Reactor.Template.describe(template);
+      const description = opr.Toolkit.Template.describe(template);
       if (description.component) {
         return this.create(
           description.component, description.props, description.children);

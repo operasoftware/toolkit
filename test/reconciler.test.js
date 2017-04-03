@@ -1,6 +1,6 @@
 describe('Reconciler', () => {
 
-  const Reconciler = Reactor.Reconciler;
+  const Reconciler = opr.Toolkit.Reconciler;
   const MoveName = Reconciler.Move.Name;
 
   const A = 'A', B = 'B', C = 'C', D = 'D', E = 'E', F = 'F', G = 'G', H = 'H';

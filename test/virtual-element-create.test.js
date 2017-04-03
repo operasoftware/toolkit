@@ -1,8 +1,8 @@
 describe('Virtual Element => create', () => {
 
-  const VirtualElement = Reactor.VirtualElement;
+  const VirtualElement = opr.Toolkit.VirtualElement;
 
-  const createElement = Reactor.ComponentTree.createElementInstance;
+  const createElement = opr.Toolkit.ComponentTree.createElementInstance;
 
   it('creates an empty element', () => {
 

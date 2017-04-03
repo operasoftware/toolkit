@@ -4,7 +4,7 @@
     constructor(path) {
       this.path = path;
       this.preloaded = false;
-      this.store = new Reactor.Store();
+      this.store = new opr.Toolkit.Store();
     }
 
     async preload() {
@@ -26,21 +26,21 @@
         this.updateDOM();
       });
 
-      this.reducer = Reactor.utils.combineReducers(...this.root.getReducers());
+      this.reducer = opr.Toolkit.utils.combineReducers(...this.root.getReducers());
       this.root.dispatch(
         this.reducer.commands.init(this.root.getInitialState()));
     }
 
     calculatePatches() {
       const patches = [];
-      if (!Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
+      if (!opr.Toolkit.Diff.deepEqual(this.store.state, this.root.props)) {
         if (this.root.props === undefined) {
-          patches.push(Reactor.Patch.createRootComponent(this.root));
+          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        patches.push(Reactor.Patch.updateComponent(this.root, this.store.state));
-        const componentTree = Reactor.ComponentTree.createChildTree(
+        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
+        const componentTree = opr.Toolkit.ComponentTree.createChildTree(
           this.root, this.store.state);
-        const childTreePatches = Reactor.Diff.calculate(
+        const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
       }
@@ -50,9 +50,9 @@
     async updateDOM() {
       console.time('=> Render');
       const patches = this.calculatePatches();
-      Reactor.ComponentLifecycle.beforeUpdate(patches);
+      opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
-      Reactor.ComponentLifecycle.afterUpdate(patches);
+      opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
       console.log('Patches:', patches.length);
       console.timeEnd('=> Render');
     }

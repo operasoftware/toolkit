@@ -1,18 +1,18 @@
 describe('Document', () => {
 
-  const VirtualNode = Reactor.VirtualNode;
-  const ComponentTree = Reactor.ComponentTree;
-  const Document = Reactor.Document;
+  const VirtualNode = opr.Toolkit.VirtualNode;
+  const ComponentTree = opr.Toolkit.ComponentTree;
+  const Document = opr.Toolkit.Document;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
 
-  const ComponentClass = class extends Reactor.Component {
+  const ComponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends Reactor.Component {
+  const SubcomponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
@@ -384,7 +384,7 @@ describe('Document', () => {
 
       const componentNode = node.children[0];
       assert.equal(componentNode.constructor, ComponentClass);
-      assert(componentNode instanceof Reactor.Component);
+      assert(componentNode instanceof opr.Toolkit.Component);
 
       const subcomponentNode = componentNode.child;
       assert.equal(subcomponentNode.constructor, SubcomponentClass);

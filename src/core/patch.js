@@ -68,7 +68,7 @@
         target,
         apply: () => {
           target.setAttribute(name, value);
-          Reactor.Document.setAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -80,7 +80,7 @@
         target,
         apply: () => {
           target.setAttribute(name, value);
-          Reactor.Document.setAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -91,7 +91,7 @@
         target,
         apply: () => {
           target.removeAttribute(name);
-          Reactor.Document.removeAttribute(target.ref, name);
+          opr.Toolkit.Document.removeAttribute(target.ref, name);
         }
       });
     }
@@ -103,7 +103,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          Reactor.Document.setDataAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -115,7 +115,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          Reactor.Document.setDataAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -126,7 +126,7 @@
         target,
         apply: () => {
           target.removeDataAttribute(name);
-          Reactor.Document.removeDataAttribute(target.ref, name);
+          opr.Toolkit.Document.removeDataAttribute(target.ref, name);
         }
       });
     }
@@ -137,7 +137,7 @@
         target,
         apply: () => {
           target.setStyleProperty(property, value);
-          Reactor.Document.setStyleProperty(target.ref, property, value);
+          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -149,7 +149,7 @@
         target,
         apply: () => {
           target.setStyleProperty(property, value);
-          Reactor.Document.setStyleProperty(target.ref, property, value);
+          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -160,7 +160,7 @@
         target,
         apply: () => {
           target.removeStyleProperty(property);
-          Reactor.Document.removeStyleProperty(target.ref, property);
+          opr.Toolkit.Document.removeStyleProperty(target.ref, property);
         }
       });
     }
@@ -171,7 +171,7 @@
         target,
         apply: () => {
           target.addClassName(name);
-          Reactor.Document.addClassName(target.ref, name);
+          opr.Toolkit.Document.addClassName(target.ref, name);
         }
       });
     }
@@ -182,7 +182,7 @@
         target,
         apply: () => {
           target.removeClassName(name);
-          Reactor.Document.removeClassName(target.ref, name);
+          opr.Toolkit.Document.removeClassName(target.ref, name);
         }
       });
     }
@@ -194,7 +194,7 @@
         target,
         apply: () => {
           target.addListener(event, listener);
-          Reactor.Document.addEventListener(target.ref, event, listener);
+          opr.Toolkit.Document.addEventListener(target.ref, event, listener);
         }
       });
     }
@@ -207,9 +207,9 @@
         target,
         apply: () => {
           target.removeListener(event, removed);
-          Reactor.Document.removeEventListener(target.ref, event, removed);
+          opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
           target.addListener(event, added);
-          Reactor.Document.addEventListener(target.ref, event, added);
+          opr.Toolkit.Document.addEventListener(target.ref, event, added);
         }
       });
     }
@@ -221,7 +221,7 @@
         target,
         apply: () => {
           target.removeListener(event, listener);
-          Reactor.Document.removeEventListener(target.ref, event, listener);
+          opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
         }
       });
     }
@@ -232,7 +232,7 @@
         parent,
         apply: () => {
           parent.appendChild(element);
-          Reactor.Document.attachElementTree(element, domElement => {
+          opr.Toolkit.Document.attachElementTree(element, domElement => {
             parent.parentElement.ref.appendChild(domElement);
           });
         }
@@ -259,18 +259,18 @@
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
             parent.appendChild(component);
-            Reactor.Document.attachElementTree(component, domNode => {
+            opr.Toolkit.Document.attachElementTree(component, domNode => {
               if (parentDomNode.hasChildNodes()) {
-                Reactor.Document.replaceChild(
+                opr.Toolkit.Document.replaceChild(
                   domNode, parentDomNode.firstChild, parentDomNode);
               } else {
-                Reactor.Document.appendChild(domNode, parentDomNode);
+                opr.Toolkit.Document.appendChild(domNode, parentDomNode);
               }
             });
           } else {
             parent.appendChild(component);
-            Reactor.Document.attachElementTree(component, domNode => {
-              Reactor.Document.replaceChild(domNode, comment, parentDomNode);
+            opr.Toolkit.Document.attachElementTree(component, domNode => {
+              opr.Toolkit.Document.replaceChild(domNode, comment, parentDomNode);
             });
           }
         }
@@ -284,7 +284,7 @@
         apply: () => {
           const domChildNode = (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
-          parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
+          parent.placeholder.ref = opr.Toolkit.Document.createComment(parent.placeholder);
           parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
         }
       });
@@ -297,7 +297,7 @@
         parent,
         apply: () => {
           parent.insertChild(node, at);
-          Reactor.Document.attachElementTree(node, domNode => {
+          opr.Toolkit.Document.attachElementTree(node, domNode => {
             parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
           });
         }
@@ -312,7 +312,7 @@
         parent,
         apply: () => {
           parent.moveChild(node, from, to);
-          Reactor.Document.moveChild(node.ref, from, to, parent.ref);
+          opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
         }
       });
     }
@@ -324,7 +324,7 @@
         parent,
         apply: () => {
           parent.removeChild(node);
-          Reactor.Document.removeChild(node.ref, parent.ref);
+          opr.Toolkit.Document.removeChild(node.ref, parent.ref);
         }
       });
     }

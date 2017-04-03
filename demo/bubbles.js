@@ -3,7 +3,7 @@ window.renderBubbles = async (container) => {
   const BubblesApp = loader.symbol('bubbles/bubbles-app');
 
   // create new app
-  const bubbles = Reactor.create(BubblesApp);
+  const bubbles = opr.Toolkit.create(BubblesApp);
 
   // preload all resources
   await bubbles.preload();

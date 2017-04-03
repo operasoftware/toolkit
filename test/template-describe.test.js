@@ -1,6 +1,6 @@
 describe('Template => describe', () => {
 
-  const Template = Reactor.Template;;
+  const Template = opr.Toolkit.Template;;
 
   suppressConsoleErrors();
 

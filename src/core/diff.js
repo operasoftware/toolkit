@@ -16,7 +16,7 @@
   };
 
   const listenerPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = Reactor.Patch;
+    const Patch = opr.Toolkit.Patch;
 
     const listeners = Object.keys(current);
     const nextListeners = Object.keys(next);
@@ -48,13 +48,13 @@
       prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
-      patches.push(Reactor.Patch.addStyleProperty(prop, next[prop], target));
+      patches.push(opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
     }
     for (let prop of removed) {
-      patches.push(Reactor.Patch.removeStyleProperty(prop, target));
+      patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
     }
     for (let prop of changed) {
-      patches.push(Reactor.Patch.replaceStyleProperty(prop, next[prop], target));
+      patches.push(opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
     }
   };
 
@@ -64,10 +64,10 @@
     const removed = current.filter(attr => !next.includes(attr));
 
     for (let name of added) {
-      patches.push(Reactor.Patch.addClassName(name, target));
+      patches.push(opr.Toolkit.Patch.addClassName(name, target));
     }
     for (let name of removed) {
-      patches.push(Reactor.Patch.removeClassName(name, target));
+      patches.push(opr.Toolkit.Patch.removeClassName(name, target));
     }
   };
 
@@ -82,13 +82,13 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(Reactor.Patch.addDataAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
-      patches.push(Reactor.Patch.removeDataAttribute(attr, target));
+      patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(Reactor.Patch.replaceDataAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
     }
   };
 
@@ -102,13 +102,13 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(Reactor.Patch.addAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
-      patches.push(Reactor.Patch.removeAttribute(attr, target));
+      patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(Reactor.Patch.replaceAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
     }
   };
 
@@ -145,22 +145,22 @@
       }
       if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
-          patches.push(Reactor.Patch.updateComponent(current, next.props));
+          patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
           calculatePatches(current.child, next.child, current, patches);
         } else {
           // no patch needed
         }
       }
     } else {
-      patches.push(Reactor.Patch.removeChildNode(current, index, parent));
-      patches.push(Reactor.Patch.insertChildNode(next, index, parent));
+      patches.push(opr.Toolkit.Patch.removeChildNode(current, index, parent));
+      patches.push(opr.Toolkit.Patch.insertChildNode(next, index, parent));
     }
   };
 
   const childrenPatches = (current = [], next = [], parent, patches) => {
 
-    const Patch = Reactor.Patch;
-    const Move = Reactor.Reconciler.Move;
+    const Patch = opr.Toolkit.Patch;
+    const Move = opr.Toolkit.Reconciler.Move;
 
     const source = current.map((node, index) => node.key || index);
     const target = next.map((node, index) => node.key || index);
@@ -173,7 +173,7 @@
       }
     };
 
-    const moves = Reactor.Reconciler.calculateMoves(source, target);
+    const moves = opr.Toolkit.Reconciler.calculateMoves(source, target);
 
     const children = [...current];
     for (const move of moves) {
@@ -202,7 +202,7 @@
 
   const calculatePatches = (current, next, parent = null, patches = []) => {
 
-    const Patch = Reactor.Patch;
+    const Patch = opr.Toolkit.Patch;
 
     if (!current && !next) {
       return patches;

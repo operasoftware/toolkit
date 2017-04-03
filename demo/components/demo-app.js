@@ -2,7 +2,7 @@
   let reducer;
   let settings;
 
-  const DemoApp = class extends Reactor.Root {
+  const DemoApp = class extends opr.Toolkit.Root {
 
     static async init() {
       reducer = await loader.require('reducers/demo-reducer');

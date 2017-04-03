@@ -6,12 +6,12 @@
     }
 
     static setAttribute(element, name, value) {
-      const attr = Reactor.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.lowerDash(name);
       element.setAttribute(attr, value);
     }
 
     static removeAttribute(element, name) {
-      const attr = Reactor.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.lowerDash(name);
       element.removeAttribute(attr);
     }
 

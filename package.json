@@ -1,7 +1,7 @@
 {
-  "name": "chromium-reactor",
-  "version": "0.2.0",
-  "description": "A framework for Chromium-based browsers for building their user interfaces",
+  "name": "opera-toolkit",
+  "version": "0.0.1",
+  "description": "Opera Web UI Toolkit",
   "main": "index.js",
   "scripts": {
     "demo": "node demo/server.js",
@@ -18,21 +18,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aswitalski/chromium-reactor.git"
+    "url": "git+https://github.com/operasoftware/toolkit.git"
   },
   "keywords": [
-    "chromium",
-    "reactor",
-    "native",
-    "browser",
-    "user interface"
+    "opera",
+    "web ui",
+    "toolkit"
   ],
   "author": "Aleksander Świtalski",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aswitalski/chromium-reactor/issues"
+    "url": "https://github.com/operasoftware/toolkit/issues"
   },
-  "homepage": "https://github.com/aswitalski/chromium-reactor#readme",
+  "homepage": "https://github.com/operasoftware/toolkit#readme",
   "devDependencies": {
     "assert": "^1.4.1",
     "babel-cli": "^6.23.0",

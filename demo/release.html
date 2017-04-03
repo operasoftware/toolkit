@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reactor demo</title>
+  <title>Opera Toolkit demo</title>
   <link rel="stylesheet" href="./demo.css" />
-  <script src="/dist/reactor.release.js"></script>
+  <script src="/dist/toolkit.release.js"></script>
   <script src="/demo/demo.js"></script>
   <script src="/demo/bubbles.js"></script>
 </head>
@@ -15,7 +15,7 @@
   </apps>
   </div>
   <script>
-    Reactor.ready().then(async () => {
+    opr.Toolkit.ready().then(async () => {
       await renderDemo($('navigation'));
       await renderBubbles($('bubbles'));
     });

@@ -24,7 +24,7 @@
   const utils = loader.get('core/utils');
   const create = root => new App(root);
 
-  const Reactor = {
+  const Toolkit = {
     // constants
     SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
     SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
@@ -39,8 +39,8 @@
     debug: false,
     ready: () => Promise.resolve(),
   };
-  Object.freeze(Reactor);
+  Object.freeze(Toolkit);
 
-  window.Reactor = Reactor;
-  window.$ = id => document.getElementById(id);
+  window.opr = window.opr || {};
+  window.opr.Toolkit = Toolkit;
 }

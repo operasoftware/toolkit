@@ -1,7 +1,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Chromium Reactor Tests</title>
+  <title>Opera Toolkit Tests</title>
   <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
 </head>
 <body>
@@ -18,8 +18,10 @@
     (async () => {
       loader.prefix('core', '../src/')
       loader.prefix('test', '../')
-      const core = await loader.require('core/reactor');
-      global.Reactor = await core.init();
+      const core = await loader.require('core/toolkit');
+      global.opr = {
+        Toolkit: await core.init()
+      };
       mocha.setup('bdd');
 
       global.suppressConsoleErrors = () => {

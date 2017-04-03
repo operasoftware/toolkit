@@ -1,8 +1,8 @@
 describe('Patch element => apply', () => {
 
-  const Patch = Reactor.Patch;
-  const Document = Reactor.Document;
-  const ComponentTree = Reactor.ComponentTree;
+  const Patch = opr.Toolkit.Patch;
+  const Document = opr.Toolkit.Document;
+  const ComponentTree = opr.Toolkit.ComponentTree;
 
   const createElement = template => {
     const element = ComponentTree.createFromTemplate(template);
@@ -135,42 +135,42 @@ describe('Patch element => apply', () => {
     const element = createElement([
       'div', {
         dataset: {
-          reactorId: 15,
+          toolkitId: 15,
           someName: 'Some Name',
         },
       }
     ]);
 
     const dataset = {
-      reactorId: '15',
+      toolkitId: '15',
       someName: 'Some Name',
     };
     assert.deepEqual(element.dataset, dataset);
 
     assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.reactorId, '15');
+    assert.equal(element.ref.dataset.toolkitId, '15');
     assert.equal(element.ref.dataset.someName, 'Some Name');
 
-    assert.equal(element.ref.getAttribute('data-reactor-id'), '15');
+    assert.equal(element.ref.getAttribute('data-toolkit-id'), '15');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
 
     // when
-    Patch.replaceDataAttribute('reactorId', '23', element).apply();
+    Patch.replaceDataAttribute('toolkitId', '23', element).apply();
     Patch.replaceDataAttribute('someName', 'Other Name', element).apply();
 
     // then
     assert.equal(Object.entries(element.dataset).length, 2);
     const nextDataset = {
-      reactorId: '23',
+      toolkitId: '23',
       someName: 'Other Name',
     };
     assert.deepEqual(element.dataset, nextDataset);
 
     assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.reactorId, '23');
+    assert.equal(element.ref.dataset.toolkitId, '23');
     assert.equal(element.ref.dataset.someName, 'Other Name');
 
-    assert.equal(element.ref.getAttribute('data-reactor-id'), '23');
+    assert.equal(element.ref.getAttribute('data-toolkit-id'), '23');
     assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name');
   });
 
@@ -381,7 +381,7 @@ describe('Patch element => apply', () => {
         'span'
       ],
     ]);
-    const link = new Reactor.VirtualElement('a');
+    const link = new opr.Toolkit.VirtualElement('a');
 
     // then
     assert.equal(element.children.length, 3);

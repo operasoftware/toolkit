@@ -1,5 +1,5 @@
 {
-  const NavigationItem = class extends Reactor.Component {
+  const NavigationItem = class extends opr.Toolkit.Component {
 
     render() {
       return [

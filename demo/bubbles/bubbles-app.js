@@ -4,7 +4,7 @@
 
   const Bubble = loader.symbol('bubbles/bubble-component');
 
-  const BubblesApp = class extends Reactor.Root {
+  const BubblesApp = class extends opr.Toolkit.Root {
 
     static async init() {
       reducer = await loader.require('bubbles/bubbles-reducer');

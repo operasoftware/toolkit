@@ -9,14 +9,15 @@
     if (initialized) {
       return;
     }
-    const reactor = await loader.require('core/reactor');
-    const modules = await reactor.init();
-    Object.assign(Reactor, modules);
-    Object.freeze(Reactor);
+    const toolkit = await loader.require('core/toolkit');
+    const modules = await toolkit.init();
+    Object.assign(opr.Toolkit, modules);
+    Object.freeze(opr.Toolkit);
     initialized = true;
   };
 
-  window.Reactor = {
+  window.opr = window.opr || {};
+  window.opr.Toolkit = {
     ready: async () => {
       if (!initialized) {
         readyPromise = readyPromise.then(() => init());
@@ -25,7 +26,6 @@
     }
   };
 
-  window.$ = id => document.getElementById(id);
-  Reactor.debug = true;
+  opr.Toolkit.debug = true;
 
 })();

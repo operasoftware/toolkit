@@ -1,5 +1,5 @@
 {
-  const Bubble = class extends Reactor.Component {
+  const Bubble = class extends opr.Toolkit.Component {
 
     render() {
       return [

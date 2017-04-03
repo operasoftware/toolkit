@@ -1,6 +1,6 @@
 describe('Template => get item type', () => {
 
-  const Template = Reactor.Template;
+  const Template = opr.Toolkit.Template;
   const ItemType = Template.ItemType;
 
   it('returns "string" for a string', () => {

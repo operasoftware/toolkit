@@ -1,7 +1,7 @@
 {
   const NavigationItem = loader.symbol('components/navigation/item');
 
-  const NavigationPanel = class extends Reactor.Component {
+  const NavigationPanel = class extends opr.Toolkit.Component {
 
     render() {
       return [

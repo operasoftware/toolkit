@@ -1,11 +1,11 @@
 describe('Core Types', () => {
 
-  const ComponentTree = Reactor.ComponentTree;
+  const ComponentTree = opr.Toolkit.ComponentTree;
 
   const Component = Symbol.for('Component');
 
-  const App = class extends Reactor.Root {};
-  const ComponentClass = class extends Reactor.Component {
+  const App = class extends opr.Toolkit.Root {};
+  const ComponentClass = class extends opr.Toolkit.Component {
 
     render() {
       return this.children[0] || null;
@@ -37,38 +37,38 @@ describe('Core Types', () => {
   describe('get node type', () => {
 
     it('returns "root" for a root', () => {
-      assert.equal(new Reactor.Root().nodeType, 'root');
+      assert.equal(new opr.Toolkit.Root().nodeType, 'root');
     });
 
     it('returns "component" for a component', () => {
-      assert.equal(new Reactor.Component().nodeType, 'component');
+      assert.equal(new opr.Toolkit.Component().nodeType, 'component');
     });
 
     it('returns "element" for an element', () => {
-      assert.equal(new Reactor.VirtualElement().nodeType, 'element');
+      assert.equal(new opr.Toolkit.VirtualElement().nodeType, 'element');
     });
 
     it('returns "comment" for a comment', () => {
-      assert.equal(new Reactor.Comment().nodeType, 'comment');
+      assert.equal(new opr.Toolkit.Comment().nodeType, 'comment');
     });
   });
 
   describe('is root', () => {
 
     it('returns true for a root', () => {
-      assert(new Reactor.Root().isRoot());
+      assert(new opr.Toolkit.Root().isRoot());
     });
 
     it('returns false for a component', () => {
-      assert(!new Reactor.Component().isRoot());
+      assert(!new opr.Toolkit.Component().isRoot());
     });
 
     it('returns false for an element', () => {
-      assert(!new Reactor.VirtualElement().isRoot());
+      assert(!new opr.Toolkit.VirtualElement().isRoot());
     });
 
     it('returns false for a comment', () => {
-      assert(!new Reactor.Comment().isRoot());
+      assert(!new opr.Toolkit.Comment().isRoot());
     });
 
   });
@@ -76,19 +76,19 @@ describe('Core Types', () => {
   describe('is component', () => {
 
     it('returns true for a root', () => {
-      assert(new Reactor.Root().isComponent());
+      assert(new opr.Toolkit.Root().isComponent());
     });
 
     it('returns true for a component', () => {
-      assert(new Reactor.Component().isComponent());
+      assert(new opr.Toolkit.Component().isComponent());
     });
 
     it('returns false for an element', () => {
-      assert(!new Reactor.VirtualElement().isComponent());
+      assert(!new opr.Toolkit.VirtualElement().isComponent());
     });
 
     it('returns false for a comment', () => {
-      assert(!new Reactor.Comment().isComponent());
+      assert(!new opr.Toolkit.Comment().isComponent());
     });
 
   });
@@ -96,19 +96,19 @@ describe('Core Types', () => {
   describe('is element', () => {
 
     it('returns false for a root', () => {
-      assert(!new Reactor.Root().isElement());
+      assert(!new opr.Toolkit.Root().isElement());
     });
 
     it('returns false for a component', () => {
-      assert(!new Reactor.Component().isElement());
+      assert(!new opr.Toolkit.Component().isElement());
     });
 
     it('returns true for an element', () => {
-      assert(new Reactor.VirtualElement().isElement());
+      assert(new opr.Toolkit.VirtualElement().isElement());
     });
 
     it('returns false for a comment', () => {
-      assert(!new Reactor.Comment().isElement());
+      assert(!new opr.Toolkit.Comment().isElement());
     });
 
   });
@@ -116,19 +116,19 @@ describe('Core Types', () => {
   describe('is comment', () => {
 
     it('returns false for a root', () => {
-      assert(!new Reactor.Root().isComment());
+      assert(!new opr.Toolkit.Root().isComment());
     });
 
     it('returns false for a component', () => {
-      assert(!new Reactor.Component().isComment());
+      assert(!new opr.Toolkit.Component().isComment());
     });
 
     it('returns false for an element', () => {
-      assert(!new Reactor.VirtualElement().isComment());
+      assert(!new opr.Toolkit.VirtualElement().isComment());
     });
 
     it('returns true for a comment', () => {
-      assert(new Reactor.Comment().isComment());
+      assert(new opr.Toolkit.Comment().isComment());
     });
   });
 
@@ -245,7 +245,7 @@ describe('Core Types', () => {
     it('returns null for detached element', () => {
 
       // given
-      const component = new Reactor.Component();
+      const component = new opr.Toolkit.Component();
 
       // then
       assert.equal(component.parentElement, null);
@@ -259,7 +259,7 @@ describe('Core Types', () => {
       it('returns undefined by default', () => {
 
         // given
-        const component = new Reactor.Root();
+        const component = new opr.Toolkit.Root();
 
         // then
         assert.equal(component.render(), undefined);
@@ -275,7 +275,7 @@ describe('Core Types', () => {
         'onDetached',
       ];
 
-      const component = new Reactor.Root();
+      const component = new opr.Toolkit.Root();
 
       methods.forEach(method => {
 
@@ -291,8 +291,8 @@ describe('Core Types', () => {
       it('removes the comment', () => {
 
           // given
-          const component = new Reactor.Component();
-          const subcomponent = new Reactor.Component();
+          const component = new opr.Toolkit.Component();
+          const subcomponent = new opr.Toolkit.Component();
 
           // when
           component.appendChild(subcomponent);
@@ -309,8 +309,8 @@ describe('Core Types', () => {
         it('between component and subcomponent', () => {
 
           // given
-          const component = new Reactor.Component();
-          const subcomponent = new Reactor.Component();
+          const component = new opr.Toolkit.Component();
+          const subcomponent = new opr.Toolkit.Component();
 
           // when
           component.appendChild(subcomponent);
@@ -323,8 +323,8 @@ describe('Core Types', () => {
         it('between component and element', () => {
 
           // given
-          const component = new Reactor.Component();
-          const element = new Reactor.VirtualElement();
+          const component = new opr.Toolkit.Component();
+          const element = new opr.Toolkit.VirtualElement();
 
           // when
           component.appendChild(element);
@@ -341,8 +341,8 @@ describe('Core Types', () => {
       it('removes the parent-child relation', () => {
 
           // given
-          const component = new Reactor.Component();
-          const subcomponent = new Reactor.Component();
+          const component = new opr.Toolkit.Component();
+          const subcomponent = new opr.Toolkit.Component();
           component.appendChild(subcomponent);
 
           // when
@@ -355,8 +355,8 @@ describe('Core Types', () => {
 
       it('creates the comment', () => {
           // given
-          const component = new Reactor.Component();
-          const subcomponent = new Reactor.Component();
+          const component = new opr.Toolkit.Component();
+          const subcomponent = new opr.Toolkit.Component();
           component.appendChild(subcomponent);
 
           // when
@@ -435,7 +435,7 @@ describe('Core Types', () => {
       it('returns null for empty component', () => {
 
         // when
-        const component = new Reactor.Component();
+        const component = new opr.Toolkit.Component();
 
         // then
         assert.equal(component.childElement, null);
@@ -444,8 +444,8 @@ describe('Core Types', () => {
       it('returns null for component with comment node', () => {
 
         // when
-        const component = new Reactor.Component();
-        component.appendChild(new Reactor.Comment());
+        const component = new opr.Toolkit.Component();
+        component.appendChild(new opr.Toolkit.Comment());
 
         // then
         assert.equal(component.childElement, null);
@@ -457,7 +457,7 @@ describe('Core Types', () => {
       it('returns a comment for a new component', () => {
 
         // given
-        const component = new Reactor.Component();
+        const component = new opr.Toolkit.Component();
 
         // then
         assert(component.placeholder);
@@ -468,8 +468,8 @@ describe('Core Types', () => {
       it('returns null for a component with a child element', () => {
 
         // given
-        const component = new Reactor.Component();
-        const element = new Reactor.VirtualElement();
+        const component = new opr.Toolkit.Component();
+        const element = new opr.Toolkit.VirtualElement();
 
         // when
         component.appendChild(element);
@@ -481,8 +481,8 @@ describe('Core Types', () => {
       it('returns a subcomponents comment for a component with a child component', () => {
 
         // given
-        const component = new Reactor.Component();
-        const subcomponent = new Reactor.Component();
+        const component = new opr.Toolkit.Component();
+        const subcomponent = new opr.Toolkit.Component();
 
         // when
         component.appendChild(subcomponent);
@@ -496,9 +496,9 @@ describe('Core Types', () => {
       it('returns a comment for a component with no child', () => {
 
         // given
-        const component = new Reactor.Component();
-        const subcomponent = new Reactor.Component();
-        const element = new Reactor.VirtualElement();
+        const component = new opr.Toolkit.Component();
+        const subcomponent = new opr.Toolkit.Component();
+        const element = new opr.Toolkit.VirtualElement();
 
         // when
         component.appendChild(subcomponent);
@@ -523,7 +523,7 @@ describe('Core Types', () => {
 
   describe('Root', () => {
 
-    const component = new Reactor.Root();
+    const component = new opr.Toolkit.Root();
 
     describe('get initial state', () => {
 
@@ -547,8 +547,8 @@ describe('Core Types', () => {
       it('inserts an element', () => {
         
         // given
-        const element = new Reactor.VirtualElement();
-        const child = new Reactor.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement();
+        const child = new opr.Toolkit.VirtualElement();
 
         // when
         element.insertChild(child);
@@ -561,8 +561,8 @@ describe('Core Types', () => {
       it('inserts a component', () => {
         
         // given
-        const element = new Reactor.VirtualElement();
-        const child = new Reactor.Component();
+        const element = new opr.Toolkit.VirtualElement();
+        const child = new opr.Toolkit.Component();
 
         // when
         element.insertChild(child);
@@ -575,10 +575,10 @@ describe('Core Types', () => {
       it('inserts child at the beginning', () => {
         
         // given
-        const element = new Reactor.VirtualElement();
-        const component = new Reactor.Component();
+        const element = new opr.Toolkit.VirtualElement();
+        const component = new opr.Toolkit.Component();
         element.insertChild(component);
-        const child = new Reactor.Component();
+        const child = new opr.Toolkit.Component();
 
         // when
         element.insertChild(child, 0);
@@ -591,12 +591,12 @@ describe('Core Types', () => {
       it('inserts child in the middle', () => {
 
         // given
-        const element = new Reactor.VirtualElement();
-        const firstComponent = new Reactor.Component();
+        const element = new opr.Toolkit.VirtualElement();
+        const firstComponent = new opr.Toolkit.Component();
         element.insertChild(firstComponent);
-        const secondComponent = new Reactor.VirtualElement();
+        const secondComponent = new opr.Toolkit.VirtualElement();
         element.insertChild(secondComponent);
-        const child = new Reactor.VirtualElement();
+        const child = new opr.Toolkit.VirtualElement();
 
         // when
         element.insertChild(child, 1);
@@ -611,10 +611,10 @@ describe('Core Types', () => {
       it('inserts child at the end', () => {
         
         // given
-        const element = new Reactor.VirtualElement();
-        const component = new Reactor.Component();
+        const element = new opr.Toolkit.VirtualElement();
+        const component = new opr.Toolkit.Component();
         element.insertChild(component);
-        const child = new Reactor.VirtualElement();
+        const child = new opr.Toolkit.VirtualElement();
 
         // when
         element.insertChild(child, 1);
@@ -631,12 +631,12 @@ describe('Core Types', () => {
       it('removes multiple children', () => {
         
         // given
-        const parent = new Reactor.VirtualElement();
-        const component = new Reactor.Component();
+        const parent = new opr.Toolkit.VirtualElement();
+        const component = new opr.Toolkit.Component();
         parent.insertChild(component);
-        const child = new Reactor.VirtualElement();
+        const child = new opr.Toolkit.VirtualElement();
         parent.insertChild(child);
-        const element = new Reactor.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement();
         parent.insertChild(element);
 
         // when
@@ -652,8 +652,8 @@ describe('Core Types', () => {
       it('removes the last child', () => {
 
         // given
-        const parent = new Reactor.VirtualElement();
-        const child = new Reactor.Component();
+        const parent = new opr.Toolkit.VirtualElement();
+        const child = new opr.Toolkit.Component();
         parent.insertChild(child);
 
         // when
@@ -666,8 +666,8 @@ describe('Core Types', () => {
 
       it('ignores node not being child', () => {
 
-        const parent = new Reactor.VirtualElement();
-        const node = new Reactor.Component();
+        const parent = new opr.Toolkit.VirtualElement();
+        const node = new opr.Toolkit.Component();
 
         // when
         parent.removeChild(node);

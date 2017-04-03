@@ -1,6 +1,6 @@
 describe('Template => get value', () => {
 
-  const Template = Reactor.Template;
+  const Template = opr.Toolkit.Template;
 
   const resolved = [
     [ undefined, null ],

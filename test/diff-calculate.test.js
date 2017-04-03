@@ -1,25 +1,25 @@
 describe('Diff => calculate patches', () => {
 
-  const VirtualNode = Reactor.VirtualNode;
-  const ComponentTree = Reactor.ComponentTree;
-  const Diff = Reactor.Diff;
-  const Patch = Reactor.Patch;
+  const VirtualNode = opr.Toolkit.VirtualNode;
+  const ComponentTree = opr.Toolkit.ComponentTree;
+  const Diff = opr.Toolkit.Diff;
+  const Patch = opr.Toolkit.Patch;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
   const OtherComponent = Symbol.for('OtherComponent');
 
-  const ComponentClass = class extends Reactor.Component {
+  const ComponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends Reactor.Component {
+  const SubcomponentClass = class extends opr.Toolkit.Component {
     render() {
       return null;
     }
   };
-  const OtherComponentClass = class extends Reactor.Component {
+  const OtherComponentClass = class extends opr.Toolkit.Component {
     render() {
       return null;
     }

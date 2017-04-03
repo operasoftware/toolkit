@@ -1,9 +1,9 @@
 describe('Utils', () => {
 
-  const lowerDash = Reactor.utils.lowerDash;
-  const getEventName = Reactor.utils.getEventName;
-  const addDataPrefix = Reactor.utils.addDataPrefix;
-  const createUUID = Reactor.utils.createUUID;
+  const lowerDash = opr.Toolkit.utils.lowerDash;
+  const getEventName = opr.Toolkit.utils.getEventName;
+  const addDataPrefix = opr.Toolkit.utils.addDataPrefix;
+  const createUUID = opr.Toolkit.utils.createUUID;
 
   describe('core reducer', () => {
 
@@ -13,7 +13,7 @@ describe('Utils', () => {
       const state = {
         foo: 'bar'
       };
-      const reducer = Reactor.utils.combineReducers();
+      const reducer = opr.Toolkit.utils.combineReducers();
       const command = reducer.commands.init(state);
 
       // when
@@ -68,7 +68,7 @@ describe('Utils', () => {
     it('chains reducers and merges commands', () => {
 
       // given
-      const reducer = Reactor.utils.combineReducers(doubleReducer, tripleReducer);
+      const reducer = opr.Toolkit.utils.combineReducers(doubleReducer, tripleReducer);
 
       // when
       const initCommand = reducer.commands.init({

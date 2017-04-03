@@ -1,6 +1,6 @@
 describe('Template => validate', () => {
 
-  const Template = Reactor.Template;
+  const Template = opr.Toolkit.Template;
 
   beforeEach(() => {
     sinon.stub(console, 'error');

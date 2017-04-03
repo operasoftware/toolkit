@@ -47,7 +47,7 @@ const release = merge(
   Release
 );
 
-fs.writeFileSync('./dist/reactor.release.js', release, 'utf8');
+fs.writeFileSync('./dist/toolkit.release.js', release, 'utf8');
 
 const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
 
@@ -56,7 +56,7 @@ const lines = formatNumber(release.split('\n').length);
 
 console.log();
 console.log('-------------------------------------------------------');
-console.log(' Finished bundling release version of Chromium Reactor');
+console.log(' Finished bundling release version of Opera Toolkit');
 console.log('-------------------------------------------------------');
 console.log(` => Version: ${package.version}`);
 console.log(` => Lines: ${lines}`);

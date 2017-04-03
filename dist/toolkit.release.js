@@ -1038,7 +1038,7 @@
     constructor(path) {
       this.path = path;
       this.preloaded = false;
-      this.store = new Reactor.Store();
+      this.store = new opr.Toolkit.Store();
     }
 
     async preload() {
@@ -1060,21 +1060,21 @@
         this.updateDOM();
       });
 
-      this.reducer = Reactor.utils.combineReducers(...this.root.getReducers());
+      this.reducer = opr.Toolkit.utils.combineReducers(...this.root.getReducers());
       this.root.dispatch(
         this.reducer.commands.init(this.root.getInitialState()));
     }
 
     calculatePatches() {
       const patches = [];
-      if (!Reactor.Diff.deepEqual(this.store.state, this.root.props)) {
+      if (!opr.Toolkit.Diff.deepEqual(this.store.state, this.root.props)) {
         if (this.root.props === undefined) {
-          patches.push(Reactor.Patch.createRootComponent(this.root));
+          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        patches.push(Reactor.Patch.updateComponent(this.root, this.store.state));
-        const componentTree = Reactor.ComponentTree.createChildTree(
+        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
+        const componentTree = opr.Toolkit.ComponentTree.createChildTree(
           this.root, this.store.state);
-        const childTreePatches = Reactor.Diff.calculate(
+        const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
       }
@@ -1084,9 +1084,9 @@
     async updateDOM() {
       console.time('=> Render');
       const patches = this.calculatePatches();
-      Reactor.ComponentLifecycle.beforeUpdate(patches);
+      opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
-      Reactor.ComponentLifecycle.afterUpdate(patches);
+      opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
       console.log('Patches:', patches.length);
       console.timeEnd('=> Render');
     }
@@ -1207,9 +1207,9 @@
     static getStyleValue(value, prop = null) {
       switch (prop) {
         case 'filter':
-          return this.getCompositeValue(value, Reactor.SUPPORTED_FILTERS);
+          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
         case 'transform':
-          return this.getCompositeValue(value, Reactor.SUPPORTED_TRANSFORMS);
+          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_TRANSFORMS);
         default:
           return this.getAttributeValue(value);
       }
@@ -1398,6 +1398,7 @@
   loader.define('core/template', Template);
 }
 
+
 {
   const ComponentTree = class {
 
@@ -1407,14 +1408,14 @@
     }
 
     static createElementInstance(description) {
-      const element = new Reactor.VirtualElement(description.name);
+      const element = new opr.Toolkit.VirtualElement(description.name);
       if (description.props) {
         const props = description.props;
         // attributes
         Object.keys(props)
-          .filter(attr => Reactor.SUPPORTED_ATTRIBUTES.includes(attr))
+          .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
           .forEach(attr => {
-            const value = Reactor.Template.getAttributeValue(props[attr]);
+            const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
             if (value !== null && value !== undefined) {
               element.setAttribute(attr, value);
             }
@@ -1423,29 +1424,29 @@
         const dataset = props.dataset || {};
         Object.keys(dataset)
           .forEach(attr => {
-            const value = Reactor.Template.getAttributeValue(dataset[attr]);
+            const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
             element.setDataAttribute(attr, value);
           });
         // class names
-        const classNames = Reactor.Template.getClassNames(props.class);
+        const classNames = opr.Toolkit.Template.getClassNames(props.class);
         classNames.forEach(className => {
           element.addClassName(className);
         });
         // style
         const style = props.style || {};
         Object.keys(style)
-          .filter(prop => Reactor.SUPPORTED_STYLES.includes(prop))
+          .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
           .forEach(prop => {
-            const value = Reactor.Template.getStyleValue(style[prop], prop);
+            const value = opr.Toolkit.Template.getStyleValue(style[prop], prop);
             if (value !== null && value !== undefined) {
               element.setStyleProperty(prop, value);
             }
           });
         // listeners
         Object.keys(props)
-          .filter(event => Reactor.SUPPORTED_EVENTS.includes(event))
+          .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
           .forEach(event => {
-            const name = Reactor.utils.getEventName(event);
+            const name = opr.Toolkit.utils.getEventName(event);
             const listener = props[event];
             if (typeof listener === 'function') {
               element.addListener(name, listener);
@@ -1470,7 +1471,7 @@
       if (template === null || template === false || template.length === 0) {
         return null;
       }
-      const description = Reactor.Template.describe(template);
+      const description = opr.Toolkit.Template.describe(template);
       if (description.component) {
         return this.create(
           description.component, description.props, description.children);
@@ -1643,7 +1644,7 @@
     }
 
     static beforePatchApplied(patch) {
-      const Type = Reactor.Patch.Type;
+      const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentReceivedProps(patch.target, patch.props);
@@ -1671,7 +1672,7 @@
     }
 
     static afterPatchApplied(patch) {
-      const Type = Reactor.Patch.Type;
+      const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
           return this.onComponentUpdated(patch.target, patch.props);
@@ -1721,7 +1722,7 @@
   };
 
   const listenerPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = Reactor.Patch;
+    const Patch = opr.Toolkit.Patch;
 
     const listeners = Object.keys(current);
     const nextListeners = Object.keys(next);
@@ -1753,13 +1754,13 @@
       prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
-      patches.push(Reactor.Patch.addStyleProperty(prop, next[prop], target));
+      patches.push(opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
     }
     for (let prop of removed) {
-      patches.push(Reactor.Patch.removeStyleProperty(prop, target));
+      patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
     }
     for (let prop of changed) {
-      patches.push(Reactor.Patch.replaceStyleProperty(prop, next[prop], target));
+      patches.push(opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
     }
   };
 
@@ -1769,10 +1770,10 @@
     const removed = current.filter(attr => !next.includes(attr));
 
     for (let name of added) {
-      patches.push(Reactor.Patch.addClassName(name, target));
+      patches.push(opr.Toolkit.Patch.addClassName(name, target));
     }
     for (let name of removed) {
-      patches.push(Reactor.Patch.removeClassName(name, target));
+      patches.push(opr.Toolkit.Patch.removeClassName(name, target));
     }
   };
 
@@ -1787,13 +1788,13 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(Reactor.Patch.addDataAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
-      patches.push(Reactor.Patch.removeDataAttribute(attr, target));
+      patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(Reactor.Patch.replaceDataAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
     }
   };
 
@@ -1807,13 +1808,13 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(Reactor.Patch.addAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
-      patches.push(Reactor.Patch.removeAttribute(attr, target));
+      patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(Reactor.Patch.replaceAttribute(attr, next[attr], target));
+      patches.push(opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
     }
   };
 
@@ -1850,22 +1851,22 @@
       }
       if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
-          patches.push(Reactor.Patch.updateComponent(current, next.props));
+          patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
           calculatePatches(current.child, next.child, current, patches);
         } else {
           // no patch needed
         }
       }
     } else {
-      patches.push(Reactor.Patch.removeChildNode(current, index, parent));
-      patches.push(Reactor.Patch.insertChildNode(next, index, parent));
+      patches.push(opr.Toolkit.Patch.removeChildNode(current, index, parent));
+      patches.push(opr.Toolkit.Patch.insertChildNode(next, index, parent));
     }
   };
 
   const childrenPatches = (current = [], next = [], parent, patches) => {
 
-    const Patch = Reactor.Patch;
-    const Move = Reactor.Reconciler.Move;
+    const Patch = opr.Toolkit.Patch;
+    const Move = opr.Toolkit.Reconciler.Move;
 
     const source = current.map((node, index) => node.key || index);
     const target = next.map((node, index) => node.key || index);
@@ -1878,7 +1879,7 @@
       }
     };
 
-    const moves = Reactor.Reconciler.calculateMoves(source, target);
+    const moves = opr.Toolkit.Reconciler.calculateMoves(source, target);
 
     const children = [...current];
     for (const move of moves) {
@@ -1907,7 +1908,7 @@
 
   const calculatePatches = (current, next, parent = null, patches = []) => {
 
-    const Patch = Reactor.Patch;
+    const Patch = opr.Toolkit.Patch;
 
     if (!current && !next) {
       return patches;
@@ -2021,6 +2022,7 @@
   loader.define('core/diff', Diff);
 }
 
+
 {
   const Type = Object.freeze({
 
@@ -2091,7 +2093,7 @@
         target,
         apply: () => {
           target.setAttribute(name, value);
-          Reactor.Document.setAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -2103,7 +2105,7 @@
         target,
         apply: () => {
           target.setAttribute(name, value);
-          Reactor.Document.setAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         }
       });
     }
@@ -2114,7 +2116,7 @@
         target,
         apply: () => {
           target.removeAttribute(name);
-          Reactor.Document.removeAttribute(target.ref, name);
+          opr.Toolkit.Document.removeAttribute(target.ref, name);
         }
       });
     }
@@ -2126,7 +2128,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          Reactor.Document.setDataAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -2138,7 +2140,7 @@
         target,
         apply: () => {
           target.setDataAttribute(name, value);
-          Reactor.Document.setDataAttribute(target.ref, name, value);
+          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         }
       });
     }
@@ -2149,7 +2151,7 @@
         target,
         apply: () => {
           target.removeDataAttribute(name);
-          Reactor.Document.removeDataAttribute(target.ref, name);
+          opr.Toolkit.Document.removeDataAttribute(target.ref, name);
         }
       });
     }
@@ -2160,7 +2162,7 @@
         target,
         apply: () => {
           target.setStyleProperty(property, value);
-          Reactor.Document.setStyleProperty(target.ref, property, value);
+          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -2172,7 +2174,7 @@
         target,
         apply: () => {
           target.setStyleProperty(property, value);
-          Reactor.Document.setStyleProperty(target.ref, property, value);
+          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         }
       });
     }
@@ -2183,7 +2185,7 @@
         target,
         apply: () => {
           target.removeStyleProperty(property);
-          Reactor.Document.removeStyleProperty(target.ref, property);
+          opr.Toolkit.Document.removeStyleProperty(target.ref, property);
         }
       });
     }
@@ -2194,7 +2196,7 @@
         target,
         apply: () => {
           target.addClassName(name);
-          Reactor.Document.addClassName(target.ref, name);
+          opr.Toolkit.Document.addClassName(target.ref, name);
         }
       });
     }
@@ -2205,7 +2207,7 @@
         target,
         apply: () => {
           target.removeClassName(name);
-          Reactor.Document.removeClassName(target.ref, name);
+          opr.Toolkit.Document.removeClassName(target.ref, name);
         }
       });
     }
@@ -2217,7 +2219,7 @@
         target,
         apply: () => {
           target.addListener(event, listener);
-          Reactor.Document.addEventListener(target.ref, event, listener);
+          opr.Toolkit.Document.addEventListener(target.ref, event, listener);
         }
       });
     }
@@ -2230,9 +2232,9 @@
         target,
         apply: () => {
           target.removeListener(event, removed);
-          Reactor.Document.removeEventListener(target.ref, event, removed);
+          opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
           target.addListener(event, added);
-          Reactor.Document.addEventListener(target.ref, event, added);
+          opr.Toolkit.Document.addEventListener(target.ref, event, added);
         }
       });
     }
@@ -2244,7 +2246,7 @@
         target,
         apply: () => {
           target.removeListener(event, listener);
-          Reactor.Document.removeEventListener(target.ref, event, listener);
+          opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
         }
       });
     }
@@ -2255,7 +2257,7 @@
         parent,
         apply: () => {
           parent.appendChild(element);
-          Reactor.Document.attachElementTree(element, domElement => {
+          opr.Toolkit.Document.attachElementTree(element, domElement => {
             parent.parentElement.ref.appendChild(domElement);
           });
         }
@@ -2282,18 +2284,18 @@
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
             parent.appendChild(component);
-            Reactor.Document.attachElementTree(component, domNode => {
+            opr.Toolkit.Document.attachElementTree(component, domNode => {
               if (parentDomNode.hasChildNodes()) {
-                Reactor.Document.replaceChild(
+                opr.Toolkit.Document.replaceChild(
                   domNode, parentDomNode.firstChild, parentDomNode);
               } else {
-                Reactor.Document.appendChild(domNode, parentDomNode);
+                opr.Toolkit.Document.appendChild(domNode, parentDomNode);
               }
             });
           } else {
             parent.appendChild(component);
-            Reactor.Document.attachElementTree(component, domNode => {
-              Reactor.Document.replaceChild(domNode, comment, parentDomNode);
+            opr.Toolkit.Document.attachElementTree(component, domNode => {
+              opr.Toolkit.Document.replaceChild(domNode, comment, parentDomNode);
             });
           }
         }
@@ -2307,7 +2309,7 @@
         apply: () => {
           const domChildNode = (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
-          parent.placeholder.ref = Reactor.Document.createComment(parent.placeholder);
+          parent.placeholder.ref = opr.Toolkit.Document.createComment(parent.placeholder);
           parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
         }
       });
@@ -2320,7 +2322,7 @@
         parent,
         apply: () => {
           parent.insertChild(node, at);
-          Reactor.Document.attachElementTree(node, domNode => {
+          opr.Toolkit.Document.attachElementTree(node, domNode => {
             parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
           });
         }
@@ -2335,7 +2337,7 @@
         parent,
         apply: () => {
           parent.moveChild(node, from, to);
-          Reactor.Document.moveChild(node.ref, from, to, parent.ref);
+          opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
         }
       });
     }
@@ -2347,7 +2349,7 @@
         parent,
         apply: () => {
           parent.removeChild(node);
-          Reactor.Document.removeChild(node.ref, parent.ref);
+          opr.Toolkit.Document.removeChild(node.ref, parent.ref);
         }
       });
     }
@@ -2466,12 +2468,12 @@
     }
 
     static setAttribute(element, name, value) {
-      const attr = Reactor.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.lowerDash(name);
       element.setAttribute(attr, value);
     }
 
     static removeAttribute(element, name) {
-      const attr = Reactor.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.lowerDash(name);
       element.removeAttribute(attr);
     }
 
@@ -2678,7 +2680,7 @@
   const utils = loader.get('core/utils');
   const create = root => new App(root);
 
-  const Reactor = {
+  const Toolkit = {
     // constants
     SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
     SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
@@ -2693,8 +2695,8 @@
     debug: false,
     ready: () => Promise.resolve(),
   };
-  Object.freeze(Reactor);
+  Object.freeze(Toolkit);
 
-  window.Reactor = Reactor;
-  window.$ = id => document.getElementById(id);
+  window.opr = window.opr || {};
+  window.opr.Toolkit = Toolkit;
 }
