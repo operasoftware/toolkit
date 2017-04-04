@@ -470,4 +470,39 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
   });
 
+  it('sets text content', () => {
+
+    // given
+    const element = createElement([
+      'div', 'one',
+    ]);
+
+    assert.equal(element.text, 'one');
+    assert.equal(element.ref.textContent, 'one');
+
+    // when
+    Patch.setTextContent(element, 'two').apply();
+
+    // then
+    assert.equal(element.text, 'two');
+    assert.equal(element.ref.textContent, 'two');
+  });
+
+  it('removes text content', () => {
+
+    // given
+    const element = createElement([
+      'div', 'one',
+    ]);
+
+    assert.equal(element.text, 'one');
+    assert.equal(element.ref.textContent, 'one');
+
+    // when
+    Patch.removeTextContent(element).apply();
+
+    // then
+    assert.equal(element.text, null);
+    assert.equal(element.ref.textContent, '');
+  });
 });

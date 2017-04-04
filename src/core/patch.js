@@ -32,6 +32,9 @@
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
     REMOVE_CHILD_NODE: Symbol('remove-child-node'),
+
+    SET_TEXT_CONTENT: Symbol('set-text-content'),
+    REMOVE_TEXT_CONTENT: Symbol('remove-text-content'),
   });
 
   const Patch = class {
@@ -325,6 +328,27 @@
         apply: () => {
           parent.removeChild(node);
           opr.Toolkit.Document.removeChild(node.ref, parent.ref);
+        }
+      });
+    }
+
+    static setTextContent(element, text) {
+      return new Patch(Type.SET_TEXT_CONTENT, {
+        element,
+        text,
+        apply: () => {
+          element.text = text;
+          opr.Toolkit.Document.setTextContent(element.ref, text);
+        }
+      });
+    }
+
+    static removeTextContent(element) {
+      return new Patch(Type.REMOVE_TEXT_CONTENT, {
+        element,
+        apply: () => {
+          element.text = null;
+          opr.Toolkit.Document.setTextContent(element.ref, '');
         }
       });
     }

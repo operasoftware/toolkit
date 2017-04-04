@@ -980,6 +980,121 @@ describe('Diff => calculate patches', () => {
         });
       });
     });
+
+    describe('set text content', () => {
+
+      it('sets text on an empty element', () => {
+          
+        const template = [
+          'section'
+        ];
+
+        const nextTemplate = [
+          'section', 'some text',
+        ];
+
+        // when
+        const [tree, nextTree] = createTrees(template, nextTemplate);
+        const patches = Diff.calculate(tree, nextTree);
+
+        assert.equal(patches.length, 1);
+        assert.equal(patches[0].type, Patch.Type.SET_TEXT_CONTENT);
+        assert.equal(patches[0].text, 'some text');
+      });
+
+      it('replaces existing text content', () => {
+        
+        const template = [
+          'section', 'some text',
+        ];
+
+        const nextTemplate = [
+          'section', 'another text',
+        ];
+
+        // when
+        const [tree, nextTree] = createTrees(template, nextTemplate);
+        const patches = Diff.calculate(tree, nextTree);
+
+        assert.equal(patches.length, 1);
+        assert.equal(patches[0].type, Patch.Type.SET_TEXT_CONTENT);
+        assert.equal(patches[0].text, 'another text');
+      });
+
+      it('replaces existing child nodes', () => {
+
+        const template = [
+          'section', [
+            'div'
+          ]
+        ];
+
+        const nextTemplate = [
+          'section', 'some text',
+        ];
+
+        // when
+        const [tree, nextTree] = createTrees(template, nextTemplate);
+        const patches = Diff.calculate(tree, nextTree);
+
+        assert.equal(patches.length, 2);
+
+        assert.equal(patches[0].type, Patch.Type.REMOVE_CHILD_NODE);
+        assert.equal(patches[0].parent, tree);
+        assert.equal(patches[0].at, 0);
+        assert.equal(patches[0].node, tree.children[0]);
+
+        assert.equal(patches[1].type, Patch.Type.SET_TEXT_CONTENT);
+        assert.equal(patches[1].text, 'some text');
+      });
+    });
+
+    describe('remove text content', () => {
+
+      it('removes existing text content', () => {
+
+        const template = [
+          'section', 'some text',
+        ];
+
+        const nextTemplate = [
+          'section',
+        ];
+
+        // when
+        const [tree, nextTree] = createTrees(template, nextTemplate);
+        const patches = Diff.calculate(tree, nextTree);
+
+        assert.equal(patches.length, 1);
+        assert.equal(patches[0].type, Patch.Type.REMOVE_TEXT_CONTENT);
+      });
+
+      it('removes text content before appending child nodes', () => {
+
+        const template = [
+          'section', 'some text',
+        ];
+
+        const nextTemplate = [
+          'section', [
+            'div'
+          ]
+        ];
+
+        // when
+        const [tree, nextTree] = createTrees(template, nextTemplate);
+        const patches = Diff.calculate(tree, nextTree);
+
+        assert.equal(patches.length, 2);
+
+        assert.equal(patches[0].type, Patch.Type.REMOVE_TEXT_CONTENT);
+
+        assert.equal(patches[1].type, Patch.Type.INSERT_CHILD_NODE);
+        assert.equal(patches[1].parent, tree);
+        assert.equal(patches[1].at, 0);
+        assert.equal(patches[1].node, nextTree.children[0]);
+      });
+    });
   });
 
   describe('=> on a Component', () => {

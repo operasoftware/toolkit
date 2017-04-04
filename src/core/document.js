@@ -1,10 +1,6 @@
 {
   const Document = class {
 
-    static setTextContent(element, text) {
-      element.textContent = text;
-    }
-
     static setAttribute(element, name, value) {
       const attr = opr.Toolkit.utils.lowerDash(name);
       element.setAttribute(attr, value);
@@ -62,6 +58,10 @@
     static moveChild(child, from, to, parent) {
       parent.removeChild(child);
       parent.insertBefore(child, parent.childNodes[to]);
+    }
+
+    static setTextContent(element, text) {
+      element.textContent = text;
     }
 
     static createElement(node) {

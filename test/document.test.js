@@ -29,6 +29,18 @@ describe('Document', () => {
 
   describe('=> DOM operations', () => {
 
+    it('sets text content', () => {
+
+      // given
+      const element = document.createElement('div');
+
+      // when
+      Document.setTextContent(element, 'text content');
+
+      // then
+      assert.equal(element.textContent, 'text content');
+    });
+
     it('sets an attribute', () => {
 
       // given
