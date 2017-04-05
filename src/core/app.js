@@ -26,9 +26,10 @@
         this.updateDOM();
       });
 
-      this.reducer = opr.Toolkit.utils.combineReducers(...this.root.getReducers());
-      this.root.dispatch(
-        this.reducer.commands.init(this.root.getInitialState()));
+      this.reducer = opr.Toolkit.utils.combineReducers(
+        ...this.root.getReducers());
+      const state = await this.root.getInitialState();
+      this.root.dispatch(this.reducer.commands.init(state));
     }
 
     calculatePatches() {

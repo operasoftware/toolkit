@@ -527,8 +527,8 @@ describe('Core Types', () => {
 
     describe('get initial state', () => {
 
-      it('by default returns an empty object', () => {
-        assert.deepEqual(component.getInitialState(), {});
+      it('by default returns an empty object', async () => {
+        assert.deepEqual(await component.getInitialState(), {});
       });
     });
 

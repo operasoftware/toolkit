@@ -11,7 +11,7 @@
       service = await loader.require('bubbles/bubbles-service');
     }
 
-    getInitialState() {
+    async getInitialState() {
       const count = 1;
       return {
         bubbles: service.createBubbles(count),

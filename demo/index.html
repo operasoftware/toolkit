@@ -16,6 +16,7 @@
   </apps>
   </div>
   <script>
+    const $ = id => document.getElementById(id);
     opr.Toolkit.ready().then(async () => {
       await renderDemo($('navigation'));
       await renderBubbles($('bubbles'));

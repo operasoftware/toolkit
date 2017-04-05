@@ -9,7 +9,7 @@
       settings = await loader.require('services/settings');
     }
 
-    getInitialState() {
+    async getInitialState() {
       return {
         items: settings.getState()
       };

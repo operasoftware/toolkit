@@ -110,7 +110,7 @@
       return containerElement;
     }
 
-    getInitialState() {
+    async getInitialState() {
       return {};
     }
 
