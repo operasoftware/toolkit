@@ -3,7 +3,7 @@ const express = require('express');
 
 const app = express();
 
-app.set('port', 3000);
+app.set('port', 3030);
 
 app.use('/lazy', express.static('node_modules/lazy-module-loader/'));
 app.use('/demo', express.static('demo'));

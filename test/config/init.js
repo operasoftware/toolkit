@@ -28,6 +28,7 @@ global.opr = {
     utils: utils,
     // core
     // App: require('../../src/core/app.js'),
+    Sandbox: require('../../src/core/sandbox.js'),
     ComponentTree: require('../../src/core/component-tree.js'),
     ComponentLifecycle: require('../../src/core/component-lifecycle.js'),
     Template: require('../../src/core/template.js'),

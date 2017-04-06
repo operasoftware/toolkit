@@ -1,4 +1,6 @@
 {
+  const SANDBOX_CONTEXT = Symbol('sandbox-context');
+
   const VirtualNode = class {
 
     constructor() {
@@ -36,6 +38,15 @@
       super();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+    }
+
+    sandbox() {
+      let sandbox = this[SANDBOX_CONTEXT];
+      if (!sandbox) {
+        sandbox = opr.Toolkit.Sandbox.create(this);
+        this[SANDBOX_CONTEXT] = sandbox;
+      }
+      return sandbox;
     }
 
     appendChild(child) {

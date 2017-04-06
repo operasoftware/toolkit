@@ -14,6 +14,7 @@
       } = await loader.require('core/core-types');
 
       const App = await loader.require('core/app');
+      const Sandbox = await loader.require('core/sandbox');
       const Store = await loader.require('core/store');
       const Template = await loader.require('core/template');
       const ComponentTree = await loader.require('core/component-tree');
@@ -31,7 +32,7 @@
         SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
         // core classes
         Store, App, ComponentTree, ComponentLifecycle, Document,
-        Diff, Patch, Reconciler, Template,
+        Diff, Patch, Reconciler, Template, Sandbox,
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
         // utils

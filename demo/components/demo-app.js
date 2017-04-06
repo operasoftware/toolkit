@@ -19,17 +19,18 @@
       return [reducer];
     }
 
+    onItemSelected(index) {
+      this.dispatch(reducer.commands.highlightItem(index));
+    }
+
     render() {
-      const onItemClicked = index => {
-        this.dispatch(reducer.commands.highlightItem(index));
-      };
       return [
         'div', {
           class: 'navigation'
         }, [
           NavigationPanel, {
             items: this.props.items,
-            onItemClicked
+            onItemSelected: this.onItemSelected,
           }
         ]
       ];

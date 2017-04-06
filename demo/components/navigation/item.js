@@ -1,10 +1,14 @@
 {
   const NavigationItem = class extends opr.Toolkit.Component {
 
+    onClick() {
+      this.props.onSelected(this.props.index);
+    }
+
     render() {
       return [
         'a', {
-          onClick: this.props.onClick,
+          onClick: this.onClick,
           style: {
             backgroundColor: this.props.highlighted ? 'red' : null
           }

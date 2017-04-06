@@ -29,6 +29,7 @@ const ModuleLoader = loadModule('../node_modules/lazy-module-loader/module-loade
 const Consts = normalizeModule('core/consts');
 const CoreTypes = normalizeModule('core/core-types');
 const App = normalizeModule('core/app');
+const Sandbox = normalizeModule('core/sandbox');
 const Store = normalizeModule('core/store');
 const Template = normalizeModule('core/template');
 const ComponentTree = normalizeModule('core/component-tree');
@@ -42,8 +43,8 @@ const utils = normalizeModule('core/utils');
 const Release = loadModule('release');
 
 const release = merge(
-  ModuleLoader, Consts, CoreTypes, App, Store, Template, ComponentTree,
-  ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
+  ModuleLoader, Consts, CoreTypes, App, Sandbox, Store, Template,
+  ComponentTree, ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
   Release
 );
 

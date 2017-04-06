@@ -37,7 +37,7 @@
         });
       };
 
-      // await require('test/app.test');
+      // await loader.require('test/app.test');
       await loader.require('test/component-lifecycle.test');
       await loader.require('test/component-tree.test');
       await loader.require('test/core-types.test');
@@ -47,6 +47,7 @@
       await loader.require('test/patch-component.test');
       await loader.require('test/patch-element.test');
       await loader.require('test/reconciler.test');
+      await loader.require('test/sandbox.test');
       await loader.require('test/template-describe.test');
       await loader.require('test/template-get-item-type.test');
       await loader.require('test/template-get-value.test');

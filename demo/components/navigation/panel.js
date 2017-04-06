@@ -9,7 +9,8 @@
           'span', 'Navigation Panel'
         ], ...this.props.items.map((item, index) => [
           NavigationItem, {
-            onClick: () => this.props.onItemClicked(index),
+            index,
+            onSelected: this.props.onItemSelected,
             text: item.label,
             highlighted: item.highlighted
           }

@@ -91,10 +91,10 @@
     }
 
     static createChildTree(root, props) {
-      const template = root.render.call({
-        props,
-        dispatch: root.dispatch,
-      });
+      const sandbox = root.sandbox();
+      sandbox.dispatch = root.dispatch;
+      sandbox.props = props;
+      const template = root.render.call(sandbox);
       const tree = this.createFromTemplate(template);
       if (tree) {
         tree.parentNode = root;
@@ -107,10 +107,12 @@
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
-        const template = instance.render.call({
-          props,
-          children
-        });
+
+        const sandbox = instance.sandbox();
+        sandbox.props = props;
+        sandbox.children = children;
+
+        const template = instance.render.call(sandbox);
         if (template) {
           // TODO: handle undefined, false, null
           instance.appendChild(this.createFromTemplate(template));

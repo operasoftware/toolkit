@@ -13,6 +13,7 @@
   } = loader.get('core/core-types');
 
   const App = loader.get('core/app');
+  const Sandbox = loader.get('core/sandbox');
   const Store = loader.get('core/store');
   const Template = loader.get('core/template');
   const ComponentTree = loader.get('core/component-tree');
@@ -30,7 +31,7 @@
     SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
     // core classes
     Store, App, ComponentTree, ComponentLifecycle, Document,
-    Diff, Patch, Reconciler, Template,
+    Diff, Patch, Reconciler, Template, Sandbox,
     // core types
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils

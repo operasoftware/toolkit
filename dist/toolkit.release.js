@@ -797,6 +797,8 @@
 }
 
 {
+  const SANDBOX_CONTEXT = Symbol('sandbox-context');
+
   const VirtualNode = class {
 
     constructor() {
@@ -834,6 +836,15 @@
       super();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+    }
+
+    sandbox() {
+      let sandbox = this[SANDBOX_CONTEXT];
+      if (!sandbox) {
+        sandbox = opr.Toolkit.Sandbox.create(this);
+        this[SANDBOX_CONTEXT] = sandbox;
+      }
+      return sandbox;
     }
 
     appendChild(child) {
@@ -1099,6 +1110,48 @@
   };
 
   loader.define('core/app', App);
+}
+
+
+{
+  const isFunction = (target, property) =>
+    typeof target[property] === 'function';
+
+  const whitelist = ['props', 'children'];
+
+  const Sandbox = class {
+
+    static create(component) {
+      const blacklist = Object.getOwnPropertyNames(
+        opr.Toolkit.Component.prototype);
+      const autobound = {};
+      return new Proxy(component, {
+        get: (target, property, receiver) => {
+          if (blacklist.includes(property)) {
+            return undefined;
+          }
+          if (isFunction(autobound, property)) {
+            return autobound[property];
+          }
+          if (isFunction(target, property)) {
+            return autobound[property] = target[property].bind(receiver);
+          }
+          if (whitelist.includes(property)) {
+            return autobound[property];
+          }
+          return undefined;
+        },
+        set: (target, property, value) => {
+          if (whitelist.includes(property)) {
+            autobound[property] = value;
+          }
+          return true;
+        }
+      });
+    }
+  }
+
+  loader.define('core/sandbox', Sandbox);
 }
 
 
@@ -1499,10 +1552,10 @@
     }
 
     static createChildTree(root, props) {
-      const template = root.render.call({
-        props,
-        dispatch: root.dispatch,
-      });
+      const sandbox = root.sandbox();
+      sandbox.dispatch = root.dispatch;
+      sandbox.props = props;
+      const template = root.render.call(sandbox);
       const tree = this.createFromTemplate(template);
       if (tree) {
         tree.parentNode = root;
@@ -1515,10 +1568,12 @@
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
-        const template = instance.render.call({
-          props,
-          children
-        });
+
+        const sandbox = instance.sandbox();
+        sandbox.props = props;
+        sandbox.children = children;
+
+        const template = instance.render.call(sandbox);
         if (template) {
           // TODO: handle undefined, false, null
           instance.appendChild(this.createFromTemplate(template));
@@ -2706,6 +2761,7 @@
   } = loader.get('core/core-types');
 
   const App = loader.get('core/app');
+  const Sandbox = loader.get('core/sandbox');
   const Store = loader.get('core/store');
   const Template = loader.get('core/template');
   const ComponentTree = loader.get('core/component-tree');
@@ -2723,7 +2779,7 @@
     SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
     // core classes
     Store, App, ComponentTree, ComponentLifecycle, Document,
-    Diff, Patch, Reconciler, Template,
+    Diff, Patch, Reconciler, Template, Sandbox,
     // core types
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils
