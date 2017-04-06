@@ -49,13 +49,17 @@
     }
 
     async updateDOM() {
-      console.time('=> Render');
+      if (opr.Toolkit.debug) {
+        console.time('=> Render');
+      }
       const patches = this.calculatePatches();
       opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
-      console.log('Patches:', patches.length);
-      console.timeEnd('=> Render');
+      if (opr.Toolkit.debug) {
+        console.log('Patches:', patches.length);
+        console.timeEnd('=> Render');
+      }
     }
   };
 
