@@ -39,6 +39,14 @@ global.opr = {
   }
 };
 
+global.CustomEvent = class {
+
+  constructor(name, options) {
+    this.name = name;
+    this.options = options;
+  }
+};
+
 global.suppressConsoleErrors = () => {
 
   let consoleError;

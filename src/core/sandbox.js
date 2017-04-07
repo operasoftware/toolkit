@@ -2,7 +2,7 @@
   const isFunction = (target, property) =>
     typeof target[property] === 'function';
 
-  const whitelist = ['props', 'children'];
+  const whitelist = ['props', 'children', 'broadcast'];
 
   const Sandbox = class {
 
@@ -12,6 +12,9 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (whitelist.includes(property)) {
+            return autobound[property];
+          }
           if (blacklist.includes(property)) {
             return undefined;
           }
@@ -20,9 +23,6 @@
           }
           if (isFunction(target, property)) {
             return autobound[property] = target[property].bind(receiver);
-          }
-          if (whitelist.includes(property)) {
-            return autobound[property];
           }
           return undefined;
         },

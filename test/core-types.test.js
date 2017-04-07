@@ -266,6 +266,35 @@ describe('Core Types', () => {
       });
     });
 
+    describe('broadcast', () => {
+
+      it('dispatches custom composed event', () => {
+
+        // given
+        const dispatchEvent = sinon.spy();
+        const element = new opr.Toolkit.VirtualElement();
+        const component = new opr.Toolkit.Component()
+        element.insertChild(component);
+        element.ref = {
+          dispatchEvent
+        }
+        const eventName = 'event-name';
+        const data = { view: 'speeddial' };
+
+        // when
+        component.broadcast(eventName, data);
+
+        // then
+        assert(dispatchEvent.called);
+        assert.equal(dispatchEvent.firstCall.args[0].name, 'event-name');
+        assert.deepEqual(dispatchEvent.firstCall.args[0].options, {
+          bubbles: true,
+          composed: true,
+          detail: data
+        });
+      });
+    });
+
     describe('lifecycle methods', () => {
 
       const methods = [

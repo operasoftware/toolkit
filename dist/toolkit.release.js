@@ -887,6 +887,15 @@
       return undefined;
     }
 
+    broadcast(name, data) {
+      this.parentElement.ref.dispatchEvent(
+        new CustomEvent(name, {
+          detail: data,
+          bubbles: true,
+          composed: true,
+        }))
+    }
+
     onCreated() {}
 
     onAttached() {}
@@ -1117,7 +1126,7 @@
   const isFunction = (target, property) =>
     typeof target[property] === 'function';
 
-  const whitelist = ['props', 'children'];
+  const whitelist = ['props', 'children', 'broadcast'];
 
   const Sandbox = class {
 
@@ -1127,6 +1136,9 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (whitelist.includes(property)) {
+            return autobound[property];
+          }
           if (blacklist.includes(property)) {
             return undefined;
           }
@@ -1135,9 +1147,6 @@
           }
           if (isFunction(target, property)) {
             return autobound[property] = target[property].bind(receiver);
-          }
-          if (whitelist.includes(property)) {
-            return autobound[property];
           }
           return undefined;
         },
@@ -1552,9 +1561,12 @@
     }
 
     static createChildTree(root, props) {
+
       const sandbox = root.sandbox();
       sandbox.dispatch = root.dispatch;
+      sandbox.broadcast = root.broadcast.bind(root);
       sandbox.props = props;
+
       const template = root.render.call(sandbox);
       const tree = this.createFromTemplate(template);
       if (tree) {
@@ -1564,12 +1576,12 @@
     }
 
     static create(symbol, props = {}, children = []) {
-
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
 
         const sandbox = instance.sandbox();
+        sandbox.broadcast = instance.broadcast.bind(instance);
         sandbox.props = props;
         sandbox.children = children;
 

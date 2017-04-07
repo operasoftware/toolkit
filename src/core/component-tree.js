@@ -91,9 +91,12 @@
     }
 
     static createChildTree(root, props) {
+
       const sandbox = root.sandbox();
       sandbox.dispatch = root.dispatch;
+      sandbox.broadcast = root.broadcast.bind(root);
       sandbox.props = props;
+
       const template = root.render.call(sandbox);
       const tree = this.createFromTemplate(template);
       if (tree) {
@@ -103,12 +106,12 @@
     }
 
     static create(symbol, props = {}, children = []) {
-
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
 
         const sandbox = instance.sandbox();
+        sandbox.broadcast = instance.broadcast.bind(instance);
         sandbox.props = props;
         sandbox.children = children;
 

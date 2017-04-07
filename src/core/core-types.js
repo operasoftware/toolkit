@@ -89,6 +89,15 @@
       return undefined;
     }
 
+    broadcast(name, data) {
+      this.parentElement.ref.dispatchEvent(
+        new CustomEvent(name, {
+          detail: data,
+          bubbles: true,
+          composed: true,
+        }))
+    }
+
     onCreated() {}
 
     onAttached() {}
