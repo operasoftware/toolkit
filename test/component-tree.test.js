@@ -251,6 +251,43 @@ describe('Component Tree', () => {
       assert.equal(element.key, null);
       assert.equal(element.ref, null);
     });
+
+    it('creates element and reuses existing child nodes', () => {
+
+      const Component = Symbol.for('Component');
+
+      const ComponentClass = class extends opr.Toolkit.Component {
+        render() {
+          return [
+            'span', this.id
+          ]
+        }
+      };
+
+      ComponentTree.createComponentInstance = def => {
+        return new ComponentClass();
+      };
+
+      // given
+      const previousElement = ComponentTree.createElement({
+        name: 'div',
+        children: [
+          [Component]
+        ],
+      });
+
+      // when
+      const element = ComponentTree.createElement({
+        name: 'div',
+        children: [
+          [Component]
+        ],
+      }, previousElement);
+
+      // then
+      assert.equal(
+        element.children[0].child.text,previousElement.children[0].child.text);
+    });
   });
 
   describe('=> create child tree', () => {
@@ -298,7 +335,7 @@ describe('Component Tree', () => {
     });
   });
 
-  describe('=> create', () => {
+  describe('=> create component', () => {
 
     it('creates a leaf with a single element', () => {
 
@@ -320,7 +357,7 @@ describe('Component Tree', () => {
 
       const label = 'Example';
       const url = 'http://www.example.com';
-      const component = ComponentTree.create('LeafElement', {
+      const component = ComponentTree.createComponent('LeafElement', {
         url,
         label
       });
@@ -365,7 +402,7 @@ describe('Component Tree', () => {
       const label = 'Example';
       const url = 'http://www.example.com';
       const onClick = () => {};
-      const component = ComponentTree.create('NestedElements', {
+      const component = ComponentTree.createComponent('NestedElements', {
         url,
         label,
         onClick
@@ -457,7 +494,7 @@ describe('Component Tree', () => {
         }
       };
 
-      const component = ComponentTree.create(ApplicationComponent);
+      const component = ComponentTree.createComponent(ApplicationComponent);
 
       // then
       assert(component.isComponent());
@@ -491,6 +528,31 @@ describe('Component Tree', () => {
       assert.equal(paragraphElement.parentNode, divElement);
     });
 
+    it('reuses sandboxed context from the existing component', () => {
+
+      // given
+      ComponentTree.createComponentInstance = def => {
+        return new ReusedComponent();
+      };
+
+      const ReusedComponent = class extends opr.Toolkit.Component {
+        render() {
+          return [
+            'span', this.id
+          ];
+        }
+      };
+      const previousComponent = ComponentTree.createComponent('Component');
+      
+      // when
+      const component = ComponentTree.createComponent(
+        'Component', {}, [], previousComponent);
+
+      // then
+      assert.equal(component.child.text, previousComponent.child.text);
+
+    });
+
     it('throws an error for invalid template', () => {
 
       // given
@@ -501,7 +563,7 @@ describe('Component Tree', () => {
       };
 
       // then
-      assert.throws(ComponentTree.create, Error, 'Error');
+      assert.throws(ComponentTree.createComponent, Error, 'Error');
     });
   });
 

@@ -37,6 +37,10 @@
     isComment() {
       return this instanceof Comment;
     }
+
+    isCompatible(node) {
+      return node && this.nodeType === node.nodeType;
+    }
   };
 
   const Component = class extends VirtualNode {
@@ -119,6 +123,10 @@
 
     get nodeType() {
       return 'component';
+    }
+
+    isCompatible(node) {
+      return super.isCompatible(node) && this.constructor === node.constructor;
     }
   };
 
@@ -229,6 +237,10 @@
 
     get nodeType() {
       return 'element';
+    }
+
+    isCompatible(node) {
+      return super.isCompatible(node) && this.name === node.name;
     }
   };
 

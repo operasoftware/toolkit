@@ -24,7 +24,9 @@
     const added = nextListeners.filter(event => !listeners.includes(event));
     const removed = listeners.filter(event => !nextListeners.includes(event));
     const changed = listeners.filter(
-      event => nextListeners.includes(event) && current[event] !== next[event]);
+      event => nextListeners.includes(event) && current[event] !== next[event] &&
+      (current[event].source === undefined && next[event].source === undefined ||
+        current[event].source !== next[event].source));
 
     for (let event of added) {
       patches.push(Patch.addListener(event, next[event], target));

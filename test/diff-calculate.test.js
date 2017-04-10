@@ -1101,8 +1101,8 @@ describe('Diff => calculate patches', () => {
 
     const createComponents = (props, children, nextProps, nextChildren) => {
       return [
-        ComponentTree.create(Component, props, children),
-        ComponentTree.create(Component, nextProps, nextChildren)
+        ComponentTree.createComponent(Component, props, children),
+        ComponentTree.createComponent(Component, nextProps, nextChildren)
       ];
     };
 

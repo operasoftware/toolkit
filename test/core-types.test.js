@@ -301,12 +301,8 @@ describe('Core Types', () => {
 
         // then
         assert(dispatchEvent.called);
-        assert.equal(dispatchEvent.firstCall.args[0].name, 'event-name');
-        assert.deepEqual(dispatchEvent.firstCall.args[0].options, {
-          bubbles: true,
-          composed: true,
-          detail: data
-        });
+        assert.equal(dispatchEvent.firstCall.args[0].type, 'event-name');
+        assert.deepEqual(dispatchEvent.firstCall.args[0].detail, data);
       });
     });
 

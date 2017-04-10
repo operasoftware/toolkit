@@ -835,6 +835,10 @@
     isComment() {
       return this instanceof Comment;
     }
+
+    isCompatible(node) {
+      return node && this.nodeType === node.nodeType;
+    }
   };
 
   const Component = class extends VirtualNode {
@@ -917,6 +921,10 @@
 
     get nodeType() {
       return 'component';
+    }
+
+    isCompatible(node) {
+      return super.isCompatible(node) && this.constructor === node.constructor;
     }
   };
 
@@ -1028,6 +1036,10 @@
     get nodeType() {
       return 'element';
     }
+
+    isCompatible(node) {
+      return super.isCompatible(node) && this.name === node.name;
+    }
   };
 
   const Comment = class extends VirtualNode {
@@ -1109,7 +1121,7 @@
         }
         patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-          this.root, this.store.state);
+          this.root, this.store.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -1150,6 +1162,9 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (property === 'id') {
+            return target.id;
+          }
           if (whitelist.includes(property)) {
             return autobound[property];
           }
@@ -1160,7 +1175,10 @@
             return autobound[property];
           }
           if (isFunction(target, property)) {
-            return autobound[property] = target[property].bind(receiver);
+            const boundListener = target[property].bind(receiver);
+            boundListener.source = target[property];
+            boundListener.component = target;
+            return autobound[property] = boundListener;
           }
           return undefined;
         },
@@ -1547,7 +1565,7 @@
       return element;
     }
 
-    static createFromTemplate(template) {
+    static createFromTemplate(template, previousNode) {
       if (template === undefined) {
         throw new Error('Invalid undefined template!');
       }
@@ -1556,25 +1574,34 @@
       }
       const description = opr.Toolkit.Template.describe(template);
       if (description.component) {
-        return this.create(
-          description.component, description.props, description.children);
+        return this.createComponent(
+          description.component, description.props, description.children,
+          previousNode);
       }
-      return this.createElement(description);
+      return this.createElement(description, previousNode);
     }
 
-    static createElement(description) {
+    static createElement(description, previousNode) {
       const element = this.createElementInstance(description);
+      const getPreviousChild = index => {
+        if (element.isCompatible(previousNode)) {
+          return previousNode.children[index] || null;
+        } else {
+          return null;
+        }
+      };
       if (description.children) {
         element.children = description.children.map(
-          child => this.createFromTemplate(child));
-        for (const child of element.children) {
-          child.parentNode = element;
-        }
+          (desc, index) => {
+            const child = this.createFromTemplate(desc, getPreviousChild(index));
+            child.parentNode = element;
+            return child;
+          });
       }
       return element;
     }
 
-    static createChildTree(root, props) {
+    static createChildTree(root, props, previousTree) {
 
       const sandbox = root.sandbox();
       sandbox.dispatch = root.dispatch;
@@ -1582,27 +1609,40 @@
       sandbox.props = props;
 
       const template = root.render.call(sandbox);
-      const tree = this.createFromTemplate(template);
+      const tree = this.createFromTemplate(template, previousTree);
       if (tree) {
         tree.parentNode = root;
       }
       return tree;
     }
 
-    static create(symbol, props = {}, children = []) {
+    static createComponent(symbol, props = {}, children = [], previousNode) {
       try {
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
 
-        const sandbox = instance.sandbox();
-        sandbox.broadcast = instance.broadcast.bind(instance);
-        sandbox.props = props;
-        sandbox.children = children;
+        const createSandbox = () => {
+          let sandbox;
+          if (instance.isCompatible(previousNode)) {
+            sandbox = previousNode.sandbox();
+            sandbox.broadcast = previousNode.broadcast.bind(previousNode);
+          } else {
+            sandbox = instance.sandbox();
+            sandbox.broadcast = instance.broadcast.bind(instance);
+          }
+          sandbox.props = props;
+          sandbox.children = children;
+          return sandbox;
+        }
 
+        const sandbox = createSandbox();
         const template = instance.render.call(sandbox);
         if (template) {
           // TODO: handle undefined, false, null
-          instance.appendChild(this.createFromTemplate(template));
+          const previousChild = previousNode && previousNode.isComponent() ?
+            previousNode.child : null;
+          instance.appendChild(
+            this.createFromTemplate(template, previousChild));
         }
         return instance;
       } catch (e) {
@@ -1822,7 +1862,9 @@
     const added = nextListeners.filter(event => !listeners.includes(event));
     const removed = listeners.filter(event => !nextListeners.includes(event));
     const changed = listeners.filter(
-      event => nextListeners.includes(event) && current[event] !== next[event]);
+      event => nextListeners.includes(event) && current[event] !== next[event] &&
+      (current[event].source === undefined && next[event].source === undefined ||
+        current[event].source !== next[event].source));
 
     for (let event of added) {
       patches.push(Patch.addListener(event, next[event], target));

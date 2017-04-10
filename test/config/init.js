@@ -41,9 +41,9 @@ global.opr = {
 
 global.CustomEvent = class {
 
-  constructor(name, options) {
-    this.name = name;
-    this.options = options;
+  constructor(type, options) {
+    this.type = type;
+    this.detail = options.detail;
   }
 };
 

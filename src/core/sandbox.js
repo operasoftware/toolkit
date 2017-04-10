@@ -12,6 +12,9 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (property === 'id') {
+            return target.id;
+          }
           if (whitelist.includes(property)) {
             return autobound[property];
           }
@@ -22,7 +25,10 @@
             return autobound[property];
           }
           if (isFunction(target, property)) {
-            return autobound[property] = target[property].bind(receiver);
+            const boundListener = target[property].bind(receiver);
+            boundListener.source = target[property];
+            boundListener.component = target;
+            return autobound[property] = boundListener;
           }
           return undefined;
         },

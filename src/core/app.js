@@ -47,7 +47,7 @@
         }
         patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-          this.root, this.store.state);
+          this.root, this.store.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
