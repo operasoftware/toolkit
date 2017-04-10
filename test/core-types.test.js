@@ -132,6 +132,21 @@ describe('Core Types', () => {
     });
   });
 
+  describe('get id', () => {
+
+    it('returns a valid id for a root component', () => {
+      assert.equal(new opr.Toolkit.Root().id.length, 36);
+    });
+
+    it('returns a valid id for a component', () => {
+      assert.equal(new opr.Toolkit.Component().id.length, 36);
+    });
+
+    it('returns a valid id for an element', () => {
+      assert.equal(new opr.Toolkit.VirtualElement().id.length, 36);
+    });
+  });
+
   describe('get parent element', () => {
 
     it('returns container for an app component', () => {

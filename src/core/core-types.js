@@ -1,10 +1,17 @@
 {
   const SANDBOX_CONTEXT = Symbol('sandbox-context');
 
+  const ID = Symbol('id');
+
   const VirtualNode = class {
 
     constructor() {
+      this[ID] = opr.Toolkit.utils.createUUID();
       this.parentNode = null;
+    }
+
+    get id() {
+      return this[ID];
     }
 
     get parentElement() {

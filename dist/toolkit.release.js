@@ -799,10 +799,17 @@
 {
   const SANDBOX_CONTEXT = Symbol('sandbox-context');
 
+  const ID = Symbol('id');
+
   const VirtualNode = class {
 
     constructor() {
+      this[ID] = opr.Toolkit.utils.createUUID();
       this.parentNode = null;
+    }
+
+    get id() {
+      return this[ID];
     }
 
     get parentElement() {
@@ -1054,12 +1061,19 @@
 
 
 {
+  const ID = Symbol('id');
+
   const App = class {
 
     constructor(path) {
+      this[ID] = opr.Toolkit.utils.createUUID();
       this.path = path;
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
+    }
+
+    get id() {
+      return this[ID];
     }
 
     async preload() {
@@ -1628,6 +1642,7 @@
 
     static onNodeCreated(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentCreated(node);
         case 'element':
@@ -1652,6 +1667,7 @@
 
     static onNodeAttached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentAttached(node);
         case 'element':
@@ -1684,6 +1700,7 @@
 
     static onNodeDestroyed(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDestroyed(node);
         case 'element':
@@ -1708,6 +1725,7 @@
 
     static onNodeDetached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDetached(node);
         case 'element':
@@ -2739,6 +2757,7 @@
     }
     return name.slice(2).toLowerCase();
   }
+
   const createUUID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
       .toString(16).substring(1);

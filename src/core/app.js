@@ -1,10 +1,17 @@
 {
+  const ID = Symbol('id');
+
   const App = class {
 
     constructor(path) {
+      this[ID] = opr.Toolkit.utils.createUUID();
       this.path = path;
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
+    }
+
+    get id() {
+      return this[ID];
     }
 
     async preload() {

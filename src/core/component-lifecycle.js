@@ -20,6 +20,7 @@
 
     static onNodeCreated(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentCreated(node);
         case 'element':
@@ -44,6 +45,7 @@
 
     static onNodeAttached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentAttached(node);
         case 'element':
@@ -76,6 +78,7 @@
 
     static onNodeDestroyed(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDestroyed(node);
         case 'element':
@@ -100,6 +103,7 @@
 
     static onNodeDetached(node) {
       switch (node.nodeType) {
+        case 'root':
         case 'component':
           return this.onComponentDetached(node);
         case 'element':
