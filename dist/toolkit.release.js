@@ -820,6 +820,13 @@
       return null;
     }
 
+    get rootElement() {
+      if (this.parentElement) {
+        return this.parentElement.rootElement;
+      }
+      return this;
+    }
+
     isRoot() {
       return this instanceof Root;
     }
@@ -899,7 +906,7 @@
     }
 
     broadcast(name, data) {
-      this.parentElement.ref.dispatchEvent(
+      this.rootElement.ref.dispatchEvent(
         new CustomEvent(name, {
           detail: data,
           bubbles: true,

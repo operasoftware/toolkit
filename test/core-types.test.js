@@ -267,6 +267,89 @@ describe('Core Types', () => {
     });
   });
 
+  describe('get root element', () => {
+
+    it('returns container for an app component', () => {
+
+      // given
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, null);
+
+      // then
+      assert.equal(app.rootElement.ref, container);
+    });
+
+    it('returns container for a top-level element', () => {
+
+      // given
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, [
+        'div'
+      ]);
+      const element = app.child;
+
+      // then
+      assert(element.isElement());
+      assert.equal(element.rootElement.ref, container);
+    })
+
+    it('returns container for a top-level component', () => {
+
+      // given
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, [
+        Component
+      ]);
+      const component = app.child;
+
+      // then
+      assert(component.isComponent());
+      assert.equal(component.rootElement.ref, container);
+    });
+
+    it('returns container for a nested element', () => {
+
+      // given
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, [
+        'div', [
+          'span'
+        ]
+      ]);
+      const span = app.child.children[0];
+
+      // then
+      assert(span.isElement());
+      assert.equal(span.rootElement.ref, container);
+    });
+
+    it('returns container for a nested component', () => {
+
+      // given
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, [
+        'div', [
+          Component
+        ]
+      ]);
+      const component = app.child.children[0];
+
+      // then
+      assert(component.isComponent());
+      assert.equal(component.rootElement.ref, container);
+    });
+  });
+
   describe('Component', () => {
 
     describe('render', () => {
