@@ -68,7 +68,7 @@ describe('Sandbox', () => {
       const context = Sandbox.create(instance);
 
       // then
-      assert.equal(context.constructor, undefined);
+      assert.equal(context.constructor, opr.Toolkit.Component);
       assert.equal(context.appendChild, undefined);
       assert.equal(context.nodeType, undefined);
       assert.equal(context.onUpdated, undefined);
@@ -81,6 +81,7 @@ describe('Sandbox', () => {
       const instance = new opr.Toolkit.Component();
       const props = {};
       const children = [];
+      const container = document.createElement('div');
 
       // when
       const context = Sandbox.create(instance);
@@ -91,5 +92,33 @@ describe('Sandbox', () => {
       assert.equal(context.props, props);
       assert.equal(context.children, children);
     })
+
+    it('allows to set and get root-specific properties', () => {
+
+      // given
+      const instance = new opr.Toolkit.Root();
+      const dispatch = () => {};
+
+      // when
+      const context = Sandbox.create(instance);
+      context.dispatch = dispatch;
+
+      // then
+      assert.equal(context.dispatch, dispatch);
+    });
+
+    it('ignores unknown properties', () => {
+
+      // given
+      const instance = new opr.Toolkit.Component();
+
+      // when
+      const context = Sandbox.create(instance);
+      context.unknown = 'unknown';
+
+      // then
+      assert.equal(context.unknown, undefined);
+    });
+
   });
 });

@@ -2,11 +2,16 @@
   const ComponentLifecycle = class {
 
     /*
-     * onCreated(), onAttached(), onPropsReceived(), onUpdated(), onDestroyed(), onDetached()
+     * onCreated(),
+     * onAttached(),
+     * onPropsReceived(),
+     * onUpdated(),
+     * onDestroyed(),
+     * onDetached()
      */
 
     static onComponentCreated(component) {
-      component.onCreated();
+      component.onCreated.call(component.sandbox);
       if (component.child) {
         this.onNodeCreated(component.child);
       }
@@ -34,7 +39,7 @@
       if (component.child) {
         this.onNodeAttached(component.child);
       }
-      component.onAttached();
+      component.onAttached.call(component.sandbox);
     }
 
     static onElementAttached(element) {
@@ -56,15 +61,15 @@
     }
 
     static onComponentReceivedProps(component, props) {
-      component.onPropsReceived(props);
+      component.onPropsReceived.call(component.sandbox, props);
     }
 
     static onComponentUpdated(component, props) {
-      component.onUpdated(props);
+      component.onUpdated.call(component.sandbox, props);
     }
 
     static onComponentDestroyed(component) {
-      component.onDestroyed();
+      component.onDestroyed.call(component.sandbox);
       if (component.child) {
         this.onNodeDestroyed(component.child);
       }
@@ -92,7 +97,7 @@
       if (component.child) {
         this.onNodeDetached(component.child);
       }
-      component.onDetached();
+      component.onDetached.call(component.sandbox);
     }
 
     static onElementDetached(element) {

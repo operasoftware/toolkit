@@ -473,7 +473,7 @@ describe('Component Lifecycle', () => {
     const assertOnPropsReceivedCalled = (component, props) => {
       assert.equal(stub.callCount, 1);
       assert.equal(stub.firstCall.args[0], 'onPropsReceived');
-      assert.equal(stub.firstCall.args[1], component);
+      assert.equal(stub.firstCall.args[1], component.sandbox);
       assert.equal(stub.firstCall.args[2], props);
     };
 
@@ -499,7 +499,7 @@ describe('Component Lifecycle', () => {
     const assertOnUpdatedCalled = (component, props) => {
       assert.equal(stub.callCount, 1);
       assert.equal(stub.firstCall.args[0], 'onUpdated');
-      assert.equal(stub.firstCall.args[1], component);
+      assert.equal(stub.firstCall.args[1], component.sandbox);
       assert.equal(stub.firstCall.args[2], props);
     };
 

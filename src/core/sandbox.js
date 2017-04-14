@@ -2,7 +2,8 @@
   const isFunction = (target, property) =>
     typeof target[property] === 'function';
 
-  const whitelist = ['props', 'children', 'broadcast'];
+  const delegated = ['id', 'constructor'];
+  const whitelist = ['props', 'children', 'dispatch', 'broadcast'];
 
   const Sandbox = class {
 
@@ -10,13 +11,14 @@
       const blacklist = Object.getOwnPropertyNames(
         opr.Toolkit.Component.prototype);
       const autobound = {};
+      const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
-          if (property === 'id') {
-            return target.id;
-          }
           if (whitelist.includes(property)) {
-            return autobound[property];
+            return state[property];
+          }
+          if (delegated.includes(property)) {
+            return target[property];
           }
           if (blacklist.includes(property)) {
             return undefined;
@@ -34,7 +36,7 @@
         },
         set: (target, property, value) => {
           if (whitelist.includes(property)) {
-            autobound[property] = value;
+            state[property] = value;
           }
           return true;
         }

@@ -856,7 +856,7 @@
       this.comment = new Comment(this.constructor.name, this);
     }
 
-    sandbox() {
+    get sandbox() {
       let sandbox = this[SANDBOX_CONTEXT];
       if (!sandbox) {
         sandbox = opr.Toolkit.Sandbox.create(this);
@@ -1159,7 +1159,8 @@
   const isFunction = (target, property) =>
     typeof target[property] === 'function';
 
-  const whitelist = ['props', 'children', 'broadcast'];
+  const delegated = ['id', 'constructor'];
+  const whitelist = ['props', 'children', 'dispatch', 'broadcast'];
 
   const Sandbox = class {
 
@@ -1167,13 +1168,14 @@
       const blacklist = Object.getOwnPropertyNames(
         opr.Toolkit.Component.prototype);
       const autobound = {};
+      const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
-          if (property === 'id') {
-            return target.id;
-          }
           if (whitelist.includes(property)) {
-            return autobound[property];
+            return state[property];
+          }
+          if (delegated.includes(property)) {
+            return target[property];
           }
           if (blacklist.includes(property)) {
             return undefined;
@@ -1191,7 +1193,7 @@
         },
         set: (target, property, value) => {
           if (whitelist.includes(property)) {
-            autobound[property] = value;
+            state[property] = value;
           }
           return true;
         }
@@ -1610,7 +1612,7 @@
 
     static createChildTree(root, props, previousTree) {
 
-      const sandbox = root.sandbox();
+      const sandbox = root.sandbox;
       sandbox.dispatch = root.dispatch;
       sandbox.broadcast = root.broadcast.bind(root);
       sandbox.props = props;
@@ -1628,22 +1630,21 @@
         const instance = this.createComponentInstance(symbol);
         instance.props = props;
 
-        const createSandbox = () => {
+        const getSandbox = () => {
           let sandbox;
           if (instance.isCompatible(previousNode)) {
-            sandbox = previousNode.sandbox();
+            sandbox = previousNode.sandbox;
             sandbox.broadcast = previousNode.broadcast.bind(previousNode);
           } else {
-            sandbox = instance.sandbox();
+            sandbox = instance.sandbox;
             sandbox.broadcast = instance.broadcast.bind(instance);
           }
           sandbox.props = props;
           sandbox.children = children;
           return sandbox;
-        }
+        };
 
-        const sandbox = createSandbox();
-        const template = instance.render.call(sandbox);
+        const template = instance.render.call(getSandbox());
         if (template) {
           // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
@@ -1671,11 +1672,16 @@
   const ComponentLifecycle = class {
 
     /*
-     * onCreated(), onAttached(), onPropsReceived(), onUpdated(), onDestroyed(), onDetached()
+     * onCreated(),
+     * onAttached(),
+     * onPropsReceived(),
+     * onUpdated(),
+     * onDestroyed(),
+     * onDetached()
      */
 
     static onComponentCreated(component) {
-      component.onCreated();
+      component.onCreated.call(component.sandbox);
       if (component.child) {
         this.onNodeCreated(component.child);
       }
@@ -1703,7 +1709,7 @@
       if (component.child) {
         this.onNodeAttached(component.child);
       }
-      component.onAttached();
+      component.onAttached.call(component.sandbox);
     }
 
     static onElementAttached(element) {
@@ -1725,15 +1731,15 @@
     }
 
     static onComponentReceivedProps(component, props) {
-      component.onPropsReceived(props);
+      component.onPropsReceived.call(component.sandbox, props);
     }
 
     static onComponentUpdated(component, props) {
-      component.onUpdated(props);
+      component.onUpdated.call(component.sandbox, props);
     }
 
     static onComponentDestroyed(component) {
-      component.onDestroyed();
+      component.onDestroyed.call(component.sandbox);
       if (component.child) {
         this.onNodeDestroyed(component.child);
       }
@@ -1761,7 +1767,7 @@
       if (component.child) {
         this.onNodeDetached(component.child);
       }
-      component.onDetached();
+      component.onDetached.call(component.sandbox);
     }
 
     static onElementDetached(element) {

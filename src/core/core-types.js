@@ -58,7 +58,7 @@
       this.comment = new Comment(this.constructor.name, this);
     }
 
-    sandbox() {
+    get sandbox() {
       let sandbox = this[SANDBOX_CONTEXT];
       if (!sandbox) {
         sandbox = opr.Toolkit.Sandbox.create(this);
