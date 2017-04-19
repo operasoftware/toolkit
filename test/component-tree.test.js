@@ -8,10 +8,9 @@ describe('Component Tree', () => {
   describe('=> create component instance', () => {
 
     const root = Symbol.for('Root');
+    const loader = global.loader;
 
-    it('creates a new instance of preloaded component', () => {
-
-      // given
+    beforeEach(() => {
       global.loader = {
         get: symbol => {
           switch (symbol) {
@@ -22,12 +21,33 @@ describe('Component Tree', () => {
           }
         }
       };
+    });
+
+    afterEach(() => {
+      global.loader = loader;
+    });
+
+    it('creates a new instance of preloaded component', () => {
+
+      // given
       const instance = ComponentTree.createComponentInstance(root);
 
       // then
       assert(instance);
       assert(instance.isComponent());
       assert(instance.isRoot());
+    });
+
+    it('creates a new instance of preloaded component with key', () => {
+
+      // given
+      const instance = ComponentTree.createComponentInstance(root, 'key');
+
+      // then
+      assert(instance);
+      assert(instance.isComponent());
+      assert(instance.isRoot());
+      assert.equal(instance.key, 'key');
     });
   });
 
@@ -286,7 +306,7 @@ describe('Component Tree', () => {
 
       // then
       assert.equal(
-        element.children[0].child.text,previousElement.children[0].child.text);
+        element.children[0].child.text, previousElement.children[0].child.text);
     });
   });
 
@@ -543,7 +563,7 @@ describe('Component Tree', () => {
         }
       };
       const previousComponent = ComponentTree.createComponent('Component');
-      
+
       // when
       const component = ComponentTree.createComponent(
         'Component', {}, [], previousComponent);

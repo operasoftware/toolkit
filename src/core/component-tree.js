@@ -1,9 +1,13 @@
 {
   const ComponentTree = class {
 
-    static createComponentInstance(def) {
+    static createComponentInstance(def, key) {
       const ComponentClass = loader.get(def);
-      return new ComponentClass();
+      const instance = new ComponentClass();
+      if (key !== undefined) {
+        instance.key = key;
+      }
+      return instance;
     }
 
     static createElementInstance(description) {
@@ -116,7 +120,7 @@
 
     static createComponent(symbol, props = {}, children = [], previousNode) {
       try {
-        const instance = this.createComponentInstance(symbol);
+        const instance = this.createComponentInstance(symbol, props.key);
         instance.props = props;
 
         const getSandbox = () => {
