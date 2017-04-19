@@ -132,6 +132,10 @@
       return 'component';
     }
 
+    get ref() {
+      return this.childElement ? this.childElement.ref : this.placeholder.ref;
+    }
+
     isCompatible(node) {
       return super.isCompatible(node) && this.constructor === node.constructor;
     }

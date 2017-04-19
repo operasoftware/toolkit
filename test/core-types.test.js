@@ -350,6 +350,33 @@ describe('Core Types', () => {
     });
   });
 
+  describe('get ref', () => {
+
+    it('returns DOM element for component with child element', () => {
+
+      // given
+      const component = new opr.Toolkit.Component();
+      const element = new opr.Toolkit.VirtualElement('span');
+      const span = document.createElement('span');
+      element.ref = span;
+      component.appendChild(element);
+
+      // then
+      assert.equal(component.ref, span);
+    });
+
+    it('returns DOM text node for empty component', () => {
+
+      // given
+      const component = new opr.Toolkit.Component();
+      const text = document.createTextNode('Component');
+      component.comment.ref = text;
+
+      // then
+      assert.equal(component.ref, text);
+    });
+  });
+
   describe('Component', () => {
 
     describe('render', () => {

@@ -399,75 +399,251 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.firstElementChild, link.ref);
   });
 
-  it('moves child node', () => {
+  describe('move child node', () => {
 
-    // given
-    const element = createElement([
-      'div', [
-        'p',
-      ],
-      [
-        'div'
-      ],
-      [
-        'span'
-      ],
-    ]);
-    const paragraph = element.children[0];
+    const Component = Symbol('component');
 
-    // then
-    assert.equal(element.children.length, 3);
-    assert.equal(element.ref.childNodes.length, 3);
+    const ComponentClass = class extends opr.Toolkit.Component {
+      render() {
+        return this.children[0] || null;
+      }
+    };
 
-    // when
-    Patch.moveChildNode(paragraph, 0, 2, element).apply();
+    beforeEach(() => {
+      sinon.stub(ComponentTree, 'createComponentInstance', def => {
+        switch (def) {
+          case Component:
+            return new ComponentClass();
+          default:
+            throw new Error('Unknown definition: ' + def);
+        }
+      });
+    });
 
-    // then
-    assert.equal(element.children.length, 3);
-    assert.equal(element.ref.childNodes.length, 3);
+    afterEach(() => {
+      ComponentTree.createComponentInstance.restore();
+    });
 
-    assert.equal(element.children[0].name, 'div');
-    assert.equal(element.ref.childNodes[0].tagName, 'DIV');
+    it('moves element', () => {
 
-    assert.equal(element.children[1].name, 'span');
-    assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+      // given
+      const element = createElement([
+        'div', [
+          'p',
+        ],
+        [
+          'div'
+        ],
+        [
+          'span'
+        ],
+      ]);
+      const paragraph = element.children[0];
 
-    assert.equal(element.children[2].name, 'p');
-    assert.equal(element.ref.childNodes[2].tagName, 'P');
+      // then
+      assert.equal(element.children.length, 3);
+      assert.equal(element.ref.childNodes.length, 3);
+
+      // when
+      Patch.moveChildNode(paragraph, 0, 2, element).apply();
+
+      // then
+      assert.equal(element.children.length, 3);
+      assert.equal(element.ref.childNodes.length, 3);
+
+      assert.equal(element.children[0].name, 'div');
+      assert.equal(element.ref.childNodes[0].tagName, 'DIV');
+
+      assert.equal(element.children[1].name, 'span');
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+
+      assert.equal(element.children[2].name, 'p');
+      assert.equal(element.ref.childNodes[2].tagName, 'P');
+    });
+
+    it('moves component with child element', () => {
+
+      // given
+      const element = createElement([
+        'div', [
+          'p',
+        ],
+        [
+          Component, [
+            'section'
+          ]
+        ],
+        [
+          'span'
+        ],
+      ]);
+      const component = element.children[1];
+
+      // then
+      assert.equal(element.children.length, 3);
+      assert.equal(element.ref.childNodes.length, 3);
+
+      // when
+      Patch.moveChildNode(component, 1, 0, element).apply();
+
+      // then
+      assert.equal(element.children.length, 3);
+      assert.equal(element.ref.childNodes.length, 3);
+
+      assert.equal(element.children[0].constructor, ComponentClass);
+      assert.equal(element.ref.childNodes[0].tagName, 'SECTION');
+
+      assert.equal(element.children[1].name, 'p');
+      assert.equal(element.ref.childNodes[1].tagName, 'P');
+
+      assert.equal(element.children[2].name, 'span');
+      assert.equal(element.ref.childNodes[2].tagName, 'SPAN');
+    });
+
+    it('moves empty component', () => {
+
+      // given
+      const element = createElement([
+        'div', [
+          Component
+        ],
+        [
+          'span'
+        ],
+      ]);
+      const component = element.children[0];
+
+      // then
+      assert.equal(element.children.length, 2);
+      assert.equal(element.ref.childNodes.length, 2);
+
+      // when
+      Patch.moveChildNode(component, 0, 1, element).apply();
+
+      // then
+      assert.equal(element.children.length, 2);
+      assert.equal(element.ref.childNodes.length, 2);
+
+      assert.equal(element.children[0].name, 'span');
+      assert.equal(element.ref.childNodes[0].tagName, 'SPAN');
+
+      assert.equal(element.children[1].constructor, ComponentClass);
+      assert.equal(element.ref.childNodes[1].textContent, 'ComponentClass');
+    });
   });
 
-  it('removes child node', () => {
+  describe('remove child node', () => {
 
-    // given
-    const element = createElement([
-      'div', [
-        'p',
-      ],
-      [
-        'div'
-      ],
-      [
-        'span'
-      ],
-    ]);
-    const div = element.children[1];
+    const Component = Symbol('component');
 
-    // then
-    assert.equal(element.children.length, 3);
-    assert.equal(element.ref.childNodes.length, 3);
+    const ComponentClass = class extends opr.Toolkit.Component {
+      render() {
+        return this.children[0] || null;
+      }
+    };
 
-    // when
-    Patch.removeChildNode(div, 1, element).apply();
+    beforeEach(() => {
+      sinon.stub(ComponentTree, 'createComponentInstance', def => {
+        switch (def) {
+          case Component:
+            return new ComponentClass();
+          default:
+            throw new Error('Unknown definition: ' + def);
+        }
+      });
+    });
 
-    // then
-    assert.equal(element.children.length, 2);
-    assert.equal(element.ref.childNodes.length, 2);
+    afterEach(() => {
+      ComponentTree.createComponentInstance.restore();
+    });
 
-    assert.equal(element.children[0].name, 'p');
-    assert.equal(element.ref.childNodes[0].tagName, 'P');
+    it('removes element', () => {
 
-    assert.equal(element.children[1].name, 'span');
-    assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+      // given
+      const element = createElement([
+        'div', [
+          'p',
+        ],
+        [
+          'div'
+        ],
+        [
+          'span'
+        ],
+      ]);
+      const div = element.children[1];
+
+      // then
+      assert.equal(element.children.length, 3);
+      assert.equal(element.ref.childNodes.length, 3);
+
+      // when
+      Patch.removeChildNode(div, 1, element).apply();
+
+      // then
+      assert.equal(element.children.length, 2);
+      assert.equal(element.ref.childNodes.length, 2);
+
+      assert.equal(element.children[0].name, 'p');
+      assert.equal(element.ref.childNodes[0].tagName, 'P');
+
+      assert.equal(element.children[1].name, 'span');
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+    });
+
+    it('removes component with child element', () => {
+
+      // given
+      const element = createElement([
+        'div', [
+          'p',
+        ],
+        [Component, [
+          'span',
+        ]],
+      ]);
+      const component = element.children[1];
+
+      // then
+      assert.equal(element.children.length, 2);
+      assert.equal(element.ref.childNodes.length, 2);
+
+      assert.equal(element.children[1].constructor, ComponentClass);
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+
+      // when
+      Patch.removeChildNode(component, 1, element).apply();
+
+      // then
+      assert.equal(element.children.length, 1);
+      assert.equal(element.ref.childNodes.length, 1);
+    });
+
+    it('removes empty component', () => {
+
+      // given
+      const element = createElement([
+        'div', [
+          'p',
+        ],
+        [Component],
+      ]);
+      const component = element.children[1];
+
+      // then
+      assert.equal(element.children.length, 2);
+      assert.equal(element.ref.childNodes.length, 2);
+
+      assert.equal(element.children[1].constructor, ComponentClass);
+      assert.equal(element.ref.childNodes[1].textContent, 'ComponentClass');
+
+      // when
+      Patch.removeChildNode(component, 1, element).apply();
+
+      // then
+      assert.equal(element.children.length, 1);
+      assert.equal(element.ref.childNodes.length, 1);
+    });
   });
 
   it('sets text content', () => {
