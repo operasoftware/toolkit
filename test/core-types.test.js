@@ -350,33 +350,6 @@ describe('Core Types', () => {
     });
   });
 
-  describe('get ref', () => {
-
-    it('returns DOM element for component with child element', () => {
-
-      // given
-      const component = new opr.Toolkit.Component();
-      const element = new opr.Toolkit.VirtualElement('span');
-      const span = document.createElement('span');
-      element.ref = span;
-      component.appendChild(element);
-
-      // then
-      assert.equal(component.ref, span);
-    });
-
-    it('returns DOM text node for empty component', () => {
-
-      // given
-      const component = new opr.Toolkit.Component();
-      const text = document.createTextNode('Component');
-      component.comment.ref = text;
-
-      // then
-      assert.equal(component.ref, text);
-    });
-  });
-
   describe('Component', () => {
 
     describe('render', () => {
@@ -416,12 +389,85 @@ describe('Core Types', () => {
       });
     });
 
+    describe('register service', () => {
+
+      it('stores a reference to the clean-up task', () => {
+
+        // given
+        const disconnect = () => {};
+        const Service = class {
+          static connect() {
+            return disconnect;
+          }
+        };
+        const component = new opr.Toolkit.Component();
+
+        // when
+        component.registerService(Service);
+
+        // then
+        assert.equal(component.cleanUpTasks.length, 1);
+        assert.equal(component.cleanUpTasks[0], disconnect);
+      });
+
+      it('passes the listeners object to the connect method', () => {
+
+        // given
+        const listeners = {
+          onSomeEvent: () => {}
+        };
+        const Service = class {
+          static connect(listeners) {
+            expectedListeners = listeners;
+            return () => {};
+          }
+        };
+        const component = new opr.Toolkit.Component();
+        let expectedListeners;
+
+        // when
+        component.registerService(Service, listeners);
+
+        // then
+        assert.equal(expectedListeners, listeners);
+      });
+    });
+
+    describe('get ref', () => {
+
+      it('returns DOM element for component with child element', () => {
+
+        // given
+        const component = new opr.Toolkit.Component();
+        const element = new opr.Toolkit.VirtualElement('span');
+        const span = document.createElement('span');
+        element.ref = span;
+        component.appendChild(element);
+
+        // then
+        assert.equal(component.ref, span);
+      });
+
+      it('returns DOM text node for empty component', () => {
+
+        // given
+        const component = new opr.Toolkit.Component();
+        const text = document.createTextNode('Component');
+        component.comment.ref = text;
+
+        // then
+        assert.equal(component.ref, text);
+      });
+    });
+
     describe('lifecycle methods', () => {
 
       const methods = [
         'onCreated',
         'onAttached',
+        'onPropsReceived',
         'onUpdated',
+        'onDestroyed',
         'onDetached',
       ];
 

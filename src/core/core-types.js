@@ -56,6 +56,7 @@
       super();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+      this.cleanUpTasks = [];
     }
 
     get sandbox() {
@@ -65,6 +66,14 @@
         this[SANDBOX_CONTEXT] = sandbox;
       }
       return sandbox;
+    }
+
+    registerService(service, listeners) {
+      console.assert(typeof service.connect === 'function');
+      const disconnect = service.connect(listeners);
+      console.assert(typeof disconnect === 'function');
+      disconnect.service = service;
+      this.cleanUpTasks.push(disconnect);
     }
 
     appendChild(child) {

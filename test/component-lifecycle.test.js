@@ -681,6 +681,32 @@ describe('Component Lifecycle', () => {
         });
       });
     });
+
+    it('cleans up bindings to services', () => {
+
+      // given
+      const disconnect = sinon.spy();
+      const Service = class {
+        static connect() {
+          return disconnect;
+        }
+      };
+      const [app, element] = createApp([
+        'div', [
+          Component
+        ]
+      ]);
+      const component = element.children[0];
+      const patches = [Patch.removeChildNode(component, 0, element)];
+
+      // when
+      component.registerService(Service);
+      ComponentLifecycle.beforeUpdate(patches);
+
+      // then
+      assert(disconnect.called);
+      assert(disconnect.calledOnce);
+    });
   });
 
   describe('on detached', () => {

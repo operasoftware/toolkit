@@ -69,6 +69,9 @@
     }
 
     static onComponentDestroyed(component) {
+      for (const cleanUpTask of component.cleanUpTasks) {
+        cleanUpTask();
+      }
       component.onDestroyed.call(component.sandbox);
       if (component.child) {
         this.onNodeDestroyed(component.child);

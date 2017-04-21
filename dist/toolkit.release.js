@@ -854,6 +854,7 @@
       super();
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
+      this.cleanUpTasks = [];
     }
 
     get sandbox() {
@@ -863,6 +864,14 @@
         this[SANDBOX_CONTEXT] = sandbox;
       }
       return sandbox;
+    }
+
+    registerService(service, listeners) {
+      console.assert(typeof service.connect === 'function');
+      const disconnect = service.connect(listeners);
+      console.assert(typeof disconnect === 'function');
+      disconnect.service = service;
+      this.cleanUpTasks.push(disconnect);
     }
 
     appendChild(child) {
@@ -1163,8 +1172,22 @@
   const isFunction = (target, property) =>
     typeof target[property] === 'function';
 
-  const delegated = ['id', 'constructor'];
-  const whitelist = ['props', 'children', 'dispatch', 'broadcast'];
+  const properties = [
+    'id', 'constructor', 'dispatch',
+  ];
+  const methods = [
+    'broadcast', 'registerService',
+  ];
+  const stateProperties = [
+    'props', 'children',
+  ];
+
+  const createBoundListener = (listener, component, context) => {
+    const boundListener = listener.bind(context);
+    boundListener.source = listener;
+    boundListener.component = component;
+    return boundListener;
+  };
 
   const Sandbox = class {
 
@@ -1175,11 +1198,14 @@
       const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
-          if (whitelist.includes(property)) {
+          if (properties.includes(property)) {
+            return target[property];
+          }
+          if (stateProperties.includes(property)) {
             return state[property];
           }
-          if (delegated.includes(property)) {
-            return target[property];
+          if (methods.includes(property) && isFunction(target, property)) {
+            return createBoundListener(target[property], target, target);
           }
           if (blacklist.includes(property)) {
             return undefined;
@@ -1188,15 +1214,13 @@
             return autobound[property];
           }
           if (isFunction(target, property)) {
-            const boundListener = target[property].bind(receiver);
-            boundListener.source = target[property];
-            boundListener.component = target;
-            return autobound[property] = boundListener;
+            return autobound[property] =
+              createBoundListener(target[property], target, receiver);
           }
           return undefined;
         },
         set: (target, property, value) => {
-          if (whitelist.includes(property)) {
+          if (stateProperties.includes(property)) {
             state[property] = value;
           }
           return true;
@@ -1621,8 +1645,6 @@
     static createChildTree(root, props, previousTree) {
 
       const sandbox = root.sandbox;
-      sandbox.dispatch = root.dispatch;
-      sandbox.broadcast = root.broadcast.bind(root);
       sandbox.props = props;
 
       const template = root.render.call(sandbox);
@@ -1638,21 +1660,14 @@
         const instance = this.createComponentInstance(symbol, props.key);
         instance.props = props;
 
-        const getSandbox = () => {
-          let sandbox;
-          if (instance.isCompatible(previousNode)) {
-            sandbox = previousNode.sandbox;
-            sandbox.broadcast = previousNode.broadcast.bind(previousNode);
-          } else {
-            sandbox = instance.sandbox;
-            sandbox.broadcast = instance.broadcast.bind(instance);
-          }
-          sandbox.props = props;
-          sandbox.children = children;
-          return sandbox;
-        };
+        const sandbox = instance.isCompatible(previousNode) ?
+          previousNode.sandbox :
+          instance.sandbox;
 
-        const template = instance.render.call(getSandbox());
+        sandbox.props = props;
+        sandbox.children = children;
+
+        const template = instance.render.call(sandbox);
         if (template) {
           // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
@@ -1747,6 +1762,9 @@
     }
 
     static onComponentDestroyed(component) {
+      for (const cleanUpTask of component.cleanUpTasks) {
+        cleanUpTask();
+      }
       component.onDestroyed.call(component.sandbox);
       if (component.child) {
         this.onNodeDestroyed(component.child);

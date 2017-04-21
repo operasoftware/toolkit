@@ -96,15 +96,26 @@ describe('Sandbox', () => {
     it('allows to set and get root-specific properties', () => {
 
       // given
-      const instance = new opr.Toolkit.Root();
       const dispatch = () => {};
+      const instance = new opr.Toolkit.Root({}, dispatch);
 
       // when
       const context = Sandbox.create(instance);
-      context.dispatch = dispatch;
 
       // then
       assert.equal(context.dispatch, dispatch);
+    });
+
+    it('allows to register services', () => {
+
+      // given
+      const instance = new opr.Toolkit.Component();
+
+      // when
+      const context = Sandbox.create(instance);
+
+      // then
+      assert.equal(typeof context.registerService, 'function');
     });
 
     it('ignores unknown properties', () => {

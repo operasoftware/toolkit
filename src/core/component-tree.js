@@ -106,8 +106,6 @@
     static createChildTree(root, props, previousTree) {
 
       const sandbox = root.sandbox;
-      sandbox.dispatch = root.dispatch;
-      sandbox.broadcast = root.broadcast.bind(root);
       sandbox.props = props;
 
       const template = root.render.call(sandbox);
@@ -123,21 +121,14 @@
         const instance = this.createComponentInstance(symbol, props.key);
         instance.props = props;
 
-        const getSandbox = () => {
-          let sandbox;
-          if (instance.isCompatible(previousNode)) {
-            sandbox = previousNode.sandbox;
-            sandbox.broadcast = previousNode.broadcast.bind(previousNode);
-          } else {
-            sandbox = instance.sandbox;
-            sandbox.broadcast = instance.broadcast.bind(instance);
-          }
-          sandbox.props = props;
-          sandbox.children = children;
-          return sandbox;
-        };
+        const sandbox = instance.isCompatible(previousNode) ?
+          previousNode.sandbox :
+          instance.sandbox;
 
-        const template = instance.render.call(getSandbox());
+        sandbox.props = props;
+        sandbox.children = children;
+
+        const template = instance.render.call(sandbox);
         if (template) {
           // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
