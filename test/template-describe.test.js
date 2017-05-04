@@ -13,10 +13,10 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       component
     });
   });
@@ -33,12 +33,61 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       component,
       props
+    });
+  });
+
+  it('detects component with child nodes', () => {
+
+    // given
+    const component = Symbol.for('component');
+    const children = [
+      ['div'],
+      ['span'],
+    ];
+    const template = [
+      component, ...children
+    ];
+
+    // when
+    const description = Template.describe(template);
+
+    // then
+    assert.deepEqual(description, {
+      component,
+      children,
+    });
+  });
+
+  it('detects component with filtered child nodes', () => {
+
+    // given
+    const component = Symbol.for('component');
+    const children = [
+      null,
+      false,
+      ['div'],
+      ['span'],
+    ];
+    const template = [
+      component, ...children
+    ];
+
+    // when
+    const description = Template.describe(template);
+
+    // then
+    assert.deepEqual(description, {
+      component,
+      children: [
+        ['div'],
+        ['span'],
+      ]
     });
   });
 
@@ -51,20 +100,52 @@ describe('Template => describe', () => {
     };
     const children = [
       ['div'],
-      ['span']
+      ['span'],
     ];
     const template = [
       component, props, ...children
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       component,
       props,
-      children
+      children,
+    });
+  });
+
+  it('detects component with properties and filtered child nodes', () => {
+
+    // given
+    const component = Symbol.for('component');
+    const props = {
+      prop: 'prop'
+    };
+    const children = [
+      false,
+      ['div'],
+      null,
+      ['span'],
+      null,
+    ];
+    const template = [
+      component, props, ...children
+    ];
+
+    // when
+    const description = Template.describe(template);
+
+    // then
+    assert.deepEqual(description, {
+      component,
+      props,
+      children: [
+        ['div'],
+        ['span'],
+      ]
     });
   });
 
@@ -76,10 +157,10 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name: 'div'
     });
   });
@@ -95,10 +176,10 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name: 'div',
       props
     });
@@ -114,10 +195,10 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name,
       text
     });
@@ -136,10 +217,10 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name,
       props,
       text
@@ -159,15 +240,41 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name,
       children
     });
   });
 
+  it('detects element with filtered child nodes', () => {
+
+    // given
+    const name = 'div';
+    const children = [
+      ['div'],
+      null,
+      ['span'],
+      null,
+    ];
+    const template = [
+      name, ...children
+    ];
+
+    // when
+    const description = Template.describe(template);
+
+    // then
+    assert.deepEqual(description, {
+      name,
+      children: [
+        ['div'],
+        ['span'],
+      ]
+    });
+  });
   it('detects element with properties and child nodes', () => {
 
     // given
@@ -184,19 +291,51 @@ describe('Template => describe', () => {
     ];
 
     // when
-    const definition = Template.describe(template);
+    const description = Template.describe(template);
 
     // then
-    assert.deepEqual(definition, {
+    assert.deepEqual(description, {
       name,
       props,
       children
     });
   });
 
+  it('detects element with properties and filtered child nodes', () => {
+
+    // given
+    const name = 'div';
+    const props = {
+      prop: 'prop'
+    };
+    const children = [
+      false,
+      null,
+      ['div'],
+      ['span'],
+      null,
+    ];
+    const template = [
+      name, props, ...children
+    ];
+
+    // when
+    const description = Template.describe(template);
+
+    // then
+    assert.deepEqual(description, {
+      name,
+      props,
+      children: [
+        ['div'],
+        ['span'],
+      ]
+    });
+  });
+
   it('rejects invalid template', () => {
     assert.throws(() => {
-      Template.describe(null);
+      Template.describe(5);
     });
   });
 });

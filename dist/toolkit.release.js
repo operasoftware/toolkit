@@ -1383,98 +1383,120 @@
     }
 
     static validate(template) {
-      const Type = Template.ItemType;
-      if (Array.isArray(template)) {
-        const types = template.map(this.getItemType);
-        if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-          console.error('Invalid element:', template[0],
-            ', expecting component or tag name');
-          const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
-          return {
-            error,
-            types
-          };
-        } else if (types.length > 1) {
-          switch (types[1]) {
-            case Type.STRING:
-              if (types.length > 2) {
-                const error = new Error('Text elements cannot have child nodes');
-                console.error('Text elements cannot have child nodes:', template.slice(1));
-                return {
-                  error,
-                  types
-                };
-              } else if (types[0] === Type.COMPONENT) {
-                const error = new Error('Subcomponents do not accept text content');
-                console.error('Subcomponents do not accept text content:', template[1]);
-                return {
-                  error,
-                  types
-                };
-              }
-            case Type.PROPS:
-            case Type.ELEMENT:
-              if (types.length > 2) {
-                if (types[2] === Type.STRING) {
-                  if (types.length > 3) {
-                    const error = new Error('Text elements cannot have child nodes');
-                    console.error('Text elements cannot have child nodes:',
-                      template.slice(2));
-                    return {
-                      error,
-                      types
-                    };
-                  } else if (types[0] === Type.COMPONENT) {
-                    const error = new Error('Subcomponents do not accept text content');
-                    console.error('Subcomponents do not accept text content:', template[2]);
-                    return {
-                      error,
-                      types
-                    };
-                  }
-                  return {
-                    types
-                  };
-                }
-                for (let i = 2; i < template.length; i++) {
-                  if (types[i] !== Type.ELEMENT) {
-                    const error = new Error(`Invalid parameter type "${types[i]}" at index ${i}`);
-                    console.error('Invalid parameter:', template[i],
-                      ', expecting child element');
-                    return {
-                      error,
-                      types
-                    };
-                  }
-                }
-              }
-              return {
-                types
-              };
-            default:
-              const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
-              console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
-              return {
-                error,
-                types
-              };
-          }
-        }
+
+      if (template === null || template === false) {
         return {
-          types
+          types: null
         };
-      } else {
+      }
+
+      if (!Array.isArray(template)) {
         const error = new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
         return {
           error
         };
       }
+
+      const Type = Template.ItemType;
+      const types = template.map(this.getItemType);
+
+      if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
+        console.error('Invalid element:', template[0],
+          ', expecting component or tag name');
+        const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        return {
+          error,
+          types
+        };
+      }
+
+      if (types.length <= 1) {
+        return {
+          types
+        };
+      }
+
+      let firstChildIndex = 1;
+
+      switch (types[1]) {
+        case Type.STRING:
+          if (types.length > 2) {
+            const error = new Error('Text elements cannot have child nodes');
+            console.error('Text elements cannot have child nodes:', template.slice(1));
+            return {
+              error,
+              types
+            };
+          } else if (types[0] === Type.COMPONENT) {
+            const error = new Error('Subcomponents do not accept text content');
+            console.error('Subcomponents do not accept text content:', template[1]);
+            return {
+              error,
+              types
+            };
+          }
+        case Type.PROPS:
+          firstChildIndex = 2;
+        case Type.NULL:
+        case Type.BOOLEAN:
+          if (template[1] === true) {
+            // throw 'You are kidding!';
+          }
+        case Type.ELEMENT:
+          if (types.length > 2) {
+            if (types[2] === Type.STRING) {
+              if (types.length > 3) {
+                const error = new Error('Text elements cannot have child nodes');
+                console.error('Text elements cannot have child nodes:',
+                  template.slice(2));
+                return {
+                  error,
+                  types
+                };
+              } else if (types[0] === Type.COMPONENT) {
+                const error = new Error('Subcomponents do not accept text content');
+                console.error('Subcomponents do not accept text content:', template[2]);
+                return {
+                  error,
+                  types
+                };
+              }
+              return {
+                types
+              };
+            }
+          }
+          for (let i = firstChildIndex; i < template.length; i++) {
+            const expected = i === 1 ? 'properties object, text content or first child element' : 'child element';
+            if (types[i] !== Type.ELEMENT && template[i] !== null && template[i] !== false) {
+              const error = new Error(`Invalid parameter type "${types[i]}" at index ${i}`);
+              console.error('Invalid parameter:', template[i],
+                ', expecting ' + expected);
+              return {
+                error,
+                types
+              };
+            }
+          }
+          return {
+            types
+          };
+        default:
+          const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
+          console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+          return {
+            error,
+            types
+          };
+      }
+      return {
+        types
+      };
     }
 
     static describe(template) {
 
-      const Type = Template.ItemType;
       const {
         types,
         error
@@ -1485,7 +1507,14 @@
         throw error;
       }
 
+      if (types === null) {
+        return null;
+      }
+
+      const Type = Template.ItemType;
       const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
+
+      const onlyValidElements = element => Array.isArray(element);
 
       switch (template.length) {
         case 1:
@@ -1507,7 +1536,7 @@
           } else if (types[1] === Type.ELEMENT) {
             return {
               [type]: template[0],
-              children: template.slice(1),
+              children: template.slice(1).filter(onlyValidElements),
             };
           }
         default:
@@ -1522,12 +1551,12 @@
             return {
               [type]: template[0],
               props: template[1],
-              children: template.slice(2),
+              children: template.slice(2).filter(onlyValidElements),
             };
           }
           return {
             [type]: template[0],
-            children: template.slice(1),
+            children: template.slice(1).filter(onlyValidElements),
           };
       }
     }
