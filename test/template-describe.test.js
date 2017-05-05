@@ -275,6 +275,7 @@ describe('Template => describe', () => {
       ]
     });
   });
+
   it('detects element with properties and child nodes', () => {
 
     // given
@@ -333,9 +334,28 @@ describe('Template => describe', () => {
     });
   });
 
+  it('returns null description for null template', () => {
+
+    // when
+    const description = Template.describe(null);
+
+    // then
+    assert.equal(description, null);
+  });
+
+  it('returns null description for false template', () => {
+
+    // when
+    const description = Template.describe(false);
+
+    // then
+    assert.equal(description, null);
+  });
+
   it('rejects invalid template', () => {
     assert.throws(() => {
       Template.describe(5);
     });
   });
+
 });

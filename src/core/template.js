@@ -183,7 +183,12 @@
         case Type.NULL:
         case Type.BOOLEAN:
           if (template[1] === true) {
-            // throw 'You are kidding!';
+            const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
+            console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+            return {
+              error,
+              types
+            };
           }
         case Type.ELEMENT:
           if (types.length > 2) {
@@ -232,9 +237,6 @@
             types
           };
       }
-      return {
-        types
-      };
     }
 
     static describe(template) {

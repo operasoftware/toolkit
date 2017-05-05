@@ -1099,9 +1099,21 @@
 
     constructor(path) {
       this[ID] = opr.Toolkit.utils.createUUID();
-      this.path = path;
+      this.root = this.getRoot(path);
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
+    }
+
+    getRoot(path) {
+      const type = typeof path;
+      switch (type) {
+        case 'symbol':
+          return path;
+        case 'string':
+          return loader.symbol(path);
+        default:
+          throw new Error(`Invalid path: ${path}`);
+      }
     }
 
     get id() {
@@ -1110,14 +1122,14 @@
 
     async preload() {
       this.preloaded = true;
-      await loader.preload(this.path);
+      await loader.preload(this.root);
     }
 
     async render(container) {
 
       this.container = container;
 
-      const RootClass = await loader.resolve(this.path);
+      const RootClass = await loader.resolve(this.root);
       if (!this.preloaded) {
         await RootClass.init();
       }
@@ -1441,7 +1453,12 @@
         case Type.NULL:
         case Type.BOOLEAN:
           if (template[1] === true) {
-            // throw 'You are kidding!';
+            const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
+            console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+            return {
+              error,
+              types
+            };
           }
         case Type.ELEMENT:
           if (types.length > 2) {
@@ -1490,9 +1507,6 @@
             types
           };
       }
-      return {
-        types
-      };
     }
 
     static describe(template) {

@@ -230,7 +230,8 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', {}, null, null,
+      'div', {},
+      null, null,
     ];
 
     // when
@@ -247,7 +248,8 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', {}, false,
+      'div', {},
+      false,
     ];
 
     // when
@@ -410,7 +412,8 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, {}, null,
+      component, {},
+      null,
     ];
 
     // when
@@ -428,7 +431,8 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, {}, false,
+      component, {},
+      false,
     ];
 
     // when
@@ -512,7 +516,7 @@ describe('Template => validate', () => {
     assert(console.error.called);
   });
 
-  it('rejects second parameter', () => {
+  it('rejects second parameter being a boolean value', () => {
 
     // when
     const result = Template.validate(['span', true]);
@@ -520,7 +524,19 @@ describe('Template => validate', () => {
     // then
     assert(result.error instanceof Error);
     assert.equal(result.error.message,
-      'Invalid parameter type "boolean" at index 1');
+      'Invalid parameter type "boolean" at index 1, expecting: properties object, text content or first child element');
+    assert(console.error.called);
+  });
+
+  it('rejects second parameter being a function', () => {
+
+    // when
+    const result = Template.validate(['span', () => {}]);
+
+    // then
+    assert(result.error instanceof Error);
+    assert.equal(result.error.message,
+      'Invalid parameter type "function" at index 1, expecting: properties object, text content or first child element');
     assert(console.error.called);
   });
 

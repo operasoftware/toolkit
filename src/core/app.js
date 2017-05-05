@@ -5,9 +5,21 @@
 
     constructor(path) {
       this[ID] = opr.Toolkit.utils.createUUID();
-      this.path = path;
+      this.root = this.getRoot(path);
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
+    }
+
+    getRoot(path) {
+      const type = typeof path;
+      switch (type) {
+        case 'symbol':
+          return path;
+        case 'string':
+          return loader.symbol(path);
+        default:
+          throw new Error(`Invalid path: ${path}`);
+      }
     }
 
     get id() {
@@ -16,14 +28,14 @@
 
     async preload() {
       this.preloaded = true;
-      await loader.preload(this.path);
+      await loader.preload(this.root);
     }
 
     async render(container) {
 
       this.container = container;
 
-      const RootClass = await loader.resolve(this.path);
+      const RootClass = await loader.resolve(this.root);
       if (!this.preloaded) {
         await RootClass.init();
       }
