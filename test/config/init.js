@@ -14,7 +14,7 @@ global.opr = {
   Toolkit: {
     // consts
     SUPPORTED_ATTRIBUTES: consts.SUPPORTED_ATTRIBUTES,
-    SUPPORTED_STYLES: consts.SUPPORTED_STYLES,
+    SUPPORTED_STYLES: require('dom-test/src/utils/supported-styles.js'),
     SUPPORTED_FILTERS: consts.SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS: consts.SUPPORTED_TRANSFORMS,
     SUPPORTED_EVENTS: consts.SUPPORTED_EVENTS,
