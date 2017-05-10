@@ -12,7 +12,6 @@
     const toolkit = await loader.require('core/toolkit');
     const modules = await toolkit.init();
     Object.assign(opr.Toolkit, modules);
-    opr.Toolkit.SUPPORTED_STYLES.push(...Object.keys(document.body.style));
     Object.freeze(opr.Toolkit);
     initialized = true;
   };

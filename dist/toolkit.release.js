@@ -348,8 +348,7 @@
     'wrap ',
   ];
 
-  // populated dynamically when Toolkit initializes
-  const SUPPORTED_STYLES = [];
+  const SUPPORTED_STYLES = Object.keys(document.documentElement.style);
 
   const SUPPORTED_FILTERS = [
     'blur',
@@ -2545,9 +2544,7 @@
     utils, create,
 
     debug: false,
-    ready: async () => {
-      opr.Toolkit.SUPPORTED_STYLES.push(...Object.keys(document.body.style));
-    },
+    ready: async () => {},
   };
   Object.freeze(Toolkit);
 

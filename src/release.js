@@ -38,9 +38,7 @@
     utils, create,
 
     debug: false,
-    ready: async () => {
-      opr.Toolkit.SUPPORTED_STYLES.push(...Object.keys(document.body.style));
-    },
+    ready: async () => {},
   };
   Object.freeze(Toolkit);
 
