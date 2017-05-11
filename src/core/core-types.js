@@ -69,9 +69,9 @@
     }
 
     registerService(service, listeners) {
-      console.assert(typeof service.connect === 'function');
+      console.assert(service.connect instanceof Function);
       const disconnect = service.connect(listeners);
-      console.assert(typeof disconnect === 'function');
+      console.assert(disconnect instanceof Function);
       disconnect.service = service;
       this.cleanUpTasks.push(disconnect);
     }
@@ -211,7 +211,7 @@
     }
 
     addClassName(className) {
-      this.classNames = [...this.classNames, className];
+      this.classNames.push(className);
     }
 
     removeClassName(className) {

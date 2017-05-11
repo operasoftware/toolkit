@@ -200,7 +200,7 @@
     'step',
     // 'style',
     'summary',
-    'tabIndex',
+    'tabindex',
     'target',
     'title',
     'type',

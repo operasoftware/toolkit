@@ -87,7 +87,7 @@
       module = await loadModule(path);
       if (module.init) {
         const result = module.init();
-        if ('object' === typeof result && 'function' === typeof result.then) {
+        if (result instanceof Promise) {
           await result;
         }
       }
@@ -126,7 +126,9 @@
     }
   };
 
-  if ('object' === typeof window) {
+  const isBrowser = 'object' === typeof window;
+
+  if (isBrowser) {
     window.loader = ModuleLoader;
     window.module = {};
   } else {
@@ -337,7 +339,7 @@
     'step',
     // 'style',
     'summary',
-    'tabIndex',
+    'tabindex',
     'target',
     'title',
     'type',
@@ -470,9 +472,9 @@
     }
 
     registerService(service, listeners) {
-      console.assert(typeof service.connect === 'function');
+      console.assert(service.connect instanceof Function);
       const disconnect = service.connect(listeners);
-      console.assert(typeof disconnect === 'function');
+      console.assert(disconnect instanceof Function);
       disconnect.service = service;
       this.cleanUpTasks.push(disconnect);
     }
@@ -612,7 +614,7 @@
     }
 
     addClassName(className) {
-      this.classNames = [...this.classNames, className];
+      this.classNames.push(className);
     }
 
     removeClassName(className) {
