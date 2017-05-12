@@ -46,7 +46,7 @@ const release = merge(
   ModuleLoader, Consts, CoreTypes, App, Sandbox, Store, Template,
   ComponentTree, ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
   Release
-);
+).replace(/\n\n\n/g, '\n\n');
 
 fs.writeFileSync('./dist/toolkit.release.js', release, 'utf8');
 

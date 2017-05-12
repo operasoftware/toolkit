@@ -18,7 +18,8 @@
       const Store = await loader.require('core/store');
       const Template = await loader.require('core/template');
       const ComponentTree = await loader.require('core/component-tree');
-      const ComponentLifecycle = await loader.require('core/component-lifecycle');
+      const ComponentLifecycle =
+          await loader.require('core/component-lifecycle');
       const Diff = await loader.require('core/diff');
       const Patch = await loader.require('core/patch');
       const Reconciler = await loader.require('core/reconciler');

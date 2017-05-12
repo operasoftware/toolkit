@@ -1,5 +1,5 @@
 {
-  const Document = class {
+  class Document {
 
     static setAttribute(element, name, value) {
       const attr = opr.Toolkit.utils.lowerDash(name);
@@ -123,7 +123,7 @@
       }
       return domNode;
     }
-  };
+  }
 
   module.exports = Document;
 }

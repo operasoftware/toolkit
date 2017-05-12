@@ -24,9 +24,11 @@
     const added = nextListeners.filter(event => !listeners.includes(event));
     const removed = listeners.filter(event => !nextListeners.includes(event));
     const changed = listeners.filter(
-      event => nextListeners.includes(event) && current[event] !== next[event] &&
-      (current[event].source === undefined && next[event].source === undefined ||
-        current[event].source !== next[event].source));
+        event => nextListeners.includes(event) &&
+            current[event] !== next[event] &&
+            (current[event].source === undefined &&
+                 next[event].source === undefined ||
+             current[event].source !== next[event].source));
 
     for (let event of added) {
       patches.push(Patch.addListener(event, next[event], target));
@@ -35,7 +37,8 @@
       patches.push(Patch.removeListener(event, current[event], target));
     }
     for (let event of changed) {
-      patches.push(Patch.replaceListener(event, current[event], next[event], target));
+      patches.push(
+          Patch.replaceListener(event, current[event], next[event], target));
     }
   };
 
@@ -50,13 +53,15 @@
       prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
-      patches.push(opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
+      patches.push(
+          opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
     }
     for (let prop of removed) {
       patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
     }
     for (let prop of changed) {
-      patches.push(opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
+      patches.push(
+          opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
     }
   };
 
@@ -84,35 +89,40 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
+      patches.push(
+          opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
       patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
+      patches.push(
+          opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
     }
   };
 
-  const attributePatches = (current = {}, next = {}, target = null, patches) => {
-    const attrs = Object.keys(current);
-    const nextAttrs = Object.keys(next);
+  const attributePatches =
+      (current = {}, next = {}, target = null, patches) => {
+        const attrs = Object.keys(current);
+        const nextAttrs = Object.keys(next);
 
-    const added = nextAttrs.filter(attr => !attrs.includes(attr));
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-    const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+        const added = nextAttrs.filter(attr => !attrs.includes(attr));
+        const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+        const changed = attrs.filter(
+            attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
-    for (let attr of added) {
-      patches.push(opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
-    }
-    for (let attr of removed) {
-      patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
-    }
-    for (let attr of changed) {
-      patches.push(opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
-    }
-  };
+        for (let attr of added) {
+          patches.push(
+              opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
+        }
+        for (let attr of removed) {
+          patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
+        }
+        for (let attr of changed) {
+          patches.push(
+              opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
+        }
+      };
 
   const areCompatible = (current, next) => {
     if (current.nodeType !== next.nodeType) {
@@ -273,7 +283,7 @@
     return patches;
   }
 
-  const Diff = class {
+  class Diff {
 
     static deepEqual(current, next) {
       const type = getType(current);
@@ -319,7 +329,7 @@
     static calculate(tree, nextTree, root) {
       return calculatePatches(tree, nextTree, root);
     }
-  };
+  }
 
   module.exports = Diff;
 }

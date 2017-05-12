@@ -3,7 +3,7 @@
 
   const ID = Symbol('id');
 
-  const VirtualNode = class {
+  class VirtualNode {
 
     constructor() {
       this[ID] = opr.Toolkit.utils.createUUID();
@@ -48,9 +48,9 @@
     isCompatible(node) {
       return node && this.nodeType === node.nodeType;
     }
-  };
+  }
 
-  const Component = class extends VirtualNode {
+  class Component extends VirtualNode {
 
     constructor() {
       super();
@@ -148,9 +148,9 @@
     isCompatible(node) {
       return super.isCompatible(node) && this.constructor === node.constructor;
     }
-  };
+  }
 
-  const Root = class extends Component {
+  class Root extends Component {
 
     constructor(container, dispatch) {
       super();
@@ -176,7 +176,7 @@
     get nodeType() {
       return 'root';
     }
-  };
+  }
 
   const VirtualElement = class extends VirtualNode {
 
@@ -262,9 +262,9 @@
     isCompatible(node) {
       return super.isCompatible(node) && this.name === node.name;
     }
-  };
+  }
 
-  const Comment = class extends VirtualNode {
+  class Comment extends VirtualNode {
 
     constructor(text, parentNode) {
       super();
@@ -276,11 +276,7 @@
     get nodeType() {
       return 'comment';
     }
-  };
-
-  const External = class extends Element {
-
-  };
+  }
 
   const CoreTypes = {
     VirtualNode,

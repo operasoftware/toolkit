@@ -5,7 +5,7 @@
     REMOVE: Symbol('remove'),
   };
 
-  const Move = class {
+  class Move {
 
     constructor(name, item, props, make) {
       Object.assign(this, {
@@ -31,9 +31,9 @@
         items.splice(at, 1);
       });
     }
-  };
+  }
 
-  const Reconciler = class {
+  class Reconciler {
 
     static calculateMoves(current, next) {
 
@@ -82,11 +82,12 @@
       const moves = makeMoves();
       if (moves.filter(move => (move.name === Name.MOVE)).length > 1) {
         const alternativeMoves = makeMoves(true);
-        return alternativeMoves.length < moves.length ? alternativeMoves : moves;
+        return alternativeMoves.length < moves.length ? alternativeMoves :
+                                                        moves;
       }
       return moves;
     }
-  };
+  }
 
   Reconciler.Move = Move;
   Reconciler.Move.Name = Name;

@@ -1,5 +1,5 @@
 {
-  const ComponentLifecycle = class {
+  class ComponentLifecycle {
 
     /*
      * onCreated(),

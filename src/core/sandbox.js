@@ -19,7 +19,7 @@
     return boundListener;
   };
 
-  const Sandbox = class {
+  class Sandbox {
 
     static create(component) {
       const blacklist = Object.getOwnPropertyNames(

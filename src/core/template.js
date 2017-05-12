@@ -1,5 +1,5 @@
 {
-  const Template = class {
+  class Template {
 
     static get ItemType() {
       return {
@@ -89,7 +89,8 @@
         case 'filter':
           return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
         case 'transform':
-          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_TRANSFORMS);
+          return this.getCompositeValue(
+              value, opr.Toolkit.SUPPORTED_TRANSFORMS);
         default:
           return this.getAttributeValue(value);
       }
@@ -126,6 +127,12 @@
 
     static validate(template) {
 
+      const validParamTypes =
+          'properties object, text content or first child element';
+
+      const createErrorDescription = (val, i, types) =>
+          `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
+
       if (template === null || template === false) {
         return {
           types: null
@@ -133,7 +140,8 @@
       }
 
       if (!Array.isArray(template)) {
-        const error = new Error(`Specified template: "${template}" is not an array!`);
+        const error =
+            new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
         return {
           error
@@ -146,7 +154,8 @@
       if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
         console.error('Invalid element:', template[0],
           ', expecting component or tag name');
-        const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        const error =
+            new Error(`Invalid parameter type "${types[0]}" at index 0`);
         return {
           error,
           types
@@ -165,17 +174,19 @@
         case Type.STRING:
           if (types.length > 2) {
             const error = new Error('Text elements cannot have child nodes');
-            console.error('Text elements cannot have child nodes:', template.slice(1));
+            console.error(
+                'Text elements cannot have child nodes:', template.slice(1));
             return {
               error,
-              types
+              types,
             };
           } else if (types[0] === Type.COMPONENT) {
             const error = new Error('Subcomponents do not accept text content');
-            console.error('Subcomponents do not accept text content:', template[1]);
+            console.error(
+                'Subcomponents do not accept text content:', template[1]);
             return {
               error,
-              types
+              types,
             };
           }
         case Type.PROPS:
@@ -183,58 +194,69 @@
         case Type.NULL:
         case Type.BOOLEAN:
           if (template[1] === true) {
-            const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
-            console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+            const error =
+                new Error(createErrorDescription(types[1], 1, validParamTypes));
+            console.error(
+                'Invalid parameter', template[1],
+                ', expecting:', validParamTypes);
             return {
               error,
-              types
+              types,
             };
           }
         case Type.ELEMENT:
           if (types.length > 2) {
             if (types[2] === Type.STRING) {
               if (types.length > 3) {
-                const error = new Error('Text elements cannot have child nodes');
+                const error =
+                    new Error('Text elements cannot have child nodes');
                 console.error('Text elements cannot have child nodes:',
                   template.slice(2));
                 return {
                   error,
-                  types
+                  types,
                 };
               } else if (types[0] === Type.COMPONENT) {
-                const error = new Error('Subcomponents do not accept text content');
-                console.error('Subcomponents do not accept text content:', template[2]);
+                const error =
+                    new Error('Subcomponents do not accept text content');
+                console.error(
+                    'Subcomponents do not accept text content:', template[2]);
                 return {
                   error,
-                  types
+                  types,
                 };
               }
               return {
-                types
+                types,
               };
             }
           }
           for (let i = firstChildIndex; i < template.length; i++) {
-            const expected = i === 1 ? 'properties object, text content or first child element' : 'child element';
-            if (types[i] !== Type.ELEMENT && template[i] !== null && template[i] !== false) {
-              const error = new Error(`Invalid parameter type "${types[i]}" at index ${i}`);
+            const expected = i === 1 ? validParamTypes : 'child element';
+            if (types[i] !== Type.ELEMENT && template[i] !== null &&
+                template[i] !== false) {
+              const error = new Error(
+                  `Invalid parameter type "${types[i]}" at index ${i}`);
               console.error('Invalid parameter:', template[i],
                 ', expecting ' + expected);
               return {
                 error,
-                types
+                types,
               };
             }
           }
           return {
-            types
+            types,
           };
         default:
-          const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
-          console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+          const error =
+              new Error(createErrorDescription(types[1], 1, validParamTypes));
+          console.error(
+              'Invalid parameter', template[1],
+              ', expecting:', validParamTypes);
           return {
             error,
-            types
+            types,
           };
       }
     }
@@ -304,7 +326,7 @@
           };
       }
     }
-  };
+  }
 
   module.exports = Template;
 }

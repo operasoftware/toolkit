@@ -1,4 +1,6 @@
 {
+  const isBrowser = 'object' === typeof window;
+
   /** Path => module mapping. */
   const registry = new Map();
 
@@ -35,7 +37,7 @@
   }
 
   const loadModule = async path => {
-    if ('object' === typeof window) {
+    if (isBrowser) {
       return appendScriptToHead(path);
     }
     return requireUncached(path);
@@ -126,8 +128,6 @@
     }
   };
 
-  const isBrowser = 'object' === typeof window;
-
   if (isBrowser) {
     window.loader = ModuleLoader;
     window.module = {};
@@ -135,7 +135,6 @@
     global.loader = ModuleLoader;
   }
 }
-
 
 {
   const SUPPORTED_EVENTS = [
@@ -400,13 +399,12 @@
   loader.define('core/consts', Consts);
 }
 
-
 {
   const SANDBOX_CONTEXT = Symbol('sandbox-context');
 
   const ID = Symbol('id');
 
-  const VirtualNode = class {
+  class VirtualNode {
 
     constructor() {
       this[ID] = opr.Toolkit.utils.createUUID();
@@ -451,9 +449,9 @@
     isCompatible(node) {
       return node && this.nodeType === node.nodeType;
     }
-  };
+  }
 
-  const Component = class extends VirtualNode {
+  class Component extends VirtualNode {
 
     constructor() {
       super();
@@ -551,9 +549,9 @@
     isCompatible(node) {
       return super.isCompatible(node) && this.constructor === node.constructor;
     }
-  };
+  }
 
-  const Root = class extends Component {
+  class Root extends Component {
 
     constructor(container, dispatch) {
       super();
@@ -579,7 +577,7 @@
     get nodeType() {
       return 'root';
     }
-  };
+  }
 
   const VirtualElement = class extends VirtualNode {
 
@@ -665,9 +663,9 @@
     isCompatible(node) {
       return super.isCompatible(node) && this.name === node.name;
     }
-  };
+  }
 
-  const Comment = class extends VirtualNode {
+  class Comment extends VirtualNode {
 
     constructor(text, parentNode) {
       super();
@@ -679,11 +677,7 @@
     get nodeType() {
       return 'comment';
     }
-  };
-
-  const External = class extends Element {
-
-  };
+  }
 
   const CoreTypes = {
     VirtualNode,
@@ -696,11 +690,10 @@
   loader.define('core/core-types', CoreTypes);
 }
 
-
 {
   const ID = Symbol('id');
 
-  const App = class {
+  class App {
 
     constructor(path) {
       this[ID] = opr.Toolkit.utils.createUUID();
@@ -738,11 +731,11 @@
       if (!this.preloaded) {
         await RootClass.init();
       }
-
-      this.root = new RootClass(container, command => {
+      this.dispatch = command => {
         this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
-      });
+      };
+      this.root = new RootClass(container, this.dispatch);
 
       this.reducer = opr.Toolkit.utils.combineReducers(
         ...this.root.getReducers());
@@ -756,9 +749,10 @@
         if (this.root.props === undefined) {
           patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
+        patches.push(
+            opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-          this.root, this.store.state, this.root.child);
+            this.root, this.store.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -779,11 +773,10 @@
         console.timeEnd('=> Render');
       }
     }
-  };
+  }
 
   loader.define('core/app', App);
 }
-
 
 {
   const isFunction = (target, property) =>
@@ -806,7 +799,7 @@
     return boundListener;
   };
 
-  const Sandbox = class {
+  class Sandbox {
 
     static create(component) {
       const blacklist = Object.getOwnPropertyNames(
@@ -849,9 +842,8 @@
   loader.define('core/sandbox', Sandbox);
 }
 
-
 {
-  const Store = class {
+  class Store {
 
     constructor() {
       this.stack = [];
@@ -867,14 +859,13 @@
     set state(state) {
       this.stack.push(state);
     }
-  };
+  }
 
   loader.define('core/store', Store);
 }
 
-
 {
-  const Template = class {
+  class Template {
 
     static get ItemType() {
       return {
@@ -964,7 +955,8 @@
         case 'filter':
           return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
         case 'transform':
-          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_TRANSFORMS);
+          return this.getCompositeValue(
+              value, opr.Toolkit.SUPPORTED_TRANSFORMS);
         default:
           return this.getAttributeValue(value);
       }
@@ -1001,6 +993,12 @@
 
     static validate(template) {
 
+      const validParamTypes =
+          'properties object, text content or first child element';
+
+      const createErrorDescription = (val, i, types) =>
+          `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
+
       if (template === null || template === false) {
         return {
           types: null
@@ -1008,7 +1006,8 @@
       }
 
       if (!Array.isArray(template)) {
-        const error = new Error(`Specified template: "${template}" is not an array!`);
+        const error =
+            new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
         return {
           error
@@ -1021,7 +1020,8 @@
       if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
         console.error('Invalid element:', template[0],
           ', expecting component or tag name');
-        const error = new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        const error =
+            new Error(`Invalid parameter type "${types[0]}" at index 0`);
         return {
           error,
           types
@@ -1040,17 +1040,19 @@
         case Type.STRING:
           if (types.length > 2) {
             const error = new Error('Text elements cannot have child nodes');
-            console.error('Text elements cannot have child nodes:', template.slice(1));
+            console.error(
+                'Text elements cannot have child nodes:', template.slice(1));
             return {
               error,
-              types
+              types,
             };
           } else if (types[0] === Type.COMPONENT) {
             const error = new Error('Subcomponents do not accept text content');
-            console.error('Subcomponents do not accept text content:', template[1]);
+            console.error(
+                'Subcomponents do not accept text content:', template[1]);
             return {
               error,
-              types
+              types,
             };
           }
         case Type.PROPS:
@@ -1058,58 +1060,69 @@
         case Type.NULL:
         case Type.BOOLEAN:
           if (template[1] === true) {
-            const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
-            console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+            const error =
+                new Error(createErrorDescription(types[1], 1, validParamTypes));
+            console.error(
+                'Invalid parameter', template[1],
+                ', expecting:', validParamTypes);
             return {
               error,
-              types
+              types,
             };
           }
         case Type.ELEMENT:
           if (types.length > 2) {
             if (types[2] === Type.STRING) {
               if (types.length > 3) {
-                const error = new Error('Text elements cannot have child nodes');
+                const error =
+                    new Error('Text elements cannot have child nodes');
                 console.error('Text elements cannot have child nodes:',
                   template.slice(2));
                 return {
                   error,
-                  types
+                  types,
                 };
               } else if (types[0] === Type.COMPONENT) {
-                const error = new Error('Subcomponents do not accept text content');
-                console.error('Subcomponents do not accept text content:', template[2]);
+                const error =
+                    new Error('Subcomponents do not accept text content');
+                console.error(
+                    'Subcomponents do not accept text content:', template[2]);
                 return {
                   error,
-                  types
+                  types,
                 };
               }
               return {
-                types
+                types,
               };
             }
           }
           for (let i = firstChildIndex; i < template.length; i++) {
-            const expected = i === 1 ? 'properties object, text content or first child element' : 'child element';
-            if (types[i] !== Type.ELEMENT && template[i] !== null && template[i] !== false) {
-              const error = new Error(`Invalid parameter type "${types[i]}" at index ${i}`);
+            const expected = i === 1 ? validParamTypes : 'child element';
+            if (types[i] !== Type.ELEMENT && template[i] !== null &&
+                template[i] !== false) {
+              const error = new Error(
+                  `Invalid parameter type "${types[i]}" at index ${i}`);
               console.error('Invalid parameter:', template[i],
                 ', expecting ' + expected);
               return {
                 error,
-                types
+                types,
               };
             }
           }
           return {
-            types
+            types,
           };
         default:
-          const error = new Error(`Invalid parameter type "${types[1]}" at index 1, expecting: properties object, text content or first child element`);
-          console.error('Invalid parameter', template[1], ', expecting: properties object, text content or first child element');
+          const error =
+              new Error(createErrorDescription(types[1], 1, validParamTypes));
+          console.error(
+              'Invalid parameter', template[1],
+              ', expecting:', validParamTypes);
           return {
             error,
-            types
+            types,
           };
       }
     }
@@ -1179,14 +1192,13 @@
           };
       }
     }
-  };
+  }
 
   loader.define('core/template', Template);
 }
 
-
 {
-  const ComponentTree = class {
+  class ComponentTree {
 
     static createComponentInstance(def, key) {
       const ComponentClass = loader.get(def);
@@ -1280,12 +1292,11 @@
         }
       };
       if (description.children) {
-        element.children = description.children.map(
-          (desc, index) => {
-            const child = this.createFromTemplate(desc, getPreviousChild(index));
-            child.parentNode = element;
-            return child;
-          });
+        element.children = description.children.map((desc, index) => {
+          const child = this.createFromTemplate(desc, getPreviousChild(index));
+          child.parentNode = element;
+          return child;
+        });
       }
       return element;
     }
@@ -1333,14 +1344,13 @@
     static async resolve() {
       // TODO: implement
     }
-  };
+  }
 
   loader.define('core/component-tree', ComponentTree);
 }
 
-
 {
-  const ComponentLifecycle = class {
+  class ComponentLifecycle {
 
     /*
      * onCreated(),
@@ -1522,7 +1532,6 @@
   loader.define('core/component-lifecycle', ComponentLifecycle);
 }
 
-
 {
   const getType = item => {
     const type = typeof item;
@@ -1549,9 +1558,11 @@
     const added = nextListeners.filter(event => !listeners.includes(event));
     const removed = listeners.filter(event => !nextListeners.includes(event));
     const changed = listeners.filter(
-      event => nextListeners.includes(event) && current[event] !== next[event] &&
-      (current[event].source === undefined && next[event].source === undefined ||
-        current[event].source !== next[event].source));
+        event => nextListeners.includes(event) &&
+            current[event] !== next[event] &&
+            (current[event].source === undefined &&
+                 next[event].source === undefined ||
+             current[event].source !== next[event].source));
 
     for (let event of added) {
       patches.push(Patch.addListener(event, next[event], target));
@@ -1560,7 +1571,8 @@
       patches.push(Patch.removeListener(event, current[event], target));
     }
     for (let event of changed) {
-      patches.push(Patch.replaceListener(event, current[event], next[event], target));
+      patches.push(
+          Patch.replaceListener(event, current[event], next[event], target));
     }
   };
 
@@ -1575,13 +1587,15 @@
       prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
-      patches.push(opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
+      patches.push(
+          opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
     }
     for (let prop of removed) {
       patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
     }
     for (let prop of changed) {
-      patches.push(opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
+      patches.push(
+          opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
     }
   };
 
@@ -1609,35 +1623,40 @@
       attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
-      patches.push(opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
+      patches.push(
+          opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
     }
     for (let attr of removed) {
       patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
     }
     for (let attr of changed) {
-      patches.push(opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
+      patches.push(
+          opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
     }
   };
 
-  const attributePatches = (current = {}, next = {}, target = null, patches) => {
-    const attrs = Object.keys(current);
-    const nextAttrs = Object.keys(next);
+  const attributePatches =
+      (current = {}, next = {}, target = null, patches) => {
+        const attrs = Object.keys(current);
+        const nextAttrs = Object.keys(next);
 
-    const added = nextAttrs.filter(attr => !attrs.includes(attr));
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-    const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+        const added = nextAttrs.filter(attr => !attrs.includes(attr));
+        const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+        const changed = attrs.filter(
+            attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
-    for (let attr of added) {
-      patches.push(opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
-    }
-    for (let attr of removed) {
-      patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
-    }
-    for (let attr of changed) {
-      patches.push(opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
-    }
-  };
+        for (let attr of added) {
+          patches.push(
+              opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
+        }
+        for (let attr of removed) {
+          patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
+        }
+        for (let attr of changed) {
+          patches.push(
+              opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
+        }
+      };
 
   const areCompatible = (current, next) => {
     if (current.nodeType !== next.nodeType) {
@@ -1798,7 +1817,7 @@
     return patches;
   }
 
-  const Diff = class {
+  class Diff {
 
     static deepEqual(current, next) {
       const type = getType(current);
@@ -1844,11 +1863,10 @@
     static calculate(tree, nextTree, root) {
       return calculatePatches(tree, nextTree, root);
     }
-  };
+  }
 
   loader.define('core/diff', Diff);
 }
-
 
 {
   const Type = Object.freeze({
@@ -1889,7 +1907,7 @@
     REMOVE_TEXT_CONTENT: Symbol('remove-text-content'),
   });
 
-  const Patch = class {
+  class Patch {
 
     constructor(type, props) {
       Object.assign(this, {
@@ -2125,7 +2143,8 @@
           } else {
             parent.appendChild(component);
             opr.Toolkit.Document.attachElementTree(component, domNode => {
-              opr.Toolkit.Document.replaceChild(domNode, comment, parentDomNode);
+              opr.Toolkit.Document.replaceChild(
+                  domNode, comment, parentDomNode);
             });
           }
         }
@@ -2137,10 +2156,13 @@
         component,
         parent,
         apply: () => {
-          const domChildNode = (component.childElement || component.placeholder).ref;
+          const domChildNode =
+              (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
-          parent.placeholder.ref = opr.Toolkit.Document.createComment(parent.placeholder);
-          parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
+          parent.placeholder.ref =
+              opr.Toolkit.Document.createComment(parent.placeholder);
+          parent.parentElement.ref.replaceChild(
+              parent.placeholder.ref, domChildNode);
         }
       });
     }
@@ -2208,11 +2230,10 @@
     static get Type() {
       return Object.assign({}, Type);
     }
-  };
+  }
 
   loader.define('core/patch', Patch);
 }
-
 
 {
   const Name = {
@@ -2221,7 +2242,7 @@
     REMOVE: Symbol('remove'),
   };
 
-  const Move = class {
+  class Move {
 
     constructor(name, item, props, make) {
       Object.assign(this, {
@@ -2247,9 +2268,9 @@
         items.splice(at, 1);
       });
     }
-  };
+  }
 
-  const Reconciler = class {
+  class Reconciler {
 
     static calculateMoves(current, next) {
 
@@ -2298,11 +2319,12 @@
       const moves = makeMoves();
       if (moves.filter(move => (move.name === Name.MOVE)).length > 1) {
         const alternativeMoves = makeMoves(true);
-        return alternativeMoves.length < moves.length ? alternativeMoves : moves;
+        return alternativeMoves.length < moves.length ? alternativeMoves :
+                                                        moves;
       }
       return moves;
     }
-  };
+  }
 
   Reconciler.Move = Move;
   Reconciler.Move.Name = Name;
@@ -2310,9 +2332,8 @@
   loader.define('core/reconciler', Reconciler);
 }
 
-
 {
-  const Document = class {
+  class Document {
 
     static setAttribute(element, name, value) {
       const attr = opr.Toolkit.utils.lowerDash(name);
@@ -2436,11 +2457,10 @@
       }
       return domNode;
     }
-  };
+  }
 
   loader.define('core/document', Document);
 }
-
 
 {
   const INIT = Symbol('init');
@@ -2477,7 +2497,8 @@
 
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
-  const lowerDash = name => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  const lowerDash = name =>
+      name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
   const getEventName = name => {
     switch (name) {
@@ -2504,7 +2525,6 @@
 
   loader.define('core/utils', Utils);
 }
-
 
 {
   loader.prefix('core', '/src/');

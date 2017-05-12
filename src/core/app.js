@@ -1,7 +1,7 @@
 {
   const ID = Symbol('id');
 
-  const App = class {
+  class App {
 
     constructor(path) {
       this[ID] = opr.Toolkit.utils.createUUID();
@@ -39,11 +39,11 @@
       if (!this.preloaded) {
         await RootClass.init();
       }
-
-      this.root = new RootClass(container, command => {
+      this.dispatch = command => {
         this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
-      });
+      };
+      this.root = new RootClass(container, this.dispatch);
 
       this.reducer = opr.Toolkit.utils.combineReducers(
         ...this.root.getReducers());
@@ -57,9 +57,10 @@
         if (this.root.props === undefined) {
           patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
+        patches.push(
+            opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-          this.root, this.store.state, this.root.child);
+            this.root, this.store.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
           this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -80,7 +81,7 @@
         console.timeEnd('=> Render');
       }
     }
-  };
+  }
 
   module.exports = App;
 }

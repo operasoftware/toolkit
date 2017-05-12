@@ -1,5 +1,5 @@
 {
-  const Store = class {
+  class Store {
 
     constructor() {
       this.stack = [];
@@ -15,7 +15,7 @@
     set state(state) {
       this.stack.push(state);
     }
-  };
+  }
 
   module.exports = Store;
 }

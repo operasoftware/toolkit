@@ -37,7 +37,7 @@
     REMOVE_TEXT_CONTENT: Symbol('remove-text-content'),
   });
 
-  const Patch = class {
+  class Patch {
 
     constructor(type, props) {
       Object.assign(this, {
@@ -273,7 +273,8 @@
           } else {
             parent.appendChild(component);
             opr.Toolkit.Document.attachElementTree(component, domNode => {
-              opr.Toolkit.Document.replaceChild(domNode, comment, parentDomNode);
+              opr.Toolkit.Document.replaceChild(
+                  domNode, comment, parentDomNode);
             });
           }
         }
@@ -285,10 +286,13 @@
         component,
         parent,
         apply: () => {
-          const domChildNode = (component.childElement || component.placeholder).ref;
+          const domChildNode =
+              (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
-          parent.placeholder.ref = opr.Toolkit.Document.createComment(parent.placeholder);
-          parent.parentElement.ref.replaceChild(parent.placeholder.ref, domChildNode);
+          parent.placeholder.ref =
+              opr.Toolkit.Document.createComment(parent.placeholder);
+          parent.parentElement.ref.replaceChild(
+              parent.placeholder.ref, domChildNode);
         }
       });
     }
@@ -356,7 +360,7 @@
     static get Type() {
       return Object.assign({}, Type);
     }
-  };
+  }
 
   module.exports = Patch;
 }

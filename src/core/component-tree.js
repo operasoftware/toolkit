@@ -1,5 +1,5 @@
 {
-  const ComponentTree = class {
+  class ComponentTree {
 
     static createComponentInstance(def, key) {
       const ComponentClass = loader.get(def);
@@ -93,12 +93,11 @@
         }
       };
       if (description.children) {
-        element.children = description.children.map(
-          (desc, index) => {
-            const child = this.createFromTemplate(desc, getPreviousChild(index));
-            child.parentNode = element;
-            return child;
-          });
+        element.children = description.children.map((desc, index) => {
+          const child = this.createFromTemplate(desc, getPreviousChild(index));
+          child.parentNode = element;
+          return child;
+        });
       }
       return element;
     }
@@ -146,7 +145,7 @@
     static async resolve() {
       // TODO: implement
     }
-  };
+  }
 
   module.exports = ComponentTree;
 }
