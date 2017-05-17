@@ -589,6 +589,7 @@
       this.style = {};
       this.classNames = [];
       this.listeners = {};
+      this.metadata = {};
       this.children = [];
       this.text = null;
       this.key = null;
@@ -1254,6 +1255,11 @@
               element.addListener(name, listener);
             }
           });
+        // metadata
+        if (props.metadata) {
+          Object.keys(props.metadata)
+            .forEach(key => { element.metadata[key] = props.metadata[key]; });
+        }
         // key
         if (props.key) {
           element.key = props.key;
@@ -1576,6 +1582,29 @@
     }
   };
 
+  const metadataPatches = (current = {}, next = {}, target = null, patches) => {
+    const Patch = opr.Toolkit.Patch;
+
+    const keys = Object.keys(current);
+    const nextKeys = Object.keys(next);
+
+    const added = nextKeys.filter(key => !keys.includes(key));
+    const removed = keys.filter(key => !nextKeys.includes(key));
+    const changed = keys.filter(
+        key => nextKeys.includes(key) &&
+            !Diff.deepEqual(current[key], next[key]));
+
+    for (let key of added) {
+      patches.push(Patch.addMetadata(key, next[key], target));
+    }
+    for (let key of removed) {
+      patches.push(Patch.removeMetadata(key, target));
+    }
+    for (let key of changed) {
+      patches.push(Patch.replaceMetadata(key, next[key], target));
+    }
+  };
+
   const stylePatches = (current = {}, next = {}, target, patches) => {
 
     const props = Object.keys(current);
@@ -1719,6 +1748,7 @@
     stylePatches(current.style, next.style, current, patches);
     classNamePatches(current.classNames, next.classNames, current, patches);
     listenerPatches(current.listeners, next.listeners, current, patches);
+    metadataPatches(current.metadata, next.metadata, current, patches);
     if (current.text !== null && next.text === null) {
       patches.push(opr.Toolkit.Patch.removeTextContent(current));
     }
@@ -1898,6 +1928,10 @@
     ADD_LISTENER: Symbol('add-listener'),
     REPLACE_LISTENER: Symbol('replace-listener'),
     REMOVE_LISTENER: Symbol('remove-listener'),
+
+    ADD_METADATA: Symbol('add-metadata'),
+    REPLACE_METADATA: Symbol('replace-metadata'),
+    REMOVE_METADATA: Symbol('remove-metadata'),
 
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
@@ -2099,6 +2133,40 @@
       });
     }
 
+    static addMetadata(key, value, target) {
+      return new Patch(Type.ADD_METADATA, {
+        key,
+        value,
+        target,
+        apply: () => {
+          target.metadata[key] = value;
+          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+        }
+      });
+    }
+
+    static replaceMetadata(key, value, target) {
+      return new Patch(Type.REPLACE_METADATA, {
+        key,
+        value,
+        target,
+        apply: () => {
+          target.metadata[key] = value;
+          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+        }
+      });
+    }
+
+    static removeMetadata(key, target) {
+      return new Patch(Type.REMOVE_METADATA, {
+        key,
+        target,
+        apply: () => {
+          delete target.metadata[key];
+          opr.Toolkit.Document.removeMetadata(target.ref, key);
+        }
+      });
+    }
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element,
@@ -2377,6 +2445,14 @@
       element.removeEventListener(name, listener);
     }
 
+    static setMetadata(element, key, value) {
+      element[key] = value;
+    }
+
+    static removeMetadata(element, key) {
+      delete element[key];
+    }
+
     static appendChild(child, parent) {
       parent.appendChild(child);
     }
@@ -2440,6 +2516,10 @@
       let domNode;
       if (element) {
         domNode = this.createElement(element);
+        Object.keys(element.metadata)
+          .forEach(key => {
+            domNode[key] = element.metadata[key];
+          });
         if (element.children) {
           for (let child of element.children) {
             this.attachElementTree(child, childNode => {

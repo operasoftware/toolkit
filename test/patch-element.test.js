@@ -367,6 +367,68 @@ describe('Patch element => apply', () => {
     !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, []);
   });
 
+  it('adds metadata', () => {
+
+    // given
+    const element = createElement([
+      'div'
+    ]);
+
+    assert.equal(element.metadata.customAttribute, undefined);
+    assert.equal(element.ref.customAttribute, undefined);
+
+    // when
+    Patch.addMetadata('customAttribute', 'customValue', element).apply();
+
+    // then
+    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.ref.customAttribute, 'customValue');
+  });
+
+  it('removes metadata', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        metadata: {
+          customAttribute: 'customValue'
+        }
+      }
+    ]);
+
+    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.ref.customAttribute, 'customValue');
+
+    // when
+    Patch.removeMetadata('customAttribute', element).apply();
+
+    // then
+    assert.equal(element.metadata.customAttribute, undefined);
+    assert.equal(element.ref.customAttribute, undefined);
+  });
+
+  it('replaces metadata', () => {
+
+    // given
+    const element = createElement([
+      'div', {
+        metadata: {
+          customAttribute: 'customValue'
+        }
+      }
+    ]);
+
+    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.ref.customAttribute, 'customValue');
+
+    // when
+    Patch.replaceMetadata('customAttribute', 'anotherValue', element).apply();
+
+    // then
+    assert.equal(element.metadata.customAttribute, 'anotherValue');
+    assert.equal(element.ref.customAttribute, 'anotherValue');
+  });
+
   it('inserts child node', () => {
 
     // given

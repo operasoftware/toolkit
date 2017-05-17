@@ -55,6 +55,11 @@
               element.addListener(name, listener);
             }
           });
+        // metadata
+        if (props.metadata) {
+          Object.keys(props.metadata)
+            .forEach(key => { element.metadata[key] = props.metadata[key]; });
+        }
         // key
         if (props.key) {
           element.key = props.key;

@@ -182,6 +182,31 @@ describe('Document', () => {
         change: [],
       });
     });
+
+    it('sets metadata', () => {
+
+      // given
+      const element = document.createElement('div');
+
+      // when
+      Document.setMetadata(element, 'key', 'value');
+
+      // then
+      assert.equal(element.key, 'value');
+    });
+
+    it('removes metadata', () => {
+
+      // given
+      const element = document.createElement('div');
+      element.key = 'value'
+
+      // when
+      Document.removeMetadata(element, 'key');
+
+      // then
+      assert.equal(element.key, undefined);
+    });
   });
 
   describe('=> create element', () => {
@@ -443,6 +468,30 @@ describe('Document', () => {
       assert.equal(subcomponentNode.constructor, SubcomponentClass);
 
       assert.equal(subcomponentNode.child, null);
+    });
+
+    it('creates metadata', () => {
+
+      // given
+      const node = ComponentTree.createFromTemplate([
+        'div', {
+          metadata: {
+            muted: true,
+            paused: true,
+          }
+        }
+      ]);
+
+      // when
+      const element = Document.attachElementTree(node);
+
+      // then
+      assert.equal(node.name, 'div');
+      assert.equal(node.ref, element);
+      assert.equal(element.tagName, 'DIV');
+
+      assert.equal(element.muted, true);
+      assert.equal(element.paused, true);
     });
 
     describe('creates a comment node', () => {

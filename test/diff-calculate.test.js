@@ -402,6 +402,133 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[0].listener, listener);
     });
 
+    it('adds metadata', () => {
+
+      // given
+      const metadata = {
+        a: 'some-value'
+      };
+
+      const template = [
+        'span'
+      ];
+      const nextTemplate = [
+        'span', {
+          metadata,
+        }
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      // then
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.ADD_METADATA);
+      assert(patches[0].target.isElement());
+      assert.equal(patches[0].key, 'a');
+      assert.equal(patches[0].value, 'some-value');
+    });
+
+    it('removes metadata', () => {
+
+      // given
+      const metadata = {
+        a: 'some-value'
+      };
+
+      const template = [
+        'span', {
+          metadata,
+        }
+      ];
+      const nextTemplate = [
+        'span'
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      // then
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_METADATA);
+      assert(patches[0].target.isElement());
+      assert.equal(patches[0].key, 'a');
+    });
+
+    it('replaces metadata', () => {
+
+      // given
+      const template = [
+        'span', {
+          metadata: {
+            a: 'xxx'
+          },
+        }
+      ];
+      const nextTemplate = [
+        'span', {
+          metadata: {
+            a: 'yyy'
+          }
+        }
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      // then
+      assert.equal(patches.length, 1);
+      assert.equal(patches[0].type, Patch.Type.REPLACE_METADATA);
+      assert(patches[0].target.isElement());
+      assert.equal(patches[0].key, 'a');
+      assert.equal(patches[0].value, 'yyy');
+    });
+
+    it('adds, removes and replaces metadata', () => {
+
+      // given
+      const template = [
+        'span', {
+          metadata: {
+            a: 'xxx',
+            c: 'before',
+          },
+        }
+      ];
+      const nextTemplate = [
+        'span', {
+          metadata: {
+            b: 'yyy',
+            c: 'after',
+          }
+        }
+      ];
+
+      // when
+      const [tree, nextTree] = createTrees(template, nextTemplate);
+      const patches = Diff.calculate(tree, nextTree);
+
+      // then
+      assert.equal(patches.length, 3);
+
+      assert.equal(patches[0].type, Patch.Type.ADD_METADATA);
+      assert(patches[0].target.isElement());
+      assert.equal(patches[0].key, 'b');
+      assert.equal(patches[0].value, 'yyy');
+
+      assert.equal(patches[1].type, Patch.Type.REMOVE_METADATA);
+      assert(patches[1].target.isElement());
+      assert.equal(patches[1].key, 'a');
+
+      assert.equal(patches[2].type, Patch.Type.REPLACE_METADATA);
+      assert(patches[2].target.isElement());
+      assert.equal(patches[2].key, 'c');
+      assert.equal(patches[2].value, 'after');
+    });
+
     describe('reconcile children', () => {
 
       const assertInsertChildNode = (patch, id, at) => {

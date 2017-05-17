@@ -188,6 +188,7 @@
       this.style = {};
       this.classNames = [];
       this.listeners = {};
+      this.metadata = {};
       this.children = [];
       this.text = null;
       this.key = null;

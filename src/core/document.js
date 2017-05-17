@@ -43,6 +43,14 @@
       element.removeEventListener(name, listener);
     }
 
+    static setMetadata(element, key, value) {
+      element[key] = value;
+    }
+
+    static removeMetadata(element, key) {
+      delete element[key];
+    }
+
     static appendChild(child, parent) {
       parent.appendChild(child);
     }
@@ -106,6 +114,10 @@
       let domNode;
       if (element) {
         domNode = this.createElement(element);
+        Object.keys(element.metadata)
+          .forEach(key => {
+            domNode[key] = element.metadata[key];
+          });
         if (element.children) {
           for (let child of element.children) {
             this.attachElementTree(child, childNode => {

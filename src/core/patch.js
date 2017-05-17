@@ -29,6 +29,10 @@
     REPLACE_LISTENER: Symbol('replace-listener'),
     REMOVE_LISTENER: Symbol('remove-listener'),
 
+    ADD_METADATA: Symbol('add-metadata'),
+    REPLACE_METADATA: Symbol('replace-metadata'),
+    REMOVE_METADATA: Symbol('remove-metadata'),
+
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
     REMOVE_CHILD_NODE: Symbol('remove-child-node'),
@@ -229,6 +233,40 @@
       });
     }
 
+    static addMetadata(key, value, target) {
+      return new Patch(Type.ADD_METADATA, {
+        key,
+        value,
+        target,
+        apply: () => {
+          target.metadata[key] = value;
+          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+        }
+      });
+    }
+
+    static replaceMetadata(key, value, target) {
+      return new Patch(Type.REPLACE_METADATA, {
+        key,
+        value,
+        target,
+        apply: () => {
+          target.metadata[key] = value;
+          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+        }
+      });
+    }
+
+    static removeMetadata(key, target) {
+      return new Patch(Type.REMOVE_METADATA, {
+        key,
+        target,
+        apply: () => {
+          delete target.metadata[key];
+          opr.Toolkit.Document.removeMetadata(target.ref, key);
+        }
+      });
+    }
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element,

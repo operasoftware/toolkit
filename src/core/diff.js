@@ -42,6 +42,29 @@
     }
   };
 
+  const metadataPatches = (current = {}, next = {}, target = null, patches) => {
+    const Patch = opr.Toolkit.Patch;
+
+    const keys = Object.keys(current);
+    const nextKeys = Object.keys(next);
+
+    const added = nextKeys.filter(key => !keys.includes(key));
+    const removed = keys.filter(key => !nextKeys.includes(key));
+    const changed = keys.filter(
+        key => nextKeys.includes(key) &&
+            !Diff.deepEqual(current[key], next[key]));
+
+    for (let key of added) {
+      patches.push(Patch.addMetadata(key, next[key], target));
+    }
+    for (let key of removed) {
+      patches.push(Patch.removeMetadata(key, target));
+    }
+    for (let key of changed) {
+      patches.push(Patch.replaceMetadata(key, next[key], target));
+    }
+  };
+
   const stylePatches = (current = {}, next = {}, target, patches) => {
 
     const props = Object.keys(current);
@@ -185,6 +208,7 @@
     stylePatches(current.style, next.style, current, patches);
     classNamePatches(current.classNames, next.classNames, current, patches);
     listenerPatches(current.listeners, next.listeners, current, patches);
+    metadataPatches(current.metadata, next.metadata, current, patches);
     if (current.text !== null && next.text === null) {
       patches.push(opr.Toolkit.Patch.removeTextContent(current));
     }
