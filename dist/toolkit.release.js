@@ -727,6 +727,7 @@
     async render(container) {
 
       this.container = container;
+      this.registerContextMenuHandler();
 
       const RootClass = await loader.resolve(this.root);
       if (!this.preloaded) {
@@ -742,6 +743,27 @@
         ...this.root.getReducers());
       const state = await this.root.getInitialState();
       this.root.dispatch(this.reducer.commands.init(state));
+    }
+
+    registerContextMenuHandler() {
+      this.container.addEventListener('contextmenu', event => {
+        let element = event.target;
+        while (element && element !== this.container && !element.contextMenu) {
+          element = element.parentElement;
+        }
+        if (element && element.contextMenu) {
+          console.assert(
+              element.contextMenu.items, 'No items defined for context menu');
+          console.assert(
+              element.contextMenu.handler,
+              'No handler function defined for context menu');
+          chrome.contextMenusPrivate.showMenu(
+              event.clientX, event.clientY, element.contextMenu.items,
+              element.contextMenu.handler);
+          event.stopPropagation();
+          event.preventDefault();
+        }
+      });
     }
 
     calculatePatches() {
