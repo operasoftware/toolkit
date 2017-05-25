@@ -3,14 +3,15 @@
 
   class App {
 
-    constructor(path) {
+    constructor(path, settings) {
       this[ID] = opr.Toolkit.utils.createUUID();
-      this.root = this.getRoot(path);
+      this.symbol = this.getSymbol(path);
+      this.settings = settings;
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
     }
 
-    getRoot(path) {
+    getSymbol(path) {
       const type = typeof path;
       switch (type) {
         case 'symbol':
@@ -27,8 +28,25 @@
     }
 
     async preload() {
+      if (this.preloaded) {
+        return;
+      }
+      await loader.preload(this.symbol);
       this.preloaded = true;
-      await loader.preload(this.root);
+    }
+
+    getBundleName() {
+      for (const bundle of this.settings.bundles) {
+        if (bundle.root === String(this.symbol).slice(7, -1)) {
+          return bundle.name;
+        }
+      }
+      return null;
+    }
+
+    async loadBundle(bundle) {
+      await loader.require(`${this.settings.bundleRootPath}/${bundle}`);
+      this.preloaded = true;
     }
 
     async render(container) {
@@ -36,7 +54,18 @@
       this.container = container;
       this.registerContextMenuHandler();
 
-      const RootClass = await loader.resolve(this.root);
+      if (this.settings.debug) {
+        if (this.settings.preload) {
+          await this.preload();
+        }
+      } else {
+        const bundle = this.getBundleName();
+        if (bundle) {
+          await this.loadBundle(bundle);
+        }
+      }
+
+      const RootClass = await loader.resolve(this.symbol);
       if (!this.preloaded) {
         await RootClass.init();
       }
@@ -91,14 +120,14 @@
     }
 
     async updateDOM() {
-      if (opr.Toolkit.debug) {
+      if (this.settings.debug) {
         console.time('=> Render');
       }
       const patches = this.calculatePatches();
       opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
-      if (opr.Toolkit.debug) {
+      if (this.settings.debug) {
         console.log('Patches:', patches.length);
         console.timeEnd('=> Render');
       }

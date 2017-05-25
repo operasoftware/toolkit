@@ -23,7 +23,28 @@
   const Reconciler = loader.get('core/reconciler');
   const Document = loader.get('core/document');
   const utils = loader.get('core/utils');
-  const create = root => new App(root);
+
+  // config
+  const settings = {};
+
+  let init;
+  const readyPromise = new Promise(resolve => {
+    init = resolve;
+  });
+
+  const ready = async () => {
+    await readyPromise;
+  };
+
+  const configure = config => {
+    settings.debug = config.debug || false;
+    settings.preload = config.preload || false;
+    settings.bundles = config.bundles || [];
+    settings.bundleRootPath = config.bundleRootPath || '';
+    init();
+  };
+
+  const create = root => new App(root, settings);
 
   const Toolkit = {
     // constants
@@ -35,12 +56,9 @@
     // core types
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils
-    utils, create,
-
-    debug: false,
-    ready: async () => {},
+    utils, create, configure, ready,
   };
-  Object.freeze(Toolkit);
+  // Object.freeze(Toolkit);
 
   window.opr = window.opr || {};
   window.opr.Toolkit = Toolkit;
