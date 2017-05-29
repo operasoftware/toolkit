@@ -51,6 +51,8 @@
 
     async render(container) {
 
+      await opr.Toolkit.ready();
+
       this.container = container;
       this.registerContextMenuHandler();
 

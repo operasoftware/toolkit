@@ -44,6 +44,20 @@
     init();
   };
 
+  const render = (templateProvider, props, container) => {
+    const parent = new Root(container);
+    const element = ComponentTree.createFromTemplate(templateProvider(props));
+    Patch.addElement(element, parent).apply();
+    return props => {
+      const template = templateProvider(props);
+      const element = ComponentTree.createFromTemplate(template);
+      const patches = Diff.calculate(parent.child, element, parent);
+      for (const patch of patches) {
+        patch.apply();
+      }
+    }
+  };
+
   const create = root => new App(root, settings);
 
   const Toolkit = {
@@ -56,9 +70,8 @@
     // core types
     VirtualNode, Root, Component, VirtualElement, Comment,
     // utils
-    utils, create, configure, ready,
+    utils, create, render, configure, ready,
   };
-  // Object.freeze(Toolkit);
 
   window.opr = window.opr || {};
   window.opr.Toolkit = Toolkit;
