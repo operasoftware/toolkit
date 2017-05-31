@@ -47,6 +47,8 @@
 
   let context = null;
 
+  let readyPromise = Promise.resolve();
+
   const ModuleLoader = class {
 
     static prefix(name, prefix) {
@@ -102,7 +104,16 @@
       return this.require(path);
     }
 
-    static async preload(symbol) {
+    static async preload(symbol, blocking = false) {
+
+      let done;
+      if (blocking) {
+        await readyPromise;
+        readyPromise = readyPromise.then(() => new Promise(resolve => {
+          done = resolve;
+        }));
+      }
+
       const path = getPath(symbol);
       let module = registry.get(path);
       if (module) {
@@ -112,6 +123,9 @@
       const symbols = dependencySymbols.get(path) || [];
       for (const symbol of symbols) {
         await this.preload(symbol);
+      }
+      if (done) {
+        done();
       }
       return module;
     }
@@ -724,7 +738,7 @@
       if (this.preloaded) {
         return;
       }
-      await loader.preload(this.symbol);
+      await loader.preload(this.symbol, true);
       this.preloaded = true;
     }
 

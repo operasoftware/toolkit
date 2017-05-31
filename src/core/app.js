@@ -31,7 +31,7 @@
       if (this.preloaded) {
         return;
       }
-      await loader.preload(this.symbol);
+      await loader.preload(this.symbol, true);
       this.preloaded = true;
     }
 
