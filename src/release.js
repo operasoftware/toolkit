@@ -36,11 +36,14 @@
     await readyPromise;
   };
 
-  const configure = config => {
-    settings.debug = config.debug || false;
-    settings.preload = config.preload || false;
-    settings.bundles = config.bundles || [];
-    settings.bundleRootPath = config.bundleRootPath || '';
+  const logLevels = ['debug', 'info', 'warn', 'error'];
+
+  const configure = options => {
+    settings.level = logLevels.includes(options.level) ? options.level : 'info';
+    settings.debug = options.debug || false;
+    settings.preload = options.preload || false;
+    settings.bundles = options.bundles || [];
+    settings.bundleRootPath = options.bundleRootPath || '';
     init();
   };
 

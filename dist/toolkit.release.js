@@ -47,8 +47,6 @@
 
   let context = null;
 
-  let readyPromise = Promise.resolve();
-
   const ModuleLoader = class {
 
     static prefix(name, prefix) {
@@ -104,16 +102,7 @@
       return this.require(path);
     }
 
-    static async preload(symbol, blocking = false) {
-
-      let done;
-      if (blocking) {
-        await readyPromise;
-        readyPromise = readyPromise.then(() => new Promise(resolve => {
-          done = resolve;
-        }));
-      }
-
+    static async preload(symbol) {
       const path = getPath(symbol);
       let module = registry.get(path);
       if (module) {
@@ -123,9 +112,6 @@
       const symbols = dependencySymbols.get(path) || [];
       for (const symbol of symbols) {
         await this.preload(symbol);
-      }
-      if (done) {
-        done();
       }
       return module;
     }
@@ -829,14 +815,14 @@
     }
 
     async updateDOM() {
-      if (this.settings.debug) {
+      if (this.settings.level === 'debug') {
         console.time('=> Render');
       }
       const patches = this.calculatePatches();
       opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
-      if (this.settings.debug) {
+      if (this.settings.level === 'debug') {
         console.log('Patches:', patches.length);
         console.timeEnd('=> Render');
       }
@@ -2711,11 +2697,14 @@
     await readyPromise;
   };
 
-  const configure = config => {
-    settings.debug = config.debug || false;
-    settings.preload = config.preload || false;
-    settings.bundles = config.bundles || [];
-    settings.bundleRootPath = config.bundleRootPath || '';
+  const logLevels = ['debug', 'info', 'warn', 'error'];
+
+  const configure = options => {
+    settings.level = logLevels.includes(options.level) ? options.level : 'info';
+    settings.debug = options.debug || false;
+    settings.preload = options.preload || false;
+    settings.bundles = options.bundles || [];
+    settings.bundleRootPath = options.bundleRootPath || '';
     init();
   };
 

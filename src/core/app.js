@@ -122,14 +122,14 @@
     }
 
     async updateDOM() {
-      if (this.settings.debug) {
+      if (this.settings.level === 'debug') {
         console.time('=> Render');
       }
       const patches = this.calculatePatches();
       opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
       for (const patch of patches) patch.apply();
       opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
-      if (this.settings.debug) {
+      if (this.settings.level === 'debug') {
         console.log('Patches:', patches.length);
         console.timeEnd('=> Render');
       }
