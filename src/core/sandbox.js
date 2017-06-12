@@ -3,7 +3,7 @@
     typeof target[property] === 'function';
 
   const properties = [
-    'id', 'constructor', 'dispatch',
+    'id', 'constructor', 'dispatch', 'commands', 'container',
   ];
   const methods = [
     'broadcast', 'registerService',

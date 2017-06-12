@@ -4,6 +4,7 @@ describe('Utils', () => {
   const getEventName = opr.Toolkit.utils.getEventName;
   const addDataPrefix = opr.Toolkit.utils.addDataPrefix;
   const createUUID = opr.Toolkit.utils.createUUID;
+  const createCommandsDispatcher = opr.Toolkit.utils.createCommandsDispatcher;
 
   describe('core reducer', () => {
 
@@ -101,13 +102,39 @@ describe('Utils', () => {
     });
   });
 
+  describe('create commands dispatcher', () => {
+
+    it('creates a dispatcher', () => {
+
+      // given
+      const dispatch = sinon.spy();
+      const reducer = () => {};
+      reducer.commands = {
+        someCommand: (key, value) => ({
+          key, value,
+        })
+      };
+      const commands = createCommandsDispatcher(reducer, dispatch);
+
+      // when
+      commands.someCommand(commands.someCommand('foo', 'bar'));
+
+      // then
+      assert(dispatch.called);
+      assert(dispatch.calledWith({
+        key: 'foo',
+        value: 'bar',
+      }));
+    });
+  });
+
   describe('lower dash', () => {
 
     const convertions = [
       ['attributeName', 'attribute-name'],
       ['TestString', 'test-string'],
       ['SomeLongAttributeName', 'some-long-attribute-name'],
-    ]
+    ];
 
     convertions.forEach(([from, to]) => {
       it(`converts "${from}" to "${to}"`, () => {

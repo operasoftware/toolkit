@@ -79,6 +79,9 @@
 
       this.reducer = opr.Toolkit.utils.combineReducers(
         ...this.root.getReducers());
+      this.root.commands = opr.Toolkit.utils.createCommandsDispatcher(
+          this.reducer, this.dispatch);
+      this.commands = this.root.commands;
       const state = await this.root.getInitialState();
       this.root.dispatch(this.reducer.commands.init(state));
     }

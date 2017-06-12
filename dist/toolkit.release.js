@@ -47,6 +47,8 @@
 
   let context = null;
 
+  let readyPromise = Promise.resolve();
+
   const ModuleLoader = class {
 
     static prefix(name, prefix) {
@@ -102,7 +104,16 @@
       return this.require(path);
     }
 
-    static async preload(symbol) {
+    static async preload(symbol, blocking = false) {
+
+      let done;
+      if (blocking) {
+        await readyPromise;
+        readyPromise = readyPromise.then(() => new Promise(resolve => {
+          done = resolve;
+        }));
+      }
+
       const path = getPath(symbol);
       let module = registry.get(path);
       if (module) {
@@ -112,6 +123,9 @@
       const symbols = dependencySymbols.get(path) || [];
       for (const symbol of symbols) {
         await this.preload(symbol);
+      }
+      if (done) {
+        done();
       }
       return module;
     }
@@ -772,6 +786,9 @@
 
       this.reducer = opr.Toolkit.utils.combineReducers(
         ...this.root.getReducers());
+      this.root.commands = opr.Toolkit.utils.createCommandsDispatcher(
+          this.reducer, this.dispatch);
+      this.commands = this.root.commands;
       const state = await this.root.getInitialState();
       this.root.dispatch(this.reducer.commands.init(state));
     }
@@ -837,7 +854,7 @@
     typeof target[property] === 'function';
 
   const properties = [
-    'id', 'constructor', 'dispatch',
+    'id', 'constructor', 'dispatch', 'commands', 'container',
   ];
   const methods = [
     'broadcast', 'registerService',
@@ -2628,6 +2645,16 @@
     return reducer;
   };
 
+  const createCommandsDispatcher = (reducer, dispatch) => {
+    const dispatcher = {};
+    for (const key of Object.keys(reducer.commands)) {
+      dispatcher[key] = (...args) => {
+        dispatch(reducer.commands[key](...args));
+      };
+    }
+    return dispatcher;
+  };
+
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
   const lowerDash = name =>
@@ -2650,6 +2677,7 @@
 
   const Utils = {
     combineReducers,
+    createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
     getEventName,

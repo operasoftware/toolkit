@@ -31,6 +31,16 @@
     return reducer;
   };
 
+  const createCommandsDispatcher = (reducer, dispatch) => {
+    const dispatcher = {};
+    for (const key of Object.keys(reducer.commands)) {
+      dispatcher[key] = (...args) => {
+        dispatch(reducer.commands[key](...args));
+      };
+    }
+    return dispatcher;
+  };
+
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
   const lowerDash = name =>
@@ -53,6 +63,7 @@
 
   const Utils = {
     combineReducers,
+    createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
     getEventName,
