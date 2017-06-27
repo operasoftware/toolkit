@@ -94,13 +94,17 @@
         }
         if (element && element.contextMenu) {
           console.assert(
-              element.contextMenu.items, 'No items defined for context menu');
+              element.contextMenu.provider,
+              'No data provider defined for context menu');
           console.assert(
-              element.contextMenu.handler,
-              'No handler function defined for context menu');
+              typeof element.contextMenu.provider === 'function',
+              'Context menu data provider must be a function');
+          const menu = element.contextMenu.provider();
+          console.assert(menu.items, 'No items defined for context menu');
+          console.assert(
+              menu.handler, 'No handler function defined for context menu');
           chrome.contextMenusPrivate.showMenu(
-              event.clientX, event.clientY, element.contextMenu.items,
-              element.contextMenu.handler);
+              event.clientX, event.clientY, menu.items, menu.handler);
           event.stopPropagation();
           event.preventDefault();
         }
