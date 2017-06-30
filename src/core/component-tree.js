@@ -72,7 +72,7 @@
       return element;
     }
 
-    static createFromTemplate(template, previousNode) {
+    static createFromTemplate(template, previousNode, root) {
       if (template === undefined) {
         throw new Error('Invalid undefined template!');
       }
@@ -83,12 +83,12 @@
       if (description.component) {
         return this.createComponent(
           description.component, description.props, description.children,
-          previousNode);
+          previousNode, root);
       }
-      return this.createElement(description, previousNode);
+      return this.createElement(description, previousNode, root);
     }
 
-    static createElement(description, previousNode) {
+    static createElement(description, previousNode, root) {
       const element = this.createElementInstance(description);
       const getPreviousChild = index => {
         if (element.isCompatible(previousNode)) {
@@ -99,7 +99,8 @@
       };
       if (description.children) {
         element.children = description.children.map((desc, index) => {
-          const child = this.createFromTemplate(desc, getPreviousChild(index));
+          const child =
+              this.createFromTemplate(desc, getPreviousChild(index), root);
           child.parentNode = element;
           return child;
         });
@@ -113,17 +114,19 @@
       sandbox.props = props;
 
       const template = root.render.call(sandbox);
-      const tree = this.createFromTemplate(template, previousTree);
+      const tree = this.createFromTemplate(template, previousTree, root);
       if (tree) {
         tree.parentNode = root;
       }
       return tree;
     }
 
-    static createComponent(symbol, props = {}, children = [], previousNode) {
+    static createComponent(
+        symbol, props = {}, children = [], previousNode, root) {
       try {
         const instance = this.createComponentInstance(symbol, props.key);
         instance.props = props;
+        instance.commands = root && root.commands || {};
 
         const sandbox = instance.isCompatible(previousNode) ?
           previousNode.sandbox :
@@ -138,7 +141,7 @@
           const previousChild = previousNode && previousNode.isComponent() ?
             previousNode.child : null;
           instance.appendChild(
-            this.createFromTemplate(template, previousChild));
+            this.createFromTemplate(template, previousChild, root));
         }
         return instance;
       } catch (e) {

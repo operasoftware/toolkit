@@ -3,13 +3,20 @@
     typeof target[property] === 'function';
 
   const properties = [
-    'id', 'constructor', 'dispatch', 'commands', 'container',
+    'commands',
+    'constructor',
+    'container',
+    'dispatch',
+    'id',
+    'ref',
   ];
   const methods = [
-    'broadcast', 'registerService',
+    'broadcast',
+    'registerService',
   ];
   const stateProperties = [
-    'props', 'children',
+    'props',
+    'children',
   ];
 
   const createBoundListener = (listener, component, context) => {

@@ -146,7 +146,8 @@
     }
 
     isCompatible(node) {
-      return super.isCompatible(node) && this.constructor === node.constructor;
+      return super.isCompatible(node) &&
+          this.constructor === node.constructor && this.key === node.key;
     }
   }
 
