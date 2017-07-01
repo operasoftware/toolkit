@@ -639,4 +639,80 @@ describe('Component Tree', () => {
     });
   });
 
+  describe('=> calculate props', () => {
+
+    const createComponent = defaultProps => {
+
+      class Component {
+        static get defaultProps() {
+          return defaultProps;
+        }
+      }
+      return new Component();
+    };
+
+    it('overrides undefined values', () => {
+
+      // given
+      const props = {
+        foo: undefined,
+      };
+
+      const instance = createComponent({
+        foo: [],
+      });
+
+      // when
+      const calculatedProps = ComponentTree.calculateProps(instance, props);
+
+      // then
+      assert.deepEqual(calculatedProps, {
+        foo: [],
+      });
+    });
+
+    it('does not override falsy values', () => {
+
+      // given
+      const props = {
+        foo: null,
+        bar: 0,
+        boolean: false,
+      };
+
+      const instance = createComponent({
+        foo: [],
+        bar: 10,
+        boolean: true,
+      });
+
+      // when
+      const calculatedProps = ComponentTree.calculateProps(instance, props);
+
+      // then
+      assert.deepEqual(calculatedProps, props);
+    });
+
+    it('does not override truthy values', () => {
+
+      // given
+      const props = {
+        foo: {},
+        bar: 10,
+        other: [],
+      };
+
+      const instance = createComponent({
+        foo: {a: 1},
+        bar: 20,
+        other: [1, 2, 3],
+      });
+
+      // when
+      const calculatedProps = ComponentTree.calculateProps(instance, props);
+
+      // then
+      assert.deepEqual(calculatedProps, props);
+    });
+  });
 });

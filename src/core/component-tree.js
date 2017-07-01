@@ -108,10 +108,25 @@
       return element;
     }
 
+    static calculateProps(component, props = {}) {
+      const defaultProps = component.constructor.defaultProps;
+      if (defaultProps) {
+        const result = Object.assign({}, props);
+        const keys = Object.keys(defaultProps);
+        for (const key of keys) {
+          if (props[key] === undefined) {
+            result[key] = defaultProps[key];
+          }
+        }
+        return result;
+      }
+      return props;
+    }
+
     static createChildTree(root, props, previousTree) {
 
       const sandbox = root.sandbox;
-      sandbox.props = props;
+      sandbox.props = this.calculateProps(root, props);
 
       const template = root.render.call(sandbox);
       const tree = this.createFromTemplate(template, previousTree, root);
@@ -125,14 +140,15 @@
         symbol, props = {}, children = [], previousNode, root) {
       try {
         const instance = this.createComponentInstance(symbol, props.key);
-        instance.props = props;
+        const calculatedProps = this.calculateProps(instance, props);
+        instance.props = calculatedProps;
         instance.commands = root && root.commands || {};
 
         const sandbox = instance.isCompatible(previousNode) ?
           previousNode.sandbox :
           instance.sandbox;
 
-        sandbox.props = props;
+        sandbox.props = calculatedProps;
         sandbox.children = children;
 
         const template = instance.render.call(sandbox);
