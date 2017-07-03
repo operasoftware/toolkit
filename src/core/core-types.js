@@ -46,7 +46,7 @@
     }
 
     isCompatible(node) {
-      return node && this.nodeType === node.nodeType;
+      return node && this.nodeType === node.nodeType && this.key === node.key;
     }
   }
 
@@ -146,8 +146,7 @@
     }
 
     isCompatible(node) {
-      return super.isCompatible(node) &&
-          this.constructor === node.constructor && this.key === node.key;
+      return super.isCompatible(node) && this.constructor === node.constructor;
     }
   }
 

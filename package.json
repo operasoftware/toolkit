@@ -42,7 +42,7 @@
     "babel-register": "^6.18.0",
     "dom-test": "^0.2.5",
     "express": "^4.14.0",
-    "lazy-module-loader": "^0.2.3",
+    "lazy-module-loader": "^0.2.4",
     "mocha": "^3.2.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",

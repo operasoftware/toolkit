@@ -9,14 +9,25 @@
 
   const prefixes = new Map();
 
+  const concatenatePaths = (...paths) => paths
+      .map(path => path.replace(/(^\/)/g, ''))
+      .join('/')
+      .replace(/\/+/g, '/');
+
   const getResourcePath = path => {
+    const getRealPath = path => {
+      if (path.endsWith('/')) {
+        return `${path}main.js`;
+      }
+      return `${path}.js`;
+    };
     for (let [name, prefix] of prefixes) {
       if (path.startsWith(name)) {
-        return `${prefix}${path}.js`;
+        return getRealPath(concatenatePaths(prefix, path));
       }
     }
-    return `${path}.js`;
-  }
+    return getRealPath(path);
+  };
 
   const appendScriptToHead = async path => {
     return new Promise(resolve => {
@@ -128,6 +139,10 @@
         done();
       }
       return module;
+    }
+
+    static getPath(module) {
+      return getResourcePath(module);
     }
 
     static get debug_() {
@@ -461,7 +476,7 @@
     }
 
     isCompatible(node) {
-      return node && this.nodeType === node.nodeType;
+      return node && this.nodeType === node.nodeType && this.key === node.key;
     }
   }
 
@@ -561,8 +576,7 @@
     }
 
     isCompatible(node) {
-      return super.isCompatible(node) &&
-          this.constructor === node.constructor && this.key === node.key;
+      return super.isCompatible(node) && this.constructor === node.constructor;
     }
   }
 
