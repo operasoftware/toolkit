@@ -147,6 +147,25 @@ describe('Reconciler', () => {
     assert.deepEqual(moves.result, target);
   });
 
+  it('removes multiple items', () => {
+
+    // given
+    const source = [A, B, C, D, E, F, G, H];
+    const target = [A, B, C]
+
+    // when
+    const moves = Reconciler.calculateMoves(source, target);
+
+    // then
+    assert.deepEqual(moves.length, 5);
+    assertRemoveItem(moves[0], H, 7);
+    assertRemoveItem(moves[1], G, 6);
+    assertRemoveItem(moves[2], F, 5);
+    assertRemoveItem(moves[3], E, 4);
+    assertRemoveItem(moves[4], D, 3);
+    assert.deepEqual(moves.result, target);
+  });
+
   it('moves the item forward', () => {
 
     // given

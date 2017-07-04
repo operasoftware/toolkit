@@ -2471,7 +2471,7 @@
           move.make(source);
           moves.push(move);
         };
-        for (let i = 0; i < source.length; i++) {
+        for (let i = source.length - 1; i >= 0; i--) {
           const item = source[i];
           if (!target.includes(item)) {
             makeMove(Move.remove(item, i));
