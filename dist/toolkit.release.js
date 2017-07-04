@@ -79,7 +79,9 @@
     }
 
     static define(path, module) {
-      registry.set(path, module);
+      if (!registry.get(path)) {
+        registry.set(path, module);
+      }
     }
 
     static get(path) {
@@ -119,10 +121,11 @@
 
       let done;
       if (blocking) {
-        await readyPromise;
-        readyPromise = readyPromise.then(() => new Promise(resolve => {
+        const currentReadyPromise = readyPromise;
+        readyPromise = currentReadyPromise.then(() => new Promise(resolve => {
           done = resolve;
         }));
+        await currentReadyPromise;
       }
 
       const path = getPath(symbol);
@@ -145,11 +148,12 @@
       return getResourcePath(module);
     }
 
-    static get debug_() {
+    static get $debug() {
       return {
         getSymbols: path => dependencySymbols.get(path) || [],
         getModules: () => Array.from(registry.entries()),
         reset: () => {
+          readyPromise = Promise.resolve();
           registry.clear();
           dependencySymbols.clear();
         }
