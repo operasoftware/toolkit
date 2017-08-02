@@ -17,7 +17,7 @@
         case 'symbol':
           return path;
         case 'string':
-          return loader.symbol(path);
+          return Symbol.for(path);
         default:
           throw new Error(`Invalid path: ${path}`);
       }
@@ -31,7 +31,7 @@
       if (this.preloaded) {
         return;
       }
-      await loader.preload(this.symbol, true);
+      await loader.foreload(this.symbol);
       this.preloaded = true;
     }
 

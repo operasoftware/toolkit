@@ -117,16 +117,19 @@
       return this.require(path);
     }
 
-    static async preload(symbol, blocking = false) {
+    static async foreload(symbol) {
 
       let done;
-      if (blocking) {
-        const currentReadyPromise = readyPromise;
-        readyPromise = currentReadyPromise.then(() => new Promise(resolve => {
-          done = resolve;
-        }));
-        await currentReadyPromise;
-      }
+      const currentReadyPromise = readyPromise;
+      readyPromise = new Promise(resolve => { done = resolve; });
+      await currentReadyPromise;
+
+      const module = await this.preload(symbol);
+      done();
+      return module;
+    }
+
+    static async preload(symbol) {
 
       const path = getPath(symbol);
       let module = registry.get(path);
@@ -137,9 +140,6 @@
       const symbols = dependencySymbols.get(path) || [];
       for (const symbol of symbols) {
         await this.preload(symbol);
-      }
-      if (done) {
-        done();
       }
       return module;
     }
@@ -743,7 +743,7 @@
         case 'symbol':
           return path;
         case 'string':
-          return loader.symbol(path);
+          return Symbol.for(path);
         default:
           throw new Error(`Invalid path: ${path}`);
       }
@@ -757,7 +757,7 @@
       if (this.preloaded) {
         return;
       }
-      await loader.preload(this.symbol, true);
+      await loader.foreload(this.symbol);
       this.preloaded = true;
     }
 
