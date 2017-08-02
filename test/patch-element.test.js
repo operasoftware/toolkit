@@ -30,8 +30,8 @@ describe('Patch element => apply', () => {
       minLength: '100px',
     });
     assert.equal(element.ref.attributes['name'].value, 'value');
-    assert.equal(element.ref.attributes['no-validate'].value, 'true');
-    assert.equal(element.ref.attributes['min-length'].value, '100px');
+    assert.equal(element.ref.attributes['novalidate'].value, 'true');
+    assert.equal(element.ref.attributes['minlength'].value, '100px');
   });
 
   it('replaces attribute', () => {
@@ -51,8 +51,8 @@ describe('Patch element => apply', () => {
       minLength: '50px',
     });
     assert.equal(element.ref.attributes['name'].value, 'name');
-    assert.equal(element.ref.attributes['no-validate'].value, 'false');
-    assert.equal(element.ref.attributes['min-length'].value, '50px');
+    assert.equal(element.ref.attributes['novalidate'].value, 'false');
+    assert.equal(element.ref.attributes['minlength'].value, '50px');
 
     // when
     Patch.replaceAttribute('name', 'value', element).apply();
@@ -67,8 +67,8 @@ describe('Patch element => apply', () => {
       minLength: '100px',
     });
     assert.equal(element.ref.attributes['name'].value, 'value');
-    assert.equal(element.ref.attributes['no-validate'].value, 'true');
-    assert.equal(element.ref.attributes['min-length'].value, '100px');
+    assert.equal(element.ref.attributes['novalidate'].value, 'true');
+    assert.equal(element.ref.attributes['minlength'].value, '100px');
   });
 
   it('removes attribute', () => {
@@ -88,8 +88,8 @@ describe('Patch element => apply', () => {
       minLength: '50px',
     });
     assert.equal(element.ref.attributes['name'].value, 'name');
-    assert.equal(element.ref.attributes['no-validate'].value, 'false');
-    assert.equal(element.ref.attributes['min-length'].value, '50px');
+    assert.equal(element.ref.attributes['novalidate'].value, 'false');
+    assert.equal(element.ref.attributes['minlength'].value, '50px');
 
     // when
     Patch.removeAttribute('name', element).apply();

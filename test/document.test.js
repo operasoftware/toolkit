@@ -41,19 +41,31 @@ describe('Document', () => {
       assert.equal(element.textContent, 'text content');
     });
 
-    it('sets an attribute', () => {
+    it('sets a lowercase attribute', () => {
 
       // given
       const element = document.createElement('div');
 
       // when
-      Document.setAttribute(element, 'name', 'value');
+      Document.setAttribute(element, 'tabIndex', 10);
 
       // then
-      assert.equal(element.getAttribute('name'), 'value');
+      assert.equal(element.getAttribute('tabindex'), '10');
       assert.equal(element.attributes.length, 1);
     });
 
+    it('sets a dash-separated attribute', () => {
+
+      // given
+      const element = document.createElement('div');
+
+      // when
+      Document.setAttribute(element, 'acceptCharset', 'UTF8');
+
+      // then
+      assert.equal(element.getAttribute('accept-charset'), 'UTF8');
+      assert.equal(element.attributes.length, 1);
+    });
     it('removes an attribute', () => {
 
       // given

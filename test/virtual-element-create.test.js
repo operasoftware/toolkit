@@ -31,7 +31,7 @@ describe('Virtual Element => create', () => {
       name: 'input',
       props: {
         type: 'text',
-        tabindex: 1,
+        tabIndex: 1,
         autoFocus: true,
         onChange: onChangeListener
       }
@@ -45,7 +45,7 @@ describe('Virtual Element => create', () => {
     assert.equal(element.name, 'input');
     assert.deepEqual(element.attrs, {
       type: 'text',
-      tabindex: '1',
+      tabIndex: '1',
       autoFocus: 'true',
     });
     assert.deepEqual(element.listeners, {

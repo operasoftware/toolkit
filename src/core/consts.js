@@ -105,7 +105,6 @@
     'checked',
     'cite',
     'classID',
-    // 'class',
     'colSpan',
     'cols',
     'content',
@@ -198,9 +197,8 @@
     'srcSet',
     'start',
     'step',
-    // 'style',
     'summary',
-    'tabindex',
+    'tabIndex',
     'target',
     'title',
     'type',
@@ -208,7 +206,7 @@
     'value',
     'width',
     'wmode',
-    'wrap ',
+    'wrap',
   ];
 
   const SUPPORTED_STYLES = Object.keys(document.documentElement.style);

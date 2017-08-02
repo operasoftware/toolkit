@@ -1,6 +1,7 @@
 describe('Utils', () => {
 
   const lowerDash = opr.Toolkit.utils.lowerDash;
+  const getAttributeName = opr.Toolkit.utils.getAttributeName;
   const getEventName = opr.Toolkit.utils.getEventName;
   const addDataPrefix = opr.Toolkit.utils.addDataPrefix;
   const createUUID = opr.Toolkit.utils.createUUID;
@@ -143,6 +144,23 @@ describe('Utils', () => {
     });
   });
 
+  describe('get attribute name', () => {
+
+    const convertions = [
+      ['tabIndex', 'tabindex'],
+      ['autoPlay', 'autoplay'],
+      ['acceptCharset', 'accept-charset'],
+      ['htmlFor', 'for'],
+      ['formAction', 'action'],
+      ['noValidate', 'novalidate'],
+    ];
+
+    convertions.forEach(([from, to]) => {
+      it(`converts "${from}" to "${to}"`, () => {
+        assert.equal(getAttributeName(from), to);
+      });
+    });
+  });
   describe('get event name', () => {
 
     const convertions = [
@@ -150,7 +168,7 @@ describe('Utils', () => {
       ['onDoubleClick', 'dblclick'],
       ['onContextMenu', 'contextmenu'],
       ['onCanPlayThrough', 'canplaythrough'],
-    ]
+    ];
 
     convertions.forEach(([from, to]) => {
       it(`converts "${from}" to "${to}"`, () => {

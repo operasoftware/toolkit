@@ -276,7 +276,6 @@
     'checked',
     'cite',
     'classID',
-    // 'class',
     'colSpan',
     'cols',
     'content',
@@ -369,9 +368,8 @@
     'srcSet',
     'start',
     'step',
-    // 'style',
     'summary',
-    'tabindex',
+    'tabIndex',
     'target',
     'title',
     'type',
@@ -379,7 +377,7 @@
     'value',
     'width',
     'wmode',
-    'wrap ',
+    'wrap',
   ];
 
   const SUPPORTED_STYLES = Object.keys(document.documentElement.style);
@@ -2524,12 +2522,12 @@
   class Document {
 
     static setAttribute(element, name, value) {
-      const attr = opr.Toolkit.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.getAttributeName(name);
       element.setAttribute(attr, value);
     }
 
     static removeAttribute(element, name) {
-      const attr = opr.Toolkit.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.getAttributeName(name);
       element.removeAttribute(attr);
     }
 
@@ -2710,13 +2708,62 @@
   const lowerDash = name =>
       name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
+  const getAttributeName = name => {
+    switch (name) {
+      case 'accessKey':
+      case 'allowFullScreen':
+      case 'allowTransparency':
+      case 'autoComplete':
+      case 'autoFocus':
+      case 'autoPlay':
+      case 'cellPadding':
+      case 'cellSpacing':
+      case 'charSet':
+      case 'classID':
+      case 'colSpan':
+      case 'contentEditable':
+      case 'contextMenu':
+      case 'crossOrigin':
+      case 'dateTime':
+      case 'frameBorder':
+      case 'hrefLang':
+      case 'inputMode':
+      case 'keyType':
+      case 'marginHeight':
+      case 'marginWidth':
+      case 'maxLength':
+      case 'minLength':
+      case 'noValidate':
+      case 'radioGroup':
+      case 'readOnly':
+      case 'rowSpan':
+      case 'spellCheck':
+      case 'srcDoc':
+      case 'srcLang':
+      case 'srcSet':
+      case 'useMap':
+      case 'tabIndex':
+        return name.toLowerCase();
+      case 'formAction':
+      case 'formEncType':
+      case 'formMethod':
+      case 'formNoValidate':
+      case 'formTarget':
+      case 'htmlFor':
+        return name.slice(4).toLowerCase();
+      default:
+        return lowerDash(name);
+    }
+  };
+
   const getEventName = name => {
     switch (name) {
       case 'onDoubleClick':
-        return  'dblclick';
+        return 'dblclick';
+      default:
+        return name.slice(2).toLowerCase();
     }
-    return name.slice(2).toLowerCase();
-  }
+  };
 
   const createUUID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
@@ -2730,6 +2777,7 @@
     createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
+    getAttributeName,
     getEventName,
     createUUID,
   };

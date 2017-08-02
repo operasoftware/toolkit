@@ -46,13 +46,62 @@
   const lowerDash = name =>
       name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
+  const getAttributeName = name => {
+    switch (name) {
+      case 'accessKey':
+      case 'allowFullScreen':
+      case 'allowTransparency':
+      case 'autoComplete':
+      case 'autoFocus':
+      case 'autoPlay':
+      case 'cellPadding':
+      case 'cellSpacing':
+      case 'charSet':
+      case 'classID':
+      case 'colSpan':
+      case 'contentEditable':
+      case 'contextMenu':
+      case 'crossOrigin':
+      case 'dateTime':
+      case 'frameBorder':
+      case 'hrefLang':
+      case 'inputMode':
+      case 'keyType':
+      case 'marginHeight':
+      case 'marginWidth':
+      case 'maxLength':
+      case 'minLength':
+      case 'noValidate':
+      case 'radioGroup':
+      case 'readOnly':
+      case 'rowSpan':
+      case 'spellCheck':
+      case 'srcDoc':
+      case 'srcLang':
+      case 'srcSet':
+      case 'useMap':
+      case 'tabIndex':
+        return name.toLowerCase();
+      case 'formAction':
+      case 'formEncType':
+      case 'formMethod':
+      case 'formNoValidate':
+      case 'formTarget':
+      case 'htmlFor':
+        return name.slice(4).toLowerCase();
+      default:
+        return lowerDash(name);
+    }
+  };
+
   const getEventName = name => {
     switch (name) {
       case 'onDoubleClick':
-        return  'dblclick';
+        return 'dblclick';
+      default:
+        return name.slice(2).toLowerCase();
     }
-    return name.slice(2).toLowerCase();
-  }
+  };
 
   const createUUID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
@@ -66,6 +115,7 @@
     createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
+    getAttributeName,
     getEventName,
     createUUID,
   };

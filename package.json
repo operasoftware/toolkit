@@ -1,6 +1,6 @@
 {
   "name": "opera-toolkit",
-  "version": "0.0.1",
+  "version": "0.48.0",
   "description": "Opera Web UI Toolkit",
   "main": "index.js",
   "scripts": {

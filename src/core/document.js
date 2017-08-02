@@ -2,12 +2,12 @@
   class Document {
 
     static setAttribute(element, name, value) {
-      const attr = opr.Toolkit.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.getAttributeName(name);
       element.setAttribute(attr, value);
     }
 
     static removeAttribute(element, name) {
-      const attr = opr.Toolkit.utils.lowerDash(name);
+      const attr = opr.Toolkit.utils.getAttributeName(name);
       element.removeAttribute(attr);
     }
 
