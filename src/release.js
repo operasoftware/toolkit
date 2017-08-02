@@ -49,11 +49,17 @@
 
   const render = (templateProvider, props, container) => {
     const parent = new Root(container);
-    const element = ComponentTree.createFromTemplate(templateProvider(props));
-    Patch.addElement(element, parent).apply();
+    const template = templateProvider(props);
+    if (template) {
+      const element = ComponentTree.createFromTemplate(template);
+      Patch.addElement(element, parent).apply();
+    }
     return props => {
       const template = templateProvider(props);
-      const element = ComponentTree.createFromTemplate(template);
+      let element;
+      if (template) {
+        element = ComponentTree.createFromTemplate(template);
+      }
       const patches = Diff.calculate(parent.child, element, parent);
       for (const patch of patches) {
         patch.apply();
