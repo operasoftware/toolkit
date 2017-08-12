@@ -1,9 +1,7 @@
 window.renderBubbles = async (container) => {
 
-  const BubblesApp = loader.symbol('bubbles/bubbles-app');
-
   // create new app
-  const bubbles = opr.Toolkit.create(BubblesApp);
+  const bubbles = opr.Toolkit.create('bubbles/bubbles-app');
 
   // preload all resources
   await bubbles.preload();

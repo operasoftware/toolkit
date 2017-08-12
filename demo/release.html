@@ -16,6 +16,10 @@
   </div>
   <script>
     const $ = id => document.getElementById(id);
+    opr.Toolkit.configure({
+      preload: true,
+      debug: true,
+    });
     opr.Toolkit.ready().then(async () => {
       await renderDemo($('navigation'));
       await renderBubbles($('bubbles'));

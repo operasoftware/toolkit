@@ -1,9 +1,7 @@
 window.renderDemo = async (container) => {
 
-  const DemoApp = loader.symbol('components/demo-app');
-
   // create new app
-  const demo = opr.Toolkit.create(DemoApp);
+  const demo = opr.Toolkit.create('components/demo-app');
 
   // preload all resources
   await demo.preload();
