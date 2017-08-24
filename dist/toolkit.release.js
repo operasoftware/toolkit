@@ -12,7 +12,8 @@
   const concatenatePaths = (...paths) => paths
       .map(path => path.replace(/(^\/)/g, ''))
       .join('/')
-      .replace(/\/+/g, '/');
+      .replace(/\/+/g, '/')
+      .replace(/\:\//g, '://');
 
   const getResourcePath = path => {
     const getRealPath = path => {
@@ -102,16 +103,6 @@
       throw new Error(`No module found for path '${path}'`);
     }
 
-    static detectDependencies(method) {
-      const str = method.toString();
-      const args = str.substring(str.indexOf('(') + 1, str.indexOf(')'));
-      if (!args) {
-        return [];
-      }
-      return args.split(',').map(
-          arg => arg.trim().match(/(\/\*\=.*\*\/)/)[0].slice(3, -2).trim());
-    }
-
     static async require(path) {
       return this.resolve(path, loadModule);
     }
@@ -125,13 +116,7 @@
       context = path;
       module = await loader(path);
       if (module.init) {
-        const paths = this.detectDependencies(module.init);
-        const deps = await Promise.all(
-          paths.map(key => (
-            path === key ? module : this.require(key)
-          ))
-        );
-        const result = module.init(...deps);
+        const result = module.init();
         if (result instanceof Promise) {
           await result;
         }
@@ -140,35 +125,35 @@
       return module;
     }
 
-    static async foreload(symbol) {
+    static async foreload(id) {
 
       let done;
       const currentReadyPromise = readyPromise;
       readyPromise = new Promise(resolve => { done = resolve; });
       await currentReadyPromise;
 
-      const module = await this.preload(symbol);
+      const module = await this.preload(id);
       done();
       return module;
     }
 
-    static async preload(symbol) {
+    static async preload(id) {
 
-      const path = getPath(symbol);
+      const path = getPath(id);
       let module = registry.get(path);
       if (module) {
         return module;
       }
       module = await this.require(path);
       const symbols = dependencySymbols.get(path) || [];
-      for (const symbol of symbols) {
+      for (let symbol of symbols) {
         await this.preload(symbol);
       }
       return module;
     }
 
-    static getPath(module) {
-      return getResourcePath(module);
+    static getPath(id) {
+      return getResourcePath(id);
     }
 
     static get $debug() {

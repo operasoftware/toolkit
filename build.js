@@ -24,7 +24,7 @@ const merge = (...contents) => contents.join('\n\n');
 
 const package = loadJSON('./package.json');
 
-const ModuleLoader = loadModule('../node_modules/lazy-module-loader/module-loader');
+const ModuleLoader = loadModule('core/loader');
 
 const Consts = normalizeModule('core/consts');
 const CoreTypes = normalizeModule('core/core-types');
