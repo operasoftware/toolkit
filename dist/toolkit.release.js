@@ -17,6 +17,9 @@
 
   const getResourcePath = path => {
     const getRealPath = path => {
+      if (path.endsWith('.css')) {
+        return path;
+      }
       if (path.endsWith('/')) {
         return `${path}main.js`;
       }
