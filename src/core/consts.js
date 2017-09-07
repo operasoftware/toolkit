@@ -83,6 +83,8 @@
     'onAnimationIteration',
     // transition events
     'onTransitionEnd',
+    // input events
+    'onSearch',
   ];
 
   const SUPPORTED_ATTRIBUTES = [
@@ -122,6 +124,7 @@
     'download',
     'draggable',
     'encType',
+    'for',
     'form',
     'formAction',
     'formEncType',
@@ -135,10 +138,10 @@
     'high',
     'href',
     'hrefLang',
-    'htmlFor',
     'httpEquiv',
     'icon',
     'id',
+    'incremental',
     'inputMode',
     'integrity',
     'is',
