@@ -16,12 +16,21 @@
 
   window.loader = class MochaModuleLoader {
 
-    static async require(path) {
-      return new Promise(resolve => {
+    static async get(id) {
+      throw new Error('Mock loader.get(id) method before the test!');
+    }
+
+    static async require(id) {
+      return new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = getScriptPath(path);
+        script.src = getScriptPath(id);
         script.onload = () => {
           resolve(module.exports);
+        };
+        script.onerror = error => {
+          console.error(
+              `Error loading module "${path}" from "${resourcePath}"!`);
+          reject(error);
         };
         document.head.appendChild(script);
       });

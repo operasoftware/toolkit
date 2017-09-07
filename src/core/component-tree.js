@@ -1,11 +1,17 @@
 {
   class ComponentTree {
 
-    static createComponentInstance(def, key) {
-      const ComponentClass = loader.get(def);
+    static createComponentInstance(id, props = {}) {
+      const ComponentClass = loader.get(id);
       const instance = new ComponentClass();
-      if (key !== undefined) {
-        instance.key = key;
+      if (props.key !== undefined) {
+        instance.key = props.key;
+      }
+      if (typeof instance.getKey === 'function') {
+        const key = instance.getKey.bind({props})();
+        if (key) {
+          instance.key = key;
+        }
       }
       return instance;
     }
@@ -139,7 +145,7 @@
     static createComponent(
         symbol, props = {}, children = [], previousNode, root) {
       try {
-        const instance = this.createComponentInstance(symbol, props.key);
+        const instance = this.createComponentInstance(symbol, props);
         const calculatedProps = this.calculateProps(instance, props);
         instance.props = calculatedProps;
         instance.commands = root && root.commands || {};

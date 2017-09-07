@@ -798,6 +798,97 @@ describe('Diff => calculate patches', () => {
           assertMoveChildNode(patches[2], 'X', 0, 5);
           assertMoveChildNode(patches[3], 'Z', 2, 3);
         });
+
+        describe('uses the key provided by the component', () => {
+
+          const ComponentWithoutKey = Symbol.for('ComponentWithoutKey');
+          const ComponentWithKey = Symbol.for('ComponentWithKey');
+
+          class ComponentWithoutKeyClass extends opr.Toolkit.Component {
+            render() {
+              return [
+                'span',
+              ];
+            }
+          };
+          class ComponentWithKeyClass extends opr.Toolkit.Component {
+
+            getKey() {
+              return this.props.name;
+            }
+
+            render() {
+              return [
+                'span',
+              ];
+            }
+          };
+
+          const loader = global.loader;
+
+          beforeEach(() => {
+            global.loader = {
+              get: symbol => {
+                switch (symbol) {
+                  case ComponentWithoutKey:
+                    return ComponentWithoutKeyClass;
+                  case ComponentWithKey:
+                    return ComponentWithKeyClass;
+                  default:
+                    throw new Error('Unknown definition: ' + symbol);
+                }
+              }
+            };
+          });
+
+          afterEach(() => {
+            global.loader = loader;
+          });
+
+          it('supports single level inference', () => {
+
+            // given
+            const template = [
+              'section',
+              [
+                ComponentWithoutKey,
+                {
+                  key: 'component',
+                },
+              ],
+              [
+                ComponentWithKey,
+                {
+                  name: 'some-key',
+                },
+              ],
+            ];
+
+            const nextTemplate = [
+              'section',
+              [
+                ComponentWithKey,
+                {
+                  name: 'some-key',
+                },
+              ],
+              [
+                ComponentWithoutKey,
+                {
+                  key: 'component',
+                },
+              ],
+            ];
+
+            // when
+            const [tree, nextTree] = createTrees(template, nextTemplate);
+            const patches = Diff.calculate(tree, nextTree);
+
+            // then
+            assert.equal(patches.length, 1);
+            assertMoveChildNode(patches[0], ComponentWithKeyClass, 1, 0);
+          });
+        });
       });
 
       describe('=> without keys', () => {

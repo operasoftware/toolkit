@@ -9,6 +9,7 @@
     'dispatch',
     'id',
     'ref',
+    'getKey',
   ];
   const methods = [
     'broadcast',

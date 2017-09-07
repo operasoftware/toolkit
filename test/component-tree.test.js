@@ -5,6 +5,16 @@ describe('Component Tree', () => {
 
   suppressConsoleErrors();
 
+  let createComponentInstance;
+  
+  before(() => {
+    createComponentInstance = ComponentTree.createComponentInstance;
+  });
+
+  after(() => {
+    ComponentTree.createComponentInstance = createComponentInstance;
+  });
+
   describe('=> create component instance', () => {
 
     const root = Symbol.for('Root');
@@ -41,7 +51,8 @@ describe('Component Tree', () => {
     it('creates a new instance of preloaded component with key', () => {
 
       // given
-      const instance = ComponentTree.createComponentInstance(root, 'key');
+      const instance =
+          ComponentTree.createComponentInstance(root, {key: 'key'});
 
       // then
       assert(instance);
