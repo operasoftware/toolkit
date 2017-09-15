@@ -747,6 +747,7 @@
       this.settings = settings;
       this.preloaded = false;
       this.store = new opr.Toolkit.Store();
+      this.plugins = new Map();
     }
 
     getSymbol(path) {
@@ -787,12 +788,26 @@
       this.preloaded = true;
     }
 
+    install(plugin) {
+      if (this.plugins.get(plugin.id)) {
+        console.warn(`Plugin "${id}" is already installed!`);
+        return;
+      }
+      const uninstall = plugin.install({
+        container: this.container,
+        state: this.store.state,
+      });
+      this.plugins.set(plugin.id, {
+        ref: plugin,
+        uninstall,
+      });
+    }
+
     async render(container) {
 
       await opr.Toolkit.ready();
 
       this.container = container;
-      this.registerContextMenuHandler();
 
       if (this.settings.debug) {
         if (this.settings.preload) {
@@ -815,39 +830,18 @@
       };
       this.root = new RootClass(container, this.dispatch);
 
-      this.reducer = opr.Toolkit.utils.combineReducers(
-        ...this.root.getReducers());
+      this.reducer =
+          opr.Toolkit.utils.combineReducers(...this.root.getReducers());
       const commands = opr.Toolkit.utils.createCommandsDispatcher(
           this.reducer, this.dispatch);
       this.root.commands = commands;
       this.commands = commands;
       const state = await this.root.getInitialState();
       this.root.dispatch(this.reducer.commands.init(state));
-    }
 
-    registerContextMenuHandler() {
-      this.container.addEventListener('contextmenu', event => {
-        let element = event.target;
-        while (element && element !== this.container && !element.contextMenu) {
-          element = element.parentElement;
-        }
-        if (element && element.contextMenu) {
-          console.assert(
-              element.contextMenu.provider,
-              'No data provider defined for context menu');
-          console.assert(
-              typeof element.contextMenu.provider === 'function',
-              'Context menu data provider must be a function');
-          const menu = element.contextMenu.provider();
-          console.assert(menu.items, 'No items defined for context menu');
-          console.assert(
-              menu.handler, 'No handler function defined for context menu');
-          chrome.contextMenusPrivate.showMenu(
-              event.clientX, event.clientY, menu.items, menu.handler);
-          event.stopPropagation();
-          event.preventDefault();
-        }
-      });
+      for (const plugin of this.settings.plugins) {
+        this.install(plugin);
+      }
     }
 
     calculatePatches() {
@@ -861,7 +855,7 @@
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
             this.root, this.store.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
-          this.root.child, componentTree, this.root);
+            this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
       }
       return patches;
@@ -873,7 +867,9 @@
       }
       const patches = this.calculatePatches();
       opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
-      for (const patch of patches) patch.apply();
+      for (const patch of patches) {
+        patch.apply();
+      }
       opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
       if (this.settings.level === 'debug') {
         console.log('Patches:', patches.length);
@@ -2812,8 +2808,13 @@
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS
   } = loader.get('core/consts');
+
   const {
-    VirtualNode, Root, Component, VirtualElement, Comment,
+    VirtualNode,
+    Root,
+    Component,
+    VirtualElement,
+    Comment,
   } = loader.get('core/core-types');
 
   const App = loader.get('core/app');
@@ -2843,6 +2844,7 @@
   const logLevels = ['debug', 'info', 'warn', 'error'];
 
   const configure = options => {
+    settings.plugins = options.plugins || [];
     settings.level = logLevels.includes(options.level) ? options.level : 'info';
     settings.debug = options.debug || false;
     settings.preload = options.preload || false;
@@ -2875,15 +2877,34 @@
 
   const Toolkit = {
     // constants
-    SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
-    SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
+    SUPPORTED_ATTRIBUTES,
+    SUPPORTED_EVENTS,
+    SUPPORTED_STYLES,
+    SUPPORTED_FILTERS,
+    SUPPORTED_TRANSFORMS,
     // core classes
-    Store, App, ComponentTree, ComponentLifecycle, Document,
-    Diff, Patch, Reconciler, Template, Sandbox,
+    Store,
+    App,
+    ComponentTree,
+    ComponentLifecycle,
+    Document,
+    Diff,
+    Patch,
+    Reconciler,
+    Template,
+    Sandbox,
     // core types
-    VirtualNode, Root, Component, VirtualElement, Comment,
+    VirtualNode,
+    Root,
+    Component,
+    VirtualElement,
+    Comment,
     // utils
-    utils, create, render, configure, ready,
+    utils,
+    create,
+    render,
+    configure,
+    ready,
   };
 
   window.opr = window.opr || {};

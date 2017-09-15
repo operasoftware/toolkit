@@ -8,8 +8,13 @@
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS
   } = loader.get('core/consts');
+
   const {
-    VirtualNode, Root, Component, VirtualElement, Comment,
+    VirtualNode,
+    Root,
+    Component,
+    VirtualElement,
+    Comment,
   } = loader.get('core/core-types');
 
   const App = loader.get('core/app');
@@ -39,6 +44,7 @@
   const logLevels = ['debug', 'info', 'warn', 'error'];
 
   const configure = options => {
+    settings.plugins = options.plugins || [];
     settings.level = logLevels.includes(options.level) ? options.level : 'info';
     settings.debug = options.debug || false;
     settings.preload = options.preload || false;
@@ -71,15 +77,34 @@
 
   const Toolkit = {
     // constants
-    SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
-    SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
+    SUPPORTED_ATTRIBUTES,
+    SUPPORTED_EVENTS,
+    SUPPORTED_STYLES,
+    SUPPORTED_FILTERS,
+    SUPPORTED_TRANSFORMS,
     // core classes
-    Store, App, ComponentTree, ComponentLifecycle, Document,
-    Diff, Patch, Reconciler, Template, Sandbox,
+    Store,
+    App,
+    ComponentTree,
+    ComponentLifecycle,
+    Document,
+    Diff,
+    Patch,
+    Reconciler,
+    Template,
+    Sandbox,
     // core types
-    VirtualNode, Root, Component, VirtualElement, Comment,
+    VirtualNode,
+    Root,
+    Component,
+    VirtualElement,
+    Comment,
     // utils
-    utils, create, render, configure, ready,
+    utils,
+    create,
+    render,
+    configure,
+    ready,
   };
 
   window.opr = window.opr || {};

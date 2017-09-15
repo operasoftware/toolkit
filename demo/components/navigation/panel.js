@@ -5,16 +5,20 @@
 
     render() {
       return [
-        'div', [
-          'span', 'Navigation Panel'
-        ], ...this.props.items.map((item, index) => [
-          NavigationItem, {
-            index,
-            onSelected: this.props.onItemSelected,
-            text: item.label,
-            highlighted: item.highlighted
-          }
-        ])
+        'div',
+        [
+          'span',
+          'Navigation Panel',
+        ],
+        ...this.props.items.map((item, index) => ([
+                                  NavigationItem,
+                                  {
+                                    index,
+                                    onSelected: this.props.onItemSelected,
+                                    text: item.label,
+                                    highlighted: item.highlighted,
+                                  },
+                                ]))
       ];
     }
   };
