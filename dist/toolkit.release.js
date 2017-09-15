@@ -1950,12 +1950,9 @@
       if (next.isComponent()) {
         if (current.constructor === next.constructor) {
           if (!Diff.deepEqual(current.props, next.props)) {
-            // component props change
             patches.push(Patch.updateComponent(current, next.props));
-            calculatePatches(current.child, next.child, current, patches);
-          } else {
-            // no component props change - no patch needed
           }
+          calculatePatches(current.child, next.child, current, patches);
         } else {
           // different components
           patches.push(Patch.removeComponent(current, parent));
