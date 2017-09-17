@@ -13,7 +13,7 @@
   ];
   const methods = [
     'broadcast',
-    'registerService',
+    'connectTo',
   ];
   const stateProperties = [
     'props',

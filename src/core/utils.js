@@ -110,6 +110,12 @@
       s4() + '-' + s4() + s4() + s4();
   };
 
+  const isSupportedAttribute = attr =>
+      opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) ||
+      ['key', 'class', 'style', 'dataset', 'metadata'].includes(attr);
+
+
   const Utils = {
     combineReducers,
     createCommandsDispatcher,
@@ -118,6 +124,7 @@
     getAttributeName,
     getEventName,
     createUUID,
+    isSupportedAttribute,
   };
 
   module.exports = Utils;

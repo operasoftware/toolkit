@@ -3,6 +3,14 @@
 
     static createComponentInstance(id, props = {}) {
       const ComponentClass = loader.get(id);
+      opr.Toolkit.assert(
+          !(ComponentClass.prototype instanceof opr.Toolkit.Root),
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component instead of opr.Toolkit.Root');
+      opr.Toolkit.assert(
+          ComponentClass.prototype instanceof opr.Toolkit.Component,
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component');
       const instance = new ComponentClass();
       if (props.key !== undefined) {
         instance.key = props.key;
@@ -16,10 +24,30 @@
       return instance;
     }
 
-    static createElementInstance(description) {
+    static createElementInstance(description, component) {
       const element = new opr.Toolkit.VirtualElement(description.name);
       if (description.props) {
         const props = description.props;
+
+        if (opr.Toolkit.isDebug()) {
+          const unknownAttrs = Object.keys(props).filter(
+              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
+          for (const unknownAttr of unknownAttrs) {
+            const suggestion = opr.Toolkit.SUPPORTED_ATTRIBUTES.find(
+                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
+            if (suggestion) {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}"`,
+                  `should be spelled "${suggestion}",`,
+                  `check render() method of ${component.constructor.name}`);
+            } else {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}" is not valid,`,
+                  `check render() method of ${component.constructor.name}`);
+            }
+          }
+        }
+
         // attributes
         Object.keys(props)
           .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
@@ -78,7 +106,7 @@
       return element;
     }
 
-    static createFromTemplate(template, previousNode, root) {
+    static createFromTemplate(template, previousNode, root, component) {
       if (template === undefined) {
         throw new Error('Invalid undefined template!');
       }
@@ -91,11 +119,11 @@
           description.component, description.props, description.children,
           previousNode, root);
       }
-      return this.createElement(description, previousNode, root);
+      return this.createElement(description, previousNode, root, component);
     }
 
-    static createElement(description, previousNode, root) {
-      const element = this.createElementInstance(description);
+    static createElement(description, previousNode, root, component) {
+      const element = this.createElementInstance(description, component);
       const getPreviousChild = index => {
         if (element.isCompatible(previousNode)) {
           return previousNode.children[index] || null;
@@ -105,8 +133,8 @@
       };
       if (description.children) {
         element.children = description.children.map((desc, index) => {
-          const child =
-              this.createFromTemplate(desc, getPreviousChild(index), root);
+          const child = this.createFromTemplate(
+              desc, getPreviousChild(index), root, component);
           child.parentNode = element;
           return child;
         });
@@ -135,7 +163,7 @@
       sandbox.props = this.calculateProps(root, props);
 
       const template = root.render.call(sandbox);
-      const tree = this.createFromTemplate(template, previousTree, root);
+      const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
         tree.parentNode = root;
       }
@@ -163,7 +191,7 @@
           const previousChild = previousNode && previousNode.isComponent() ?
             previousNode.child : null;
           instance.appendChild(
-            this.createFromTemplate(template, previousChild, root));
+            this.createFromTemplate(template, previousChild, root, instance));
         }
         return instance;
       } catch (e) {

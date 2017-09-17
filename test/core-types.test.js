@@ -403,7 +403,7 @@ describe('Core Types', () => {
         const component = new opr.Toolkit.Component();
 
         // when
-        component.registerService(Service);
+        component.connectTo(Service);
 
         // then
         assert.equal(component.cleanUpTasks.length, 1);
@@ -426,7 +426,7 @@ describe('Core Types', () => {
         let expectedListeners;
 
         // when
-        component.registerService(Service, listeners);
+        component.connectTo(Service, listeners);
 
         // then
         assert.equal(expectedListeners, listeners);

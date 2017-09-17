@@ -68,10 +68,14 @@
       return sandbox;
     }
 
-    registerService(service, listeners) {
-      console.assert(service.connect instanceof Function);
+    connectTo(service, listeners) {
+      opr.Toolkit.assert(
+          service.connect instanceof Function,
+          'Services have to define the connect() method');
       const disconnect = service.connect(listeners);
-      console.assert(disconnect instanceof Function);
+      opr.Toolkit.assert(
+          disconnect instanceof Function,
+          'The result of the connect() method has to be a disconnect() method');
       disconnect.service = service;
       this.cleanUpTasks.push(disconnect);
     }

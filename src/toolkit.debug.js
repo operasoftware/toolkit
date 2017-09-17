@@ -26,6 +26,6 @@
     }
   };
 
-  opr.Toolkit.debug = true;
+  opr.Toolkit.isDebug = () => true;
 
 })();

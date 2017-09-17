@@ -38,12 +38,13 @@ const Diff = normalizeModule('core/diff');
 const Patch = normalizeModule('core/patch');
 const Reconciler = normalizeModule('core/reconciler');
 const Document = normalizeModule('core/document');
+const Service = normalizeModule('core/service');
 const utils = normalizeModule('core/utils');
 
 const Release = loadModule('release');
 
 const release = merge(
-  ModuleLoader, Consts, CoreTypes, App, Sandbox, Store, Template,
+  ModuleLoader, Consts, CoreTypes, Service, App, Sandbox, Store, Template,
   ComponentTree, ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
   Release
 ).replace(/\n\n\n/g, '\n\n');

@@ -265,7 +265,7 @@
     'onAnimationIteration',
     // transition events
     'onTransitionEnd',
-    // input events
+    // search events
     'onSearch',
   ];
 
@@ -514,10 +514,14 @@
       return sandbox;
     }
 
-    registerService(service, listeners) {
-      console.assert(service.connect instanceof Function);
+    connectTo(service, listeners) {
+      opr.Toolkit.assert(
+          service.connect instanceof Function,
+          'Services have to define the connect() method');
       const disconnect = service.connect(listeners);
-      console.assert(disconnect instanceof Function);
+      opr.Toolkit.assert(
+          disconnect instanceof Function,
+          'The result of the connect() method has to be a disconnect() method');
       disconnect.service = service;
       this.cleanUpTasks.push(disconnect);
     }
@@ -737,6 +741,35 @@
 }
 
 {
+  class Service {
+
+    static validate(listeners) {
+      if (opr.Toolkit.isDebug()) {
+        /* eslint-disable max-len */
+        const keys = Object.keys(listeners);
+        opr.Toolkit.assert(this.events instanceof Array, `Service "${this.name}" does not provide information about valid events, implement "static get events() { return ['foo', 'bar']; }"`);
+        opr.Toolkit.assert(this.events.length > 0, `Service "${this.name}" returned an empty list of valid events, the list returned from "static get event()" must contain at least one event name`);
+        const unsupportedKeys =
+            Object.keys(listeners).filter(key => !this.events.includes(key));
+        for (const unsupportedKey of unsupportedKeys) {
+          opr.Toolkit.warn(`Unsupported listener specified "${unsupportedKey}" when connecting to ${this.name}`);
+        }
+        const supportedKeys = this.events.filter(event => keys.includes(event));
+        opr.Toolkit.assert(supportedKeys.length > 0, `No valid listener specified when connecting to ${this.name}, use one of [${this.events.join(', ')}]`);
+        for (const supportedKey of supportedKeys) {
+          opr.Toolkit.assert(listeners[supportedKey] instanceof Function,
+              `Specified listener "${supportedKey}" for ${this.name} is not a function`);
+        }
+        /* eslint-enable max-len */
+      }
+      return this.events.filter(event => listeners[event] instanceof Function);
+    }
+  }
+
+  loader.define('core/service', Service);
+}
+
+{
   const ID = Symbol('id');
 
   class App {
@@ -828,6 +861,10 @@
         this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
       };
+      opr.Toolkit.assert(
+          RootClass.prototype instanceof opr.Toolkit.Root,
+          'Root component class', RootClass.name,
+          'must extends opr.Toolkit.Root');
       this.root = new RootClass(container, this.dispatch);
 
       this.reducer =
@@ -896,7 +933,7 @@
   ];
   const methods = [
     'broadcast',
-    'registerService',
+    'connectTo',
   ];
   const stateProperties = [
     'props',
@@ -1313,6 +1350,14 @@
 
     static createComponentInstance(id, props = {}) {
       const ComponentClass = loader.get(id);
+      opr.Toolkit.assert(
+          !(ComponentClass.prototype instanceof opr.Toolkit.Root),
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component instead of opr.Toolkit.Root');
+      opr.Toolkit.assert(
+          ComponentClass.prototype instanceof opr.Toolkit.Component,
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component');
       const instance = new ComponentClass();
       if (props.key !== undefined) {
         instance.key = props.key;
@@ -1326,10 +1371,30 @@
       return instance;
     }
 
-    static createElementInstance(description) {
+    static createElementInstance(description, component) {
       const element = new opr.Toolkit.VirtualElement(description.name);
       if (description.props) {
         const props = description.props;
+
+        if (opr.Toolkit.isDebug()) {
+          const unknownAttrs = Object.keys(props).filter(
+              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
+          for (const unknownAttr of unknownAttrs) {
+            const suggestion = opr.Toolkit.SUPPORTED_ATTRIBUTES.find(
+                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
+            if (suggestion) {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}"`,
+                  `should be spelled "${suggestion}",`,
+                  `check render() method of ${component.constructor.name}`);
+            } else {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}" is not valid,`,
+                  `check render() method of ${component.constructor.name}`);
+            }
+          }
+        }
+
         // attributes
         Object.keys(props)
           .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
@@ -1388,7 +1453,7 @@
       return element;
     }
 
-    static createFromTemplate(template, previousNode, root) {
+    static createFromTemplate(template, previousNode, root, component) {
       if (template === undefined) {
         throw new Error('Invalid undefined template!');
       }
@@ -1401,11 +1466,11 @@
           description.component, description.props, description.children,
           previousNode, root);
       }
-      return this.createElement(description, previousNode, root);
+      return this.createElement(description, previousNode, root, component);
     }
 
-    static createElement(description, previousNode, root) {
-      const element = this.createElementInstance(description);
+    static createElement(description, previousNode, root, component) {
+      const element = this.createElementInstance(description, component);
       const getPreviousChild = index => {
         if (element.isCompatible(previousNode)) {
           return previousNode.children[index] || null;
@@ -1415,8 +1480,8 @@
       };
       if (description.children) {
         element.children = description.children.map((desc, index) => {
-          const child =
-              this.createFromTemplate(desc, getPreviousChild(index), root);
+          const child = this.createFromTemplate(
+              desc, getPreviousChild(index), root, component);
           child.parentNode = element;
           return child;
         });
@@ -1445,7 +1510,7 @@
       sandbox.props = this.calculateProps(root, props);
 
       const template = root.render.call(sandbox);
-      const tree = this.createFromTemplate(template, previousTree, root);
+      const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
         tree.parentNode = root;
       }
@@ -1473,7 +1538,7 @@
           const previousChild = previousNode && previousNode.isComponent() ?
             previousNode.child : null;
           instance.appendChild(
-            this.createFromTemplate(template, previousChild, root));
+            this.createFromTemplate(template, previousChild, root, instance));
         }
         return instance;
       } catch (e) {
@@ -1905,7 +1970,6 @@
       }
       if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
-          // TODO: should this be called if children differ?
           patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
         }
         calculatePatches(current.child, next.child, current, patches);
@@ -2785,6 +2849,11 @@
       s4() + '-' + s4() + s4() + s4();
   };
 
+  const isSupportedAttribute = attr =>
+      opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) ||
+      ['key', 'class', 'style', 'dataset', 'metadata'].includes(attr);
+
   const Utils = {
     combineReducers,
     createCommandsDispatcher,
@@ -2793,6 +2862,7 @@
     getAttributeName,
     getEventName,
     createUUID,
+    isSupportedAttribute,
   };
 
   loader.define('core/utils', Utils);
@@ -2827,6 +2897,7 @@
   const Patch = loader.get('core/patch');
   const Reconciler = loader.get('core/reconciler');
   const Document = loader.get('core/document');
+  const Service = loader.get('core/service');
   const utils = loader.get('core/utils');
 
   // config
@@ -2850,8 +2921,11 @@
     settings.preload = options.preload || false;
     settings.bundles = options.bundles || [];
     settings.bundleRootPath = options.bundleRootPath || '';
+    Object.freeze(settings);
     init();
   };
+
+  const isDebug = () => settings.debug;
 
   const render = (templateProvider, props, container) => {
     const parent = new Root(container);
@@ -2875,6 +2949,16 @@
 
   const create = root => new App(root, settings);
 
+  const assert = (condition, ...messages) => {
+    if (isDebug()) {
+      console.assert(condition, ...messages);
+    }
+  };
+
+  const warn = (...messages) => {
+    console.warn(...messages);
+  };
+
   const Toolkit = {
     // constants
     SUPPORTED_ATTRIBUTES,
@@ -2893,6 +2977,7 @@
     Reconciler,
     Template,
     Sandbox,
+    Service,
     // core types
     VirtualNode,
     Root,
@@ -2905,6 +2990,10 @@
     render,
     configure,
     ready,
+    // debug
+    isDebug,
+    assert,
+    warn,
   };
 
   window.opr = window.opr || {};

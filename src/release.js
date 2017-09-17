@@ -27,6 +27,7 @@
   const Patch = loader.get('core/patch');
   const Reconciler = loader.get('core/reconciler');
   const Document = loader.get('core/document');
+  const Service = loader.get('core/service');
   const utils = loader.get('core/utils');
 
   // config
@@ -50,8 +51,11 @@
     settings.preload = options.preload || false;
     settings.bundles = options.bundles || [];
     settings.bundleRootPath = options.bundleRootPath || '';
+    Object.freeze(settings);
     init();
   };
+
+  const isDebug = () => settings.debug;
 
   const render = (templateProvider, props, container) => {
     const parent = new Root(container);
@@ -75,6 +79,16 @@
 
   const create = root => new App(root, settings);
 
+  const assert = (condition, ...messages) => {
+    if (isDebug()) {
+      console.assert(condition, ...messages);
+    }
+  };
+
+  const warn = (...messages) => {
+    console.warn(...messages);
+  };
+
   const Toolkit = {
     // constants
     SUPPORTED_ATTRIBUTES,
@@ -93,6 +107,7 @@
     Reconciler,
     Template,
     Sandbox,
+    Service,
     // core types
     VirtualNode,
     Root,
@@ -105,6 +120,10 @@
     render,
     configure,
     ready,
+    // debug
+    isDebug,
+    assert,
+    warn,
   };
 
   window.opr = window.opr || {};

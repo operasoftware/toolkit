@@ -9,6 +9,16 @@ const utils = require('../../src/core/utils.js');
 
 const types = require('../../src/core/core-types.js');
 
+const isDebug = () => true;
+
+const assert = (condition, ...messages) => {
+  console.assert(condition, ...messages);
+};
+
+const warn = (...messages) => {
+  console.warn(...messages);
+};
+
 global.opr = {
 
   Toolkit: {
@@ -36,6 +46,11 @@ global.opr = {
     Patch: require('../../src/core/patch.js'),
     Reconciler: require('../../src/core/reconciler.js'),
     Document: require('../../src/core/document.js'),
+    Service: require('../../src/core/service.js'),
+
+    isDebug,
+    assert,
+    warn,
   }
 };
 

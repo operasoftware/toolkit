@@ -115,7 +115,7 @@ describe('Sandbox', () => {
       const context = Sandbox.create(instance);
 
       // then
-      assert.equal(typeof context.registerService, 'function');
+      assert.equal(typeof context.connectTo, 'function');
     });
 
     it('ignores unknown properties', () => {

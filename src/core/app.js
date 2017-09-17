@@ -90,6 +90,10 @@
         this.store.state = this.reducer(this.store.state, command);
         this.updateDOM();
       };
+      opr.Toolkit.assert(
+          RootClass.prototype instanceof opr.Toolkit.Root,
+          'Root component class', RootClass.name,
+          'must extends opr.Toolkit.Root');
       this.root = new RootClass(container, this.dispatch);
 
       this.reducer =

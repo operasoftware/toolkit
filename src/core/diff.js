@@ -230,7 +230,6 @@
       }
       if (current.isComponent()) {
         if (!Diff.deepEqual(current.props, next.props)) {
-          // TODO: should this be called if children differ?
           patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
         }
         calculatePatches(current.child, next.child, current, patches);

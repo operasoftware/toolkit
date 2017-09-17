@@ -83,7 +83,7 @@
     'onAnimationIteration',
     // transition events
     'onTransitionEnd',
-    // input events
+    // search events
     'onSearch',
   ];
 

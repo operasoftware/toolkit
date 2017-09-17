@@ -138,7 +138,7 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = ComponentTree.createElementInstance(description, new opr.Toolkit.Component());
 
       // then
       assert(element);

@@ -700,7 +700,7 @@ describe('Component Lifecycle', () => {
       const patches = [Patch.removeChildNode(component, 0, element)];
 
       // when
-      component.registerService(Service);
+      component.connectTo(Service);
       ComponentLifecycle.beforeUpdate(patches);
 
       // then
