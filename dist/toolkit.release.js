@@ -394,7 +394,16 @@
     'wrap',
   ];
 
-  const SUPPORTED_STYLES = Object.keys(document.documentElement.style);
+  const getSupportedStyles = element => {
+    const keys = Object.keys(element.style);
+    if (keys.length) {
+      return keys;
+    }
+    return Object.keys(Object.getPrototypeOf(element.style))
+        .filter(key => !key.includes('-'));
+  };
+
+  const SUPPORTED_STYLES = getSupportedStyles(document.documentElement);
 
   const SUPPORTED_FILTERS = [
     'blur',
@@ -406,7 +415,7 @@
     'invert',
     'opacity',
     'sepia',
-    'saturate'
+    'saturate',
   ];
 
   const SUPPORTED_TRANSFORMS = [
@@ -430,7 +439,7 @@
     'skew',
     'skewX',
     'skewY',
-    'perspective'
+    'perspective',
   ];
 
   const Consts = {
@@ -438,7 +447,7 @@
     SUPPORTED_EVENTS,
     SUPPORTED_STYLES,
     SUPPORTED_FILTERS,
-    SUPPORTED_TRANSFORMS
+    SUPPORTED_TRANSFORMS,
   };
 
   loader.define('core/consts', Consts);
