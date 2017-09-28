@@ -1,6 +1,23 @@
 {
   const ID = Symbol('id');
 
+  const registerMutationObserver = (container, root) => {
+    const observer = new MutationObserver(mutations => {
+      const isContainerRemoved = mutations.find(
+          mutation => [...mutation.removedNodes].find(
+              node => node === container));
+      if (isContainerRemoved) {
+        opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
+        opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
+      }
+    });
+    if (container.parentElement) {
+      observer.observe(container.parentElement, {
+        childList: true,
+      });
+    }
+  };
+
   class App {
 
     constructor(path, settings) {
@@ -108,6 +125,7 @@
       for (const plugin of this.settings.plugins) {
         this.install(plugin);
       }
+      registerMutationObserver(container, this.root);
     }
 
     calculatePatches() {

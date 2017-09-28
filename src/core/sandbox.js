@@ -36,6 +36,9 @@
       const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (property === '$component') {
+            return component;
+          }
           if (properties.includes(property)) {
             return target[property];
           }
