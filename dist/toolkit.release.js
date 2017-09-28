@@ -624,8 +624,8 @@
       return containerElement;
     }
 
-    async getInitialState() {
-      return {};
+    async getInitialState(defaultProps = {}) {
+      return defaultProps;
     }
 
     getReducers() {
@@ -862,7 +862,7 @@
       });
     }
 
-    async render(container) {
+    async render(container, defaultProps = {}) {
 
       await opr.Toolkit.ready();
 
@@ -899,7 +899,7 @@
           this.reducer, this.dispatch);
       this.root.commands = commands;
       this.commands = commands;
-      const state = await this.root.getInitialState();
+      const state = await this.root.getInitialState(defaultProps);
       this.root.dispatch(this.reducer.commands.init(state));
 
       for (const plugin of this.settings.plugins) {

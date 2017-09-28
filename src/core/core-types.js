@@ -169,8 +169,8 @@
       return containerElement;
     }
 
-    async getInitialState() {
-      return {};
+    async getInitialState(defaultProps = {}) {
+      return defaultProps;
     }
 
     getReducers() {
