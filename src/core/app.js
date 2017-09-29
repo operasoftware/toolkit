@@ -119,7 +119,8 @@
           this.reducer, this.dispatch);
       this.root.commands = commands;
       this.commands = commands;
-      const state = await this.root.getInitialState(defaultProps);
+      const state =
+          await this.root.getInitialState.call(this.root.sandbox, defaultProps);
       this.root.dispatch(this.reducer.commands.init(state));
 
       for (const plugin of this.settings.plugins) {
