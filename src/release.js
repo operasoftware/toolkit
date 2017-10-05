@@ -19,7 +19,6 @@
 
   const App = loader.get('core/app');
   const Sandbox = loader.get('core/sandbox');
-  const Store = loader.get('core/store');
   const Template = loader.get('core/template');
   const ComponentTree = loader.get('core/component-tree');
   const ComponentLifecycle = loader.get('core/component-lifecycle');
@@ -97,7 +96,6 @@
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS,
     // core classes
-    Store,
     App,
     ComponentTree,
     ComponentLifecycle,

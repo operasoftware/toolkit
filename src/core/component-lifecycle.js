@@ -127,7 +127,7 @@
         case Type.UPDATE_COMPONENT:
           return this.onComponentReceivedProps(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
-          return this.onComponentCreated(patch.root);
+          return patch.root.onCreated.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentCreated(patch.component);
         case Type.ADD_ELEMENT:
@@ -155,7 +155,7 @@
         case Type.UPDATE_COMPONENT:
           return this.onComponentUpdated(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
-          return this.onComponentAttached(patch.root);
+          return patch.root.onAttached.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentAttached(patch.component);
         case Type.ADD_ELEMENT:
@@ -172,6 +172,7 @@
     }
 
     static afterUpdate(patches) {
+      patches = [...patches].reverse();
       for (const patch of patches) {
         this.afterPatchApplied(patch);
       }

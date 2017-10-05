@@ -8,7 +8,8 @@ const convertModuleExportsToDefine = (script, path) => {
   const moduleExportsRegExp = /module\.exports\ \=\ (.+?);/;
   const match = script.match(moduleExportsRegExp);
   if (match) {
-    const normalized = script.replace(match[0], `loader.define('${path}', ${match[1]});`);
+    const normalized =
+        script.replace(match[0], `loader.define('${path}', ${match[1]});`);
     return normalized;
   } else {
     throw new Error('No module.exports statement found in: ' + path);
@@ -30,7 +31,6 @@ const Consts = normalizeModule('core/consts');
 const CoreTypes = normalizeModule('core/core-types');
 const App = normalizeModule('core/app');
 const Sandbox = normalizeModule('core/sandbox');
-const Store = normalizeModule('core/store');
 const Template = normalizeModule('core/template');
 const ComponentTree = normalizeModule('core/component-tree');
 const ComponentLifecycle = normalizeModule('core/component-lifecycle');
@@ -44,10 +44,10 @@ const utils = normalizeModule('core/utils');
 const Release = loadModule('release');
 
 const release = merge(
-  ModuleLoader, Consts, CoreTypes, Service, App, Sandbox, Store, Template,
-  ComponentTree, ComponentLifecycle, Diff, Patch, Reconciler, Document, utils,
-  Release
-).replace(/\n\n\n/g, '\n\n');
+                    ModuleLoader, Consts, CoreTypes, Service, App, Sandbox,
+                    Template, ComponentTree, ComponentLifecycle, Diff, Patch,
+                    Reconciler, Document, utils, Release)
+                    .replace(/\n\n\n/g, '\n\n');
 
 fs.writeFileSync('./dist/toolkit.release.js', release, 'utf8');
 

@@ -37,7 +37,7 @@ global.opr = {
     // utils
     utils: utils,
     // core
-    // App: require('../../src/core/app.js'),
+    App: require('../../src/core/app.js'),
     Sandbox: require('../../src/core/sandbox.js'),
     ComponentTree: require('../../src/core/component-tree.js'),
     ComponentLifecycle: require('../../src/core/component-lifecycle.js'),
@@ -51,6 +51,8 @@ global.opr = {
     isDebug,
     assert,
     warn,
+
+    ready: async () => {},
   }
 };
 
@@ -74,3 +76,9 @@ global.suppressConsoleErrors = () => {
     console.error = consoleError;
   });
 };
+
+global.MutationObserver = class {
+
+  observe() {
+  }
+}

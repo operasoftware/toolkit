@@ -15,7 +15,6 @@
 
       const App = await loader.require('core/app');
       const Sandbox = await loader.require('core/sandbox');
-      const Store = await loader.require('core/store');
       const Template = await loader.require('core/template');
       const ComponentTree = await loader.require('core/component-tree');
       const ComponentLifecycle =
@@ -27,17 +26,23 @@
       const utils = await loader.require('core/utils');
       const create = root => new App(root);
 
+      const isDebug = () => false;
+      const assert = () => {};
+      const warn = () => {};
+
+      const ready = async () => {};
+
       return {
         // constants
         SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
         SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
         // core classes
-        Store, App, ComponentTree, ComponentLifecycle, Document,
+        App, ComponentTree, ComponentLifecycle, Document,
         Diff, Patch, Reconciler, Template, Sandbox,
         // core types
         VirtualNode, Root, Component, VirtualElement, Comment,
         // utils
-        utils, create
+        utils, create, isDebug, assert, warn, ready,
       };
     }
   };

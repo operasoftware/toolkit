@@ -805,7 +805,7 @@
       this.symbol = this.getSymbol(path);
       this.settings = settings;
       this.preloaded = false;
-      this.store = new opr.Toolkit.Store();
+      this.state = null;
       this.plugins = new Map();
     }
 
@@ -854,7 +854,7 @@
       }
       const uninstall = plugin.install({
         container: this.container,
-        state: this.store.state,
+        state: this.state,
       });
       this.plugins.set(plugin.id, {
         ref: plugin,
@@ -880,11 +880,11 @@
       }
 
       const RootClass = await loader.resolve(this.symbol);
-      if (!this.preloaded) {
+      if (!this.preloaded && RootClass.init) {
         await RootClass.init();
       }
       this.dispatch = command => {
-        this.store.state = this.reducer(this.store.state, command);
+        this.state = this.reducer(this.state, command);
         this.updateDOM();
       };
       opr.Toolkit.assert(
@@ -911,14 +911,13 @@
 
     calculatePatches() {
       const patches = [];
-      if (!opr.Toolkit.Diff.deepEqual(this.store.state, this.root.props)) {
+      if (!opr.Toolkit.Diff.deepEqual(this.state, this.root.props)) {
         if (this.root.props === undefined) {
           patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        patches.push(
-            opr.Toolkit.Patch.updateComponent(this.root, this.store.state));
+        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.state));
         const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-            this.root, this.store.state, this.root.child);
+            this.root, this.state, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
             this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -1019,28 +1018,6 @@
   }
 
   loader.define('core/sandbox', Sandbox);
-}
-
-{
-  class Store {
-
-    constructor() {
-      this.stack = [];
-    }
-
-    get state() {
-      if (this.stack.length === 0) {
-        return null;
-      }
-      return Object.assign({}, this.stack[this.stack.length - 1]);
-    }
-
-    set state(state) {
-      this.stack.push(state);
-    }
-  }
-
-  loader.define('core/store', Store);
 }
 
 {
@@ -1715,7 +1692,7 @@
         case Type.UPDATE_COMPONENT:
           return this.onComponentReceivedProps(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
-          return this.onComponentCreated(patch.root);
+          return patch.root.onCreated.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentCreated(patch.component);
         case Type.ADD_ELEMENT:
@@ -1743,7 +1720,7 @@
         case Type.UPDATE_COMPONENT:
           return this.onComponentUpdated(patch.target, patch.props);
         case Type.CREATE_ROOT_COMPONENT:
-          return this.onComponentAttached(patch.root);
+          return patch.root.onAttached.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentAttached(patch.component);
         case Type.ADD_ELEMENT:
@@ -1760,6 +1737,7 @@
     }
 
     static afterUpdate(patches) {
+      patches = [...patches].reverse();
       for (const patch of patches) {
         this.afterPatchApplied(patch);
       }
@@ -2920,7 +2898,6 @@
 
   const App = loader.get('core/app');
   const Sandbox = loader.get('core/sandbox');
-  const Store = loader.get('core/store');
   const Template = loader.get('core/template');
   const ComponentTree = loader.get('core/component-tree');
   const ComponentLifecycle = loader.get('core/component-lifecycle');
@@ -2998,7 +2975,6 @@
     SUPPORTED_FILTERS,
     SUPPORTED_TRANSFORMS,
     // core classes
-    Store,
     App,
     ComponentTree,
     ComponentLifecycle,
