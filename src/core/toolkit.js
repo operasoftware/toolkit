@@ -1,7 +1,7 @@
 {
-  const core = {
+  class Toolkit {
 
-    init: async () => {
+    static async init() {
       const {
         SUPPORTED_ATTRIBUTES,
         SUPPORTED_EVENTS,
@@ -10,7 +10,11 @@
         SUPPORTED_TRANSFORMS
       } = await loader.require('core/consts');
       const {
-        VirtualNode, Root, Component, VirtualElement, Comment,
+        VirtualNode,
+        Root,
+        Component,
+        VirtualElement,
+        Comment,
       } = await loader.require('core/core-types');
 
       const App = await loader.require('core/app');
@@ -34,18 +38,37 @@
 
       return {
         // constants
-        SUPPORTED_ATTRIBUTES, SUPPORTED_EVENTS,
-        SUPPORTED_STYLES, SUPPORTED_FILTERS, SUPPORTED_TRANSFORMS,
+        SUPPORTED_ATTRIBUTES,
+        SUPPORTED_EVENTS,
+        SUPPORTED_STYLES,
+        SUPPORTED_FILTERS,
+        SUPPORTED_TRANSFORMS,
         // core classes
-        App, ComponentTree, ComponentLifecycle, Document,
-        Diff, Patch, Reconciler, Template, Sandbox,
+        App,
+        ComponentTree,
+        ComponentLifecycle,
+        Document,
+        Diff,
+        Patch,
+        Reconciler,
+        Template,
+        Sandbox,
         // core types
-        VirtualNode, Root, Component, VirtualElement, Comment,
+        VirtualNode,
+        Root,
+        Component,
+        VirtualElement,
+        Comment,
         // utils
-        utils, create, isDebug, assert, warn, ready,
+        utils,
+        create,
+        isDebug,
+        assert,
+        warn,
+        ready,
       };
     }
   };
 
-  module.exports = core;
+  module.exports = Toolkit;
 }

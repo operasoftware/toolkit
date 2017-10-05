@@ -42,16 +42,12 @@
       if (classNames === '') {
         return [];
       }
-      classNames = classNames
-        .replace(/( )+/g, ' ')
-        .trim()
-        .split(' ');
+      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
       return [...new Set(classNames)];
     }
 
     static getCompositeValue(obj = {}, whitelist) {
-      const names = Object.keys(obj)
-        .filter(name => whitelist.includes(name));
+      const names = Object.keys(obj).filter(name => whitelist.includes(name));
       return this.getAttributeValue(names.reduce((result, name) => {
         const value = this.getAttributeValue(obj[name], false);
         if (value) {
@@ -134,38 +130,30 @@
           `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
 
       if (template === null || template === false) {
-        return {
-          types: null
-        };
+        return {types: null};
       }
 
       if (!Array.isArray(template)) {
         const error =
             new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
-        return {
-          error
-        };
+        return {error};
       }
 
       const Type = Template.ItemType;
       const types = template.map(this.getItemType);
 
       if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-        console.error('Invalid element:', template[0],
-          ', expecting component or tag name');
+        console.error(
+            'Invalid element:', template[0],
+            ', expecting component or tag name');
         const error =
             new Error(`Invalid parameter type "${types[0]}" at index 0`);
-        return {
-          error,
-          types
-        };
+        return {error, types};
       }
 
       if (types.length <= 1) {
-        return {
-          types
-        };
+        return {types};
       }
 
       let firstChildIndex = 1;
@@ -210,8 +198,9 @@
               if (types.length > 3) {
                 const error =
                     new Error('Text elements cannot have child nodes');
-                console.error('Text elements cannot have child nodes:',
-                  template.slice(2));
+                console.error(
+                    'Text elements cannot have child nodes:',
+                    template.slice(2));
                 return {
                   error,
                   types,
@@ -237,8 +226,8 @@
                 template[i] !== false) {
               const error = new Error(
                   `Invalid parameter type "${types[i]}" at index ${i}`);
-              console.error('Invalid parameter:', template[i],
-                ', expecting ' + expected);
+              console.error(
+                  'Invalid parameter:', template[i], ', expecting ' + expected);
               return {
                 error,
                 types,
@@ -263,10 +252,7 @@
 
     static describe(template) {
 
-      const {
-        types,
-        error
-      } = this.validate(template);
+      const {types, error} = this.validate(template);
 
       if (error) {
         console.error('Invalid template definition:', template);
@@ -295,10 +281,7 @@
               text,
             };
           } else if (types[1] === Type.PROPS) {
-            return {
-              [type]: template[0],
-              props: template[1]
-            };
+            return {[type]: template[0], props: template[1]};
           } else if (types[1] === Type.ELEMENT) {
             return {
               [type]: template[0],

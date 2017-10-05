@@ -50,20 +50,19 @@
 
         // attributes
         Object.keys(props)
-          .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
-          .forEach(attr => {
-            const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
-            if (value !== null && value !== undefined) {
-              element.setAttribute(attr, value);
-            }
-          });
+            .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
+            .forEach(attr => {
+              const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
+              if (value !== null && value !== undefined) {
+                element.setAttribute(attr, value);
+              }
+            });
         // data attributes
         const dataset = props.dataset || {};
-        Object.keys(dataset)
-          .forEach(attr => {
-            const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
-            element.setDataAttribute(attr, value);
-          });
+        Object.keys(dataset).forEach(attr => {
+          const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
+          element.setDataAttribute(attr, value);
+        });
         // class names
         const classNames = opr.Toolkit.Template.getClassNames(props.class);
         classNames.forEach(className => {
@@ -72,27 +71,29 @@
         // style
         const style = props.style || {};
         Object.keys(style)
-          .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
-          .forEach(prop => {
-            const value = opr.Toolkit.Template.getStyleValue(style[prop], prop);
-            if (value !== null && value !== undefined) {
-              element.setStyleProperty(prop, value);
-            }
-          });
+            .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
+            .forEach(prop => {
+              const value =
+                  opr.Toolkit.Template.getStyleValue(style[prop], prop);
+              if (value !== null && value !== undefined) {
+                element.setStyleProperty(prop, value);
+              }
+            });
         // listeners
         Object.keys(props)
-          .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
-          .forEach(event => {
-            const name = opr.Toolkit.utils.getEventName(event);
-            const listener = props[event];
-            if (typeof listener === 'function') {
-              element.addListener(name, listener);
-            }
-          });
+            .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
+            .forEach(event => {
+              const name = opr.Toolkit.utils.getEventName(event);
+              const listener = props[event];
+              if (typeof listener === 'function') {
+                element.addListener(name, listener);
+              }
+            });
         // metadata
         if (props.metadata) {
-          Object.keys(props.metadata)
-            .forEach(key => { element.metadata[key] = props.metadata[key]; });
+          Object.keys(props.metadata).forEach(key => {
+            element.metadata[key] = props.metadata[key];
+          });
         }
         // key
         if (props.key) {
@@ -116,8 +117,8 @@
       const description = opr.Toolkit.Template.describe(template);
       if (description.component) {
         return this.createComponent(
-          description.component, description.props, description.children,
-          previousNode, root);
+            description.component, description.props, description.children,
+            previousNode, root);
       }
       return this.createElement(description, previousNode, root, component);
     }
@@ -179,8 +180,8 @@
         instance.commands = root && root.commands || {};
 
         const sandbox = instance.isCompatible(previousNode) ?
-          previousNode.sandbox :
-          instance.sandbox;
+            previousNode.sandbox :
+            instance.sandbox;
 
         sandbox.props = calculatedProps;
         sandbox.children = children;
@@ -189,9 +190,10 @@
         if (template) {
           // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
-            previousNode.child : null;
+              previousNode.child :
+              null;
           instance.appendChild(
-            this.createFromTemplate(template, previousChild, root, instance));
+              this.createFromTemplate(template, previousChild, root, instance));
         }
         return instance;
       } catch (e) {

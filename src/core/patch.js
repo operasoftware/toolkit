@@ -44,9 +44,7 @@
   class Patch {
 
     constructor(type, props) {
-      Object.assign(this, {
-        type
-      }, props);
+      Object.assign(this, {type}, props);
     }
 
     static createRootComponent(root) {
@@ -303,7 +301,7 @@
             opr.Toolkit.Document.attachElementTree(component, domNode => {
               if (parentDomNode.hasChildNodes()) {
                 opr.Toolkit.Document.replaceChild(
-                  domNode, parentDomNode.firstChild, parentDomNode);
+                    domNode, parentDomNode.firstChild, parentDomNode);
               } else {
                 opr.Toolkit.Document.appendChild(domNode, parentDomNode);
               }

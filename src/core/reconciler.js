@@ -8,26 +8,24 @@
   class Move {
 
     constructor(name, item, props, make) {
-      Object.assign(this, {
-        name, item, make
-      }, props);
+      Object.assign(this, {name, item, make}, props);
     }
 
     static insert(item, at) {
-      return new Move(Name.INSERT, item, { at }, items => {
+      return new Move(Name.INSERT, item, {at}, items => {
         items.splice(at, 0, item);
       });
     }
 
     static move(item, from, to) {
-      return new Move(Name.MOVE, item, { from, to }, items => {
+      return new Move(Name.MOVE, item, {from, to}, items => {
         items.splice(from, 1);
         items.splice(to, 0, item);
       });
     }
 
     static remove(item, at) {
-      return new Move(Name.REMOVE, item, { at }, items => {
+      return new Move(Name.REMOVE, item, {at}, items => {
         items.splice(at, 1);
       });
     }
@@ -39,7 +37,7 @@
 
       const makeMoves = (reversed = false) => {
         const source = [...current];
-        const target  = [...next];
+        const target = [...next];
         const moves = [];
 
         const makeMove = move => {

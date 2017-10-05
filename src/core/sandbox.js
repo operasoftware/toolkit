@@ -1,6 +1,6 @@
 {
   const isFunction = (target, property) =>
-    typeof target[property] === 'function';
+      typeof target[property] === 'function';
 
   const properties = [
     'commands',
@@ -30,8 +30,8 @@
   class Sandbox {
 
     static create(component) {
-      const blacklist = Object.getOwnPropertyNames(
-        opr.Toolkit.Component.prototype);
+      const blacklist =
+          Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
       const autobound = {};
       const state = {};
       return new Proxy(component, {
@@ -56,7 +56,7 @@
           }
           if (isFunction(target, property)) {
             return autobound[property] =
-              createBoundListener(target[property], target, receiver);
+                       createBoundListener(target[property], target, receiver);
           }
           return undefined;
         },

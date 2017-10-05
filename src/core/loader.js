@@ -9,11 +9,11 @@
 
   const prefixes = new Map();
 
-  const concatenatePaths = (...paths) => paths
-      .map(path => path.replace(/(^\/)/g, ''))
-      .join('/')
-      .replace(/\/+/g, '/')
-      .replace(/\:\//g, '://');
+  const concatenatePaths = (...paths) =>
+      paths.map(path => path.replace(/(^\/)/g, ''))
+          .join('/')
+          .replace(/\/+/g, '/')
+          .replace(/\:\//g, '://');
 
   const getResourcePath = path => {
     const getRealPath = path => {
@@ -46,7 +46,7 @@
       script.onerror = error => {
         console.error(`Error loading module "${path}" from "${resourcePath}"!`);
         reject(error);
-      }
+      };
       document.head.appendChild(script);
     });
   };
@@ -55,7 +55,7 @@
     const resourcePath = getResourcePath(path);
     decache(resourcePath);
     return require(resourcePath);
-  }
+  };
 
   const loadModule = async path => {
     if (isBrowser) {
@@ -132,7 +132,9 @@
 
       let done;
       const currentReadyPromise = readyPromise;
-      readyPromise = new Promise(resolve => { done = resolve; });
+      readyPromise = new Promise(resolve => {
+        done = resolve;
+      });
       await currentReadyPromise;
 
       const module = await this.preload(id);
@@ -167,8 +169,8 @@
           readyPromise = Promise.resolve();
           registry.clear();
           dependencySymbols.clear();
-        }
-      }
+        },
+      };
     }
   };
 

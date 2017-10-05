@@ -9,11 +9,11 @@
 
   const prefixes = new Map();
 
-  const concatenatePaths = (...paths) => paths
-      .map(path => path.replace(/(^\/)/g, ''))
-      .join('/')
-      .replace(/\/+/g, '/')
-      .replace(/\:\//g, '://');
+  const concatenatePaths = (...paths) =>
+      paths.map(path => path.replace(/(^\/)/g, ''))
+          .join('/')
+          .replace(/\/+/g, '/')
+          .replace(/\:\//g, '://');
 
   const getResourcePath = path => {
     const getRealPath = path => {
@@ -46,7 +46,7 @@
       script.onerror = error => {
         console.error(`Error loading module "${path}" from "${resourcePath}"!`);
         reject(error);
-      }
+      };
       document.head.appendChild(script);
     });
   };
@@ -55,7 +55,7 @@
     const resourcePath = getResourcePath(path);
     decache(resourcePath);
     return require(resourcePath);
-  }
+  };
 
   const loadModule = async path => {
     if (isBrowser) {
@@ -132,7 +132,9 @@
 
       let done;
       const currentReadyPromise = readyPromise;
-      readyPromise = new Promise(resolve => { done = resolve; });
+      readyPromise = new Promise(resolve => {
+        done = resolve;
+      });
       await currentReadyPromise;
 
       const module = await this.preload(id);
@@ -167,8 +169,8 @@
           readyPromise = Promise.resolve();
           registry.clear();
           dependencySymbols.clear();
-        }
-      }
+        },
+      };
     }
   };
 
@@ -419,26 +421,10 @@
   ];
 
   const SUPPORTED_TRANSFORMS = [
-    'matrix',
-    'matrix3d',
-    'translate',
-    'translate3d',
-    'translateX',
-    'translateY',
-    'translateZ',
-    'scale',
-    'scale3d',
-    'scaleX',
-    'scaleY',
-    'scaleZ',
-    'rotate',
-    'rotate3d',
-    'rotateX',
-    'rotateY',
-    'rotateZ',
-    'skew',
-    'skewX',
-    'skewY',
+    'matrix',      'matrix3d',   'translate', 'translate3d', 'translateX',
+    'translateY',  'translateZ', 'scale',     'scale3d',     'scaleX',
+    'scaleY',      'scaleZ',     'rotate',    'rotate3d',    'rotateX',
+    'rotateY',     'rotateZ',    'skew',      'skewX',       'skewY',
     'perspective',
   ];
 
@@ -471,8 +457,8 @@
 
     get parentElement() {
       if (this.parentNode) {
-        return this.parentNode.isElement() ?
-          this.parentNode : this.parentNode.parentElement;
+        return this.parentNode.isElement() ? this.parentNode :
+                                             this.parentNode.parentElement;
       }
       return null;
     }
@@ -538,7 +524,7 @@
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
-      this.comment.parentNode = null; // TODO: unit test
+      this.comment.parentNode = null;  // TODO: unit test
       this.comment = null;
     }
 
@@ -576,25 +562,30 @@
     }
 
     broadcast(name, data) {
-      this.rootElement.ref.dispatchEvent(
-        new CustomEvent(name, {
-          detail: data,
-          bubbles: true,
-          composed: true,
-        }))
+      this.rootElement.ref.dispatchEvent(new CustomEvent(name, {
+        detail: data,
+        bubbles: true,
+        composed: true,
+      }))
     }
 
-    onCreated() {}
+    onCreated() {
+    }
 
-    onAttached() {}
+    onAttached() {
+    }
 
-    onPropsReceived(props) {}
+    onPropsReceived(props) {
+    }
 
-    onUpdated() {}
+    onUpdated() {
+    }
 
-    onDestroyed() {}
+    onDestroyed() {
+    }
 
-    onDetached() {}
+    onDetached() {
+    }
 
     get nodeType() {
       return 'component';
@@ -756,18 +747,42 @@
       if (opr.Toolkit.isDebug()) {
         /* eslint-disable max-len */
         const keys = Object.keys(listeners);
-        opr.Toolkit.assert(this.events instanceof Array, `Service "${this.name}" does not provide information about valid events, implement "static get events() { return ['foo', 'bar']; }"`);
-        opr.Toolkit.assert(this.events.length > 0, `Service "${this.name}" returned an empty list of valid events, the list returned from "static get event()" must contain at least one event name`);
+        opr.Toolkit.assert(
+            this.events instanceof Array,
+            `Service "${
+                        this.name
+                      }" does not provide information about valid events, implement "static get events() { return ['foo', 'bar']; }"`);
+        opr.Toolkit.assert(
+            this.events.length > 0,
+            `Service "${
+                        this.name
+                      }" returned an empty list of valid events, the list returned from "static get event()" must contain at least one event name`);
         const unsupportedKeys =
             Object.keys(listeners).filter(key => !this.events.includes(key));
         for (const unsupportedKey of unsupportedKeys) {
-          opr.Toolkit.warn(`Unsupported listener specified "${unsupportedKey}" when connecting to ${this.name}`);
+          opr.Toolkit.warn(
+              `Unsupported listener specified "${
+                                                 unsupportedKey
+                                               }" when connecting to ${
+                                                                       this.name
+                                                                     }`);
         }
         const supportedKeys = this.events.filter(event => keys.includes(event));
-        opr.Toolkit.assert(supportedKeys.length > 0, `No valid listener specified when connecting to ${this.name}, use one of [${this.events.join(', ')}]`);
+        opr.Toolkit.assert(
+            supportedKeys.length > 0,
+            `No valid listener specified when connecting to ${
+                                                              this.name
+                                                            }, use one of [${
+                                                                             this.events
+                                                                                 .join(
+                                                                                     ', ')
+                                                                           }]`);
         for (const supportedKey of supportedKeys) {
-          opr.Toolkit.assert(listeners[supportedKey] instanceof Function,
-              `Specified listener "${supportedKey}" for ${this.name} is not a function`);
+          opr.Toolkit.assert(
+              listeners[supportedKey] instanceof Function,
+              `Specified listener "${supportedKey}" for ${
+                                                          this.name
+                                                        } is not a function`);
         }
         /* eslint-enable max-len */
       }
@@ -947,7 +962,7 @@
 
 {
   const isFunction = (target, property) =>
-    typeof target[property] === 'function';
+      typeof target[property] === 'function';
 
   const properties = [
     'commands',
@@ -977,8 +992,8 @@
   class Sandbox {
 
     static create(component) {
-      const blacklist = Object.getOwnPropertyNames(
-        opr.Toolkit.Component.prototype);
+      const blacklist =
+          Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
       const autobound = {};
       const state = {};
       return new Proxy(component, {
@@ -1003,7 +1018,7 @@
           }
           if (isFunction(target, property)) {
             return autobound[property] =
-              createBoundListener(target[property], target, receiver);
+                       createBoundListener(target[property], target, receiver);
           }
           return undefined;
         },
@@ -1064,16 +1079,12 @@
       if (classNames === '') {
         return [];
       }
-      classNames = classNames
-        .replace(/( )+/g, ' ')
-        .trim()
-        .split(' ');
+      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
       return [...new Set(classNames)];
     }
 
     static getCompositeValue(obj = {}, whitelist) {
-      const names = Object.keys(obj)
-        .filter(name => whitelist.includes(name));
+      const names = Object.keys(obj).filter(name => whitelist.includes(name));
       return this.getAttributeValue(names.reduce((result, name) => {
         const value = this.getAttributeValue(obj[name], false);
         if (value) {
@@ -1156,38 +1167,30 @@
           `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
 
       if (template === null || template === false) {
-        return {
-          types: null
-        };
+        return {types: null};
       }
 
       if (!Array.isArray(template)) {
         const error =
             new Error(`Specified template: "${template}" is not an array!`);
         console.error('Specified template', template, 'is not an array!');
-        return {
-          error
-        };
+        return {error};
       }
 
       const Type = Template.ItemType;
       const types = template.map(this.getItemType);
 
       if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-        console.error('Invalid element:', template[0],
-          ', expecting component or tag name');
+        console.error(
+            'Invalid element:', template[0],
+            ', expecting component or tag name');
         const error =
             new Error(`Invalid parameter type "${types[0]}" at index 0`);
-        return {
-          error,
-          types
-        };
+        return {error, types};
       }
 
       if (types.length <= 1) {
-        return {
-          types
-        };
+        return {types};
       }
 
       let firstChildIndex = 1;
@@ -1232,8 +1235,9 @@
               if (types.length > 3) {
                 const error =
                     new Error('Text elements cannot have child nodes');
-                console.error('Text elements cannot have child nodes:',
-                  template.slice(2));
+                console.error(
+                    'Text elements cannot have child nodes:',
+                    template.slice(2));
                 return {
                   error,
                   types,
@@ -1259,8 +1263,8 @@
                 template[i] !== false) {
               const error = new Error(
                   `Invalid parameter type "${types[i]}" at index ${i}`);
-              console.error('Invalid parameter:', template[i],
-                ', expecting ' + expected);
+              console.error(
+                  'Invalid parameter:', template[i], ', expecting ' + expected);
               return {
                 error,
                 types,
@@ -1285,10 +1289,7 @@
 
     static describe(template) {
 
-      const {
-        types,
-        error
-      } = this.validate(template);
+      const {types, error} = this.validate(template);
 
       if (error) {
         console.error('Invalid template definition:', template);
@@ -1317,10 +1318,7 @@
               text,
             };
           } else if (types[1] === Type.PROPS) {
-            return {
-              [type]: template[0],
-              props: template[1]
-            };
+            return {[type]: template[0], props: template[1]};
           } else if (types[1] === Type.ELEMENT) {
             return {
               [type]: template[0],
@@ -1405,20 +1403,19 @@
 
         // attributes
         Object.keys(props)
-          .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
-          .forEach(attr => {
-            const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
-            if (value !== null && value !== undefined) {
-              element.setAttribute(attr, value);
-            }
-          });
+            .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
+            .forEach(attr => {
+              const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
+              if (value !== null && value !== undefined) {
+                element.setAttribute(attr, value);
+              }
+            });
         // data attributes
         const dataset = props.dataset || {};
-        Object.keys(dataset)
-          .forEach(attr => {
-            const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
-            element.setDataAttribute(attr, value);
-          });
+        Object.keys(dataset).forEach(attr => {
+          const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
+          element.setDataAttribute(attr, value);
+        });
         // class names
         const classNames = opr.Toolkit.Template.getClassNames(props.class);
         classNames.forEach(className => {
@@ -1427,27 +1424,29 @@
         // style
         const style = props.style || {};
         Object.keys(style)
-          .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
-          .forEach(prop => {
-            const value = opr.Toolkit.Template.getStyleValue(style[prop], prop);
-            if (value !== null && value !== undefined) {
-              element.setStyleProperty(prop, value);
-            }
-          });
+            .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
+            .forEach(prop => {
+              const value =
+                  opr.Toolkit.Template.getStyleValue(style[prop], prop);
+              if (value !== null && value !== undefined) {
+                element.setStyleProperty(prop, value);
+              }
+            });
         // listeners
         Object.keys(props)
-          .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
-          .forEach(event => {
-            const name = opr.Toolkit.utils.getEventName(event);
-            const listener = props[event];
-            if (typeof listener === 'function') {
-              element.addListener(name, listener);
-            }
-          });
+            .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
+            .forEach(event => {
+              const name = opr.Toolkit.utils.getEventName(event);
+              const listener = props[event];
+              if (typeof listener === 'function') {
+                element.addListener(name, listener);
+              }
+            });
         // metadata
         if (props.metadata) {
-          Object.keys(props.metadata)
-            .forEach(key => { element.metadata[key] = props.metadata[key]; });
+          Object.keys(props.metadata).forEach(key => {
+            element.metadata[key] = props.metadata[key];
+          });
         }
         // key
         if (props.key) {
@@ -1471,8 +1470,8 @@
       const description = opr.Toolkit.Template.describe(template);
       if (description.component) {
         return this.createComponent(
-          description.component, description.props, description.children,
-          previousNode, root);
+            description.component, description.props, description.children,
+            previousNode, root);
       }
       return this.createElement(description, previousNode, root, component);
     }
@@ -1534,8 +1533,8 @@
         instance.commands = root && root.commands || {};
 
         const sandbox = instance.isCompatible(previousNode) ?
-          previousNode.sandbox :
-          instance.sandbox;
+            previousNode.sandbox :
+            instance.sandbox;
 
         sandbox.props = calculatedProps;
         sandbox.children = children;
@@ -1544,9 +1543,10 @@
         if (template) {
           // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
-            previousNode.child : null;
+              previousNode.child :
+              null;
           instance.appendChild(
-            this.createFromTemplate(template, previousChild, root, instance));
+              this.createFromTemplate(template, previousChild, root, instance));
         }
         return instance;
       } catch (e) {
@@ -1800,8 +1800,8 @@
     const added = nextKeys.filter(key => !keys.includes(key));
     const removed = keys.filter(key => !nextKeys.includes(key));
     const changed = keys.filter(
-        key => nextKeys.includes(key) &&
-            !Diff.deepEqual(current[key], next[key]));
+        key =>
+            nextKeys.includes(key) && !Diff.deepEqual(current[key], next[key]));
 
     for (let key of added) {
       patches.push(Patch.addMetadata(key, next[key], target));
@@ -1822,7 +1822,7 @@
     const added = nextProps.filter(prop => !props.includes(prop));
     const removed = props.filter(prop => !nextProps.includes(prop));
     const changed = props.filter(
-      prop => nextProps.includes(prop) && current[prop] !== next[prop]);
+        prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
       patches.push(
@@ -1858,7 +1858,7 @@
     const added = nextAttrs.filter(attr => !attrs.includes(attr));
     const removed = attrs.filter(attr => !nextAttrs.includes(attr));
     const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+        attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
       patches.push(
@@ -1989,67 +1989,68 @@
     }
   };
 
-  const calculatePatches = (current, next, parent = null, patches = []) => {
+  const calculatePatches =
+      (current, next, parent = null, patches = []) => {
 
-    const Patch = opr.Toolkit.Patch;
+        const Patch = opr.Toolkit.Patch;
 
-    if (!current && !next) {
-      return patches;
-    }
+        if (!current && !next) {
+          return patches;
+        }
 
-    if (!current && next) {
-      if (next.isComponent()) {
-        patches.push(Patch.addComponent(next, parent));
-      } else if (next.isElement()) {
-        patches.push(Patch.addElement(next, parent));
-      }
-      return patches;
-    }
-
-    if (current && !next) {
-      if (current.isComponent()) {
-        patches.push(Patch.removeComponent(current, parent));
-      } else if (current.isElement()) {
-        patches.push(Patch.removeElement(current, parent));
-      }
-      return patches;
-    }
-
-    if (current.isComponent()) {
-      if (next.isComponent()) {
-        if (current.constructor === next.constructor) {
-          if (!Diff.deepEqual(current.props, next.props)) {
-            patches.push(Patch.updateComponent(current, next.props));
+        if (!current && next) {
+          if (next.isComponent()) {
+            patches.push(Patch.addComponent(next, parent));
+          } else if (next.isElement()) {
+            patches.push(Patch.addElement(next, parent));
           }
-          calculatePatches(current.child, next.child, current, patches);
-        } else {
-          // different components
-          patches.push(Patch.removeComponent(current, parent));
-          patches.push(Patch.addComponent(next, parent));
+          return patches;
         }
-      } else if (next.isElement()) {
-        // replace component with an element
-        patches.push(Patch.removeComponent(current, parent));
-        patches.push(Patch.addElement(next, parent));
-      }
-    } else if (current.isElement()) {
-      if (next.isComponent()) {
-        // replace element with a component
-        patches.push(Patch.removeElement(current, parent));
-        patches.push(Patch.addComponent(next, parent));
-      } else if (next.isElement()) {
-        if (current.name === next.name) {
-          // compatible elements
-          elementPatches(current, next, patches);
-        } else {
-          // different elements
-          patches.push(Patch.removeElement(current, parent));
-          patches.push(Patch.addElement(next, parent));
+
+        if (current && !next) {
+          if (current.isComponent()) {
+            patches.push(Patch.removeComponent(current, parent));
+          } else if (current.isElement()) {
+            patches.push(Patch.removeElement(current, parent));
+          }
+          return patches;
         }
+
+        if (current.isComponent()) {
+          if (next.isComponent()) {
+            if (current.constructor === next.constructor) {
+              if (!Diff.deepEqual(current.props, next.props)) {
+                patches.push(Patch.updateComponent(current, next.props));
+              }
+              calculatePatches(current.child, next.child, current, patches);
+            } else {
+              // different components
+              patches.push(Patch.removeComponent(current, parent));
+              patches.push(Patch.addComponent(next, parent));
+            }
+          } else if (next.isElement()) {
+            // replace component with an element
+            patches.push(Patch.removeComponent(current, parent));
+            patches.push(Patch.addElement(next, parent));
+          }
+        } else if (current.isElement()) {
+          if (next.isComponent()) {
+            // replace element with a component
+            patches.push(Patch.removeElement(current, parent));
+            patches.push(Patch.addComponent(next, parent));
+          } else if (next.isElement()) {
+            if (current.name === next.name) {
+              // compatible elements
+              elementPatches(current, next, patches);
+            } else {
+              // different elements
+              patches.push(Patch.removeElement(current, parent));
+              patches.push(Patch.addElement(next, parent));
+            }
+          }
+        }
+        return patches;
       }
-    }
-    return patches;
-  }
 
   class Diff {
 
@@ -2148,9 +2149,7 @@
   class Patch {
 
     constructor(type, props) {
-      Object.assign(this, {
-        type
-      }, props);
+      Object.assign(this, {type}, props);
     }
 
     static createRootComponent(root) {
@@ -2407,7 +2406,7 @@
             opr.Toolkit.Document.attachElementTree(component, domNode => {
               if (parentDomNode.hasChildNodes()) {
                 opr.Toolkit.Document.replaceChild(
-                  domNode, parentDomNode.firstChild, parentDomNode);
+                    domNode, parentDomNode.firstChild, parentDomNode);
               } else {
                 opr.Toolkit.Document.appendChild(domNode, parentDomNode);
               }
@@ -2517,26 +2516,24 @@
   class Move {
 
     constructor(name, item, props, make) {
-      Object.assign(this, {
-        name, item, make
-      }, props);
+      Object.assign(this, {name, item, make}, props);
     }
 
     static insert(item, at) {
-      return new Move(Name.INSERT, item, { at }, items => {
+      return new Move(Name.INSERT, item, {at}, items => {
         items.splice(at, 0, item);
       });
     }
 
     static move(item, from, to) {
-      return new Move(Name.MOVE, item, { from, to }, items => {
+      return new Move(Name.MOVE, item, {from, to}, items => {
         items.splice(from, 1);
         items.splice(to, 0, item);
       });
     }
 
     static remove(item, at) {
-      return new Move(Name.REMOVE, item, { at }, items => {
+      return new Move(Name.REMOVE, item, {at}, items => {
         items.splice(at, 1);
       });
     }
@@ -2548,7 +2545,7 @@
 
       const makeMoves = (reversed = false) => {
         const source = [...current];
-        const target  = [...next];
+        const target = [...next];
         const moves = [];
 
         const makeMove = move => {
@@ -2720,10 +2717,9 @@
       let domNode;
       if (element) {
         domNode = this.createElement(element);
-        Object.keys(element.metadata)
-          .forEach(key => {
-            domNode[key] = element.metadata[key];
-          });
+        Object.keys(element.metadata).forEach(key => {
+          domNode[key] = element.metadata[key];
+        });
         if (element.children) {
           for (let child of element.children) {
             this.attachElementTree(child, childNode => {
@@ -2756,12 +2752,7 @@
     return state;
   };
 
-  coreReducer.commands = {
-    init: state => ({
-      type: INIT,
-      state
-    })
-  };
+  coreReducer.commands = {init: state => ({type: INIT, state})};
 
   const combineReducers = (...reducers) => {
     const commands = {};
@@ -2852,10 +2843,10 @@
   };
 
   const createUUID = () => {
-    const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16).substring(1);
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-      s4() + '-' + s4() + s4() + s4();
+    const s4 = () =>
+        Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() +
+        s4() + s4();
   };
 
   const isSupportedAttribute = attr =>

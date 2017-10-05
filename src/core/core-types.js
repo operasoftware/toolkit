@@ -16,8 +16,8 @@
 
     get parentElement() {
       if (this.parentNode) {
-        return this.parentNode.isElement() ?
-          this.parentNode : this.parentNode.parentElement;
+        return this.parentNode.isElement() ? this.parentNode :
+                                             this.parentNode.parentElement;
       }
       return null;
     }
@@ -83,7 +83,7 @@
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
-      this.comment.parentNode = null; // TODO: unit test
+      this.comment.parentNode = null;  // TODO: unit test
       this.comment = null;
     }
 
@@ -121,25 +121,30 @@
     }
 
     broadcast(name, data) {
-      this.rootElement.ref.dispatchEvent(
-        new CustomEvent(name, {
-          detail: data,
-          bubbles: true,
-          composed: true,
-        }))
+      this.rootElement.ref.dispatchEvent(new CustomEvent(name, {
+        detail: data,
+        bubbles: true,
+        composed: true,
+      }))
     }
 
-    onCreated() {}
+    onCreated() {
+    }
 
-    onAttached() {}
+    onAttached() {
+    }
 
-    onPropsReceived(props) {}
+    onPropsReceived(props) {
+    }
 
-    onUpdated() {}
+    onUpdated() {
+    }
 
-    onDestroyed() {}
+    onDestroyed() {
+    }
 
-    onDetached() {}
+    onDetached() {
+    }
 
     get nodeType() {
       return 'component';

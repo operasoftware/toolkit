@@ -51,8 +51,8 @@
     const added = nextKeys.filter(key => !keys.includes(key));
     const removed = keys.filter(key => !nextKeys.includes(key));
     const changed = keys.filter(
-        key => nextKeys.includes(key) &&
-            !Diff.deepEqual(current[key], next[key]));
+        key =>
+            nextKeys.includes(key) && !Diff.deepEqual(current[key], next[key]));
 
     for (let key of added) {
       patches.push(Patch.addMetadata(key, next[key], target));
@@ -73,7 +73,7 @@
     const added = nextProps.filter(prop => !props.includes(prop));
     const removed = props.filter(prop => !nextProps.includes(prop));
     const changed = props.filter(
-      prop => nextProps.includes(prop) && current[prop] !== next[prop]);
+        prop => nextProps.includes(prop) && current[prop] !== next[prop]);
 
     for (let prop of added) {
       patches.push(
@@ -109,7 +109,7 @@
     const added = nextAttrs.filter(attr => !attrs.includes(attr));
     const removed = attrs.filter(attr => !nextAttrs.includes(attr));
     const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+        attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
     for (let attr of added) {
       patches.push(
@@ -240,67 +240,68 @@
     }
   };
 
-  const calculatePatches = (current, next, parent = null, patches = []) => {
+  const calculatePatches =
+      (current, next, parent = null, patches = []) => {
 
-    const Patch = opr.Toolkit.Patch;
+        const Patch = opr.Toolkit.Patch;
 
-    if (!current && !next) {
-      return patches;
-    }
+        if (!current && !next) {
+          return patches;
+        }
 
-    if (!current && next) {
-      if (next.isComponent()) {
-        patches.push(Patch.addComponent(next, parent));
-      } else if (next.isElement()) {
-        patches.push(Patch.addElement(next, parent));
-      }
-      return patches;
-    }
-
-    if (current && !next) {
-      if (current.isComponent()) {
-        patches.push(Patch.removeComponent(current, parent));
-      } else if (current.isElement()) {
-        patches.push(Patch.removeElement(current, parent));
-      }
-      return patches;
-    }
-
-    if (current.isComponent()) {
-      if (next.isComponent()) {
-        if (current.constructor === next.constructor) {
-          if (!Diff.deepEqual(current.props, next.props)) {
-            patches.push(Patch.updateComponent(current, next.props));
+        if (!current && next) {
+          if (next.isComponent()) {
+            patches.push(Patch.addComponent(next, parent));
+          } else if (next.isElement()) {
+            patches.push(Patch.addElement(next, parent));
           }
-          calculatePatches(current.child, next.child, current, patches);
-        } else {
-          // different components
-          patches.push(Patch.removeComponent(current, parent));
-          patches.push(Patch.addComponent(next, parent));
+          return patches;
         }
-      } else if (next.isElement()) {
-        // replace component with an element
-        patches.push(Patch.removeComponent(current, parent));
-        patches.push(Patch.addElement(next, parent));
-      }
-    } else if (current.isElement()) {
-      if (next.isComponent()) {
-        // replace element with a component
-        patches.push(Patch.removeElement(current, parent));
-        patches.push(Patch.addComponent(next, parent));
-      } else if (next.isElement()) {
-        if (current.name === next.name) {
-          // compatible elements
-          elementPatches(current, next, patches);
-        } else {
-          // different elements
-          patches.push(Patch.removeElement(current, parent));
-          patches.push(Patch.addElement(next, parent));
+
+        if (current && !next) {
+          if (current.isComponent()) {
+            patches.push(Patch.removeComponent(current, parent));
+          } else if (current.isElement()) {
+            patches.push(Patch.removeElement(current, parent));
+          }
+          return patches;
         }
+
+        if (current.isComponent()) {
+          if (next.isComponent()) {
+            if (current.constructor === next.constructor) {
+              if (!Diff.deepEqual(current.props, next.props)) {
+                patches.push(Patch.updateComponent(current, next.props));
+              }
+              calculatePatches(current.child, next.child, current, patches);
+            } else {
+              // different components
+              patches.push(Patch.removeComponent(current, parent));
+              patches.push(Patch.addComponent(next, parent));
+            }
+          } else if (next.isElement()) {
+            // replace component with an element
+            patches.push(Patch.removeComponent(current, parent));
+            patches.push(Patch.addElement(next, parent));
+          }
+        } else if (current.isElement()) {
+          if (next.isComponent()) {
+            // replace element with a component
+            patches.push(Patch.removeElement(current, parent));
+            patches.push(Patch.addComponent(next, parent));
+          } else if (next.isElement()) {
+            if (current.name === next.name) {
+              // compatible elements
+              elementPatches(current, next, patches);
+            } else {
+              // different elements
+              patches.push(Patch.removeElement(current, parent));
+              patches.push(Patch.addElement(next, parent));
+            }
+          }
+        }
+        return patches;
       }
-    }
-    return patches;
-  }
 
   class Diff {
 
