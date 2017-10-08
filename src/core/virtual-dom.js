@@ -1,16 +1,18 @@
 {
-  class ComponentTree {
+  class VirtualDOM {
 
-    static createComponentInstance(id, props = {}) {
-      const ComponentClass = loader.get(id);
+    static createComponentFrom(symbol, props = {}) {
+      const ComponentClass = loader.get(symbol);
       opr.Toolkit.assert(
-          !(ComponentClass.prototype instanceof opr.Toolkit.Root),
-          'Component class', ComponentClass.name,
-          'must extend opr.Toolkit.Component instead of opr.Toolkit.Root');
+          ComponentClass, `No module found for: ${String(symbol)}`);
       opr.Toolkit.assert(
           ComponentClass.prototype instanceof opr.Toolkit.Component,
           'Component class', ComponentClass.name,
           'must extend opr.Toolkit.Component');
+      return this.createComponentInstance(ComponentClass, props);
+    }
+
+    static createComponentInstance(ComponentClass, props = {}) {
       const instance = new ComponentClass();
       if (props.key !== undefined) {
         instance.key = props.key;
@@ -20,6 +22,21 @@
         if (key) {
           instance.key = key;
         }
+      }
+      // TODO: move elsewhere
+      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
+        const reducer =
+            opr.Toolkit.utils.combineReducers(...instance.getReducers());
+        const dispatch = command => {
+          instance.state = reducer(instance.state, command);
+          instance.renderer.updateDOM();
+        };
+        const commands =
+            opr.Toolkit.utils.createCommandsDispatcher(reducer, dispatch);
+
+        instance.reducer = reducer;
+        instance.dispatch = dispatch;
+        instance.commands = commands;
       }
       return instance;
     }
@@ -128,9 +145,8 @@
       const getPreviousChild = index => {
         if (element.isCompatible(previousNode)) {
           return previousNode.children[index] || null;
-        } else {
-          return null;
         }
+        return null;
       };
       if (description.children) {
         element.children = description.children.map((desc, index) => {
@@ -187,7 +203,7 @@
     static createComponent(
         symbol, props = {}, children = [], previousNode, root) {
       try {
-        const instance = this.createComponentInstance(symbol, props);
+        const instance = this.createComponentFrom(symbol, props);
         const calculatedProps = this.calculateProps(instance, props);
         instance.props = calculatedProps;
         instance.commands = root && root.commands || {};
@@ -199,9 +215,31 @@
         sandbox.props = calculatedProps;
         sandbox.children = children;
 
-        const template = instance.render.call(sandbox);
+        let template;
+        if (instance instanceof opr.Toolkit.Root) {
+          const customElementName = instance.constructor.elementName;
+          if (customElementName) {
+            // TODO: static render after element will have attached
+            template = [
+              customElementName,
+            ];
+          } else {
+            /* eslint-disable max-len */
+            throw new Error(
+                `No custom element name defined in "${
+                                                      instance.constructor.name
+                                                    }", implement "static get elementName()" method.`);
+            /* eslint-enable max-len */
+          }
+        } else {
+          template = instance.render.call(sandbox);
+        }
+
+        opr.Toolkit.assert(
+            template !== undefined,
+            'Invalid undefined template returned when rendering:', instance);
+
         if (template) {
-          // TODO: handle undefined, false, null
           const previousChild = previousNode && previousNode.isComponent() ?
               previousNode.child :
               null;
@@ -220,5 +258,5 @@
     }
   }
 
-  module.exports = ComponentTree;
+  module.exports = VirtualDOM;
 }

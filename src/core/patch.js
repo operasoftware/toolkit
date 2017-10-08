@@ -265,6 +265,7 @@
         }
       });
     }
+
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element,

@@ -1,6 +1,6 @@
-describe('Core Types', () => {
+describe('Nodes', () => {
 
-  const ComponentTree = opr.Toolkit.ComponentTree;
+  const VirtualDOM = opr.Toolkit.VirtualDOM;
 
   const Component = Symbol.for('Component');
 
@@ -13,8 +13,15 @@ describe('Core Types', () => {
   };
 
   const createApp = (container, template) => {
-    const app = new App(container);
-    const node = ComponentTree.createFromTemplate(template);
+    class RootClass extends opr.Toolkit.Root {
+      render() {
+        return template;
+      }
+    }
+    const app = new RootClass();
+    app.container = container;
+
+    const node = VirtualDOM.createFromTemplate(template);
     if (node) {
       app.appendChild(node);
     }
@@ -22,7 +29,7 @@ describe('Core Types', () => {
   };
 
   beforeEach(() => {
-    sinon.stub(ComponentTree, 'createComponentInstance', def => {
+    sinon.stub(VirtualDOM, 'createComponentFrom', def => {
       switch (def) {
         case Component:
           return new ComponentClass();
@@ -31,7 +38,7 @@ describe('Core Types', () => {
   });
 
   afterEach(() => {
-    ComponentTree.createComponentInstance.restore();
+    VirtualDOM.createComponentFrom.restore();
   });
 
   describe('get node type', () => {
@@ -168,7 +175,7 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div'
+        'div',
       ]);
       const element = app.child;
 
@@ -183,9 +190,7 @@ describe('Core Types', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
-        Component
-      ]);
+      const app = createApp(container, [Component]);
       const component = app.child;
 
       // then
@@ -200,9 +205,10 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div', [
-          Component
-        ]
+        'div',
+        [
+          Component,
+        ],
       ]);
       const element = app.child;
       const component = element.children[0];
@@ -220,11 +226,13 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div', [
-          Component, [
-            Component
-          ]
-        ]
+        'div',
+        [
+          Component,
+          [
+            Component,
+          ],
+        ],
       ]);
       const element = app.child;
       const component = element.children[0];
@@ -244,9 +252,10 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div', [
-          'span'
-        ]
+        'div',
+        [
+          'span',
+        ],
       ]);
       const parent = app.child;
       const child = parent.children[0];
@@ -288,7 +297,7 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div'
+        'div',
       ]);
       const element = app.child;
 
@@ -303,9 +312,7 @@ describe('Core Types', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
-        Component
-      ]);
+      const app = createApp(container, [Component]);
       const component = app.child;
 
       // then
@@ -320,9 +327,10 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div', [
-          'span'
-        ]
+        'div',
+        [
+          'span',
+        ],
       ]);
       const span = app.child.children[0];
 
@@ -338,9 +346,10 @@ describe('Core Types', () => {
 
       // when
       const app = createApp(container, [
-        'div', [
-          Component
-        ]
+        'div',
+        [
+          Component,
+        ],
       ]);
       const component = app.child.children[0];
 
@@ -373,11 +382,9 @@ describe('Core Types', () => {
         const element = new opr.Toolkit.VirtualElement();
         const component = new opr.Toolkit.Component()
         element.insertChild(component);
-        element.ref = {
-          dispatchEvent
-        }
+        element.ref = {dispatchEvent};
         const eventName = 'event-name';
-        const data = { view: 'speeddial' };
+        const data = {view: 'speeddial'};
 
         // when
         component.broadcast(eventName, data);
@@ -414,7 +421,7 @@ describe('Core Types', () => {
 
         // given
         const listeners = {
-          onSomeEvent: () => {}
+          onSomeEvent: () => {},
         };
         const Service = class {
           static connect(listeners) {
@@ -473,31 +480,31 @@ describe('Core Types', () => {
 
       const component = new opr.Toolkit.Root();
 
-      methods.forEach(method => {
+      methods.forEach(
+          method => {
 
-        it(`defines ${method}()`, () => {
-          assert.equal(typeof component[method], 'function');
-          assert.equal(component[method](), undefined);
-        })
-      });
+              it(`defines ${method}()`, () => {
+                assert.equal(typeof component[method], 'function');
+                assert.equal(component[method](), undefined);
+              })});
     });
 
     describe('append child', () => {
 
       it('removes the comment', () => {
 
-          // given
-          const component = new opr.Toolkit.Component();
-          const subcomponent = new opr.Toolkit.Component();
+        // given
+        const component = new opr.Toolkit.Component();
+        const subcomponent = new opr.Toolkit.Component();
 
-          // when
-          component.appendChild(subcomponent);
+        // when
+        component.appendChild(subcomponent);
 
-          // then
-          assert.equal(component.comment, null);
-          assert(subcomponent.comment.isComment());
-          assert.equal(subcomponent.placeholder, subcomponent.comment);
-          assert.equal(component.placeholder, subcomponent.placeholder);
+        // then
+        assert.equal(component.comment, null);
+        assert(subcomponent.comment.isComment());
+        assert.equal(subcomponent.placeholder, subcomponent.comment);
+        assert.equal(component.placeholder, subcomponent.placeholder);
       });
 
       describe('establishes the parent-child relation', () => {
@@ -536,32 +543,32 @@ describe('Core Types', () => {
 
       it('removes the parent-child relation', () => {
 
-          // given
-          const component = new opr.Toolkit.Component();
-          const subcomponent = new opr.Toolkit.Component();
-          component.appendChild(subcomponent);
+        // given
+        const component = new opr.Toolkit.Component();
+        const subcomponent = new opr.Toolkit.Component();
+        component.appendChild(subcomponent);
 
-          // when
-          component.removeChild(subcomponent);
+        // when
+        component.removeChild(subcomponent);
 
-          // then
-          assert.equal(component.child, null);
-          assert.equal(subcomponent.parentNode, null);
+        // then
+        assert.equal(component.child, null);
+        assert.equal(subcomponent.parentNode, null);
       });
 
       it('creates the comment', () => {
-          // given
-          const component = new opr.Toolkit.Component();
-          const subcomponent = new opr.Toolkit.Component();
-          component.appendChild(subcomponent);
+        // given
+        const component = new opr.Toolkit.Component();
+        const subcomponent = new opr.Toolkit.Component();
+        component.appendChild(subcomponent);
 
-          // when
-          component.removeChild(subcomponent);
+        // when
+        component.removeChild(subcomponent);
 
-          // then
-          assert(component.comment);
-          assert.equal(component.placeholder, component.comment);
-          assert(component.comment.isComment());
+        // then
+        assert(component.comment);
+        assert.equal(component.placeholder, component.comment);
+        assert(component.comment.isComment());
       });
     });
 
@@ -574,7 +581,7 @@ describe('Core Types', () => {
 
         // when
         const app = createApp(container, [
-          'div'
+          'div',
         ]);
         const element = app.child;
 
@@ -590,9 +597,10 @@ describe('Core Types', () => {
 
         // when
         const app = createApp(container, [
-          Component, [
-            'div'
-          ]
+          Component,
+          [
+            'div',
+          ],
         ]);
         const component = app.child;
         const element = component.child;
@@ -610,11 +618,13 @@ describe('Core Types', () => {
 
         // when
         const app = createApp(container, [
-          Component, [
-            Component, [
-              'div'
-            ]
-          ]
+          Component,
+          [
+            Component,
+            [
+              'div',
+            ],
+          ],
         ]);
         const component = app.child;
         const subcomponent = component.child;
@@ -674,20 +684,21 @@ describe('Core Types', () => {
         assert.equal(component.placeholder, null);
       });
 
-      it('returns a subcomponents comment for a component with a child component', () => {
+      it('returns a subcomponents comment for a component with a child component',
+         () => {
 
-        // given
-        const component = new opr.Toolkit.Component();
-        const subcomponent = new opr.Toolkit.Component();
+           // given
+           const component = new opr.Toolkit.Component();
+           const subcomponent = new opr.Toolkit.Component();
 
-        // when
-        component.appendChild(subcomponent);
+           // when
+           component.appendChild(subcomponent);
 
-        // then
-        assert(component.placeholder);
-        assert(component.placeholder.isComment());
-        assert(component.placeholder, subcomponent.comment);
-      });
+           // then
+           assert(component.placeholder);
+           assert(component.placeholder.isComment());
+           assert(component.placeholder, subcomponent.comment);
+         });
 
       it('returns a comment for a component with no child', () => {
 
@@ -741,7 +752,7 @@ describe('Core Types', () => {
     describe('insert child', () => {
 
       it('inserts an element', () => {
-        
+
         // given
         const element = new opr.Toolkit.VirtualElement();
         const child = new opr.Toolkit.VirtualElement();
@@ -755,7 +766,7 @@ describe('Core Types', () => {
       });
 
       it('inserts a component', () => {
-        
+
         // given
         const element = new opr.Toolkit.VirtualElement();
         const child = new opr.Toolkit.Component();
@@ -769,7 +780,7 @@ describe('Core Types', () => {
       });
 
       it('inserts child at the beginning', () => {
-        
+
         // given
         const element = new opr.Toolkit.VirtualElement();
         const component = new opr.Toolkit.Component();
@@ -798,14 +809,13 @@ describe('Core Types', () => {
         element.insertChild(child, 1);
 
         // then
-        assert.deepEqual(element.children, [
-          firstComponent, child, secondComponent
-        ]);
+        assert.deepEqual(
+            element.children, [firstComponent, child, secondComponent]);
         assert.equal(child.parentNode, element);
       });
 
       it('inserts child at the end', () => {
-        
+
         // given
         const element = new opr.Toolkit.VirtualElement();
         const component = new opr.Toolkit.Component();
@@ -825,7 +835,7 @@ describe('Core Types', () => {
     describe('remove child', () => {
 
       it('removes multiple children', () => {
-        
+
         // given
         const parent = new opr.Toolkit.VirtualElement();
         const component = new opr.Toolkit.Component();

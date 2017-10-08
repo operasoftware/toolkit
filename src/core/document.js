@@ -103,7 +103,7 @@
         this.addClassName(element, className);
       });
       return element;
-    };
+    }
 
     static createComment(placeholder) {
       return document.createComment(placeholder.text);

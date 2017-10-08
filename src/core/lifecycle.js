@@ -1,5 +1,5 @@
 {
-  class ComponentLifecycle {
+  class Lifecycle {
 
     /*
      * onCreated(),
@@ -31,7 +31,7 @@
         case 'element':
           return this.onElementCreated(node);
         default:
-          throw new Error('Unsupported node type:' + node.nodeType);
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
       }
     }
 
@@ -56,7 +56,7 @@
         case 'element':
           return this.onElementAttached(node);
         default:
-          throw new Error('Unsupported node type:' + node.nodeType);
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
       }
     }
 
@@ -92,7 +92,7 @@
         case 'element':
           return this.onElementDestroyed(node);
         default:
-          throw new Error('Unsupported node type:' + node.nodeType);
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
       }
     }
 
@@ -117,7 +117,7 @@
         case 'element':
           return this.onElementDetached(node);
         default:
-          throw new Error('Unsupported node type:' + node.nodeType);
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
       }
     }
 
@@ -179,5 +179,5 @@
     }
   }
 
-  module.exports = ComponentLifecycle;
+  module.exports = Lifecycle;
 }

@@ -1,7 +1,7 @@
 describe('Diff => calculate patches', () => {
 
   const VirtualNode = opr.Toolkit.VirtualNode;
-  const ComponentTree = opr.Toolkit.ComponentTree;
+  const VirtualDOM = opr.Toolkit.VirtualDOM;
   const Diff = opr.Toolkit.Diff;
   const Patch = opr.Toolkit.Patch;
 
@@ -9,51 +9,90 @@ describe('Diff => calculate patches', () => {
   const Subcomponent = Symbol.for('Subcomponent');
   const OtherComponent = Symbol.for('OtherComponent');
 
-  const ComponentClass = class extends opr.Toolkit.Component {
+  const ComponentWithoutKey = Symbol.for('ComponentWithoutKey');
+  const ComponentWithKey = Symbol.for('ComponentWithKey');
+
+  class ComponentClass extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends opr.Toolkit.Component {
-    render() {
-      return null;
-    }
-  };
-  const OtherComponentClass = class extends opr.Toolkit.Component {
+
+  class SubcomponentClass extends opr.Toolkit.Component {
     render() {
       return null;
     }
   };
 
-  const createDummyInstance = def => {
-    switch (def) {
-      case Component:
-        return new ComponentClass();
-      case Subcomponent:
-        return new SubcomponentClass();
-      case OtherComponent:
-        return new OtherComponentClass();
+  class OtherComponentClass extends opr.Toolkit.Component {
+    render() {
+      return null;
     }
   };
+
+  class ComponentWithoutKeyClass extends opr.Toolkit.Component {
+    render() {
+      return [
+        'span',
+      ];
+    }
+  }
+  class ComponentWithKeyClass extends opr.Toolkit.Component {
+
+    getKey() {
+      return this.props.name;
+    }
+
+    render() {
+      return [
+        'span',
+      ];
+    }
+  }
+
+  const createDummyInstance = (symbol, props) => {
+    const getComponentClass = () => {
+      switch (symbol) {
+        case Component:
+          return ComponentClass;
+        case Subcomponent:
+          return SubcomponentClass;
+        case OtherComponent:
+          return OtherComponentClass;
+        case ComponentWithoutKey:
+          return ComponentWithoutKeyClass;
+        case ComponentWithKey:
+          return ComponentWithKeyClass;
+      }
+    };
+    const Clazz = getComponentClass();
+    return VirtualDOM.createComponentInstance(Clazz, props);
+  };
+
+  beforeEach(() => {
+    sinon.stub(VirtualDOM, 'createComponentFrom', createDummyInstance);
+  });
+
+  afterEach(() => {
+    VirtualDOM.createComponentFrom.restore();
+  });
 
   describe('=> on an Element', () => {
 
     const createTrees = (...templates) => {
       let currentTemplate;
-      return templates.map(
-          template => ComponentTree.createFromTemplate(template));
+      return templates.map(template => VirtualDOM.createFromTemplate(template));
     };
 
     it('adds an attribute', () => {
 
       // given
-      const template = [
-        'input', {}
-      ];
+      const template = ['input', {}];
       const nextTemplate = [
-        'input', {
-          value: 'next'
-        }
+        'input',
+        {
+          value: 'next',
+        },
       ];
 
       // when
@@ -71,15 +110,12 @@ describe('Diff => calculate patches', () => {
     it('replaces an attribute', () => {
 
       // given
-      const template = [
-        'span', {
-          name: 'prev'
-        }
-      ];
+      const template = ['span', {name: 'prev'}];
       const nextTemplate = [
-        'span', {
-          name: 'next'
-        }
+        'span',
+        {
+          name: 'next',
+        },
       ];
 
       // when
@@ -97,13 +133,10 @@ describe('Diff => calculate patches', () => {
     it('removes an attribute', () => {
 
       // given
-      const template = [
-        'span', {
-          name: 'prev'
-        }
-      ];
+      const template = ['span', {name: 'prev'}];
       const nextTemplate = [
-        'span', {}
+        'span',
+        {},
       ];
 
       // when
@@ -120,16 +153,8 @@ describe('Diff => calculate patches', () => {
     it('adds a data attribute', () => {
 
       // given
-      const template = [
-        'input', {}
-      ];
-      const nextTemplate = [
-        'input', {
-          dataset: {
-            reactorId: 666
-          }
-        }
-      ];
+      const template = ['input', {}];
+      const nextTemplate = ['input', {dataset: {reactorId: 666}}];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -146,14 +171,16 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           dataset: {
             customAttrName: 'foo',
           },
         },
       ];
       const nextTemplate = [
-        'div', {
+        'div',
+        {
           dataset: {
             customAttrName: ['foo', 'bar'],
           },
@@ -175,15 +202,14 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           dataset: {
             id: 42,
           },
         },
       ];
-      const nextTemplate = [
-        'div'
-      ];
+      const nextTemplate = ['div'];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -198,16 +224,8 @@ describe('Diff => calculate patches', () => {
     it('adds a style property', () => {
 
       // given
-      const template = [
-        'input', {}
-      ];
-      const nextTemplate = [
-        'input', {
-          style: {
-            width: [100, 'px']
-          }
-        }
-      ];
+      const template = ['input', {}];
+      const nextTemplate = ['input', {style: {width: [100, 'px']}}];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -224,14 +242,16 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           style: {
             height: '100%',
           },
         },
       ];
       const nextTemplate = [
-        'div', {
+        'div',
+        {
           style: {
             height: '50%',
           },
@@ -253,15 +273,14 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           style: {
             animationDelay: '.666s',
           },
         },
       ];
-      const nextTemplate = [
-        'div'
-      ];
+      const nextTemplate = ['div'];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -277,12 +296,14 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           class: 'one',
         },
       ];
       const nextTemplate = [
-        'div', {
+        'div',
+        {
           class: 'one two',
         },
       ];
@@ -301,13 +322,14 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'div', {
+        'div',
+        {
           class: 'some-name',
         },
       ];
       const nextTemplate = [
-        'div', {
-        },
+        'div',
+        {},
       ];
 
       // when
@@ -325,14 +347,8 @@ describe('Diff => calculate patches', () => {
       // given
       const listener = () => {};
 
-      const template = [
-        'span', {}
-      ];
-      const nextTemplate = [
-        'span', {
-          onClick: listener
-        }
-      ];
+      const template = ['span', {}];
+      const nextTemplate = ['span', {onClick: listener}];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -352,16 +368,8 @@ describe('Diff => calculate patches', () => {
       const listener = () => {};
       const anotherListener = () => {};
 
-      const template = [
-        'span', {
-          onClick: listener
-        }
-      ];
-      const nextTemplate = [
-        'span', {
-          onClick: anotherListener
-        }
-      ];
+      const template = ['span', {onClick: listener}];
+      const nextTemplate = ['span', {onClick: anotherListener}];
 
       // when
       const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -382,12 +390,14 @@ describe('Diff => calculate patches', () => {
       const listener = () => {};
 
       const template = [
-        'span', {
-          onClick: listener
-        }
+        'span',
+        {
+          onClick: listener,
+        },
       ];
       const nextTemplate = [
-        'span', {}
+        'span',
+        {},
       ];
 
       // when
@@ -406,16 +416,17 @@ describe('Diff => calculate patches', () => {
 
       // given
       const metadata = {
-        a: 'some-value'
+        a: 'some-value',
       };
 
       const template = [
-        'span'
+        'span',
       ];
       const nextTemplate = [
-        'span', {
+        'span',
+        {
           metadata,
-        }
+        },
       ];
 
       // when
@@ -433,17 +444,16 @@ describe('Diff => calculate patches', () => {
     it('removes metadata', () => {
 
       // given
-      const metadata = {
-        a: 'some-value'
-      };
+      const metadata = {a: 'some-value'};
 
       const template = [
-        'span', {
+        'span',
+        {
           metadata,
-        }
+        },
       ];
       const nextTemplate = [
-        'span'
+        'span',
       ];
 
       // when
@@ -461,18 +471,20 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'span', {
+        'span',
+        {
           metadata: {
-            a: 'xxx'
+            a: 'xxx',
           },
-        }
+        },
       ];
       const nextTemplate = [
-        'span', {
+        'span',
+        {
           metadata: {
-            a: 'yyy'
-          }
-        }
+            a: 'yyy',
+          },
+        },
       ];
 
       // when
@@ -491,20 +503,22 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'span', {
+        'span',
+        {
           metadata: {
             a: 'xxx',
             c: 'before',
           },
-        }
+        },
       ];
       const nextTemplate = [
-        'span', {
+        'span',
+        {
           metadata: {
             b: 'yyy',
             c: 'after',
-          }
-        }
+          },
+        },
       ];
 
       // when
@@ -568,30 +582,21 @@ describe('Diff => calculate patches', () => {
       };
 
       const createChildren = ({keys}) => ({
-        from: (...items) => items.map(name => [
-          name, {
-            key: (keys === true ? name : undefined)
-          }
-        ])
+        from: (...items) => items.map(
+            name => [name, {key: (keys === true ? name : undefined)}])
       });
 
       describe('=> with keys', () => {
 
         const getChildren = (...items) => {
-          return createChildren({
-            keys: true
-          }).from(...items);
+          return createChildren({keys: true}).from(...items);
         };
 
         it('inserts element at the beginning', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('X', 'div', 'span')
-          ];
+          const template = ['section', ...getChildren('div', 'span')];
+          const nextTemplate = ['section', ...getChildren('X', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -605,12 +610,8 @@ describe('Diff => calculate patches', () => {
         it('inserts element at the end', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('div', 'span', 'X')
-          ];
+          const template = ['section', ...getChildren('div', 'span')];
+          const nextTemplate = ['section', ...getChildren('div', 'span', 'X')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -624,12 +625,10 @@ describe('Diff => calculate patches', () => {
         it('moves an element up', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'X', 'p', 'div', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'p', 'div', 'X', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'X', 'p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -643,12 +642,10 @@ describe('Diff => calculate patches', () => {
         it('moves an element down', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'X', 'p', 'div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'X', 'p', 'div', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'p', 'div', 'X', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -662,12 +659,10 @@ describe('Diff => calculate patches', () => {
         it('moves an element to the beginning', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'p', 'div', 'span', 'X')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('X', 'section', 'p', 'div', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'p', 'div', 'span', 'X')];
+          const nextTemplate =
+              ['section', ...getChildren('X', 'section', 'p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -681,12 +676,10 @@ describe('Diff => calculate patches', () => {
         it('moves an element to the end', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('X', 'section', 'p', 'div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'p', 'div', 'span', 'X')
-          ];
+          const template =
+              ['section', ...getChildren('X', 'section', 'p', 'div', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'p', 'div', 'span', 'X')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -700,12 +693,10 @@ describe('Diff => calculate patches', () => {
         it('swaps two elements', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'X', 'div', 'Y', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'Y', 'div', 'X', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'X', 'div', 'Y', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'Y', 'div', 'X', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -721,10 +712,12 @@ describe('Diff => calculate patches', () => {
 
           // given
           const template = [
-            'section', ...getChildren('section', 'Z', 'p', 'X', 'div', 'Y', 'span')
+            'section',
+            ...getChildren('section', 'Z', 'p', 'X', 'div', 'Y', 'span')
           ];
           const nextTemplate = [
-            'section', ...getChildren('section', 'X', 'p', 'Y', 'div', 'Z', 'span')
+            'section',
+            ...getChildren('section', 'X', 'p', 'Y', 'div', 'Z', 'span')
           ];
 
           // when
@@ -741,12 +734,10 @@ describe('Diff => calculate patches', () => {
         it('removes an element', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'p', 'div', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'p', 'div', 'X', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -760,12 +751,10 @@ describe('Diff => calculate patches', () => {
         it('inserts and removes elements', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('section', 'p', 'div', 'X', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('section', 'Y', 'p', 'div', 'span')
-          ];
+          const template =
+              ['section', ...getChildren('section', 'p', 'div', 'X', 'span')];
+          const nextTemplate =
+              ['section', ...getChildren('section', 'Y', 'p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -800,50 +789,6 @@ describe('Diff => calculate patches', () => {
         });
 
         describe('uses the key provided by the component', () => {
-
-          const ComponentWithoutKey = Symbol.for('ComponentWithoutKey');
-          const ComponentWithKey = Symbol.for('ComponentWithKey');
-
-          class ComponentWithoutKeyClass extends opr.Toolkit.Component {
-            render() {
-              return [
-                'span',
-              ];
-            }
-          };
-          class ComponentWithKeyClass extends opr.Toolkit.Component {
-
-            getKey() {
-              return this.props.name;
-            }
-
-            render() {
-              return [
-                'span',
-              ];
-            }
-          };
-
-          const loader = global.loader;
-
-          beforeEach(() => {
-            global.loader = {
-              get: symbol => {
-                switch (symbol) {
-                  case ComponentWithoutKey:
-                    return ComponentWithoutKeyClass;
-                  case ComponentWithKey:
-                    return ComponentWithKeyClass;
-                  default:
-                    throw new Error('Unknown definition: ' + symbol);
-                }
-              }
-            };
-          });
-
-          afterEach(() => {
-            global.loader = loader;
-          });
 
           it('supports single level inference', () => {
 
@@ -893,23 +838,14 @@ describe('Diff => calculate patches', () => {
 
       describe('=> without keys', () => {
 
-        const getChildren = (...items) => createChildren({
-          keys: false
-        }).from(...items);
-
-        beforeEach(() => {
-          ComponentTree.createComponentInstance = createDummyInstance;
-        });
+        const getChildren = (...items) =>
+            createChildren({keys: false}).from(...items);
 
         it('inserts an element', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('p', 'div')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('p', 'div', 'span')
-          ];
+          const template = ['section', ...getChildren('p', 'div')];
+          const nextTemplate = ['section', ...getChildren('p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -923,12 +859,8 @@ describe('Diff => calculate patches', () => {
         it('removes an element', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('p', 'div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('p', 'div')
-          ];
+          const template = ['section', ...getChildren('p', 'div', 'span')];
+          const nextTemplate = ['section', ...getChildren('p', 'div')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -942,12 +874,8 @@ describe('Diff => calculate patches', () => {
         it('replaces reordered elements', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('p', 'div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('div', 'span', 'p')
-          ];
+          const template = ['section', ...getChildren('p', 'div', 'span')];
+          const nextTemplate = ['section', ...getChildren('div', 'span', 'p')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -969,12 +897,8 @@ describe('Diff => calculate patches', () => {
         it('replaces and inserts elements', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('p', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('p', 'div', 'span')
-          ];
+          const template = ['section', ...getChildren('p', 'span')];
+          const nextTemplate = ['section', ...getChildren('p', 'div', 'span')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -990,12 +914,8 @@ describe('Diff => calculate patches', () => {
         it('replaces and removes elements', () => {
 
           // given
-          const template = [
-            'section', ...getChildren('p', 'div', 'span')
-          ];
-          const nextTemplate = [
-            'section', ...getChildren('div', 'div')
-          ];
+          const template = ['section', ...getChildren('p', 'div', 'span')];
+          const nextTemplate = ['section', ...getChildren('div', 'div')];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1013,12 +933,8 @@ describe('Diff => calculate patches', () => {
           it('with an element', () => {
 
             // given
-            const template = [
-              'section', ...getChildren('p', 'div', 'span')
-            ];
-            const nextTemplate = [
-              'section', ...getChildren('p', 'div', 'a')
-            ];
+            const template = ['section', ...getChildren('p', 'div', 'span')];
+            const nextTemplate = ['section', ...getChildren('p', 'div', 'a')];
 
             // when
             const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1033,12 +949,8 @@ describe('Diff => calculate patches', () => {
           it('with a component', () => {
 
             // given
-            const template = [
-              'section', ...getChildren('div', 'span')
-            ];
-            const nextTemplate = [
-              'section', ...getChildren('div', Component)
-            ];
+            const template = ['section', ...getChildren('div', 'span')];
+            const nextTemplate = ['section', ...getChildren('div', Component)];
 
             // when
             const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1056,12 +968,10 @@ describe('Diff => calculate patches', () => {
           it('with an element', () => {
 
             // given
-            const template = [
-              'section', ...getChildren('p', 'div', 'span', Component)
-            ];
-            const nextTemplate = [
-              'section', ...getChildren('p', 'div', 'span', 'a')
-            ];
+            const template =
+                ['section', ...getChildren('p', 'div', 'span', Component)];
+            const nextTemplate =
+                ['section', ...getChildren('p', 'div', 'span', 'a')];
 
             // when
             const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1076,12 +986,10 @@ describe('Diff => calculate patches', () => {
           it('with a component', () => {
 
             // given
-            const template = [
-              'section', ...getChildren('div', Component, 'span')
-            ];
-            const nextTemplate = [
-              'section', ...getChildren('div', Subcomponent, 'span')
-            ];
+            const template =
+                ['section', ...getChildren('div', Component, 'span')];
+            const nextTemplate =
+                ['section', ...getChildren('div', Subcomponent, 'span')];
 
             // when
             const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1100,14 +1008,8 @@ describe('Diff => calculate patches', () => {
         it('skips a component', () => {
 
           // given
-          const props = {
-            value: 'universal'
-          };
-          const template = [
-            'section', [
-              Component, props
-            ]
-          ];
+          const props = {value: 'universal'};
+          const template = ['section', [Component, props]];
 
           // when
           const [tree, nextTree] = createTrees(template, template);
@@ -1120,23 +1022,11 @@ describe('Diff => calculate patches', () => {
         it('updates a component', () => {
 
           // given
-          const props = {
-            value: 'old'
-          };
-          const template = [
-            'section', [
-              Component, props
-            ]
-          ];
+          const props = {value: 'old'};
+          const template = ['section', [Component, props]];
 
-          const nextProps = {
-            value: 'new'
-          };
-          const nextTemplate = [
-            'section', [
-              Component, nextProps
-            ]
-          ];
+          const nextProps = {value: 'new'};
+          const nextTemplate = ['section', [Component, nextProps]];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1150,15 +1040,9 @@ describe('Diff => calculate patches', () => {
         it('adds an attribute', () => {
 
           // given
-          const template = [
-            'section'
-          ];
+          const template = ['section'];
 
-          const nextTemplate = [
-            'section', {
-              name: 'value'
-            }
-          ];
+          const nextTemplate = ['section', {name: 'value'}];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1176,15 +1060,9 @@ describe('Diff => calculate patches', () => {
           // given
           const onClick = () => {};
 
-          const template = [
-            'section'
-          ];
+          const template = ['section'];
 
-          const nextTemplate = [
-            'section', {
-              onClick
-            }
-          ];
+          const nextTemplate = ['section', {onClick}];
 
           // when
           const [tree, nextTree] = createTrees(template, nextTemplate);
@@ -1202,13 +1080,12 @@ describe('Diff => calculate patches', () => {
     describe('set text content', () => {
 
       it('sets text on an empty element', () => {
-          
-        const template = [
-          'section'
-        ];
+
+        const template = ['section'];
 
         const nextTemplate = [
-          'section', 'some text',
+          'section',
+          'some text',
         ];
 
         // when
@@ -1221,13 +1098,15 @@ describe('Diff => calculate patches', () => {
       });
 
       it('replaces existing text content', () => {
-        
+
         const template = [
-          'section', 'some text',
+          'section',
+          'some text',
         ];
 
         const nextTemplate = [
-          'section', 'another text',
+          'section',
+          'another text',
         ];
 
         // when
@@ -1241,14 +1120,11 @@ describe('Diff => calculate patches', () => {
 
       it('replaces existing child nodes', () => {
 
-        const template = [
-          'section', [
-            'div'
-          ]
-        ];
+        const template = ['section', ['div']];
 
         const nextTemplate = [
-          'section', 'some text',
+          'section',
+          'some text',
         ];
 
         // when
@@ -1272,7 +1148,8 @@ describe('Diff => calculate patches', () => {
       it('removes existing text content', () => {
 
         const template = [
-          'section', 'some text',
+          'section',
+          'some text',
         ];
 
         const nextTemplate = [
@@ -1290,13 +1167,15 @@ describe('Diff => calculate patches', () => {
       it('removes text content before appending child nodes', () => {
 
         const template = [
-          'section', 'some text',
+          'section',
+          'some text',
         ];
 
         const nextTemplate = [
-          'section', [
-            'div'
-          ]
+          'section',
+          [
+            'div',
+          ],
         ];
 
         // when
@@ -1319,14 +1198,10 @@ describe('Diff => calculate patches', () => {
 
     const createComponents = (props, children, nextProps, nextChildren) => {
       return [
-        ComponentTree.createComponent(Component, props, children),
-        ComponentTree.createComponent(Component, nextProps, nextChildren)
+        VirtualDOM.createComponent(Component, props, children),
+        VirtualDOM.createComponent(Component, nextProps, nextChildren)
       ];
     };
-
-    beforeEach(() => {
-      ComponentTree.createComponentInstance = createDummyInstance;
-    });
 
     const assertComponentUpdate = (patch, component, props) => {
       assert.equal(patch.type, Patch.Type.UPDATE_COMPONENT);
@@ -1340,15 +1215,21 @@ describe('Diff => calculate patches', () => {
       const props = {};
       const children = [];
 
-      const nextProps = { child: true };
+      const nextProps = {
+        child: true,
+      };
       const nextChildren = [
-        [ 'div' ]
+        [
+          'div',
+        ],
       ];
 
       // when
       const [component, nextComponent] = createComponents(
-        props, children,
-        nextProps, nextChildren,
+          props,
+          children,
+          nextProps,
+          nextChildren,
       );
 
       const patches = Diff.calculate(component, nextComponent);
@@ -1368,9 +1249,13 @@ describe('Diff => calculate patches', () => {
     it('removes an element', () => {
 
       // given
-      const props = { child: true };
+      const props = {
+        child: true,
+      };
       const children = [
-        [ 'div' ]
+        [
+          'div',
+        ],
       ];
 
       const nextProps = {};
@@ -1378,8 +1263,10 @@ describe('Diff => calculate patches', () => {
 
       // when
       const [component, nextComponent] = createComponents(
-        props, children,
-        nextProps, nextChildren,
+          props,
+          children,
+          nextProps,
+          nextChildren,
       );
 
       const patches = Diff.calculate(component, nextComponent);
@@ -1393,7 +1280,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].element.isElement());
-      assert.equal(patches[1].element.name, 'div');      
+      assert.equal(patches[1].element.name, 'div');
     });
 
     it('adds a component', () => {
@@ -1402,15 +1289,15 @@ describe('Diff => calculate patches', () => {
       const props = {};
       const children = [];
 
-      const nextProps = { child: true };
-      const nextChildren = [
-        [ Subcomponent ]
-      ];
+      const nextProps = {child: true};
+      const nextChildren = [[Subcomponent]];
 
       // when
       const [component, nextComponent] = createComponents(
-        props, children,
-        nextProps, nextChildren,
+          props,
+          children,
+          nextProps,
+          nextChildren,
       );
 
       const patches = Diff.calculate(component, nextComponent);
@@ -1430,18 +1317,18 @@ describe('Diff => calculate patches', () => {
     it('removes a component', () => {
 
       // given
-      const props = { child: true };
-      const children = [
-        [ Subcomponent ]
-      ];
+      const props = {child: true};
+      const children = [[Subcomponent]];
 
       const nextProps = {};
       const nextChildren = [];
 
       // when
       const [component, nextComponent] = createComponents(
-        props, children,
-        nextProps, nextChildren,
+          props,
+          children,
+          nextProps,
+          nextChildren,
       );
 
       const patches = Diff.calculate(component, nextComponent);
@@ -1455,7 +1342,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].component.isComponent());
-      assert.equal(patches[1].component.constructor, SubcomponentClass);      
+      assert.equal(patches[1].component.constructor, SubcomponentClass);
     });
 
     describe('replaces a child element', () => {
@@ -1463,20 +1350,30 @@ describe('Diff => calculate patches', () => {
       it('with an element', () => {
 
         // given
-        const props = { child: 'div' };
+        const props = {
+          child: 'div',
+        };
         const children = [
-          [ 'div' ]
+          [
+            'div',
+          ],
         ];
 
-        const nextProps = { child: 'span' };
+        const nextProps = {
+          child: 'span',
+        };
         const nextChildren = [
-          [ 'span' ]
+          [
+            'span',
+          ],
         ];
 
         // when
         const [component, nextComponent] = createComponents(
-          props, children,
-          nextProps, nextChildren,
+            props,
+            children,
+            nextProps,
+            nextChildren,
         );
 
         const patches = Diff.calculate(component, nextComponent);
@@ -1502,20 +1399,30 @@ describe('Diff => calculate patches', () => {
       it('with a component', () => {
 
         // given
-        const props = { child: 'div' };
+        const props = {
+          child: 'div',
+        };
         const children = [
-          [ 'div' ]
+          [
+            'div',
+          ],
         ];
 
-        const nextProps = { child: 'component' };
+        const nextProps = {
+          child: 'component',
+        };
         const nextChildren = [
-          [ Subcomponent ]
+          [
+            Subcomponent,
+          ],
         ];
 
         // when
         const [component, nextComponent] = createComponents(
-          props, children,
-          nextProps, nextChildren,
+            props,
+            children,
+            nextProps,
+            nextChildren,
         );
 
         const patches = Diff.calculate(component, nextComponent);
@@ -1539,26 +1446,34 @@ describe('Diff => calculate patches', () => {
       });
 
     });
-    
+
     describe('replaces a child component', () => {
-      
+
       it('with an element', () => {
 
         // given
-        const props = { child: 'subcomponent' };
+        const props = {child: 'subcomponent'};
         const children = [
-          [ Subcomponent ]
+          [
+            Subcomponent,
+          ],
         ];
 
-        const nextProps = { child: 'div' };
+        const nextProps = {
+          child: 'div',
+        };
         const nextChildren = [
-          [ 'div' ]
+          [
+            'div',
+          ],
         ];
 
         // when
         const [component, nextComponent] = createComponents(
-          props, children,
-          nextProps, nextChildren,
+            props,
+            children,
+            nextProps,
+            nextChildren,
         );
 
         const patches = Diff.calculate(component, nextComponent);
@@ -1584,20 +1499,30 @@ describe('Diff => calculate patches', () => {
       it('with a component', () => {
 
         // given
-        const props = { child: 'subcomponent' };
+        const props = {
+          child: 'subcomponent',
+        };
         const children = [
-          [ Subcomponent ]
+          [
+            Subcomponent,
+          ],
         ];
 
-        const nextProps = { child: 'other-component' };
+        const nextProps = {
+          child: 'other-component',
+        };
         const nextChildren = [
-          [ OtherComponent ]
+          [
+            OtherComponent,
+          ],
         ];
 
         // when
         const [component, nextComponent] = createComponents(
-          props, children,
-          nextProps, nextChildren,
+            props,
+            children,
+            nextProps,
+            nextChildren,
         );
 
         const patches = Diff.calculate(component, nextComponent);

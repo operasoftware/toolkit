@@ -176,8 +176,7 @@
         onStylesLoaded: () =>
             this.props.onLoad(shadow.querySelector(':host > slot')),
       };
-      const update =
-          opr.Toolkit.render(props => this.render(props), data, shadow);
+      opr.Toolkit.render(props => this.render(props), shadow, data);
     }
 
     disconnectedCallback() {
@@ -205,22 +204,12 @@
       if (!ElementClass) {
         ElementClass = class extends ComponentElement {};
         customElements.define(this.elementName, ElementClass);
-        this.elementClass = ElementClass;
-      } else {
-        if (this.elementClass !== ElementClass) {
-          console.error(
-              `Element name: ${this.elementName} is already registered by:`,
-              ElementClass.component);
-          throw new Error(
-              `Duplicate '${this.elementName}' element declaration!`);
-        }
+        this.prototype.elementClass = ElementClass;
       }
     }
 
-    constructor(container, dispatch) {
-      super();
-      this.container = container;
-      this.dispatch = dispatch;
+    static styles() {
+      return [];
     }
 
     get parentElement() {

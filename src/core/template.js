@@ -115,9 +115,8 @@
             return Type.NULL;
           } else if (Array.isArray(item)) {
             return Type.ELEMENT;
-          } else {
-            return Type.PROPS;
           }
+          return Type.PROPS;
       }
     }
 
@@ -227,7 +226,7 @@
               const error = new Error(
                   `Invalid parameter type "${types[i]}" at index ${i}`);
               console.error(
-                  'Invalid parameter:', template[i], ', expecting ' + expected);
+                  'Invalid parameter:', template[i], ', expecting:', expected);
               return {
                 error,
                 types,
@@ -237,17 +236,15 @@
           return {
             types,
           };
-        default:
-          const error =
-              new Error(createErrorDescription(types[1], 1, validParamTypes));
-          console.error(
-              'Invalid parameter', template[1],
-              ', expecting:', validParamTypes);
-          return {
-            error,
-            types,
-          };
       }
+      const error =
+          new Error(createErrorDescription(types[1], 1, validParamTypes));
+      console.error(
+          'Invalid parameter', template[1], ', expecting:', validParamTypes);
+      return {
+        error,
+        types,
+      };
     }
 
     static describe(template) {

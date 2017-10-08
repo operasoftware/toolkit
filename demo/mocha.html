@@ -14,14 +14,12 @@
   <script src="../test/setup/assert.js"></script>
   <script src="../test/setup/sinon.js"></script>
   <script src="../test/setup/mocha-module-loader.js"></script>
+  <script src="/src/debug.js"></script>
   <script>
     (async () => {
       loader.prefix('core', '../src/')
       loader.prefix('test', '../')
-      const core = await loader.require('core/toolkit');
-      global.opr = {
-        Toolkit: await core.init()
-      };
+      await loadToolkit();
       mocha.setup('bdd');
 
       global.suppressConsoleErrors = () => {
@@ -37,13 +35,11 @@
         });
       };
 
-      await loader.require('test/app.test');
-      await loader.require('test/component-lifecycle.test');
-      await loader.require('test/component-tree.test');
-      await loader.require('test/core-types.test');
       await loader.require('test/diff-calculate.test');
       await loader.require('test/diff-deep-equal.test');
       await loader.require('test/document.test');
+      await loader.require('test/lifecycle.test');
+      await loader.require('test/nodes.test');
       await loader.require('test/patch-component.test');
       await loader.require('test/patch-element.test');
       await loader.require('test/reconciler.test');
@@ -52,7 +48,9 @@
       await loader.require('test/template-get-item-type.test');
       await loader.require('test/template-get-value.test');
       await loader.require('test/template-validate.test');
+      await loader.require('test/toolkit.test');
       await loader.require('test/utils.test');
+      await loader.require('test/virtual-dom.test');
       await loader.require('test/virtual-element-create.test');
       await loader.require('test/virtual-element.test');
       

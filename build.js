@@ -28,25 +28,27 @@ const package = loadJSON('./package.json');
 const ModuleLoader = loadModule('core/loader');
 
 const Consts = normalizeModule('core/consts');
-const CoreTypes = normalizeModule('core/core-types');
-const App = normalizeModule('core/app');
-const Sandbox = normalizeModule('core/sandbox');
-const Template = normalizeModule('core/template');
-const ComponentTree = normalizeModule('core/component-tree');
-const ComponentLifecycle = normalizeModule('core/component-lifecycle');
+const Nodes = normalizeModule('core/nodes');
+
 const Diff = normalizeModule('core/diff');
+const Document = normalizeModule('core/document');
+const Lifecycle = normalizeModule('core/lifecycle');
 const Patch = normalizeModule('core/patch');
 const Reconciler = normalizeModule('core/reconciler');
-const Document = normalizeModule('core/document');
+const Renderer = normalizeModule('core/renderer');
+const Sandbox = normalizeModule('core/sandbox');
 const Service = normalizeModule('core/service');
+const Template = normalizeModule('core/template');
+const VirtualDOM = normalizeModule('core/virtual-dom');
 const utils = normalizeModule('core/utils');
 
+const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 const release = merge(
-                    ModuleLoader, Consts, CoreTypes, Service, App, Sandbox,
-                    Template, ComponentTree, ComponentLifecycle, Diff, Patch,
-                    Reconciler, Document, utils, Release)
+                    ModuleLoader, Consts, Nodes, Diff, Document, Lifecycle,
+                    Patch, Reconciler, Renderer, Sandbox, Service, Template,
+                    VirtualDOM, utils, Toolkit, Release)
                     .replace(/\n\n\n/g, '\n\n');
 
 fs.writeFileSync('./dist/toolkit.release.js', release, 'utf8');

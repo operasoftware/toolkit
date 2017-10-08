@@ -617,8 +617,7 @@
         onStylesLoaded: () =>
             this.props.onLoad(shadow.querySelector(':host > slot')),
       };
-      const update =
-          opr.Toolkit.render(props => this.render(props), data, shadow);
+      opr.Toolkit.render(props => this.render(props), shadow, data);
     }
 
     disconnectedCallback() {
@@ -646,22 +645,12 @@
       if (!ElementClass) {
         ElementClass = class extends ComponentElement {};
         customElements.define(this.elementName, ElementClass);
-        this.elementClass = ElementClass;
-      } else {
-        if (this.elementClass !== ElementClass) {
-          console.error(
-              `Element name: ${this.elementName} is already registered by:`,
-              ElementClass.component);
-          throw new Error(
-              `Duplicate '${this.elementName}' element declaration!`);
-        }
+        this.prototype.elementClass = ElementClass;
       }
     }
 
-    constructor(container, dispatch) {
-      super();
-      this.container = container;
-      this.dispatch = dispatch;
+    static styles() {
+      return [];
     }
 
     get parentElement() {
@@ -793,1054 +782,7 @@
     Comment,
   };
 
-  loader.define('core/core-types', CoreTypes);
-}
-
-{
-  class Service {
-
-    static validate(listeners) {
-      if (opr.Toolkit.isDebug()) {
-        /* eslint-disable max-len */
-        const keys = Object.keys(listeners);
-        opr.Toolkit.assert(
-            this.events instanceof Array,
-            `Service "${
-                        this.name
-                      }" does not provide information about valid events, implement "static get events() { return ['foo', 'bar']; }"`);
-        opr.Toolkit.assert(
-            this.events.length > 0,
-            `Service "${
-                        this.name
-                      }" returned an empty list of valid events, the list returned from "static get event()" must contain at least one event name`);
-        const unsupportedKeys =
-            Object.keys(listeners).filter(key => !this.events.includes(key));
-        for (const unsupportedKey of unsupportedKeys) {
-          opr.Toolkit.warn(
-              `Unsupported listener specified "${
-                                                 unsupportedKey
-                                               }" when connecting to ${
-                                                                       this.name
-                                                                     }`);
-        }
-        const supportedKeys = this.events.filter(event => keys.includes(event));
-        opr.Toolkit.assert(
-            supportedKeys.length > 0,
-            `No valid listener specified when connecting to ${
-                                                              this.name
-                                                            }, use one of [${
-                                                                             this.events
-                                                                                 .join(
-                                                                                     ', ')
-                                                                           }]`);
-        for (const supportedKey of supportedKeys) {
-          opr.Toolkit.assert(
-              listeners[supportedKey] instanceof Function,
-              `Specified listener "${supportedKey}" for ${
-                                                          this.name
-                                                        } is not a function`);
-        }
-        /* eslint-enable max-len */
-      }
-      return this.events.filter(event => listeners[event] instanceof Function);
-    }
-  }
-
-  loader.define('core/service', Service);
-}
-
-{
-  const ID = Symbol('id');
-
-  class App {
-
-    constructor(path, settings) {
-      this[ID] = opr.Toolkit.utils.createUUID();
-      this.symbol = this.getSymbol(path);
-      this.settings = settings;
-      this.preloaded = false;
-      this.state = null;
-      this.plugins = new Map();
-    }
-
-    getSymbol(path) {
-      const type = typeof path;
-      switch (type) {
-        case 'symbol':
-          return path;
-        case 'string':
-          return Symbol.for(path);
-        default:
-          throw new Error(`Invalid path: ${path}`);
-      }
-    }
-
-    get id() {
-      return this[ID];
-    }
-
-    async preload() {
-      if (this.preloaded) {
-        return;
-      }
-      await loader.foreload(this.symbol);
-      this.preloaded = true;
-    }
-
-    getBundleName() {
-      for (const bundle of this.settings.bundles) {
-        if (bundle.root === String(this.symbol).slice(7, -1)) {
-          return bundle.name;
-        }
-      }
-      return null;
-    }
-
-    async loadBundle(bundle) {
-      await loader.require(`${this.settings.bundleRootPath}/${bundle}`);
-      this.preloaded = true;
-    }
-
-    install(plugin) {
-      if (this.plugins.get(plugin.id)) {
-        console.warn(`Plugin "${id}" is already installed!`);
-        return;
-      }
-      const uninstall = plugin.install({
-        container: this.container,
-        state: this.state,
-      });
-      this.plugins.set(plugin.id, {
-        ref: plugin,
-        uninstall,
-      });
-    }
-
-    createRoot(RootClass, container, dispatch) {
-      opr.Toolkit.assert(
-          RootClass.prototype instanceof opr.Toolkit.Root,
-          'Root component class', RootClass.name,
-          'must extends opr.Toolkit.Root');
-
-      const root = new RootClass(container, dispatch);
-
-      this.reducer = opr.Toolkit.utils.combineReducers(...root.getReducers());
-      const commands =
-          opr.Toolkit.utils.createCommandsDispatcher(this.reducer, dispatch);
-      root.commands = commands;
-      return root;
-    }
-
-    async render(container, defaultProps = {}) {
-
-      await opr.Toolkit.ready();
-
-      this.container = container;
-
-      if (this.settings.debug) {
-        if (this.settings.preload) {
-          await this.preload();
-        }
-      } else {
-        const bundle = this.getBundleName();
-        if (bundle) {
-          await this.loadBundle(bundle);
-        }
-      }
-
-      const RootClass = await loader.resolve(this.symbol);
-      if (!this.preloaded && RootClass.init) {
-        await RootClass.init();
-      }
-
-      for (const plugin of this.settings.plugins) {
-        this.install(plugin);
-      }
-
-      let destroy;
-      const init = async container => {
-        const dispatch = command => {
-          this.state = this.reducer(this.state, command);
-          this.updateDOM();
-        };
-        const root = this.createRoot(RootClass, container, dispatch);
-        destroy = () => {
-          opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
-          opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
-        };
-        const initialState =
-            await root.getInitialState.call(root.sandbox, defaultProps);
-
-        this.root = root;
-        // TODO: investigate why dispatch and this.reducer are needed
-        dispatch(this.reducer.commands.init(initialState));
-        return root;
-      };
-
-      if (RootClass.elementName) {
-        RootClass.register();
-        const customElement = document.createElement(RootClass.elementName);
-        customElement.props = {
-          onLoad: container => init(container),
-          onUnload: () => destroy(),
-          styles: [
-            'bubbles.css',
-          ],
-        };
-        container.appendChild(customElement);
-      } else {
-        const root = await init(container);
-        const observer = new MutationObserver(mutations => {
-          const isContainerRemoved = mutations.find(
-              mutation => [...mutation.removedNodes].find(
-                  node => node === container));
-          if (isContainerRemoved) {
-            destroy();
-          }
-        });
-        if (container.parentElement) {
-          observer.observe(container.parentElement, {
-            childList: true,
-          });
-        }
-      }
-    }
-
-    calculatePatches() {
-      const patches = [];
-      if (!opr.Toolkit.Diff.deepEqual(this.state, this.root.props)) {
-        if (this.root.props === undefined) {
-          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
-        }
-        patches.push(opr.Toolkit.Patch.updateComponent(this.root, this.state));
-        const componentTree = opr.Toolkit.ComponentTree.createChildTree(
-            this.root, this.state, this.root.child);
-        const childTreePatches = opr.Toolkit.Diff.calculate(
-            this.root.child, componentTree, this.root);
-        patches.push(...childTreePatches);
-      }
-      return patches;
-    }
-
-    async updateDOM() {
-      if (this.settings.level === 'debug') {
-        console.time('=> Render');
-      }
-      const patches = this.calculatePatches();
-      opr.Toolkit.ComponentLifecycle.beforeUpdate(patches);
-      for (const patch of patches) {
-        patch.apply();
-      }
-      opr.Toolkit.ComponentLifecycle.afterUpdate(patches);
-      if (this.settings.level === 'debug') {
-        console.log('Patches:', patches.length);
-        console.timeEnd('=> Render');
-      }
-    }
-  }
-
-  loader.define('core/app', App);
-}
-
-{
-  const isFunction = (target, property) =>
-      typeof target[property] === 'function';
-
-  const properties = [
-    'commands',
-    'constructor',
-    'container',
-    'dispatch',
-    'id',
-    'ref',
-    'getKey',
-    'elementName',
-  ];
-  const methods = [
-    'broadcast',
-    'connectTo',
-  ];
-  const stateProperties = [
-    'props',
-    'children',
-  ];
-
-  const createBoundListener = (listener, component, context) => {
-    const boundListener = listener.bind(context);
-    boundListener.source = listener;
-    boundListener.component = component;
-    return boundListener;
-  };
-
-  class Sandbox {
-
-    static create(component) {
-      const blacklist =
-          Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
-      const autobound = {};
-      const state = {};
-      return new Proxy(component, {
-        get: (target, property, receiver) => {
-          if (property === '$component') {
-            return component;
-          }
-          if (properties.includes(property)) {
-            return target[property];
-          }
-          if (stateProperties.includes(property)) {
-            return state[property];
-          }
-          if (methods.includes(property) && isFunction(target, property)) {
-            return createBoundListener(target[property], target, target);
-          }
-          if (blacklist.includes(property)) {
-            return undefined;
-          }
-          if (isFunction(autobound, property)) {
-            return autobound[property];
-          }
-          if (isFunction(target, property)) {
-            return autobound[property] =
-                       createBoundListener(target[property], target, receiver);
-          }
-          return undefined;
-        },
-        set: (target, property, value) => {
-          if (stateProperties.includes(property)) {
-            state[property] = value;
-          }
-          return true;
-        }
-      });
-    }
-  }
-
-  loader.define('core/sandbox', Sandbox);
-}
-
-{
-  class Template {
-
-    static get ItemType() {
-      return {
-        STRING: 'string',
-        NUMBER: 'number',
-        BOOLEAN: 'boolean',
-        UNDEFINED: 'undefined',
-        NULL: 'null',
-        COMPONENT: 'component',
-        ELEMENT: 'element',
-        PROPS: 'props',
-        FUNCTION: 'function',
-      };
-    }
-
-    static getClassNames(value) {
-      const getClassNamesString = value => {
-        if (!value) {
-          return '';
-        }
-        if (value.constructor === Object) {
-          value = Object.keys(value).map(key => value[key] && key);
-        }
-        if (value.constructor === Array) {
-          const classNames = [];
-          for (const item of value) {
-            const className = getClassNamesString(item);
-            if (className) {
-              classNames.push(className);
-            }
-          }
-          value = classNames.join(' ');
-        }
-        if (value.constructor === String) {
-          return value.trim();
-        }
-        return '';
-      };
-      let classNames = getClassNamesString(value);
-      if (classNames === '') {
-        return [];
-      }
-      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
-      return [...new Set(classNames)];
-    }
-
-    static getCompositeValue(obj = {}, whitelist) {
-      const names = Object.keys(obj).filter(name => whitelist.includes(name));
-      return this.getAttributeValue(names.reduce((result, name) => {
-        const value = this.getAttributeValue(obj[name], false);
-        if (value) {
-          result[name] = value;
-        }
-        return result;
-      }, {}));
-    }
-
-    static getAttributeValue(value, allowEmptyString = true) {
-      if (value === undefined || value === null) {
-        return null;
-      }
-      if (value.constructor === Function) {
-        return null;
-      }
-      if (value.constructor === Array) {
-        return value.length > 0 ? value.join('') : null;
-      }
-      if (value.constructor === Object) {
-        const entries = Object.entries(value);
-        if (entries.length > 0) {
-          return entries.map(([name, value]) => `${name}(${value})`).join(' ');
-        }
-        return null;
-      }
-      if (value === '') {
-        return allowEmptyString ? '' : null;
-      }
-      return String(value);
-    }
-
-    static getStyleValue(value, prop = null) {
-      switch (prop) {
-        case 'filter':
-          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
-        case 'transform':
-          return this.getCompositeValue(
-              value, opr.Toolkit.SUPPORTED_TRANSFORMS);
-        default:
-          return this.getAttributeValue(value);
-      }
-    }
-
-    static getItemType(item) {
-
-      const Type = Template.ItemType;
-      const type = typeof item;
-
-      switch (type) {
-        case 'string':
-          return Type.STRING;
-        case 'number':
-          return Type.NUMBER;
-        case 'boolean':
-          return Type.BOOLEAN;
-        case 'undefined':
-          return Type.UNDEFINED;
-        case 'symbol':
-          return Type.COMPONENT;
-        case 'function':
-          return Type.FUNCTION;
-        case 'object':
-          if (item === null) {
-            return Type.NULL;
-          } else if (Array.isArray(item)) {
-            return Type.ELEMENT;
-          } else {
-            return Type.PROPS;
-          }
-      }
-    }
-
-    static validate(template) {
-
-      const validParamTypes =
-          'properties object, text content or first child element';
-
-      const createErrorDescription = (val, i, types) =>
-          `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
-
-      if (template === null || template === false) {
-        return {types: null};
-      }
-
-      if (!Array.isArray(template)) {
-        const error =
-            new Error(`Specified template: "${template}" is not an array!`);
-        console.error('Specified template', template, 'is not an array!');
-        return {error};
-      }
-
-      const Type = Template.ItemType;
-      const types = template.map(this.getItemType);
-
-      if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-        console.error(
-            'Invalid element:', template[0],
-            ', expecting component or tag name');
-        const error =
-            new Error(`Invalid parameter type "${types[0]}" at index 0`);
-        return {error, types};
-      }
-
-      if (types.length <= 1) {
-        return {types};
-      }
-
-      let firstChildIndex = 1;
-
-      switch (types[1]) {
-        case Type.STRING:
-          if (types.length > 2) {
-            const error = new Error('Text elements cannot have child nodes');
-            console.error(
-                'Text elements cannot have child nodes:', template.slice(1));
-            return {
-              error,
-              types,
-            };
-          } else if (types[0] === Type.COMPONENT) {
-            const error = new Error('Subcomponents do not accept text content');
-            console.error(
-                'Subcomponents do not accept text content:', template[1]);
-            return {
-              error,
-              types,
-            };
-          }
-        case Type.PROPS:
-          firstChildIndex = 2;
-        case Type.NULL:
-        case Type.BOOLEAN:
-          if (template[1] === true) {
-            const error =
-                new Error(createErrorDescription(types[1], 1, validParamTypes));
-            console.error(
-                'Invalid parameter', template[1],
-                ', expecting:', validParamTypes);
-            return {
-              error,
-              types,
-            };
-          }
-        case Type.ELEMENT:
-          if (types.length > 2) {
-            if (types[2] === Type.STRING) {
-              if (types.length > 3) {
-                const error =
-                    new Error('Text elements cannot have child nodes');
-                console.error(
-                    'Text elements cannot have child nodes:',
-                    template.slice(2));
-                return {
-                  error,
-                  types,
-                };
-              } else if (types[0] === Type.COMPONENT) {
-                const error =
-                    new Error('Subcomponents do not accept text content');
-                console.error(
-                    'Subcomponents do not accept text content:', template[2]);
-                return {
-                  error,
-                  types,
-                };
-              }
-              return {
-                types,
-              };
-            }
-          }
-          for (let i = firstChildIndex; i < template.length; i++) {
-            const expected = i === 1 ? validParamTypes : 'child element';
-            if (types[i] !== Type.ELEMENT && template[i] !== null &&
-                template[i] !== false) {
-              const error = new Error(
-                  `Invalid parameter type "${types[i]}" at index ${i}`);
-              console.error(
-                  'Invalid parameter:', template[i], ', expecting ' + expected);
-              return {
-                error,
-                types,
-              };
-            }
-          }
-          return {
-            types,
-          };
-        default:
-          const error =
-              new Error(createErrorDescription(types[1], 1, validParamTypes));
-          console.error(
-              'Invalid parameter', template[1],
-              ', expecting:', validParamTypes);
-          return {
-            error,
-            types,
-          };
-      }
-    }
-
-    static describe(template) {
-
-      const {types, error} = this.validate(template);
-
-      if (error) {
-        console.error('Invalid template definition:', template);
-        throw error;
-      }
-
-      if (types === null) {
-        return null;
-      }
-
-      const Type = Template.ItemType;
-      const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
-
-      const onlyValidElements = element => Array.isArray(element);
-
-      switch (template.length) {
-        case 1:
-          return {
-            [type]: template[0],
-          };
-        case 2:
-          if (types[1] === Type.STRING) {
-            const text = template[1];
-            return {
-              [type]: template[0],
-              text,
-            };
-          } else if (types[1] === Type.PROPS) {
-            return {[type]: template[0], props: template[1]};
-          } else if (types[1] === Type.ELEMENT) {
-            return {
-              [type]: template[0],
-              children: template.slice(1).filter(onlyValidElements),
-            };
-          }
-        default:
-          if (types[1] === Type.PROPS) {
-            if (types[2] === Type.STRING) {
-              return {
-                [type]: template[0],
-                props: template[1],
-                text: template[2],
-              };
-            }
-            return {
-              [type]: template[0],
-              props: template[1],
-              children: template.slice(2).filter(onlyValidElements),
-            };
-          }
-          return {
-            [type]: template[0],
-            children: template.slice(1).filter(onlyValidElements),
-          };
-      }
-    }
-  }
-
-  loader.define('core/template', Template);
-}
-
-{
-  class ComponentTree {
-
-    static createComponentInstance(id, props = {}) {
-      const ComponentClass = loader.get(id);
-      opr.Toolkit.assert(
-          !(ComponentClass.prototype instanceof opr.Toolkit.Root),
-          'Component class', ComponentClass.name,
-          'must extend opr.Toolkit.Component instead of opr.Toolkit.Root');
-      opr.Toolkit.assert(
-          ComponentClass.prototype instanceof opr.Toolkit.Component,
-          'Component class', ComponentClass.name,
-          'must extend opr.Toolkit.Component');
-      const instance = new ComponentClass();
-      if (props.key !== undefined) {
-        instance.key = props.key;
-      }
-      if (typeof instance.getKey === 'function') {
-        const key = instance.getKey.bind({props})();
-        if (key) {
-          instance.key = key;
-        }
-      }
-      return instance;
-    }
-
-    static createElementInstance(description, component) {
-      const element = new opr.Toolkit.VirtualElement(description.name);
-      if (description.props) {
-        const props = description.props;
-
-        if (opr.Toolkit.isDebug()) {
-          const unknownAttrs = Object.keys(props).filter(
-              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
-          for (const unknownAttr of unknownAttrs) {
-            const suggestion = opr.Toolkit.SUPPORTED_ATTRIBUTES.find(
-                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
-            if (suggestion) {
-              opr.Toolkit.warn(
-                  `Attribute name "${unknownAttr}"`,
-                  `should be spelled "${suggestion}",`,
-                  `check render() method of ${component.constructor.name}`);
-            } else {
-              opr.Toolkit.warn(
-                  `Attribute name "${unknownAttr}" is not valid,`,
-                  `check render() method of ${component.constructor.name}`);
-            }
-          }
-        }
-
-        // attributes
-        Object.keys(props)
-            .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
-            .forEach(attr => {
-              const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
-              if (value !== null && value !== undefined) {
-                element.setAttribute(attr, value);
-              }
-            });
-        // data attributes
-        const dataset = props.dataset || {};
-        Object.keys(dataset).forEach(attr => {
-          const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
-          element.setDataAttribute(attr, value);
-        });
-        // class names
-        const classNames = opr.Toolkit.Template.getClassNames(props.class);
-        classNames.forEach(className => {
-          element.addClassName(className);
-        });
-        // style
-        const style = props.style || {};
-        Object.keys(style)
-            .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
-            .forEach(prop => {
-              const value =
-                  opr.Toolkit.Template.getStyleValue(style[prop], prop);
-              if (value !== null && value !== undefined) {
-                element.setStyleProperty(prop, value);
-              }
-            });
-        // listeners
-        Object.keys(props)
-            .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
-            .forEach(event => {
-              const name = opr.Toolkit.utils.getEventName(event);
-              const listener = props[event];
-              if (typeof listener === 'function') {
-                element.addListener(name, listener);
-              }
-            });
-        // metadata
-        if (props.metadata) {
-          Object.keys(props.metadata).forEach(key => {
-            element.metadata[key] = props.metadata[key];
-          });
-        }
-        // key
-        if (props.key) {
-          element.key = props.key;
-        }
-      }
-      // text
-      if (description.text) {
-        element.text = description.text;
-      }
-      return element;
-    }
-
-    static createFromTemplate(template, previousNode, root, component) {
-      if (template === undefined) {
-        throw new Error('Invalid undefined template!');
-      }
-      if (template === null || template === false || template.length === 0) {
-        return null;
-      }
-      const description = opr.Toolkit.Template.describe(template);
-      if (description.component) {
-        return this.createComponent(
-            description.component, description.props, description.children,
-            previousNode, root);
-      }
-      return this.createElement(description, previousNode, root, component);
-    }
-
-    static createElement(description, previousNode, root, component) {
-      const element = this.createElementInstance(description, component);
-      const getPreviousChild = index => {
-        if (element.isCompatible(previousNode)) {
-          return previousNode.children[index] || null;
-        } else {
-          return null;
-        }
-      };
-      if (description.children) {
-        element.children = description.children.map((desc, index) => {
-          const child = this.createFromTemplate(
-              desc, getPreviousChild(index), root, component);
-          child.parentNode = element;
-          return child;
-        });
-      }
-      return element;
-    }
-
-    static calculateProps(component, props = {}) {
-      const defaultProps = component.constructor.defaultProps;
-      if (defaultProps) {
-        const result = Object.assign({}, props);
-        const keys = Object.keys(defaultProps);
-        for (const key of keys) {
-          if (props[key] === undefined) {
-            result[key] = defaultProps[key];
-          }
-        }
-        return result;
-      }
-      return props;
-    }
-
-    static createChildTree(root, props, previousTree) {
-
-      const sandbox = root.sandbox;
-      sandbox.props = this.calculateProps(root, props);
-
-      let template;
-      if (root.elementName) {
-        // TODO: do better
-        template = [
-          root.elementName,
-          {
-            metadata: {
-              component: root,
-            },
-          },
-        ];
-      } else {
-        template = root.render.call(sandbox);
-      }
-      const tree = this.createFromTemplate(template, previousTree, root, root);
-      if (tree) {
-        tree.parentNode = root;
-      }
-      return tree;
-    }
-
-    static createComponent(
-        symbol, props = {}, children = [], previousNode, root) {
-      try {
-        const instance = this.createComponentInstance(symbol, props);
-        const calculatedProps = this.calculateProps(instance, props);
-        instance.props = calculatedProps;
-        instance.commands = root && root.commands || {};
-
-        const sandbox = instance.isCompatible(previousNode) ?
-            previousNode.sandbox :
-            instance.sandbox;
-
-        sandbox.props = calculatedProps;
-        sandbox.children = children;
-
-        const template = instance.render.call(sandbox);
-        if (template) {
-          // TODO: handle undefined, false, null
-          const previousChild = previousNode && previousNode.isComponent() ?
-              previousNode.child :
-              null;
-          instance.appendChild(
-              this.createFromTemplate(template, previousChild, root, instance));
-        }
-        return instance;
-      } catch (e) {
-        console.error('Error creating Component Tree:', symbol);
-        throw e;
-      }
-    }
-
-    static async resolve() {
-      // TODO: implement
-    }
-  }
-
-  loader.define('core/component-tree', ComponentTree);
-}
-
-{
-  class ComponentLifecycle {
-
-    /*
-     * onCreated(),
-     * onAttached(),
-     * onPropsReceived(),
-     * onUpdated(),
-     * onDestroyed(),
-     * onDetached()
-     */
-
-    static onComponentCreated(component) {
-      component.onCreated.call(component.sandbox);
-      if (component.child) {
-        this.onNodeCreated(component.child);
-      }
-    }
-
-    static onElementCreated(element) {
-      for (const child of element.children) {
-        this.onNodeCreated(child);
-      }
-    }
-
-    static onNodeCreated(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentCreated(node);
-        case 'element':
-          return this.onElementCreated(node);
-        default:
-          throw new Error('Unsupported node type:' + node.nodeType);
-      }
-    }
-
-    static onComponentAttached(component) {
-      if (component.child) {
-        this.onNodeAttached(component.child);
-      }
-      component.onAttached.call(component.sandbox);
-    }
-
-    static onElementAttached(element) {
-      for (const child of element.children) {
-        this.onNodeAttached(child);
-      }
-    }
-
-    static onNodeAttached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentAttached(node);
-        case 'element':
-          return this.onElementAttached(node);
-        default:
-          throw new Error('Unsupported node type:' + node.nodeType);
-      }
-    }
-
-    static onComponentReceivedProps(component, props) {
-      component.onPropsReceived.call(component.sandbox, props);
-    }
-
-    static onComponentUpdated(component, props) {
-      component.onUpdated.call(component.sandbox, props);
-    }
-
-    static onComponentDestroyed(component) {
-      for (const cleanUpTask of component.cleanUpTasks) {
-        cleanUpTask();
-      }
-      component.onDestroyed.call(component.sandbox);
-      if (component.child) {
-        this.onNodeDestroyed(component.child);
-      }
-    }
-
-    static onElementDestroyed(element) {
-      for (const child of element.children) {
-        this.onNodeDestroyed(child);
-      }
-    }
-
-    static onNodeDestroyed(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDestroyed(node);
-        case 'element':
-          return this.onElementDestroyed(node);
-        default:
-          throw new Error('Unsupported node type:' + node.nodeType);
-      }
-    }
-
-    static onComponentDetached(component) {
-      if (component.child) {
-        this.onNodeDetached(component.child);
-      }
-      component.onDetached.call(component.sandbox);
-    }
-
-    static onElementDetached(element) {
-      for (const child of element.children) {
-        this.onNodeDetached(child);
-      }
-    }
-
-    static onNodeDetached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDetached(node);
-        case 'element':
-          return this.onElementDetached(node);
-        default:
-          throw new Error('Unsupported node type:' + node.nodeType);
-      }
-    }
-
-    static beforePatchApplied(patch) {
-      const Type = opr.Toolkit.Patch.Type;
-      switch (patch.type) {
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentReceivedProps(patch.target, patch.props);
-        case Type.CREATE_ROOT_COMPONENT:
-          return patch.root.onCreated.call(patch.root.sandbox);
-        case Type.ADD_COMPONENT:
-          return this.onComponentCreated(patch.component);
-        case Type.ADD_ELEMENT:
-          return this.onElementCreated(patch.element);
-        case Type.INSERT_CHILD_NODE:
-          return this.onNodeCreated(patch.node);
-        case Type.REMOVE_COMPONENT:
-          return this.onComponentDestroyed(patch.component);
-        case Type.REMOVE_ELEMENT:
-          return this.onElementDestroyed(patch.element);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDestroyed(patch.node);
-      }
-    }
-
-    static beforeUpdate(patches) {
-      for (const patch of patches) {
-        this.beforePatchApplied(patch);
-      }
-    }
-
-    static afterPatchApplied(patch) {
-      const Type = opr.Toolkit.Patch.Type;
-      switch (patch.type) {
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target, patch.props);
-        case Type.CREATE_ROOT_COMPONENT:
-          return patch.root.onAttached.call(patch.root.sandbox);
-        case Type.ADD_COMPONENT:
-          return this.onComponentAttached(patch.component);
-        case Type.ADD_ELEMENT:
-          return this.onElementAttached(patch.element);
-        case Type.INSERT_CHILD_NODE:
-          return this.onNodeAttached(patch.node);
-        case Type.REMOVE_COMPONENT:
-          return this.onComponentDetached(patch.component);
-        case Type.REMOVE_ELEMENT:
-          return this.onElementDetached(patch.element);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDetached(patch.node);
-      }
-    }
-
-    static afterUpdate(patches) {
-      patches = [...patches].reverse();
-      for (const patch of patches) {
-        this.afterPatchApplied(patch);
-      }
-    }
-  }
-
-  loader.define('core/component-lifecycle', ComponentLifecycle);
+  loader.define('core/nodes', CoreTypes);
 }
 
 {
@@ -2151,6 +1093,9 @@
   class Diff {
 
     static deepEqual(current, next) {
+      if (Object.is(current, next)) {
+        return true;
+      }
       const type = getType(current);
       const nextType = getType(next);
       if (type !== nextType) {
@@ -2186,9 +1131,8 @@
           }
         }
         return true;
-      } else {
-        return current === next;
       }
+      return false;
     }
 
     static calculate(tree, nextTree, root) {
@@ -2197,6 +1141,331 @@
   }
 
   loader.define('core/diff', Diff);
+}
+
+{
+  class Document {
+
+    static setAttribute(element, name, value) {
+      const attr = opr.Toolkit.utils.getAttributeName(name);
+      element.setAttribute(attr, value);
+    }
+
+    static removeAttribute(element, name) {
+      const attr = opr.Toolkit.utils.getAttributeName(name);
+      element.removeAttribute(attr);
+    }
+
+    static setDataAttribute(element, name, value) {
+      element.dataset[name] = value;
+    }
+
+    static removeDataAttribute(element, name) {
+      delete element.dataset[name];
+    }
+
+    static setStyleProperty(element, prop, value) {
+      element.style[prop] = value;
+    }
+
+    static removeStyleProperty(element, prop, value) {
+      element.style[prop] = null;
+    }
+
+    static addClassName(element, className) {
+      element.classList.add(className);
+    }
+
+    static removeClassName(element, className) {
+      element.classList.remove(className);
+    }
+
+    static addEventListener(element, name, listener) {
+      element.addEventListener(name, listener);
+    }
+
+    static removeEventListener(element, name, listener) {
+      element.removeEventListener(name, listener);
+    }
+
+    static setMetadata(element, key, value) {
+      element[key] = value;
+    }
+
+    static removeMetadata(element, key) {
+      delete element[key];
+    }
+
+    static appendChild(child, parent) {
+      parent.appendChild(child);
+    }
+
+    static replaceChild(child, replaced, parent) {
+      parent.replaceChild(child, replaced);
+    }
+
+    static removeChild(child, parent) {
+      parent.removeChild(child);
+    }
+
+    static moveChild(child, from, to, parent) {
+      parent.removeChild(child);
+      parent.insertBefore(child, parent.childNodes[to]);
+    }
+
+    static setTextContent(element, text) {
+      element.textContent = text;
+    }
+
+    static createElement(node) {
+      const {
+        name,
+        text,
+        attrs,
+        dataset,
+        listeners,
+        style,
+        classNames,
+      } = node;
+
+      const element = document.createElement(name);
+      if (text) {
+        this.setTextContent(element, text);
+      }
+      Object.entries(listeners).forEach(([name, listener]) => {
+        this.addEventListener(element, name, listener);
+      });
+      Object.entries(attrs).forEach(([attr, value]) => {
+        this.setAttribute(element, attr, value);
+      });
+      Object.entries(dataset).forEach(([attr, value]) => {
+        this.setDataAttribute(element, attr, value);
+      });
+      Object.entries(style).forEach(([prop, value]) => {
+        this.setStyleProperty(element, prop, value);
+      });
+      classNames.forEach(className => {
+        this.addClassName(element, className);
+      });
+      return element;
+    }
+
+    static createComment(placeholder) {
+      return document.createComment(placeholder.text);
+    }
+
+    static attachElementTree(node, callback) {
+      const element = node.isComponent() ? node.childElement : node;
+      let domNode;
+      if (element) {
+        domNode = this.createElement(element);
+        Object.keys(element.metadata).forEach(key => {
+          domNode[key] = element.metadata[key];
+        });
+        if (element.children) {
+          for (let child of element.children) {
+            this.attachElementTree(child, childNode => {
+              domNode.appendChild(childNode);
+            });
+          }
+        }
+        element.ref = domNode;
+      } else {
+        domNode = this.createComment(node.placeholder);
+        node.placeholder.ref = domNode;
+      }
+      if (callback) {
+        callback(domNode);
+      }
+      return domNode;
+    }
+  }
+
+  loader.define('core/document', Document);
+}
+
+{
+  class Lifecycle {
+
+    /*
+     * onCreated(),
+     * onAttached(),
+     * onPropsReceived(),
+     * onUpdated(),
+     * onDestroyed(),
+     * onDetached()
+     */
+
+    static onComponentCreated(component) {
+      component.onCreated.call(component.sandbox);
+      if (component.child) {
+        this.onNodeCreated(component.child);
+      }
+    }
+
+    static onElementCreated(element) {
+      for (const child of element.children) {
+        this.onNodeCreated(child);
+      }
+    }
+
+    static onNodeCreated(node) {
+      switch (node.nodeType) {
+        case 'root':
+        case 'component':
+          return this.onComponentCreated(node);
+        case 'element':
+          return this.onElementCreated(node);
+        default:
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      }
+    }
+
+    static onComponentAttached(component) {
+      if (component.child) {
+        this.onNodeAttached(component.child);
+      }
+      component.onAttached.call(component.sandbox);
+    }
+
+    static onElementAttached(element) {
+      for (const child of element.children) {
+        this.onNodeAttached(child);
+      }
+    }
+
+    static onNodeAttached(node) {
+      switch (node.nodeType) {
+        case 'root':
+        case 'component':
+          return this.onComponentAttached(node);
+        case 'element':
+          return this.onElementAttached(node);
+        default:
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      }
+    }
+
+    static onComponentReceivedProps(component, props) {
+      component.onPropsReceived.call(component.sandbox, props);
+    }
+
+    static onComponentUpdated(component, props) {
+      component.onUpdated.call(component.sandbox, props);
+    }
+
+    static onComponentDestroyed(component) {
+      for (const cleanUpTask of component.cleanUpTasks) {
+        cleanUpTask();
+      }
+      component.onDestroyed.call(component.sandbox);
+      if (component.child) {
+        this.onNodeDestroyed(component.child);
+      }
+    }
+
+    static onElementDestroyed(element) {
+      for (const child of element.children) {
+        this.onNodeDestroyed(child);
+      }
+    }
+
+    static onNodeDestroyed(node) {
+      switch (node.nodeType) {
+        case 'root':
+        case 'component':
+          return this.onComponentDestroyed(node);
+        case 'element':
+          return this.onElementDestroyed(node);
+        default:
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      }
+    }
+
+    static onComponentDetached(component) {
+      if (component.child) {
+        this.onNodeDetached(component.child);
+      }
+      component.onDetached.call(component.sandbox);
+    }
+
+    static onElementDetached(element) {
+      for (const child of element.children) {
+        this.onNodeDetached(child);
+      }
+    }
+
+    static onNodeDetached(node) {
+      switch (node.nodeType) {
+        case 'root':
+        case 'component':
+          return this.onComponentDetached(node);
+        case 'element':
+          return this.onElementDetached(node);
+        default:
+          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      }
+    }
+
+    static beforePatchApplied(patch) {
+      const Type = opr.Toolkit.Patch.Type;
+      switch (patch.type) {
+        case Type.UPDATE_COMPONENT:
+          return this.onComponentReceivedProps(patch.target, patch.props);
+        case Type.CREATE_ROOT_COMPONENT:
+          return patch.root.onCreated.call(patch.root.sandbox);
+        case Type.ADD_COMPONENT:
+          return this.onComponentCreated(patch.component);
+        case Type.ADD_ELEMENT:
+          return this.onElementCreated(patch.element);
+        case Type.INSERT_CHILD_NODE:
+          return this.onNodeCreated(patch.node);
+        case Type.REMOVE_COMPONENT:
+          return this.onComponentDestroyed(patch.component);
+        case Type.REMOVE_ELEMENT:
+          return this.onElementDestroyed(patch.element);
+        case Type.REMOVE_CHILD_NODE:
+          return this.onNodeDestroyed(patch.node);
+      }
+    }
+
+    static beforeUpdate(patches) {
+      for (const patch of patches) {
+        this.beforePatchApplied(patch);
+      }
+    }
+
+    static afterPatchApplied(patch) {
+      const Type = opr.Toolkit.Patch.Type;
+      switch (patch.type) {
+        case Type.UPDATE_COMPONENT:
+          return this.onComponentUpdated(patch.target, patch.props);
+        case Type.CREATE_ROOT_COMPONENT:
+          return patch.root.onAttached.call(patch.root.sandbox);
+        case Type.ADD_COMPONENT:
+          return this.onComponentAttached(patch.component);
+        case Type.ADD_ELEMENT:
+          return this.onElementAttached(patch.element);
+        case Type.INSERT_CHILD_NODE:
+          return this.onNodeAttached(patch.node);
+        case Type.REMOVE_COMPONENT:
+          return this.onComponentDetached(patch.component);
+        case Type.REMOVE_ELEMENT:
+          return this.onElementDetached(patch.element);
+        case Type.REMOVE_CHILD_NODE:
+          return this.onNodeDetached(patch.node);
+      }
+    }
+
+    static afterUpdate(patches) {
+      patches = [...patches].reverse();
+      for (const patch of patches) {
+        this.afterPatchApplied(patch);
+      }
+    }
+  }
+
+  loader.define('core/lifecycle', Lifecycle);
 }
 
 {
@@ -2466,6 +1735,7 @@
         }
       });
     }
+
     static addElement(element, parent) {
       return new Patch(Type.ADD_ELEMENT, {
         element,
@@ -2698,144 +1968,765 @@
 }
 
 {
-  class Document {
+  class Renderer {
 
-    static setAttribute(element, name, value) {
-      const attr = opr.Toolkit.utils.getAttributeName(name);
-      element.setAttribute(attr, value);
+    constructor(root, container, settings) {
+      this.root = root;
+      this.container = container;
+      this.settings = settings;
+      this.plugins = new Map();
+      this.installPlugins();
     }
 
-    static removeAttribute(element, name) {
-      const attr = opr.Toolkit.utils.getAttributeName(name);
-      element.removeAttribute(attr);
-    }
-
-    static setDataAttribute(element, name, value) {
-      element.dataset[name] = value;
-    }
-
-    static removeDataAttribute(element, name) {
-      delete element.dataset[name];
-    }
-
-    static setStyleProperty(element, prop, value) {
-      element.style[prop] = value;
-    }
-
-    static removeStyleProperty(element, prop, value) {
-      element.style[prop] = null;
-    }
-
-    static addClassName(element, className) {
-      element.classList.add(className);
-    }
-
-    static removeClassName(element, className) {
-      element.classList.remove(className);
-    }
-
-    static addEventListener(element, name, listener) {
-      element.addEventListener(name, listener);
-    }
-
-    static removeEventListener(element, name, listener) {
-      element.removeEventListener(name, listener);
-    }
-
-    static setMetadata(element, key, value) {
-      element[key] = value;
-    }
-
-    static removeMetadata(element, key) {
-      delete element[key];
-    }
-
-    static appendChild(child, parent) {
-      parent.appendChild(child);
-    }
-
-    static replaceChild(child, replaced, parent) {
-      parent.replaceChild(child, replaced);
-    }
-
-    static removeChild(child, parent) {
-      parent.removeChild(child);
-    }
-
-    static moveChild(child, from, to, parent) {
-      parent.removeChild(child);
-      parent.insertBefore(child, parent.childNodes[to]);
-    }
-
-    static setTextContent(element, text) {
-      element.textContent = text;
-    }
-
-    static createElement(node) {
-      const {
-        name,
-        text,
-        attrs,
-        dataset,
-        listeners,
-        style,
-        classNames,
-      } = node;
-
-      const element = document.createElement(name);
-      if (text) {
-        this.setTextContent(element, text);
-      }
-      Object.entries(listeners).forEach(([name, listener]) => {
-        this.addEventListener(element, name, listener);
-      });
-      Object.entries(attrs).forEach(([attr, value]) => {
-        this.setAttribute(element, attr, value);
-      });
-      Object.entries(dataset).forEach(([attr, value]) => {
-        this.setDataAttribute(element, attr, value);
-      });
-      Object.entries(style).forEach(([prop, value]) => {
-        this.setStyleProperty(element, prop, value);
-      });
-      classNames.forEach(className => {
-        this.addClassName(element, className);
-      });
-      return element;
-    };
-
-    static createComment(placeholder) {
-      return document.createComment(placeholder.text);
-    }
-
-    static attachElementTree(node, callback) {
-      const element = node.isComponent() ? node.childElement : node;
-      let domNode;
-      if (element) {
-        domNode = this.createElement(element);
-        Object.keys(element.metadata).forEach(key => {
-          domNode[key] = element.metadata[key];
-        });
-        if (element.children) {
-          for (let child of element.children) {
-            this.attachElementTree(child, childNode => {
-              domNode.appendChild(childNode);
-            });
-          }
+    calculatePatches() {
+      const patches = [];
+      if (!opr.Toolkit.Diff.deepEqual(this.root.state, this.root.props)) {
+        if (this.root.props === undefined) {
+          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
         }
-        element.ref = domNode;
-      } else {
-        domNode = this.createComment(node.placeholder);
-        node.placeholder.ref = domNode;
+        patches.push(
+            opr.Toolkit.Patch.updateComponent(this.root, this.root.state));
+        const componentTree = opr.Toolkit.VirtualDOM.createChildTree(
+            this.root, this.root.state, this.root.child);
+        const childTreePatches = opr.Toolkit.Diff.calculate(
+            this.root.child, componentTree, this.root);
+        patches.push(...childTreePatches);
       }
-      if (callback) {
-        callback(domNode);
+      return patches;
+    }
+
+    updateDOM() {
+      /* eslint-disable no-console */
+      if (this.settings.level === 'debug') {
+        console.time('=> Render');
       }
-      return domNode;
+      const patches = this.calculatePatches();
+      opr.Toolkit.Lifecycle.beforeUpdate(patches);
+      for (const patch of patches) {
+        patch.apply();
+      }
+      opr.Toolkit.Lifecycle.afterUpdate(patches);
+      if (this.settings.level === 'debug') {
+        console.log('Patches:', patches.length);
+        console.timeEnd('=> Render');
+      }
+      /* eslint-enable no-console */
+    }
+
+    installPlugins() {
+      for (const plugin of this.settings.plugins) {
+        this.install(plugin);
+      }
+    }
+
+    install(plugin) {
+      if (this.plugins.get(plugin.id)) {
+        console.warn(`Plugin "${id}" is already installed!`);
+        return;
+      }
+      const uninstall = plugin.install({
+        container: this.container,
+        state: this.root.state,
+      });
+      this.plugins.set(plugin.id, {
+        ref: plugin,
+        uninstall,
+      });
     }
   }
 
-  loader.define('core/document', Document);
+  loader.define('core/renderer', Renderer);
+}
+
+{
+  const isFunction = (target, property) =>
+      typeof target[property] === 'function';
+
+  const properties = [
+    'commands',
+    'constructor',
+    'container',
+    'dispatch',
+    'id',
+    'ref',
+    'getKey',
+    'elementName',
+  ];
+  const methods = [
+    'broadcast',
+    'connectTo',
+  ];
+  const stateProperties = [
+    'props',
+    'children',
+  ];
+
+  const createBoundListener = (listener, component, context) => {
+    const boundListener = listener.bind(context);
+    boundListener.source = listener;
+    boundListener.component = component;
+    return boundListener;
+  };
+
+  class Sandbox {
+
+    static create(component) {
+      const blacklist =
+          Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
+      const autobound = {};
+      const state = {};
+      return new Proxy(component, {
+        get: (target, property, receiver) => {
+          if (property === '$component') {
+            return component;
+          }
+          if (properties.includes(property)) {
+            return target[property];
+          }
+          if (stateProperties.includes(property)) {
+            return state[property];
+          }
+          if (methods.includes(property) && isFunction(target, property)) {
+            return createBoundListener(target[property], target, target);
+          }
+          if (blacklist.includes(property)) {
+            return undefined;
+          }
+          if (isFunction(autobound, property)) {
+            return autobound[property];
+          }
+          if (isFunction(target, property)) {
+            return autobound[property] =
+                       createBoundListener(target[property], target, receiver);
+          }
+          return undefined;
+        },
+        set: (target, property, value) => {
+          if (stateProperties.includes(property)) {
+            state[property] = value;
+          }
+          return true;
+        },
+      });
+    }
+  }
+
+  loader.define('core/sandbox', Sandbox);
+}
+
+{
+  class Service {
+
+    static validate(listeners) {
+      if (opr.Toolkit.isDebug()) {
+        // clang-format off
+        /* eslint-disable max-len */
+        const keys = Object.keys(listeners);
+        opr.Toolkit.assert(
+            this.events instanceof Array,
+            `Service "${this.name}" does not provide information about valid events, implement "static get events() { return ['foo', 'bar']; }"`);
+        opr.Toolkit.assert(
+            this.events.length > 0,
+            `Service "${this.name}" returned an empty list of valid events, the list returned from "static get event()" must contain at least one event name`);
+        const unsupportedKeys =
+            Object.keys(listeners).filter(key => !this.events.includes(key));
+        for (const unsupportedKey of unsupportedKeys) {
+          opr.Toolkit.warn(
+              `Unsupported listener specified "${unsupportedKey}" when connecting to ${this.name}`);
+        }
+        const supportedKeys = this.events.filter(event => keys.includes(event));
+        opr.Toolkit.assert(
+            supportedKeys.length > 0,
+            `No valid listener specified when connecting to ${this.name}, use one of [${this.events.join(', ')}]`);
+        for (const supportedKey of supportedKeys) {
+          opr.Toolkit.assert(
+              listeners[supportedKey] instanceof Function,
+              `Specified listener "${supportedKey}" for ${this.name} is not a function`);
+        }
+        /* eslint-enable max-len */
+        // clang-format on
+      }
+      return this.events.filter(event => listeners[event] instanceof Function);
+    }
+  }
+
+  loader.define('core/service', Service);
+}
+
+{
+  class Template {
+
+    static get ItemType() {
+      return {
+        STRING: 'string',
+        NUMBER: 'number',
+        BOOLEAN: 'boolean',
+        UNDEFINED: 'undefined',
+        NULL: 'null',
+        COMPONENT: 'component',
+        ELEMENT: 'element',
+        PROPS: 'props',
+        FUNCTION: 'function',
+      };
+    }
+
+    static getClassNames(value) {
+      const getClassNamesString = value => {
+        if (!value) {
+          return '';
+        }
+        if (value.constructor === Object) {
+          value = Object.keys(value).map(key => value[key] && key);
+        }
+        if (value.constructor === Array) {
+          const classNames = [];
+          for (const item of value) {
+            const className = getClassNamesString(item);
+            if (className) {
+              classNames.push(className);
+            }
+          }
+          value = classNames.join(' ');
+        }
+        if (value.constructor === String) {
+          return value.trim();
+        }
+        return '';
+      };
+      let classNames = getClassNamesString(value);
+      if (classNames === '') {
+        return [];
+      }
+      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
+      return [...new Set(classNames)];
+    }
+
+    static getCompositeValue(obj = {}, whitelist) {
+      const names = Object.keys(obj).filter(name => whitelist.includes(name));
+      return this.getAttributeValue(names.reduce((result, name) => {
+        const value = this.getAttributeValue(obj[name], false);
+        if (value) {
+          result[name] = value;
+        }
+        return result;
+      }, {}));
+    }
+
+    static getAttributeValue(value, allowEmptyString = true) {
+      if (value === undefined || value === null) {
+        return null;
+      }
+      if (value.constructor === Function) {
+        return null;
+      }
+      if (value.constructor === Array) {
+        return value.length > 0 ? value.join('') : null;
+      }
+      if (value.constructor === Object) {
+        const entries = Object.entries(value);
+        if (entries.length > 0) {
+          return entries.map(([name, value]) => `${name}(${value})`).join(' ');
+        }
+        return null;
+      }
+      if (value === '') {
+        return allowEmptyString ? '' : null;
+      }
+      return String(value);
+    }
+
+    static getStyleValue(value, prop = null) {
+      switch (prop) {
+        case 'filter':
+          return this.getCompositeValue(value, opr.Toolkit.SUPPORTED_FILTERS);
+        case 'transform':
+          return this.getCompositeValue(
+              value, opr.Toolkit.SUPPORTED_TRANSFORMS);
+        default:
+          return this.getAttributeValue(value);
+      }
+    }
+
+    static getItemType(item) {
+
+      const Type = Template.ItemType;
+      const type = typeof item;
+
+      switch (type) {
+        case 'string':
+          return Type.STRING;
+        case 'number':
+          return Type.NUMBER;
+        case 'boolean':
+          return Type.BOOLEAN;
+        case 'undefined':
+          return Type.UNDEFINED;
+        case 'symbol':
+          return Type.COMPONENT;
+        case 'function':
+          return Type.FUNCTION;
+        case 'object':
+          if (item === null) {
+            return Type.NULL;
+          } else if (Array.isArray(item)) {
+            return Type.ELEMENT;
+          }
+          return Type.PROPS;
+      }
+    }
+
+    static validate(template) {
+
+      const validParamTypes =
+          'properties object, text content or first child element';
+
+      const createErrorDescription = (val, i, types) =>
+          `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
+
+      if (template === null || template === false) {
+        return {types: null};
+      }
+
+      if (!Array.isArray(template)) {
+        const error =
+            new Error(`Specified template: "${template}" is not an array!`);
+        console.error('Specified template', template, 'is not an array!');
+        return {error};
+      }
+
+      const Type = Template.ItemType;
+      const types = template.map(this.getItemType);
+
+      if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
+        console.error(
+            'Invalid element:', template[0],
+            ', expecting component or tag name');
+        const error =
+            new Error(`Invalid parameter type "${types[0]}" at index 0`);
+        return {error, types};
+      }
+
+      if (types.length <= 1) {
+        return {types};
+      }
+
+      let firstChildIndex = 1;
+
+      switch (types[1]) {
+        case Type.STRING:
+          if (types.length > 2) {
+            const error = new Error('Text elements cannot have child nodes');
+            console.error(
+                'Text elements cannot have child nodes:', template.slice(1));
+            return {
+              error,
+              types,
+            };
+          } else if (types[0] === Type.COMPONENT) {
+            const error = new Error('Subcomponents do not accept text content');
+            console.error(
+                'Subcomponents do not accept text content:', template[1]);
+            return {
+              error,
+              types,
+            };
+          }
+        case Type.PROPS:
+          firstChildIndex = 2;
+        case Type.NULL:
+        case Type.BOOLEAN:
+          if (template[1] === true) {
+            const error =
+                new Error(createErrorDescription(types[1], 1, validParamTypes));
+            console.error(
+                'Invalid parameter', template[1],
+                ', expecting:', validParamTypes);
+            return {
+              error,
+              types,
+            };
+          }
+        case Type.ELEMENT:
+          if (types.length > 2) {
+            if (types[2] === Type.STRING) {
+              if (types.length > 3) {
+                const error =
+                    new Error('Text elements cannot have child nodes');
+                console.error(
+                    'Text elements cannot have child nodes:',
+                    template.slice(2));
+                return {
+                  error,
+                  types,
+                };
+              } else if (types[0] === Type.COMPONENT) {
+                const error =
+                    new Error('Subcomponents do not accept text content');
+                console.error(
+                    'Subcomponents do not accept text content:', template[2]);
+                return {
+                  error,
+                  types,
+                };
+              }
+              return {
+                types,
+              };
+            }
+          }
+          for (let i = firstChildIndex; i < template.length; i++) {
+            const expected = i === 1 ? validParamTypes : 'child element';
+            if (types[i] !== Type.ELEMENT && template[i] !== null &&
+                template[i] !== false) {
+              const error = new Error(
+                  `Invalid parameter type "${types[i]}" at index ${i}`);
+              console.error(
+                  'Invalid parameter:', template[i], ', expecting:', expected);
+              return {
+                error,
+                types,
+              };
+            }
+          }
+          return {
+            types,
+          };
+      }
+      const error =
+          new Error(createErrorDescription(types[1], 1, validParamTypes));
+      console.error(
+          'Invalid parameter', template[1], ', expecting:', validParamTypes);
+      return {
+        error,
+        types,
+      };
+    }
+
+    static describe(template) {
+
+      const {types, error} = this.validate(template);
+
+      if (error) {
+        console.error('Invalid template definition:', template);
+        throw error;
+      }
+
+      if (types === null) {
+        return null;
+      }
+
+      const Type = Template.ItemType;
+      const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
+
+      const onlyValidElements = element => Array.isArray(element);
+
+      switch (template.length) {
+        case 1:
+          return {
+            [type]: template[0],
+          };
+        case 2:
+          if (types[1] === Type.STRING) {
+            const text = template[1];
+            return {
+              [type]: template[0],
+              text,
+            };
+          } else if (types[1] === Type.PROPS) {
+            return {[type]: template[0], props: template[1]};
+          } else if (types[1] === Type.ELEMENT) {
+            return {
+              [type]: template[0],
+              children: template.slice(1).filter(onlyValidElements),
+            };
+          }
+        default:
+          if (types[1] === Type.PROPS) {
+            if (types[2] === Type.STRING) {
+              return {
+                [type]: template[0],
+                props: template[1],
+                text: template[2],
+              };
+            }
+            return {
+              [type]: template[0],
+              props: template[1],
+              children: template.slice(2).filter(onlyValidElements),
+            };
+          }
+          return {
+            [type]: template[0],
+            children: template.slice(1).filter(onlyValidElements),
+          };
+      }
+    }
+  }
+
+  loader.define('core/template', Template);
+}
+
+{
+  class VirtualDOM {
+
+    static createComponentFrom(symbol, props = {}) {
+      const ComponentClass = loader.get(symbol);
+      opr.Toolkit.assert(
+          ComponentClass, `No module found for: ${String(symbol)}`);
+      opr.Toolkit.assert(
+          ComponentClass.prototype instanceof opr.Toolkit.Component,
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component');
+      return this.createComponentInstance(ComponentClass, props);
+    }
+
+    static createComponentInstance(ComponentClass, props = {}) {
+      const instance = new ComponentClass();
+      if (props.key !== undefined) {
+        instance.key = props.key;
+      }
+      if (typeof instance.getKey === 'function') {
+        const key = instance.getKey.bind({props})();
+        if (key) {
+          instance.key = key;
+        }
+      }
+      // TODO: move elsewhere
+      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
+        const reducer =
+            opr.Toolkit.utils.combineReducers(...instance.getReducers());
+        const dispatch = command => {
+          instance.state = reducer(instance.state, command);
+          instance.renderer.updateDOM();
+        };
+        const commands =
+            opr.Toolkit.utils.createCommandsDispatcher(reducer, dispatch);
+
+        instance.reducer = reducer;
+        instance.dispatch = dispatch;
+        instance.commands = commands;
+      }
+      return instance;
+    }
+
+    static createElementInstance(description, component) {
+      const element = new opr.Toolkit.VirtualElement(description.name);
+      if (description.props) {
+        const props = description.props;
+
+        if (opr.Toolkit.isDebug()) {
+          const unknownAttrs = Object.keys(props).filter(
+              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
+          for (const unknownAttr of unknownAttrs) {
+            const suggestion = opr.Toolkit.SUPPORTED_ATTRIBUTES.find(
+                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
+            if (suggestion) {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}"`,
+                  `should be spelled "${suggestion}",`,
+                  `check render() method of ${component.constructor.name}`);
+            } else {
+              opr.Toolkit.warn(
+                  `Attribute name "${unknownAttr}" is not valid,`,
+                  `check render() method of ${component.constructor.name}`);
+            }
+          }
+        }
+
+        // attributes
+        Object.keys(props)
+            .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
+            .forEach(attr => {
+              const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
+              if (value !== null && value !== undefined) {
+                element.setAttribute(attr, value);
+              }
+            });
+        // data attributes
+        const dataset = props.dataset || {};
+        Object.keys(dataset).forEach(attr => {
+          const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
+          element.setDataAttribute(attr, value);
+        });
+        // class names
+        const classNames = opr.Toolkit.Template.getClassNames(props.class);
+        classNames.forEach(className => {
+          element.addClassName(className);
+        });
+        // style
+        const style = props.style || {};
+        Object.keys(style)
+            .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
+            .forEach(prop => {
+              const value =
+                  opr.Toolkit.Template.getStyleValue(style[prop], prop);
+              if (value !== null && value !== undefined) {
+                element.setStyleProperty(prop, value);
+              }
+            });
+        // listeners
+        Object.keys(props)
+            .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
+            .forEach(event => {
+              const name = opr.Toolkit.utils.getEventName(event);
+              const listener = props[event];
+              if (typeof listener === 'function') {
+                element.addListener(name, listener);
+              }
+            });
+        // metadata
+        if (props.metadata) {
+          Object.keys(props.metadata).forEach(key => {
+            element.metadata[key] = props.metadata[key];
+          });
+        }
+        // key
+        if (props.key) {
+          element.key = props.key;
+        }
+      }
+      // text
+      if (description.text) {
+        element.text = description.text;
+      }
+      return element;
+    }
+
+    static createFromTemplate(template, previousNode, root, component) {
+      if (template === undefined) {
+        throw new Error('Invalid undefined template!');
+      }
+      if (template === null || template === false || template.length === 0) {
+        return null;
+      }
+      const description = opr.Toolkit.Template.describe(template);
+      if (description.component) {
+        return this.createComponent(
+            description.component, description.props, description.children,
+            previousNode, root);
+      }
+      return this.createElement(description, previousNode, root, component);
+    }
+
+    static createElement(description, previousNode, root, component) {
+      const element = this.createElementInstance(description, component);
+      const getPreviousChild = index => {
+        if (element.isCompatible(previousNode)) {
+          return previousNode.children[index] || null;
+        }
+        return null;
+      };
+      if (description.children) {
+        element.children = description.children.map((desc, index) => {
+          const child = this.createFromTemplate(
+              desc, getPreviousChild(index), root, component);
+          child.parentNode = element;
+          return child;
+        });
+      }
+      return element;
+    }
+
+    static calculateProps(component, props = {}) {
+      const defaultProps = component.constructor.defaultProps;
+      if (defaultProps) {
+        const result = Object.assign({}, props);
+        const keys = Object.keys(defaultProps);
+        for (const key of keys) {
+          if (props[key] === undefined) {
+            result[key] = defaultProps[key];
+          }
+        }
+        return result;
+      }
+      return props;
+    }
+
+    static createChildTree(root, props, previousTree) {
+
+      const sandbox = root.sandbox;
+      sandbox.props = this.calculateProps(root, props);
+
+      let template;
+      if (root.elementName) {
+        // TODO: do better
+        template = [
+          root.elementName,
+          {
+            metadata: {
+              component: root,
+            },
+          },
+        ];
+      } else {
+        template = root.render.call(sandbox);
+      }
+      const tree = this.createFromTemplate(template, previousTree, root, root);
+      if (tree) {
+        tree.parentNode = root;
+      }
+      return tree;
+    }
+
+    static createComponent(
+        symbol, props = {}, children = [], previousNode, root) {
+      try {
+        const instance = this.createComponentFrom(symbol, props);
+        const calculatedProps = this.calculateProps(instance, props);
+        instance.props = calculatedProps;
+        instance.commands = root && root.commands || {};
+
+        const sandbox = instance.isCompatible(previousNode) ?
+            previousNode.sandbox :
+            instance.sandbox;
+
+        sandbox.props = calculatedProps;
+        sandbox.children = children;
+
+        let template;
+        if (instance instanceof opr.Toolkit.Root) {
+          const customElementName = instance.constructor.elementName;
+          if (customElementName) {
+            // TODO: static render after element will have attached
+            template = [
+              customElementName,
+            ];
+          } else {
+            /* eslint-disable max-len */
+            throw new Error(
+                `No custom element name defined in "${
+                                                      instance.constructor.name
+                                                    }", implement "static get elementName()" method.`);
+            /* eslint-enable max-len */
+          }
+        } else {
+          template = instance.render.call(sandbox);
+        }
+
+        opr.Toolkit.assert(
+            template !== undefined,
+            'Invalid undefined template returned when rendering:', instance);
+
+        if (template) {
+          const previousChild = previousNode && previousNode.isComponent() ?
+              previousNode.child :
+              null;
+          instance.appendChild(
+              this.createFromTemplate(template, previousChild, root, instance));
+        }
+        return instance;
+      } catch (e) {
+        console.error('Error creating Component Tree:', symbol);
+        throw e;
+      }
+    }
+
+    static async resolve() {
+      // TODO: implement
+    }
+  }
+
+  loader.define('core/virtual-dom', VirtualDOM);
 }
 
 {
@@ -2965,131 +2856,196 @@
 }
 
 {
-  loader.prefix('core', '/src/');
-
-  const {
-    SUPPORTED_ATTRIBUTES,
-    SUPPORTED_EVENTS,
-    SUPPORTED_STYLES,
-    SUPPORTED_FILTERS,
-    SUPPORTED_TRANSFORMS
-  } = loader.get('core/consts');
-
-  const {
-    VirtualNode,
-    Root,
-    Component,
-    VirtualElement,
-    Comment,
-  } = loader.get('core/core-types');
-
-  const App = loader.get('core/app');
-  const Sandbox = loader.get('core/sandbox');
-  const Template = loader.get('core/template');
-  const ComponentTree = loader.get('core/component-tree');
-  const ComponentLifecycle = loader.get('core/component-lifecycle');
-  const Diff = loader.get('core/diff');
-  const Patch = loader.get('core/patch');
-  const Reconciler = loader.get('core/reconciler');
-  const Document = loader.get('core/document');
-  const Service = loader.get('core/service');
-  const utils = loader.get('core/utils');
-
-  // config
-  const settings = {};
-
-  let init;
-  const readyPromise = new Promise(resolve => {
-    init = resolve;
-  });
-
-  const ready = async () => {
-    await readyPromise;
-  };
-
   const logLevels = ['debug', 'info', 'warn', 'error'];
 
-  const configure = options => {
-    settings.plugins = options.plugins || [];
-    settings.level = logLevels.includes(options.level) ? options.level : 'info';
-    settings.debug = options.debug || false;
-    settings.preload = options.preload || false;
-    settings.bundles = options.bundles || [];
-    settings.bundleRootPath = options.bundleRootPath || '';
-    Object.freeze(settings);
-    init();
-  };
+  class Toolkit {
 
-  const isDebug = () => settings.debug;
-
-  const render = (templateProvider, props, container) => {
-    const parent = new Root(container);
-    const template = templateProvider(props);
-    if (template) {
-      const element = ComponentTree.createFromTemplate(template);
-      Patch.addElement(element, parent).apply();
+    constructor() {
+      this.plugins = new Map();
+      this.readyPromise = new Promise(resolve => {
+        this.init = resolve;
+      });
     }
-    return props => {
+
+    async ready() {
+      await this.readyPromise;
+    }
+
+    configure(options) {
+      const settings = {};
+      settings.plugins = options.plugins || [];
+      settings.level =
+          logLevels.includes(options.level) ? options.level : 'info';
+      settings.debug = options.debug || false;
+      settings.preload = options.preload || false;
+      settings.bundles = options.bundles || [];
+      settings.bundleRootPath = options.bundleRootPath || '';
+      Object.freeze(settings);
+      this.settings = settings;
+      this.init();
+    }
+
+    isDebug() {
+      return Boolean(this.settings) && this.settings.debug;
+    }
+
+    assert(condition, ...messages) {
+      if (this.isDebug()) {
+        console.assert(condition, ...messages);
+      }
+    }
+
+    warn(...messages) {
+      console.warn(...messages);
+    }
+
+    getBundleName(root) {
+      if (typeof root === 'symbol') {
+        root = String(this.symbol).slice(7, -1);
+      }
+      for (const bundle of this.settings.bundles) {
+        if (bundle.root === root) {
+          return bundle.name;
+        }
+      }
+      return null;
+    }
+
+    async preload(symbol) {
+      if (this.settings.debug) {
+        if (this.settings.preload) {
+          await loader.foreload(symbol);
+        }
+      } else {
+        const bundle = this.getBundleName(symbol);
+        if (bundle) {
+          await loader.require(`${this.settings.bundleRootPath}/${bundle}`);
+        }
+      }
+    }
+
+    async getRootClass(component, props) {
+      const type = typeof component;
+      switch (type) {
+        case 'string':
+        case 'symbol':
+          await this.preload(component);
+          const module = loader.get(component);
+          this.assert(
+              module.prototype instanceof opr.Toolkit.Root,
+              'Module has to be an instance of opr.Toolkit.Root');
+          return module;
+        case 'function':
+          if (component.prototype instanceof opr.Toolkit.Root) {
+            return component;
+          }
+          return class RootClass extends opr.Toolkit.Root {
+            render() {
+              return component(props);
+            }
+          };
+        default:
+          throw new Error(`Invalid component type: ${type}`);
+      }
+    }
+
+    renderStatic(templateProvider, container, props = {}) {
+      const parent = new opr.Toolkit.Root();
+      parent.container = container;
       const template = templateProvider(props);
-      let element;
       if (template) {
-        element = ComponentTree.createFromTemplate(template);
+        const element = this.VirtualDOM.createFromTemplate(template);
+        this.Patch.addElement(element, parent).apply();
       }
-      const patches = Diff.calculate(parent.child, element, parent);
-      for (const patch of patches) {
-        patch.apply();
+      return props => {
+        const template = templateProvider(props);
+        let element;
+        if (template) {
+          element = this.VirtualDOM.createFromTemplate(template);
+        }
+        const patches = this.Diff.calculate(parent.child, element, parent);
+        for (const patch of patches) {
+          patch.apply();
+        }
+      };
+    }
+
+    async render(component, container, props = {}) {
+
+      await this.ready();
+
+      const RootClass = await this.getRootClass(component, props);
+
+      const root = this.VirtualDOM.createComponentInstance(RootClass, props);
+
+      let destroy;
+      const init = async container => {
+        root.renderer = new this.Renderer(root, container, this.settings);
+        root.container = container;
+        destroy = () => {
+          this.Lifecycle.onComponentDestroyed(root);
+          this.Lifecycle.onComponentDetached(root);
+        };
+        const initialState =
+            await root.getInitialState.call(root.sandbox, props);
+
+        // TODO: investigate why dispatch and this.reducer are needed
+        root.dispatch(root.reducer.commands.init(initialState));
+      };
+
+      if (RootClass.elementName) {
+        RootClass.register();
+        const customElement = document.createElement(RootClass.elementName);
+        customElement.props = {
+          onLoad: container => init(container),
+          onUnload: () => destroy(),
+          styles: RootClass.styles,
+        };
+        container.appendChild(customElement);
+      } else {
+        const observer = new MutationObserver(mutations => {
+          const isContainerRemoved = mutations.find(
+              mutation => [...mutation.removedNodes].find(
+                  node => node === container));
+          if (isContainerRemoved) {
+            destroy();
+          }
+        });
+        if (container.parentElement) {
+          observer.observe(container.parentElement, {
+            childList: true,
+          });
+        }
+        await init(container);
       }
+
+      return root;
     }
-  };
+  }
 
-  const create = root => new App(root, settings);
+  loader.define('core/toolkit', Toolkit);
+}
 
-  const assert = (condition, ...messages) => {
-    if (isDebug()) {
-      console.assert(condition, ...messages);
-    }
-  };
+{
+  const Toolkit = loader.get('core/toolkit');
 
-  const warn = (...messages) => {
-    console.warn(...messages);
-  };
+  const consts = loader.get('core/consts');
+  const nodes = loader.get('core/nodes');
 
-  const Toolkit = {
-    // constants
-    SUPPORTED_ATTRIBUTES,
-    SUPPORTED_EVENTS,
-    SUPPORTED_STYLES,
-    SUPPORTED_FILTERS,
-    SUPPORTED_TRANSFORMS,
-    // core classes
-    App,
-    ComponentTree,
-    ComponentLifecycle,
-    Document,
-    Diff,
-    Patch,
-    Reconciler,
-    Template,
-    Sandbox,
-    Service,
-    // core types
-    VirtualNode,
-    Root,
-    Component,
-    VirtualElement,
-    Comment,
-    // utils
-    utils,
-    create,
-    render,
-    configure,
-    ready,
-    // debug
-    isDebug,
-    assert,
-    warn,
-  };
+  Object.assign(Toolkit.prototype, consts, nodes, {
+    Diff: loader.get('core/diff'),
+    Document: loader.get('core/document'),
+    Lifecycle: loader.get('core/lifecycle'),
+    Patch: loader.get('core/patch'),
+    Reconciler: loader.get('core/reconciler'),
+    Renderer: loader.get('core/renderer'),
+    Sandbox: loader.get('core/sandbox'),
+    Service: loader.get('core/service'),
+    Template: loader.get('core/template'),
+    VirtualDOM: loader.get('core/virtual-dom'),
+    utils: loader.get('core/utils'),
+  });
 
   window.opr = window.opr || {};
-  window.opr.Toolkit = Toolkit;
+  window.opr.Toolkit = new Toolkit();
 }

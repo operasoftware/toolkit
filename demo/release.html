@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Opera Toolkit demo</title>
+  <title>Toolkit Demo - release</title>
   <link rel="stylesheet" href="./bubbles.css" />
   <link rel="stylesheet" href="./demo.css" />
   <script src="/dist/toolkit.release.js"></script>
-  <script src="/demo/demo.js"></script>
-  <script src="/demo/bubbles.js"></script>
 </head>
 <body>
   <div class="background">
@@ -17,38 +15,17 @@
   </div>
   <script>
     const $ = id => document.getElementById(id);
-    const contextMenuPlugin = {
-      id: Symbol('context-menu'),
-      install: sandbox => {
-        const contextMenuListener = event => {
-          let element = event.target;
-          while (element && element !== this.container && !element.contextMenu) {
-            element = element.parentElement;
-          }
-          if (element && element.contextMenu) {
-            const menu = element.contextMenu.provider();
-            console.log(`Context menu for '${menu}'`);
-            event.stopImmediatePropagation();
-            event.preventDefault();
-          }
-        };
-        sandbox.container.addEventListener('contextmenu', contextMenuListener);
-        const uninstall = () => {
-          sandbox.container.removeEventListener(
-              'contextmenu', contextMenuListener);
-        };
-        return uninstall;
-      },
+    const render = async () => {
+      opr.Toolkit.configure({
+        preload: true,
+        debug: true,
+        plugins: [],
+      });
+      await opr.Toolkit.ready();
+      opr.Toolkit.render('bubbles/bubbles-app', $('navigation'));
+      opr.Toolkit.render('bubbles/bubbles-app', $('bubbles'));
     };
-    opr.Toolkit.configure({
-      preload: true,
-      debug: true,
-      plugins: [contextMenuPlugin],
-    });
-    opr.Toolkit.ready().then(async () => {
-      await renderDemo($('navigation'));
-      await renderBubbles($('bubbles'));
-    });
+    render();
   </script>
 </body>
 </html>

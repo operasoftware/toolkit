@@ -66,7 +66,7 @@
             state[property] = value;
           }
           return true;
-        }
+        },
       });
     }
   }

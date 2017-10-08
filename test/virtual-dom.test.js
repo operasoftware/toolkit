@@ -1,46 +1,22 @@
-describe('Component Tree', () => {
+describe('Virtual DOM', () => {
 
-  const VirtualNode = opr.Toolkit.VirtualNode;
-  const ComponentTree = opr.Toolkit.ComponentTree;
+  const VirtualDOM = opr.Toolkit.VirtualDOM;
 
   suppressConsoleErrors();
 
-  let createComponentInstance;
-  
-  before(() => {
-    createComponentInstance = ComponentTree.createComponentInstance;
-  });
+  const cache = new Map();
 
-  after(() => {
-    ComponentTree.createComponentInstance = createComponentInstance;
-  });
-
-  describe('=> create component instance', () => {
+  describe('=> create component from', () => {
 
     const root = Symbol.for('Root');
-    const loader = global.loader;
 
-    beforeEach(() => {
-      global.loader = {
-        get: symbol => {
-          switch (symbol) {
-            case root:
-              return opr.Toolkit.Root;
-            default:
-              throw new Error('Unknown definition: ' + symbol);
-          }
-        }
-      };
-    });
-
-    afterEach(() => {
-      global.loader = loader;
-    });
+    class RootClass extends opr.Toolkit.Root {};
+    loader.define('Root', RootClass);
 
     it('creates a new instance of preloaded component', () => {
 
       // given
-      const instance = ComponentTree.createComponentInstance(root);
+      const instance = VirtualDOM.createComponentFrom(root);
 
       // then
       assert(instance);
@@ -51,8 +27,9 @@ describe('Component Tree', () => {
     it('creates a new instance of preloaded component with key', () => {
 
       // given
-      const instance =
-          ComponentTree.createComponentInstance(root, {key: 'key'});
+      const instance = VirtualDOM.createComponentFrom(root, {
+        key: 'key',
+      });
 
       // then
       assert(instance);
@@ -72,7 +49,7 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -94,7 +71,7 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -114,7 +91,7 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -138,7 +115,8 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description, new opr.Toolkit.Component());
+      const element = VirtualDOM.createElementInstance(
+          description, new opr.Toolkit.Component());
 
       // then
       assert(element);
@@ -168,7 +146,7 @@ describe('Component Tree', () => {
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -190,23 +168,27 @@ describe('Component Tree', () => {
       const description = {
         name: 'div',
         props: {
-          class: ['foo', {
+          class: [
+            'foo',
+            {
               bar: true,
             },
             [
               [
-                ['nested']
+                [
+                  'nested',
+                ],
               ],
               [
-                [() => {}]
-              ]
-            ]
+                [() => {}],
+              ],
+            ],
           ],
-        }
+        },
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -231,11 +213,11 @@ describe('Component Tree', () => {
             backgroundColor: 'black',
             unknown: 'green',
           },
-        }
+        },
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -262,11 +244,11 @@ describe('Component Tree', () => {
         props: {
           onClick,
           onChange,
-        }
+        },
       };
 
       // when
-      const element = ComponentTree.createElementInstance(description);
+      const element = VirtualDOM.createElementInstance(description);
 
       // then
       assert(element);
@@ -290,34 +272,40 @@ describe('Component Tree', () => {
       const ComponentClass = class extends opr.Toolkit.Component {
         render() {
           return [
-            'span', this.id
-          ]
+            'span',
+            this.id,
+          ];
         }
       };
 
-      ComponentTree.createComponentInstance = def => {
-        return new ComponentClass();
-      };
+      loader.define('Component', ComponentClass);
 
       // given
-      const previousElement = ComponentTree.createElement({
+      const previousElement = VirtualDOM.createElement({
         name: 'div',
         children: [
-          [Component]
+          [
+            Component,
+          ],
         ],
       });
 
       // when
-      const element = ComponentTree.createElement({
-        name: 'div',
-        children: [
-          [Component]
-        ],
-      }, previousElement);
+      const element = VirtualDOM.createElement(
+          {
+            name: 'div',
+            children: [
+              [
+                Component,
+              ],
+            ],
+          },
+          previousElement);
 
       // then
       assert.equal(
-        element.children[0].child.text, previousElement.children[0].child.text);
+          element.children[0].child.text,
+          previousElement.children[0].child.text);
     });
   });
 
@@ -338,7 +326,7 @@ describe('Component Tree', () => {
       const props = {};
 
       // when
-      const child = ComponentTree.createChildTree(app, props);
+      const child = VirtualDOM.createChildTree(app, props);
 
       // then
       assert(child);
@@ -358,7 +346,7 @@ describe('Component Tree', () => {
       const props = {};
 
       // when
-      const child = ComponentTree.createChildTree(app, props);
+      const child = VirtualDOM.createChildTree(app, props);
 
       // then
       assert.equal(child, null);
@@ -371,27 +359,26 @@ describe('Component Tree', () => {
     it('creates a leaf with a single element', () => {
 
       // given
+      const LeafElementComponent = Symbol.for('LeafElement');
+
       const LeafElement = class extends opr.Toolkit.Component {
         render() {
           return [
-            'a', {
-              href: this.props.url
+            'a',
+            {
+              href: this.props.url,
             },
-            this.props.label
+            this.props.label,
           ];
         }
       };
 
-      ComponentTree.createComponentInstance = def => {
-        return new LeafElement();
-      };
+      loader.define('LeafElement', LeafElement);
 
       const label = 'Example';
       const url = 'http://www.example.com';
-      const component = ComponentTree.createComponent('LeafElement', {
-        url,
-        label
-      });
+      const component =
+          VirtualDOM.createComponent(LeafElementComponent, {url, label});
 
       // then
       assert(component.isComponent());
@@ -408,36 +395,36 @@ describe('Component Tree', () => {
     it('creates a leaf with nested elements', () => {
 
       // given
+      const NestedElementsComponent = Symbol.for('NestedElements');
+
       const NestedElements = class extends opr.Toolkit.Component {
         render() {
           return [
-            'div', [
-              'span', {
-                onClick: this.props.onClick
+            'div',
+            [
+              'span',
+              {
+                onClick: this.props.onClick,
               },
               [
-                'a', {
-                  href: this.props.url
+                'a',
+                {
+                  href: this.props.url,
                 },
-                this.props.label
-              ]
-            ]
+                this.props.label,
+              ],
+            ],
           ];
         }
       };
 
-      ComponentTree.createComponentInstance = def => {
-        return new NestedElements();
-      };
+      loader.define('NestedElements', NestedElements);
 
       const label = 'Example';
       const url = 'http://www.example.com';
       const onClick = () => {};
-      const component = ComponentTree.createComponent('NestedElements', {
-        url,
-        label,
-        onClick
-      });
+      const component = VirtualDOM.createComponent(
+          NestedElementsComponent, {url, label, onClick});
 
       // then
       const divElement = component.child;
@@ -481,24 +468,21 @@ describe('Component Tree', () => {
       // given
       const Application = class extends opr.Toolkit.Component {
         render() {
-          return [
-            ParentComponent, [
-              'p', {
-                class: 'passed-from-application'
-              }
-            ]
-          ];
+          return [ParentComponent, ['p', {class: 'passed-from-application'}]];
         }
       };
 
       const Parent = class extends opr.Toolkit.Component {
         render() {
           return [
-            ChildComponent, [
-              'div', {
-                class: 'passed-from-parent'
-              }, ...this.children
-            ]
+            ChildComponent,
+            [
+              'div',
+              {
+                class: 'passed-from-parent',
+              },
+              ...this.children,
+            ],
           ];
         }
       };
@@ -506,26 +490,20 @@ describe('Component Tree', () => {
       const Child = class extends opr.Toolkit.Component {
         render() {
           return [
-            'span', {
-              id: 'child'
-            }, ...this.children
+            'span',
+            {
+              id: 'child',
+            },
+            ...this.children,
           ];
         }
       };
 
-      ComponentTree.createComponentInstance = def => {
-        switch (def) {
-          case ApplicationComponent:
-            return new Application();
-          case ParentComponent:
-            return new Parent();
-          case ChildComponent:
-            return new Child();
-            throw `Unknown definition: ${def}`;
-        }
-      };
+      loader.define('application', Application);
+      loader.define('parent', Parent);
+      loader.define('child', Child);
 
-      const component = ComponentTree.createComponent(ApplicationComponent);
+      const component = VirtualDOM.createComponent(ApplicationComponent);
 
       // then
       assert(component.isComponent());
@@ -562,39 +540,45 @@ describe('Component Tree', () => {
     it('reuses sandboxed context from the existing component', () => {
 
       // given
-      ComponentTree.createComponentInstance = def => {
-        return new ReusedComponent();
-      };
+      const Component = Symbol.for('Component');
 
       const ReusedComponent = class extends opr.Toolkit.Component {
         render() {
           return [
-            'span', this.id
+            'span',
+            this.id,
           ];
         }
       };
-      const previousComponent = ComponentTree.createComponent('Component');
+      loader.define('Component', ReusedComponent);
+      const previousComponent = VirtualDOM.createComponent(Component);
 
       // when
-      const component = ComponentTree.createComponent(
-        'Component', {}, [], previousComponent);
+      const component =
+          VirtualDOM.createComponent(Component, {}, [], previousComponent);
 
       // then
       assert.equal(component.child.text, previousComponent.child.text);
 
     });
+  });
 
-    it('throws an error for invalid template', () => {
+  describe('=> throw error for invalid template', () => {
 
-      // given
-      ComponentTree.createComponentInstance = () => {
+    beforeEach(() => {
+      sinon.stub(VirtualDOM, 'createComponentInstance', () => {
         return {
-          render: () => [666]
-        }
-      };
+          render: () => [666],
+        };
+      });
+    });
 
-      // then
-      assert.throws(ComponentTree.createComponent, Error, 'Error');
+    afterEach(() => {
+      VirtualDOM.createComponentInstance.restore();
+    })
+
+    it('throws an error for number', () => {
+      assert.throws(VirtualDOM.createComponent, Error, 'Error');
     });
   });
 
@@ -604,17 +588,21 @@ describe('Component Tree', () => {
 
       // given
       const template = [
-        'div', [
-          'span', [
-            'a', {
-              href: 'http://www.example.com'
-            }, 'Text'
-          ]
-        ]
+        'div',
+        [
+          'span',
+          [
+            'a',
+            {
+              href: 'http://www.example.com',
+            },
+            'Text',
+          ],
+        ],
       ];
 
       // when
-      const divElement = ComponentTree.createFromTemplate(template);
+      const divElement = VirtualDOM.createFromTemplate(template);
 
       // then
       assert(divElement.isElement())
@@ -633,20 +621,20 @@ describe('Component Tree', () => {
     });
 
     it('returns null for template === null', () => {
-      assert.equal(ComponentTree.createFromTemplate(null), null);
+      assert.equal(VirtualDOM.createFromTemplate(null), null);
     });
 
     it('returns null for template === false', () => {
-      assert.equal(ComponentTree.createFromTemplate(false), null);
+      assert.equal(VirtualDOM.createFromTemplate(false), null);
     });
 
     it('returns null for template === []', () => {
-      assert.equal(ComponentTree.createFromTemplate([]), null);
+      assert.equal(VirtualDOM.createFromTemplate([]), null);
     });
 
     it('throws when template === undefined', () => {
-      assert.throws(ComponentTree.createFromTemplate, Error,
-        'Invalid undefined template!');
+      assert.throws(
+          VirtualDOM.createFromTemplate, Error, 'Invalid undefined template!');
     });
   });
 
@@ -674,7 +662,7 @@ describe('Component Tree', () => {
       });
 
       // when
-      const calculatedProps = ComponentTree.calculateProps(instance, props);
+      const calculatedProps = VirtualDOM.calculateProps(instance, props);
 
       // then
       assert.deepEqual(calculatedProps, {
@@ -698,7 +686,7 @@ describe('Component Tree', () => {
       });
 
       // when
-      const calculatedProps = ComponentTree.calculateProps(instance, props);
+      const calculatedProps = VirtualDOM.calculateProps(instance, props);
 
       // then
       assert.deepEqual(calculatedProps, props);
@@ -720,7 +708,7 @@ describe('Component Tree', () => {
       });
 
       // when
-      const calculatedProps = ComponentTree.calculateProps(instance, props);
+      const calculatedProps = VirtualDOM.calculateProps(instance, props);
 
       // then
       assert.deepEqual(calculatedProps, props);

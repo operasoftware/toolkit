@@ -2,14 +2,12 @@ describe('Virtual Element => create', () => {
 
   const VirtualElement = opr.Toolkit.VirtualElement;
 
-  const createElement = opr.Toolkit.ComponentTree.createElementInstance;
+  const createElement = opr.Toolkit.VirtualDOM.createElementInstance;
 
   it('creates an empty element', () => {
 
     // given
-    const description = {
-      name: 'span'
-    };
+    const description = {name: 'span'};
 
     // when
     const element = createElement(description);
@@ -33,8 +31,8 @@ describe('Virtual Element => create', () => {
         type: 'text',
         tabIndex: 1,
         autoFocus: true,
-        onChange: onChangeListener
-      }
+        onChange: onChangeListener,
+      },
     };
 
     // when
@@ -58,10 +56,7 @@ describe('Virtual Element => create', () => {
   it('creates a text element', () => {
 
     // given
-    const description = {
-      name: 'div',
-      text: 'Text'
-    };
+    const description = {name: 'div', text: 'Text'};
 
     // when
     const element = createElement(description);
@@ -87,7 +82,7 @@ describe('Virtual Element => create', () => {
         title: 'Example',
         onClick: onClickListener,
       },
-      text: 'Example'
+      text: 'Example',
     };
 
     // when
@@ -116,9 +111,9 @@ describe('Virtual Element => create', () => {
       props: {
         href: null,
         target: undefined,
-        title: 'Test'
+        title: 'Test',
       },
-      text: 'Text'
+      text: 'Text',
     };
 
     // when
@@ -128,7 +123,7 @@ describe('Virtual Element => create', () => {
     assert(element instanceof VirtualElement);
     assert.equal(element.name, 'a');
     assert.deepEqual(element.attrs, {
-      'title': 'Test'
+      'title': 'Test',
     });
     assert.equal(element.text, 'Text');
     assert.deepEqual(element.children, []);
@@ -146,9 +141,9 @@ describe('Virtual Element => create', () => {
         onSubmit: false,
         onCopy: 'copy',
         onPaste: null,
-        onCut: undefined
+        onCut: undefined,
       },
-      text: 'Link'
+      text: 'Link',
     };
 
     // when
@@ -159,12 +154,11 @@ describe('Virtual Element => create', () => {
     assert.equal(element.name, 'a');
     assert.deepEqual(element.attrs, {});
     assert.deepEqual(element.listeners, {
-      'click': onClickListener
+      'click': onClickListener,
     });
     assert.equal(element.text, 'Link');
     assert.deepEqual(element.children, []);
   });
-
 
   describe('supports adding attributes', () => {
 
@@ -176,7 +170,7 @@ describe('Virtual Element => create', () => {
         props: {
           title: 'Title',
           value: 'Value',
-        }
+        },
       };
 
       // when
@@ -199,7 +193,7 @@ describe('Virtual Element => create', () => {
         props: {
           height: 0,
           width: 200,
-        }
+        },
       };
 
       // when
@@ -222,7 +216,7 @@ describe('Virtual Element => create', () => {
         props: {
           checked: true,
           selected: true,
-        }
+        },
       };
 
       // when
@@ -246,7 +240,7 @@ describe('Virtual Element => create', () => {
           title: undefined,
           type: null,
           value: () => {},
-        }
+        },
       };
 
       // when
@@ -260,15 +254,11 @@ describe('Virtual Element => create', () => {
 
     describe('add "class" attribute', () => {
 
-      const createElementWithClasses = (name, classNames) => {
-        const description = {
-          name,
-          props: {
-            class: classNames
+      const createElementWithClasses =
+          (name, classNames) => {
+            const description = {name, props: {class: classNames}};
+            return createElement(description);
           }
-        };
-        return createElement(description);
-      }
 
       it('supports strings', () => {
 
@@ -322,9 +312,12 @@ describe('Virtual Element => create', () => {
         // given
         const classNames = [
           null,
-          'foo', [{
-            bar: true,
-          }]
+          'foo',
+          [
+            {
+              bar: true,
+            },
+          ],
         ];
 
         // when
@@ -341,9 +334,14 @@ describe('Virtual Element => create', () => {
         // given
         const classNames = [
           null,
-          ' foo ', [{
-            bar: true,
-          }, '   test', ' ']
+          ' foo ',
+          [
+            {
+              bar: true,
+            },
+            '   test',
+            ' ',
+          ],
         ];
 
         // when
@@ -372,15 +370,11 @@ describe('Virtual Element => create', () => {
 
     describe('add "style" attribute', () => {
 
-      const createElementWithStyle = (name, style) => {
-        const description = {
-          name,
-          props: {
-            style
+      const createElementWithStyle =
+          (name, style) => {
+            const description = {name, props: {style}};
+            return createElement(description);
           }
-        };
-        return createElement(description);
-      }
 
       it('supports plain values', () => {
 
@@ -440,17 +434,11 @@ describe('Virtual Element => create', () => {
 
       describe('add "filter"', () => {
 
-        const createElementWithFilter = (name, filter) => {
-          const description = {
-            name,
-            props: {
-              style: {
-                filter
-              }
+        const createElementWithFilter =
+            (name, filter) => {
+              const description = {name, props: {style: {filter}}};
+              return createElement(description);
             }
-          };
-          return createElement(description);
-        }
 
         it('supports known filters', () => {
 
@@ -474,17 +462,11 @@ describe('Virtual Element => create', () => {
 
       describe('add "transform"', () => {
 
-        const createElementWithTransform = (name, transform) => {
-          const description = {
-            name,
-            props: {
-              style: {
-                transform
-              }
+        const createElementWithTransform =
+            (name, transform) => {
+              const description = {name, props: {style: {transform}}};
+              return createElement(description);
             }
-          };
-          return createElement(description);
-        }
 
         it('supports known transforms', () => {
 
@@ -502,8 +484,9 @@ describe('Virtual Element => create', () => {
           // then
           assert(element instanceof VirtualElement);
           assert.equal(element.name, 'section');
-          assert.equal(element.style.transform,
-            'translate3d(0, 0, 0) scale(2) rotate(90deg)');
+          assert.equal(
+              element.style.transform,
+              'translate3d(0, 0, 0) scale(2) rotate(90deg)');
         });
       });
     });

@@ -306,6 +306,9 @@
   class Diff {
 
     static deepEqual(current, next) {
+      if (Object.is(current, next)) {
+        return true;
+      }
       const type = getType(current);
       const nextType = getType(next);
       if (type !== nextType) {
@@ -341,9 +344,8 @@
           }
         }
         return true;
-      } else {
-        return current === next;
       }
+      return false;
     }
 
     static calculate(tree, nextTree, root) {

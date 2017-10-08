@@ -97,7 +97,8 @@ describe('Sandbox', () => {
 
       // given
       const dispatch = () => {};
-      const instance = new opr.Toolkit.Root({}, dispatch);
+      const instance = new opr.Toolkit.Root();
+      instance.dispatch = dispatch;
 
       // when
       const context = Sandbox.create(instance);

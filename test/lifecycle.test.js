@@ -1,8 +1,8 @@
-describe('Component Lifecycle', () => {
+describe('Lifecycle', () => {
 
-  const ComponentTree = opr.Toolkit.ComponentTree;
-  const ComponentLifecycle = opr.Toolkit.ComponentLifecycle;
+  const Lifecycle = opr.Toolkit.Lifecycle;
   const Patch = opr.Toolkit.Patch;
+  const VirtualDOM = opr.Toolkit.VirtualDOM;
 
   let container;
   let stub = sinon.spy();
@@ -56,10 +56,17 @@ describe('Component Lifecycle', () => {
   };
 
   const createApp = template => {
-    const app = new App();
+    const RootClass = class extends opr.Toolkit.Root {
+      render() {
+        return template;
+      }
+    };
+    const app = new RootClass();
+    app.container = document.createElement('section');
+
     let node = null;
     if (template) {
-      node = ComponentTree.createFromTemplate(template);
+      node = VirtualDOM.createFromTemplate(template);
       if (node.isElement()) {
         Patch.addElement(node, app).apply();
       }
@@ -94,7 +101,7 @@ describe('Component Lifecycle', () => {
   beforeEach(() => {
     container = document.createElement('app');
     stub.reset();
-    sinon.stub(ComponentTree, 'createComponentInstance', def => {
+    sinon.stub(VirtualDOM, 'createComponentFrom', def => {
       switch (def) {
         case Component:
           return new ComponentClass();
@@ -107,7 +114,7 @@ describe('Component Lifecycle', () => {
   });
 
   afterEach(() => {
-    ComponentTree.createComponentInstance.restore();
+    VirtualDOM.createComponentFrom.restore();
   });
 
   describe('on created', () => {
@@ -125,7 +132,7 @@ describe('Component Lifecycle', () => {
         const patches = [Patch.createRootComponent(app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(App);
@@ -134,14 +141,12 @@ describe('Component Lifecycle', () => {
       it('adding component', () => {
 
         // given
-        const app = new App();
-        const component = ComponentTree.createFromTemplate([
-          Component
-        ])
+        const app = new opr.Toolkit.Root();
+        const component = VirtualDOM.createFromTemplate([Component]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass);
@@ -151,15 +156,16 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = ComponentTree.createFromTemplate([
-          Component, [
+        const component = VirtualDOM.createFromTemplate([
+          Component,
+          [
             Subcomponent,
-          ]
-        ])
+          ],
+        ]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass, SubcomponentClass);
@@ -169,15 +175,16 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = ComponentTree.createFromTemplate([
-          'div', [
+        const element = VirtualDOM.createFromTemplate([
+          'div',
+          [
             Component,
-          ]
-        ])
+          ],
+        ]);
         const patches = [Patch.addElement(element, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass);
@@ -187,19 +194,22 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = ComponentTree.createFromTemplate([
-          'div', [
-            Component, [
-              'span', [
+        const element = VirtualDOM.createFromTemplate([
+          'div',
+          [
+            Component,
+            [
+              'span',
+              [
                 Subcomponent,
-              ]
-            ]
-          ]
-        ])
+              ],
+            ],
+          ],
+        ]);
         const patches = [Patch.addElement(element, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass, SubcomponentClass);
@@ -211,13 +221,13 @@ describe('Component Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const component = ComponentTree.createFromTemplate([
+        const component = VirtualDOM.createFromTemplate([
           Component,
         ]);
         const patches = [Patch.insertChildNode(component, 0, element)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass);
@@ -227,19 +237,21 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
+          'div',
+          [
             'span',
-          ]
+          ],
         ]);
-        const component = ComponentTree.createFromTemplate([
-          Component, [
-            Subcomponent
-          ]
+        const component = VirtualDOM.createFromTemplate([
+          Component,
+          [
+            Subcomponent,
+          ],
         ]);
         const patches = [Patch.insertChildNode(component, 1, element)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass, SubcomponentClass);
@@ -249,17 +261,18 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div'
+          'div',
         ]);
-        const spanElement = ComponentTree.createFromTemplate([
-          'span', [
-            Component
-          ]
+        const spanElement = VirtualDOM.createFromTemplate([
+          'span',
+          [
+            Component,
+          ],
         ]);
         const patches = [Patch.insertChildNode(spanElement, 0, element)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass);
@@ -269,19 +282,21 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div'
+          'div',
         ]);
-        const spanElement = ComponentTree.createFromTemplate([
-          'span', [
-            Component, [
+        const spanElement = VirtualDOM.createFromTemplate([
+          'span',
+          [
+            Component,
+            [
               Subcomponent,
-            ]
-          ]
+            ],
+          ],
         ]);
         const patches = [Patch.insertChildNode(spanElement, 0, element)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnCreatedCalled(ComponentClass, SubcomponentClass);
@@ -304,7 +319,7 @@ describe('Component Lifecycle', () => {
         const patches = [Patch.createRootComponent(app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(App);
@@ -314,13 +329,11 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = ComponentTree.createFromTemplate([
-          Component
-        ])
+        const component = VirtualDOM.createFromTemplate([Component]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(ComponentClass);
@@ -330,15 +343,16 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = ComponentTree.createFromTemplate([
-          Component, [
+        const component = VirtualDOM.createFromTemplate([
+          Component,
+          [
             Subcomponent,
-          ]
-        ])
+          ],
+        ]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(SubcomponentClass, ComponentClass);
@@ -348,15 +362,16 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = ComponentTree.createFromTemplate([
-          'div', [
+        const element = VirtualDOM.createFromTemplate([
+          'div',
+          [
             Component,
-          ]
-        ])
+          ],
+        ]);
         const patches = [Patch.addElement(element, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(ComponentClass);
@@ -366,19 +381,22 @@ describe('Component Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = ComponentTree.createFromTemplate([
-          'div', [
-            Component, [
-              'span', [
+        const element = VirtualDOM.createFromTemplate([
+          'div',
+          [
+            Component,
+            [
+              'span',
+              [
                 Subcomponent,
-              ]
-            ]
+              ],
+            ],
           ]
-        ])
+        ]);
         const patches = [Patch.addElement(element, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(SubcomponentClass, ComponentClass);
@@ -390,13 +408,13 @@ describe('Component Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const component = ComponentTree.createFromTemplate([
+        const component = VirtualDOM.createFromTemplate([
           Component,
         ]);
         const patches = [Patch.insertChildNode(component, 0, element)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(ComponentClass);
@@ -406,19 +424,17 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
+          'div',
+          [
             'span',
-          ]
+          ],
         ]);
-        const component = ComponentTree.createFromTemplate([
-          Component, [
-            Subcomponent
-          ]
-        ]);
+        const component =
+            VirtualDOM.createFromTemplate([Component, [Subcomponent]]);
         const patches = [Patch.insertChildNode(component, 1, element)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(SubcomponentClass, ComponentClass);
@@ -428,17 +444,18 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div'
+          'div',
         ]);
-        const spanElement = ComponentTree.createFromTemplate([
-          'span', [
-            Component
-          ]
+        const spanElement = VirtualDOM.createFromTemplate([
+          'span',
+          [
+            Component,
+          ],
         ]);
         const patches = [Patch.insertChildNode(spanElement, 0, element)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(ComponentClass);
@@ -448,19 +465,21 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div'
+          'div',
         ]);
-        const spanElement = ComponentTree.createFromTemplate([
-          'span', [
-            Component, [
+        const spanElement = VirtualDOM.createFromTemplate([
+          'span',
+          [
+            Component,
+            [
               Subcomponent,
-            ]
+            ],
           ]
         ]);
         const patches = [Patch.insertChildNode(spanElement, 0, element)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnAttachedCalled(SubcomponentClass, ComponentClass);
@@ -482,12 +501,12 @@ describe('Component Lifecycle', () => {
       // given
       const component = new ComponentClass();
       const props = {
-        test: 'test'
+        test: 'test',
       };
       const patches = [Patch.updateComponent(component, props)];
 
       // when
-      ComponentLifecycle.beforeUpdate(patches);
+      Lifecycle.beforeUpdate(patches);
 
       // then
       assertOnPropsReceivedCalled(component, props);
@@ -508,12 +527,12 @@ describe('Component Lifecycle', () => {
       // given
       const component = new ComponentClass();
       const props = {
-        foo: 'bar'
+        foo: 'bar',
       };
       const patches = [Patch.updateComponent(component, props)];
 
       // when
-      ComponentLifecycle.afterUpdate(patches);
+      Lifecycle.afterUpdate(patches);
 
       // then
       assertOnUpdatedCalled(component, props);
@@ -531,13 +550,11 @@ describe('Component Lifecycle', () => {
       it('removing component', () => {
 
         // given
-        const [app, component] = createApp([
-          Component
-        ]);
+        const [app, component] = createApp([Component]);
         const patches = [Patch.removeComponent(component, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnDestroyedCalled(ComponentClass);
@@ -546,15 +563,11 @@ describe('Component Lifecycle', () => {
       it('removing nested components', () => {
 
         // given
-        const [app, component] = createApp([
-          Component, [
-            Subcomponent
-          ]
-        ]);
+        const [app, component] = createApp([Component, [Subcomponent]]);
         const patches = [Patch.removeComponent(component, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnDestroyedCalled(ComponentClass, SubcomponentClass);
@@ -564,14 +577,15 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
-            Component
-          ]
+          'div',
+          [
+            Component,
+          ],
         ]);
         const patches = [Patch.removeElement(element, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnDestroyedCalled(ComponentClass);
@@ -581,16 +595,18 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
-            Component, [
-              Subcomponent
-            ]
-          ]
+          'div',
+          [
+            Component,
+            [
+              Subcomponent,
+            ],
+          ],
         ]);
         const patches = [Patch.removeElement(element, app)];
 
         // when
-        ComponentLifecycle.beforeUpdate(patches);
+        Lifecycle.beforeUpdate(patches);
 
         // then
         assertOnDestroyedCalled(ComponentClass, SubcomponentClass);
@@ -602,15 +618,16 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              Component
-            ]
+            'div',
+            [
+              Component,
+            ],
           ]);
           const component = element.children[0];
           const patches = [Patch.removeChildNode(component, 0, element)];
 
           // when
-          ComponentLifecycle.beforeUpdate(patches);
+          Lifecycle.beforeUpdate(patches);
 
           // then
           assertOnDestroyedCalled(ComponentClass);
@@ -620,17 +637,19 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              Component, [
-                Subcomponent
-              ]
-            ]
+            'div',
+            [
+              Component,
+              [
+                Subcomponent,
+              ],
+            ],
           ]);
           const component = element.children[0];
           const patches = [Patch.removeChildNode(component, 0, element)];
 
           // when
-          ComponentLifecycle.beforeUpdate(patches);
+          Lifecycle.beforeUpdate(patches);
 
           // then
           assertOnDestroyedCalled(ComponentClass, SubcomponentClass);
@@ -640,17 +659,19 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              'span', [
-                Component
-              ]
-            ]
+            'div',
+            [
+              'span',
+              [
+                Component,
+              ],
+            ],
           ]);
           const spanElement = element.children[0];
           const patches = [Patch.removeChildNode(spanElement, 0, element)];
 
           // when
-          ComponentLifecycle.beforeUpdate(patches);
+          Lifecycle.beforeUpdate(patches);
 
           // then
           assertOnDestroyedCalled(ComponentClass);
@@ -660,21 +681,25 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              'span', [
-                Component, [
-                  'span', [
-                    Subcomponent
-                  ]
-                ]
-              ]
-            ]
+            'div',
+            [
+              'span',
+              [
+                Component,
+                [
+                  'span',
+                  [
+                    Subcomponent,
+                  ],
+                ],
+              ],
+            ],
           ]);
           const spanElement = element.children[0];
           const patches = [Patch.removeChildNode(spanElement, 0, element)];
 
           // when
-          ComponentLifecycle.beforeUpdate(patches);
+          Lifecycle.beforeUpdate(patches);
 
           // then
           assertOnDestroyedCalled(ComponentClass, SubcomponentClass);
@@ -692,16 +717,17 @@ describe('Component Lifecycle', () => {
         }
       };
       const [app, element] = createApp([
-        'div', [
-          Component
-        ]
+        'div',
+        [
+          Component,
+        ],
       ]);
       const component = element.children[0];
       const patches = [Patch.removeChildNode(component, 0, element)];
 
       // when
       component.connectTo(Service);
-      ComponentLifecycle.beforeUpdate(patches);
+      Lifecycle.beforeUpdate(patches);
 
       // then
       assert(disconnect.called);
@@ -720,13 +746,11 @@ describe('Component Lifecycle', () => {
       it('removed component', () => {
 
         // given
-        const [app, component] = createApp([
-          Component
-        ]);
+        const [app, component] = createApp([Component]);
         const patches = [Patch.removeComponent(component, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnDetachedCalled(ComponentClass);
@@ -735,15 +759,11 @@ describe('Component Lifecycle', () => {
       it('removed nested components', () => {
 
         // given
-        const [app, component] = createApp([
-          Component, [
-            Subcomponent
-          ]
-        ]);
+        const [app, component] = createApp([Component, [Subcomponent]]);
         const patches = [Patch.removeComponent(component, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnDetachedCalled(SubcomponentClass, ComponentClass);
@@ -753,14 +773,15 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
-            Component
-          ]
+          'div',
+          [
+            Component,
+          ],
         ]);
         const patches = [Patch.removeElement(element, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnDetachedCalled(ComponentClass);
@@ -770,18 +791,21 @@ describe('Component Lifecycle', () => {
 
         // given
         const [app, element] = createApp([
-          'div', [
-            Component, [
-              'span', [
-                Subcomponent
-              ]
-            ]
-          ]
+          'div',
+          [
+            Component,
+            [
+              'span',
+              [
+                Subcomponent,
+              ],
+            ],
+          ],
         ]);
         const patches = [Patch.removeElement(element, app)];
 
         // when
-        ComponentLifecycle.afterUpdate(patches);
+        Lifecycle.afterUpdate(patches);
 
         // then
         assertOnDetachedCalled(SubcomponentClass, ComponentClass);
@@ -793,15 +817,16 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              Component
-            ]
+            'div',
+            [
+              Component,
+            ],
           ]);
           const component = element.children[0];
           const patches = [Patch.removeChildNode(component, 0, element)];
 
           // when
-          ComponentLifecycle.afterUpdate(patches);
+          Lifecycle.afterUpdate(patches);
 
           // then
           assertOnDetachedCalled(ComponentClass);
@@ -811,17 +836,19 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              Component, [
-                Subcomponent
-              ]
-            ]
+            'div',
+            [
+              Component,
+              [
+                Subcomponent,
+              ],
+            ],
           ]);
           const component = element.children[0];
           const patches = [Patch.removeChildNode(component, 0, element)];
 
           // when
-          ComponentLifecycle.afterUpdate(patches);
+          Lifecycle.afterUpdate(patches);
 
           // then
           assertOnDetachedCalled(SubcomponentClass, ComponentClass);
@@ -831,17 +858,19 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              'span', [
-                Component
-              ]
-            ]
+            'div',
+            [
+              'span',
+              [
+                Component,
+              ],
+            ],
           ]);
           const spanElement = element.children[0];
           const patches = [Patch.removeChildNode(spanElement, 0, element)];
 
           // when
-          ComponentLifecycle.afterUpdate(patches);
+          Lifecycle.afterUpdate(patches);
 
           // then
           assertOnDetachedCalled(ComponentClass);
@@ -851,19 +880,22 @@ describe('Component Lifecycle', () => {
 
           // given
           const [app, element] = createApp([
-            'div', [
-              'span', [
-                Component, [
-                  Subcomponent
-                ]
-              ]
-            ]
+            'div',
+            [
+              'span',
+              [
+                Component,
+                [
+                  Subcomponent,
+                ],
+              ],
+            ],
           ]);
           const spanElement = element.children[0];
           const patches = [Patch.removeChildNode(spanElement, 0, element)];
 
           // when
-          ComponentLifecycle.afterUpdate(patches);
+          Lifecycle.afterUpdate(patches);
 
           // then
           assertOnDetachedCalled(SubcomponentClass, ComponentClass);
@@ -879,27 +911,27 @@ describe('Component Lifecycle', () => {
     };
 
     it('on node created', () => {
-      assert.throws(() => {
-        ComponentLifecycle.onNodeCreated(unsupportedNode)
-      }, 'Unsupported node type: invalid');
+      assert.throws(
+          () => {Lifecycle.onNodeCreated(unsupportedNode)},
+          'Unsupported node type: invalid');
     });
 
     it('on node attached', () => {
-      assert.throws(() => {
-        ComponentLifecycle.onNodeAttached(unsupportedNode)
-      }, 'Unsupported node type: invalid');
+      assert.throws(
+          () => {Lifecycle.onNodeAttached(unsupportedNode)},
+          'Unsupported node type: invalid');
     });
 
     it('on node destroyed', () => {
-      assert.throws(() => {
-        ComponentLifecycle.onNodeDestroyed(unsupportedNode)
-      }, 'Unsupported node type: invalid');
+      assert.throws(
+          () => {Lifecycle.onNodeDestroyed(unsupportedNode)},
+          'Unsupported node type: invalid');
     });
 
     it('on node detached', () => {
-      assert.throws(() => {
-        ComponentLifecycle.onNodeDetached(unsupportedNode)
-      }, 'Unsupported node type: invalid');
+      assert.throws(
+          () => {Lifecycle.onNodeDetached(unsupportedNode)},
+          'Unsupported node type: invalid');
     });
   });
 });

@@ -1,7 +1,7 @@
 describe('Document', () => {
 
   const VirtualNode = opr.Toolkit.VirtualNode;
-  const ComponentTree = opr.Toolkit.ComponentTree;
+  const VirtualDOM = opr.Toolkit.VirtualDOM;
   const Document = opr.Toolkit.Document;
 
   const Component = Symbol.for('Component');
@@ -66,6 +66,7 @@ describe('Document', () => {
       assert.equal(element.getAttribute('accept-charset'), 'UTF8');
       assert.equal(element.attributes.length, 1);
     });
+
     it('removes an attribute', () => {
 
       // given
@@ -226,9 +227,7 @@ describe('Document', () => {
     it('supports empty elements', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'span'
-      ]);
+      const node = VirtualDOM.createFromTemplate(['span']);
 
       // when
       const element = Document.createElement(node);
@@ -243,9 +242,7 @@ describe('Document', () => {
     it('supports text elements', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'span', 'Text'
-      ]);
+      const node = VirtualDOM.createFromTemplate(['span', 'Text']);
 
       // when
       const element = Document.createElement(node);
@@ -259,12 +256,13 @@ describe('Document', () => {
     it('supports style attribute', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'span', {
+      const node = VirtualDOM.createFromTemplate([
+        'span',
+        {
           style: {
             color: 'red',
-          }
-        }
+          },
+        },
       ]);
 
       // when
@@ -282,12 +280,8 @@ describe('Document', () => {
       // given
       const onClick = () => {};
       const onChange = () => {};
-      const node = ComponentTree.createFromTemplate([
-        'span', {
-          onClick,
-          onChange
-        }, 'Text'
-      ]);
+      const node =
+          VirtualDOM.createFromTemplate(['span', {onClick, onChange}, 'Text']);
 
       // when
       const element = Document.createElement(node);
@@ -306,15 +300,17 @@ describe('Document', () => {
   describe('=> attach element tree', () => {
 
     beforeEach(() => {
-      ComponentTree.createComponentInstance = createDummyInstance;
+      sinon.stub(VirtualDOM, 'createComponentFrom', createDummyInstance);
+    });
+
+    afterEach(() => {
+      VirtualDOM.createComponentFrom.restore();
     });
 
     it('creates a single element', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div'
-      ]);
+      const node = VirtualDOM.createFromTemplate(['div']);
 
       // when
       const element = Document.attachElementTree(node);
@@ -328,10 +324,11 @@ describe('Document', () => {
     it('creates two nested elements', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', [
-          'span'
-        ]
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        [
+          'span',
+        ],
       ]);
 
       // when
@@ -352,12 +349,14 @@ describe('Document', () => {
     it('creates three nested elements', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', [
-          'span', [
-            'a'
-          ]
-        ]
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        [
+          'span',
+          [
+            'a',
+          ],
+        ],
       ]);
 
       // when
@@ -384,12 +383,14 @@ describe('Document', () => {
     it('supports component present within the tree', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', [
-          Component, [
-            'span'
-          ]
-        ]
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        [
+          Component,
+          [
+            'span',
+          ],
+        ],
       ]);
 
       // when
@@ -413,14 +414,17 @@ describe('Document', () => {
     it('supports nested components present within the tree', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', [
-          Component, [
-            Subcomponent, [
-              'span'
-            ]
-          ]
-        ]
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        [
+          Component,
+          [
+            Subcomponent,
+            [
+              'span',
+            ],
+          ],
+        ],
       ]);
 
       // when
@@ -448,14 +452,17 @@ describe('Document', () => {
     it('supports component with no children', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', [
-          Component, [
-            'span', [
-              Subcomponent
-            ]
-          ]
-        ]
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        [
+          Component,
+          [
+            'span',
+            [
+              Subcomponent,
+            ],
+          ],
+        ],
       ]);
 
       // when
@@ -485,13 +492,14 @@ describe('Document', () => {
     it('creates metadata', () => {
 
       // given
-      const node = ComponentTree.createFromTemplate([
-        'div', {
+      const node = VirtualDOM.createFromTemplate([
+        'div',
+        {
           metadata: {
             muted: true,
             paused: true,
-          }
-        }
+          },
+        },
       ]);
 
       // when
@@ -511,9 +519,7 @@ describe('Document', () => {
       it('for a component with no child', () => {
 
         // given
-        const node = ComponentTree.createFromTemplate([
-          Component
-        ]);
+        const node = VirtualDOM.createFromTemplate([Component]);
 
         // when
         const comment = Document.attachElementTree(node);
@@ -527,13 +533,8 @@ describe('Document', () => {
       it('for nested components with no child element', () => {
 
         // given
-        const node = ComponentTree.createFromTemplate([
-          Component, [
-            Component, [
-              Subcomponent
-            ]
-          ]
-        ]);
+        const node = VirtualDOM.createFromTemplate(
+            [Component, [Component, [Subcomponent]]]);
 
         // when
         const comment = Document.attachElementTree(node);

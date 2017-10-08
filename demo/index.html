@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Opera Toolkit demo</title>
+  <title>Toolkit Demo - debug</title>
+  <link rel="stylesheet" href="./bubbles.css" />
   <link rel="stylesheet" href="./demo.css" />
-  <script src="/lazy/module-loader.js"></script>
-  <script src="/src/toolkit.debug.js"></script>
-  <script src="/demo/demo.js"></script>
-  <script src="/demo/bubbles.js"></script>
+  <script src="/src/core/loader.js"></script>
+  <script src="/src/debug.js"></script>
 </head>
 <body>
   <div class="background">
@@ -17,10 +16,19 @@
   </div>
   <script>
     const $ = id => document.getElementById(id);
-    opr.Toolkit.ready().then(async () => {
-      await renderDemo($('navigation'));
-      await renderBubbles($('bubbles'));
-    });
+    const render = async () => {
+      loader.prefix('core', '//src/');
+      await loadToolkit();
+      opr.Toolkit.configure({
+        preload: true,
+        debug: true,
+        plugins: [],
+      });
+      await opr.Toolkit.ready();
+      opr.Toolkit.render('bubbles/bubbles-app', $('navigation'));
+      opr.Toolkit.render('bubbles/bubbles-app', $('bubbles'));
+    };
+    render();
   </script>
 </body>
 </html>

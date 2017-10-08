@@ -1,4 +1,4 @@
-describe('App', () => {
+describe('Toolkit', () => {
 
   it('should call lifecycle methods in proper order', async () => {
 
@@ -19,6 +19,7 @@ describe('App', () => {
         return [ParentSymbol];
       }
     };
+    loader.define('my/app', App);
 
     class Parent extends opr.Toolkit.Component {
       onCreated() {
@@ -31,6 +32,7 @@ describe('App', () => {
         return [ChildSymbol];
       }
     };
+    loader.define('my/parent', Parent);
 
     class Child extends opr.Toolkit.Component {
       onCreated() {
@@ -43,35 +45,21 @@ describe('App', () => {
         return ['div'];
       }
     };
-
-    const getModule = id => {
-      const path = String(id).slice(7, -1);
-      switch (path) {
-        case 'my/app':
-          return App;
-        case 'my/parent':
-          return Parent;
-        case 'my/child':
-          return Child;
-        default:
-          throw new Error(`Unknown path: ${path}`);
-      }
-    };
-
-    global.loader = {
-      get: id => getModule(id),
-      resolve: async id => getModule(id),
-    };
+    loader.define('my/child', Child);
 
     const settings = {
       bundles: [],
       plugins: [],
     };
-    const app = new opr.Toolkit.App('my/app', settings);
 
     const container = document.createElement('section');
+    container.style.display = 'none';
+    document.body.appendChild(container);
 
-    await app.render(container);
+    opr.Toolkit.configure(settings);
+    await opr.Toolkit.ready();
+
+    await opr.Toolkit.render('my/app', container);
 
     assert.equal(lifecycle.length, 6);
 
