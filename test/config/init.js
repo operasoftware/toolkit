@@ -7,6 +7,7 @@ global.sinon = require('sinon');
 const consts = require('../../src/core/consts.js');
 const utils = require('../../src/core/utils.js');
 
+global.HTMLElement = class {};
 const types = require('../../src/core/core-types.js');
 
 const isDebug = () => true;

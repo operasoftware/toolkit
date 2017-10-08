@@ -1,23 +1,6 @@
 {
   const ID = Symbol('id');
 
-  const registerMutationObserver = (container, root) => {
-    const observer = new MutationObserver(mutations => {
-      const isContainerRemoved = mutations.find(
-          mutation => [...mutation.removedNodes].find(
-              node => node === container));
-      if (isContainerRemoved) {
-        opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
-        opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
-      }
-    });
-    if (container.parentElement) {
-      observer.observe(container.parentElement, {
-        childList: true,
-      });
-    }
-  };
-
   class App {
 
     constructor(path, settings) {
@@ -82,6 +65,21 @@
       });
     }
 
+    createRoot(RootClass, container, dispatch) {
+      opr.Toolkit.assert(
+          RootClass.prototype instanceof opr.Toolkit.Root,
+          'Root component class', RootClass.name,
+          'must extends opr.Toolkit.Root');
+
+      const root = new RootClass(container, dispatch);
+
+      this.reducer = opr.Toolkit.utils.combineReducers(...root.getReducers());
+      const commands =
+          opr.Toolkit.utils.createCommandsDispatcher(this.reducer, dispatch);
+      root.commands = commands;
+      return root;
+    }
+
     async render(container, defaultProps = {}) {
 
       await opr.Toolkit.ready();
@@ -103,30 +101,58 @@
       if (!this.preloaded && RootClass.init) {
         await RootClass.init();
       }
-      this.dispatch = command => {
-        this.state = this.reducer(this.state, command);
-        this.updateDOM();
-      };
-      opr.Toolkit.assert(
-          RootClass.prototype instanceof opr.Toolkit.Root,
-          'Root component class', RootClass.name,
-          'must extends opr.Toolkit.Root');
-      this.root = new RootClass(container, this.dispatch);
-
-      this.reducer =
-          opr.Toolkit.utils.combineReducers(...this.root.getReducers());
-      const commands = opr.Toolkit.utils.createCommandsDispatcher(
-          this.reducer, this.dispatch);
-      this.root.commands = commands;
-      this.commands = commands;
-      const state =
-          await this.root.getInitialState.call(this.root.sandbox, defaultProps);
-      this.root.dispatch(this.reducer.commands.init(state));
 
       for (const plugin of this.settings.plugins) {
         this.install(plugin);
       }
-      registerMutationObserver(container, this.root);
+
+      let destroy;
+      const init = async container => {
+        const dispatch = command => {
+          this.state = this.reducer(this.state, command);
+          this.updateDOM();
+        };
+        const root = this.createRoot(RootClass, container, dispatch);
+        destroy = () => {
+          opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
+          opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
+        };
+        const initialState =
+            await root.getInitialState.call(root.sandbox, defaultProps);
+
+        this.root = root;
+        // TODO: investigate why dispatch and this.reducer are needed
+        dispatch(this.reducer.commands.init(initialState));
+        return root;
+      };
+
+      if (RootClass.elementName) {
+        RootClass.register();
+        const customElement = document.createElement(RootClass.elementName);
+        customElement.props = {
+          onLoad: container => init(container),
+          onUnload: () => destroy(),
+          styles: [
+            'bubbles.css',
+          ],
+        };
+        container.appendChild(customElement);
+      } else {
+        const root = await init(container);
+        const observer = new MutationObserver(mutations => {
+          const isContainerRemoved = mutations.find(
+              mutation => [...mutation.removedNodes].find(
+                  node => node === container));
+          if (isContainerRemoved) {
+            destroy();
+          }
+        });
+        if (container.parentElement) {
+          observer.observe(container.parentElement, {
+            childList: true,
+          });
+        }
+      }
     }
 
     calculatePatches() {

@@ -163,7 +163,20 @@
       const sandbox = root.sandbox;
       sandbox.props = this.calculateProps(root, props);
 
-      const template = root.render.call(sandbox);
+      let template;
+      if (root.elementName) {
+        // TODO: do better
+        template = [
+          root.elementName,
+          {
+            metadata: {
+              component: root,
+            },
+          },
+        ];
+      } else {
+        template = root.render.call(sandbox);
+      }
       const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
         tree.parentNode = root;

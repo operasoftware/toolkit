@@ -10,6 +10,7 @@
     'id',
     'ref',
     'getKey',
+    'elementName',
   ];
   const methods = [
     'broadcast',

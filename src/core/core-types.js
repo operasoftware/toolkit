@@ -159,7 +159,63 @@
     }
   }
 
+  class ComponentElement extends HTMLElement {
+
+    cssImports(paths) {
+      return paths.map(loader.getPath)
+          .map(path => `@import url(${path});`)
+          .join('\n');
+    }
+
+    async connectedCallback() {
+      const shadow = this.attachShadow({
+        mode: 'open',
+      });
+      const data = {
+        styles: this.props.styles,
+        onStylesLoaded: () =>
+            this.props.onLoad(shadow.querySelector(':host > slot')),
+      };
+      const update =
+          opr.Toolkit.render(props => this.render(props), data, shadow);
+    }
+
+    disconnectedCallback() {
+      this.props.onUnload();
+    }
+
+    render({styles = [], onStylesLoaded}) {
+      return [
+        'slot',
+        [
+          'style',
+          {
+            onLoad: onStylesLoaded,
+          },
+          this.cssImports(styles),
+        ],
+      ];
+    }
+  }
+
   class Root extends Component {
+
+    static register() {
+      let ElementClass = customElements.get(this.elementName);
+      if (!ElementClass) {
+        ElementClass = class extends ComponentElement {};
+        customElements.define(this.elementName, ElementClass);
+        this.elementClass = ElementClass;
+      } else {
+        if (this.elementClass !== ElementClass) {
+          console.error(
+              `Element name: ${this.elementName} is already registered by:`,
+              ElementClass.component);
+          throw new Error(
+              `Duplicate '${this.elementName}' element declaration!`);
+        }
+      }
+    }
 
     constructor(container, dispatch) {
       super();
@@ -187,7 +243,7 @@
     }
   }
 
-  const VirtualElement = class extends VirtualNode {
+  class VirtualElement extends VirtualNode {
 
     constructor(name) {
       super();

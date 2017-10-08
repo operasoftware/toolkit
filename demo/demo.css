@@ -36,7 +36,7 @@ app {
   --margin: 160px;
   --padding: 0px;
   display: inline-block;
-  background-color: white;
+  /* background-color: black; */
   border-radius: 20px;
   padding: var(--padding);
   flex: 1 1 50%;
@@ -76,22 +76,8 @@ app:nth-child(even) {
 
 #bubbles {
   border-radius: 20px;
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 bubbles {
-  display: block;
-  height: 100%;
-  position: relative;
-  width: 100%;
-}
-
-bubble {
-  transition: all 0.6s ease-out, saturation 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border-radius: 50%;
-  display: block;
-  opacity :0.8;
-  position: absolute;
-  background-image: url('/demo/bubbles/bubble.jpg');
-  background-size: cover;
+  background-color: #44558452;
 }

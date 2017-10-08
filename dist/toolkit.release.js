@@ -600,7 +600,63 @@
     }
   }
 
+  class ComponentElement extends HTMLElement {
+
+    cssImports(paths) {
+      return paths.map(loader.getPath)
+          .map(path => `@import url(${path});`)
+          .join('\n');
+    }
+
+    async connectedCallback() {
+      const shadow = this.attachShadow({
+        mode: 'open',
+      });
+      const data = {
+        styles: this.props.styles,
+        onStylesLoaded: () =>
+            this.props.onLoad(shadow.querySelector(':host > slot')),
+      };
+      const update =
+          opr.Toolkit.render(props => this.render(props), data, shadow);
+    }
+
+    disconnectedCallback() {
+      this.props.onUnload();
+    }
+
+    render({styles = [], onStylesLoaded}) {
+      return [
+        'slot',
+        [
+          'style',
+          {
+            onLoad: onStylesLoaded,
+          },
+          this.cssImports(styles),
+        ],
+      ];
+    }
+  }
+
   class Root extends Component {
+
+    static register() {
+      let ElementClass = customElements.get(this.elementName);
+      if (!ElementClass) {
+        ElementClass = class extends ComponentElement {};
+        customElements.define(this.elementName, ElementClass);
+        this.elementClass = ElementClass;
+      } else {
+        if (this.elementClass !== ElementClass) {
+          console.error(
+              `Element name: ${this.elementName} is already registered by:`,
+              ElementClass.component);
+          throw new Error(
+              `Duplicate '${this.elementName}' element declaration!`);
+        }
+      }
+    }
 
     constructor(container, dispatch) {
       super();
@@ -628,7 +684,7 @@
     }
   }
 
-  const VirtualElement = class extends VirtualNode {
+  class VirtualElement extends VirtualNode {
 
     constructor(name) {
       super();
@@ -796,23 +852,6 @@
 {
   const ID = Symbol('id');
 
-  const registerMutationObserver = (container, root) => {
-    const observer = new MutationObserver(mutations => {
-      const isContainerRemoved = mutations.find(
-          mutation => [...mutation.removedNodes].find(
-              node => node === container));
-      if (isContainerRemoved) {
-        opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
-        opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
-      }
-    });
-    if (container.parentElement) {
-      observer.observe(container.parentElement, {
-        childList: true,
-      });
-    }
-  };
-
   class App {
 
     constructor(path, settings) {
@@ -877,6 +916,21 @@
       });
     }
 
+    createRoot(RootClass, container, dispatch) {
+      opr.Toolkit.assert(
+          RootClass.prototype instanceof opr.Toolkit.Root,
+          'Root component class', RootClass.name,
+          'must extends opr.Toolkit.Root');
+
+      const root = new RootClass(container, dispatch);
+
+      this.reducer = opr.Toolkit.utils.combineReducers(...root.getReducers());
+      const commands =
+          opr.Toolkit.utils.createCommandsDispatcher(this.reducer, dispatch);
+      root.commands = commands;
+      return root;
+    }
+
     async render(container, defaultProps = {}) {
 
       await opr.Toolkit.ready();
@@ -898,30 +952,58 @@
       if (!this.preloaded && RootClass.init) {
         await RootClass.init();
       }
-      this.dispatch = command => {
-        this.state = this.reducer(this.state, command);
-        this.updateDOM();
-      };
-      opr.Toolkit.assert(
-          RootClass.prototype instanceof opr.Toolkit.Root,
-          'Root component class', RootClass.name,
-          'must extends opr.Toolkit.Root');
-      this.root = new RootClass(container, this.dispatch);
-
-      this.reducer =
-          opr.Toolkit.utils.combineReducers(...this.root.getReducers());
-      const commands = opr.Toolkit.utils.createCommandsDispatcher(
-          this.reducer, this.dispatch);
-      this.root.commands = commands;
-      this.commands = commands;
-      const state =
-          await this.root.getInitialState.call(this.root.sandbox, defaultProps);
-      this.root.dispatch(this.reducer.commands.init(state));
 
       for (const plugin of this.settings.plugins) {
         this.install(plugin);
       }
-      registerMutationObserver(container, this.root);
+
+      let destroy;
+      const init = async container => {
+        const dispatch = command => {
+          this.state = this.reducer(this.state, command);
+          this.updateDOM();
+        };
+        const root = this.createRoot(RootClass, container, dispatch);
+        destroy = () => {
+          opr.Toolkit.ComponentLifecycle.onComponentDestroyed(root);
+          opr.Toolkit.ComponentLifecycle.onComponentDetached(root);
+        };
+        const initialState =
+            await root.getInitialState.call(root.sandbox, defaultProps);
+
+        this.root = root;
+        // TODO: investigate why dispatch and this.reducer are needed
+        dispatch(this.reducer.commands.init(initialState));
+        return root;
+      };
+
+      if (RootClass.elementName) {
+        RootClass.register();
+        const customElement = document.createElement(RootClass.elementName);
+        customElement.props = {
+          onLoad: container => init(container),
+          onUnload: () => destroy(),
+          styles: [
+            'bubbles.css',
+          ],
+        };
+        container.appendChild(customElement);
+      } else {
+        const root = await init(container);
+        const observer = new MutationObserver(mutations => {
+          const isContainerRemoved = mutations.find(
+              mutation => [...mutation.removedNodes].find(
+                  node => node === container));
+          if (isContainerRemoved) {
+            destroy();
+          }
+        });
+        if (container.parentElement) {
+          observer.observe(container.parentElement, {
+            childList: true,
+          });
+        }
+      }
     }
 
     calculatePatches() {
@@ -972,6 +1054,7 @@
     'id',
     'ref',
     'getKey',
+    'elementName',
   ];
   const methods = [
     'broadcast',
@@ -1516,7 +1599,20 @@
       const sandbox = root.sandbox;
       sandbox.props = this.calculateProps(root, props);
 
-      const template = root.render.call(sandbox);
+      let template;
+      if (root.elementName) {
+        // TODO: do better
+        template = [
+          root.elementName,
+          {
+            metadata: {
+              component: root,
+            },
+          },
+        ];
+      } else {
+        template = root.render.call(sandbox);
+      }
       const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
         tree.parentNode = root;
