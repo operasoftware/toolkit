@@ -79,18 +79,15 @@ describe('Sandbox', () => {
 
       // given
       const instance = new opr.Toolkit.Component();
-      const props = {};
       const children = [];
       const container = document.createElement('div');
 
       // when
       const context = Sandbox.create(instance);
-      context.props = props;
       context.children = children;
 
       // then
-      assert.equal(context.props, props);
-      assert.equal(context.children, children);
+      assert.deepEqual(context.children, children);
     })
 
     it('allows to set and get root-specific properties', () => {

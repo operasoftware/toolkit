@@ -563,25 +563,6 @@ describe('Virtual DOM', () => {
     });
   });
 
-  describe('=> throw error for invalid template', () => {
-
-    beforeEach(() => {
-      sinon.stub(VirtualDOM, 'createComponentInstance', () => {
-        return {
-          render: () => [666],
-        };
-      });
-    });
-
-    afterEach(() => {
-      VirtualDOM.createComponentInstance.restore();
-    })
-
-    it('throws an error for number', () => {
-      assert.throws(VirtualDOM.createComponent, Error, 'Error');
-    });
-  });
-
   describe('=> create from template', () => {
 
     it('supports nested markup', () => {
@@ -638,16 +619,14 @@ describe('Virtual DOM', () => {
     });
   });
 
-  describe('=> calculate props', () => {
+  describe('=> normalize props', () => {
 
-    const createComponent = defaultProps => {
-
-      class Component {
+    const createComponentClass = defaultProps => {
+      return class Component {
         static get defaultProps() {
           return defaultProps;
         }
       }
-      return new Component();
     };
 
     it('overrides undefined values', () => {
@@ -657,15 +636,15 @@ describe('Virtual DOM', () => {
         foo: undefined,
       };
 
-      const instance = createComponent({
+      const ComponentClass = createComponentClass({
         foo: [],
       });
 
       // when
-      const calculatedProps = VirtualDOM.calculateProps(instance, props);
+      const normalizedProps = VirtualDOM.normalizeProps(ComponentClass, props);
 
       // then
-      assert.deepEqual(calculatedProps, {
+      assert.deepEqual(normalizedProps, {
         foo: [],
       });
     });
@@ -679,17 +658,17 @@ describe('Virtual DOM', () => {
         boolean: false,
       };
 
-      const instance = createComponent({
+      const ComponentClass = createComponentClass({
         foo: [],
         bar: 10,
         boolean: true,
       });
 
       // when
-      const calculatedProps = VirtualDOM.calculateProps(instance, props);
+      const normalizedProps = VirtualDOM.normalizeProps(ComponentClass, props);
 
       // then
-      assert.deepEqual(calculatedProps, props);
+      assert.deepEqual(normalizedProps, props);
     });
 
     it('does not override truthy values', () => {
@@ -701,17 +680,17 @@ describe('Virtual DOM', () => {
         other: [],
       };
 
-      const instance = createComponent({
+      const ComponentClass = createComponentClass({
         foo: {a: 1},
         bar: 20,
         other: [1, 2, 3],
       });
 
       // when
-      const calculatedProps = VirtualDOM.calculateProps(instance, props);
+      const normalizedProps = VirtualDOM.normalizeProps(ComponentClass, props);
 
       // then
-      assert.deepEqual(calculatedProps, props);
+      assert.deepEqual(normalizedProps, props);
     });
   });
 });

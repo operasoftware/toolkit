@@ -461,10 +461,10 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'createComponentFrom', def => {
+      sinon.stub(VirtualDOM, 'getComponentClass', def => {
         switch (def) {
           case Component:
-            return new ComponentClass();
+            return ComponentClass;
           default:
             throw new Error('Unknown definition: ' + def);
         }
@@ -472,7 +472,7 @@ describe('Patch element => apply', () => {
     });
 
     afterEach(() => {
-      VirtualDOM.createComponentFrom.restore();
+      VirtualDOM.getComponentClass.restore();
     });
 
     it('moves element', () => {
@@ -596,10 +596,10 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'createComponentFrom', def => {
+      sinon.stub(VirtualDOM, 'getComponentClass', def => {
         switch (def) {
           case Component:
-            return new ComponentClass();
+            return ComponentClass;
           default:
             throw new Error('Unknown definition: ' + def);
         }
@@ -607,7 +607,7 @@ describe('Patch element => apply', () => {
     });
 
     afterEach(() => {
-      VirtualDOM.createComponentFrom.restore();
+      VirtualDOM.getComponentClass.restore();
     });
 
     it('removes element', () => {

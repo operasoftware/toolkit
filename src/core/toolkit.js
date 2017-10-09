@@ -1,10 +1,11 @@
 {
-  const logLevels = ['debug', 'info', 'warn', 'error'];
+  const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
 
   class Toolkit {
 
     constructor() {
       this.plugins = new Map();
+      this.settings = null;
       this.readyPromise = new Promise(resolve => {
         this.init = resolve;
       });
@@ -18,7 +19,7 @@
       const settings = {};
       settings.plugins = options.plugins || [];
       settings.level =
-          logLevels.includes(options.level) ? options.level : 'info';
+          LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
       settings.preload = options.preload || false;
       settings.bundles = options.bundles || [];
@@ -35,6 +36,9 @@
     assert(condition, ...messages) {
       if (this.isDebug()) {
         console.assert(condition, ...messages);
+        if (!condition) {
+          throw new Error();
+        }
       }
     }
 
@@ -92,9 +96,11 @@
       }
     }
 
+    // TODO: is this needed at all?
     renderStatic(templateProvider, container, props = {}) {
       const parent = new opr.Toolkit.Root();
-      parent.container = container;
+      parent.renderer =
+          new opr.Toolkit.Renderer(container, this.settings, parent);
       const template = templateProvider(props);
       if (template) {
         const element = this.VirtualDOM.createFromTemplate(template);
@@ -119,21 +125,19 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = this.VirtualDOM.createComponentInstance(RootClass, props);
+      const root = new RootClass(props);
 
       let destroy;
       const init = async container => {
-        root.renderer = new this.Renderer(root, container, this.settings);
-        root.container = container;
+        root.renderer =
+            new opr.Toolkit.Renderer(container, this.settings, root);
         destroy = () => {
           this.Lifecycle.onComponentDestroyed(root);
           this.Lifecycle.onComponentDetached(root);
         };
         const initialState =
             await root.getInitialState.call(root.sandbox, props);
-
-        // TODO: investigate why dispatch and this.reducer are needed
-        root.dispatch(root.reducer.commands.init(initialState));
+        root.commands.init(initialState);
       };
 
       if (RootClass.elementName) {

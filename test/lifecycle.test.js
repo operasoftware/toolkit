@@ -62,7 +62,9 @@ describe('Lifecycle', () => {
       }
     };
     const app = new RootClass();
-    app.container = document.createElement('section');
+    app.renderer = {
+      container: document.createElement('section'),
+    };
 
     let node = null;
     if (template) {
@@ -101,12 +103,12 @@ describe('Lifecycle', () => {
   beforeEach(() => {
     container = document.createElement('app');
     stub.reset();
-    sinon.stub(VirtualDOM, 'createComponentFrom', def => {
+    sinon.stub(VirtualDOM, 'getComponentClass', def => {
       switch (def) {
         case Component:
-          return new ComponentClass();
+          return ComponentClass;
         case Subcomponent:
-          return new SubcomponentClass();
+          return SubcomponentClass;
         default:
           throw new Error('Unknown definition: ' + def);
       }
@@ -114,7 +116,7 @@ describe('Lifecycle', () => {
   });
 
   afterEach(() => {
-    VirtualDOM.createComponentFrom.restore();
+    VirtualDOM.getComponentClass.restore();
   });
 
   describe('on created', () => {
@@ -519,7 +521,7 @@ describe('Lifecycle', () => {
       assert.equal(stub.callCount, 1);
       assert.equal(stub.firstCall.args[0], 'onUpdated');
       assert.equal(stub.firstCall.args[1], component.sandbox);
-      assert.equal(stub.firstCall.args[2], props);
+      assert.equal(stub.firstCall.args[2], null);
     };
 
     it('=> is called after updating component', () => {

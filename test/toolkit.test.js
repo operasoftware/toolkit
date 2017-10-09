@@ -57,7 +57,6 @@ describe('Toolkit', () => {
     document.body.appendChild(container);
 
     opr.Toolkit.configure(settings);
-    await opr.Toolkit.ready();
 
     await opr.Toolkit.render('my/app', container);
 

@@ -37,6 +37,7 @@ describe('Diff => calculate patches', () => {
       ];
     }
   }
+
   class ComponentWithKeyClass extends opr.Toolkit.Component {
 
     getKey() {
@@ -50,31 +51,27 @@ describe('Diff => calculate patches', () => {
     }
   }
 
-  const createDummyInstance = (symbol, props) => {
-    const getComponentClass = () => {
-      switch (symbol) {
-        case Component:
-          return ComponentClass;
-        case Subcomponent:
-          return SubcomponentClass;
-        case OtherComponent:
-          return OtherComponentClass;
-        case ComponentWithoutKey:
-          return ComponentWithoutKeyClass;
-        case ComponentWithKey:
-          return ComponentWithKeyClass;
-      }
-    };
-    const Clazz = getComponentClass();
-    return VirtualDOM.createComponentInstance(Clazz, props);
+  const getComponentClass = symbol => {
+    switch (symbol) {
+      case Component:
+        return ComponentClass;
+      case Subcomponent:
+        return SubcomponentClass;
+      case OtherComponent:
+        return OtherComponentClass;
+      case ComponentWithoutKey:
+        return ComponentWithoutKeyClass;
+      case ComponentWithKey:
+        return ComponentWithKeyClass;
+    }
   };
 
   beforeEach(() => {
-    sinon.stub(VirtualDOM, 'createComponentFrom', createDummyInstance);
+    sinon.stub(VirtualDOM, 'getComponentClass', getComponentClass);
   });
 
   afterEach(() => {
-    VirtualDOM.createComponentFrom.restore();
+    VirtualDOM.getComponentClass.restore();
   });
 
   describe('=> on an Element', () => {

@@ -5,7 +5,8 @@
 
   class VirtualNode {
 
-    constructor() {
+    constructor(key) {
+      this.key = key;
       this[ID] = opr.Toolkit.utils.createUUID();
       this.parentNode = null;
     }
@@ -52,8 +53,13 @@
 
   class Component extends VirtualNode {
 
-    constructor() {
-      super();
+    constructor(props = {}, children = []) {
+      super(props.key);
+      this.props = props;
+      this.children = children;
+      if (this.key === undefined && this.getKey) {
+        this.key = this.getKey.call(this.sandbox);
+      }
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
       this.cleanUpTasks = [];
@@ -199,6 +205,20 @@
 
   class Root extends Component {
 
+    constructor(props, children) {
+      super(props, children);
+      this.state = null;
+      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
+      this.dispatch = command => {
+        const prevState = this.state;
+        this.state = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, this.state);
+      };
+      this.commands = opr.Toolkit.utils.createCommandsDispatcher(
+          this.reducer, this.dispatch);
+      this.plugins = new Map();
+    }
+
     static register() {
       let ElementClass = customElements.get(this.elementName);
       if (!ElementClass) {
@@ -212,19 +232,19 @@
       return [];
     }
 
+    getReducers() {
+      return [];
+    }
+
+    async getInitialState(props = {}) {
+      return props;
+    }
+
     get parentElement() {
       const containerElement = new VirtualElement('root');
       containerElement.children.push(this);
-      containerElement.ref = this.container;
+      containerElement.ref = this.renderer.container;
       return containerElement;
-    }
-
-    async getInitialState(defaultProps = {}) {
-      return defaultProps;
-    }
-
-    getReducers() {
-      return [];
     }
 
     get nodeType() {
@@ -234,8 +254,8 @@
 
   class VirtualElement extends VirtualNode {
 
-    constructor(name) {
-      super();
+    constructor(name, key) {
+      super(key);
       this.name = name;
       this.attrs = {};
       this.dataset = {};

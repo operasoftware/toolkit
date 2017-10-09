@@ -27,31 +27,35 @@ describe('Patch component => apply', () => {
 
   beforeEach(() => {
     container = document.createElement('app');
-    sinon.stub(VirtualDOM, 'createComponentFrom', def => {
-      switch (def) {
+    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      switch (symbol) {
         case Component:
-          return new ComponentClass();
+          return ComponentClass;
         case Subcomponent:
-          return new SubcomponentClass();
+          return SubcomponentClass;
         default:
-          throw new Error('Unknown definition: ' + def);
+          throw new Error('Unknown definition: ' + symbol);
       }
     });
   });
 
   afterEach(() => {
-    VirtualDOM.createComponentFrom.restore();
+    VirtualDOM.getComponentClass.restore();
   });
 
   const createRoot = () => {
     const root = new App();
-    root.container = container;
+    root.renderer = {
+      container,
+    };
     return root;
   };
 
   const createApp = template => {
     const app = createRoot();
-    app.container = container;
+    app.renderer = {
+      container,
+    };
     let node = null;
     if (template) {
       node = VirtualDOM.createFromTemplate(template);
@@ -98,7 +102,9 @@ describe('Patch component => apply', () => {
 
       // given
       const app = createRoot();
-      app.container = container;
+      app.renderer = {
+        container,
+      };
 
       const component = VirtualDOM.createFromTemplate([Component]);
 

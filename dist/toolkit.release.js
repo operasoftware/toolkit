@@ -446,7 +446,8 @@
 
   class VirtualNode {
 
-    constructor() {
+    constructor(key) {
+      this.key = key;
       this[ID] = opr.Toolkit.utils.createUUID();
       this.parentNode = null;
     }
@@ -493,8 +494,13 @@
 
   class Component extends VirtualNode {
 
-    constructor() {
-      super();
+    constructor(props = {}, children = []) {
+      super(props.key);
+      this.props = props;
+      this.children = children;
+      if (this.key === undefined && this.getKey) {
+        this.key = this.getKey.call(this.sandbox);
+      }
       this.child = null;
       this.comment = new Comment(this.constructor.name, this);
       this.cleanUpTasks = [];
@@ -640,6 +646,20 @@
 
   class Root extends Component {
 
+    constructor(props, children) {
+      super(props, children);
+      this.state = null;
+      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
+      this.dispatch = command => {
+        const prevState = this.state;
+        this.state = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, this.state);
+      };
+      this.commands = opr.Toolkit.utils.createCommandsDispatcher(
+          this.reducer, this.dispatch);
+      this.plugins = new Map();
+    }
+
     static register() {
       let ElementClass = customElements.get(this.elementName);
       if (!ElementClass) {
@@ -653,19 +673,19 @@
       return [];
     }
 
+    getReducers() {
+      return [];
+    }
+
+    async getInitialState(props = {}) {
+      return props;
+    }
+
     get parentElement() {
       const containerElement = new VirtualElement('root');
       containerElement.children.push(this);
-      containerElement.ref = this.container;
+      containerElement.ref = this.renderer.container;
       return containerElement;
-    }
-
-    async getInitialState(defaultProps = {}) {
-      return defaultProps;
-    }
-
-    getReducers() {
-      return [];
     }
 
     get nodeType() {
@@ -675,8 +695,8 @@
 
   class VirtualElement extends VirtualNode {
 
-    constructor(name) {
-      super();
+    constructor(name, key) {
+      super(key);
       this.name = name;
       this.attrs = {};
       this.dataset = {};
@@ -1290,8 +1310,8 @@
     /*
      * onCreated(),
      * onAttached(),
-     * onPropsReceived(),
-     * onUpdated(),
+     * onPropsReceived(nextProps),
+     * onUpdated(prevProps),
      * onDestroyed(),
      * onDetached()
      */
@@ -1346,12 +1366,12 @@
       }
     }
 
-    static onComponentReceivedProps(component, props) {
-      component.onPropsReceived.call(component.sandbox, props);
+    static onComponentReceivedProps(component, nextProps) {
+      component.onPropsReceived.call(component.sandbox, nextProps);
     }
 
-    static onComponentUpdated(component, props) {
-      component.onUpdated.call(component.sandbox, props);
+    static onComponentUpdated(component, prevProps) {
+      component.onUpdated.call(component.sandbox, prevProps);
     }
 
     static onComponentDestroyed(component) {
@@ -1439,7 +1459,7 @@
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target, patch.props);
+          return this.onComponentUpdated(patch.target, patch.prevProps);
         case Type.CREATE_ROOT_COMPONENT:
           return patch.root.onAttached.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
@@ -1520,9 +1540,10 @@
     static createRootComponent(root) {
       return new Patch(Type.CREATE_ROOT_COMPONENT, {
         root,
-        apply: () => {
+        apply: function() {
+          // TODO: investigate
           root.props = null;
-        }
+        },
       });
     }
 
@@ -1530,9 +1551,13 @@
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
         props,
-        apply: () => {
+        apply: function() {
+          this.prevProps = target.props;
+          if (target instanceof opr.Toolkit.Root) {
+            return;
+          }
           target.props = props;
-        }
+        },
       });
     }
 
@@ -1541,10 +1566,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setAttribute(name, value);
           opr.Toolkit.Document.setAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -1553,10 +1578,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setAttribute(name, value);
           opr.Toolkit.Document.setAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -1564,10 +1589,10 @@
       return new Patch(Type.REMOVE_ATTRIBUTE, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeAttribute(name);
           opr.Toolkit.Document.removeAttribute(target.ref, name);
-        }
+        },
       });
     }
 
@@ -1576,10 +1601,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setDataAttribute(name, value);
           opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -1588,10 +1613,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setDataAttribute(name, value);
           opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -1599,10 +1624,10 @@
       return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeDataAttribute(name);
           opr.Toolkit.Document.removeDataAttribute(target.ref, name);
-        }
+        },
       });
     }
     static addStyleProperty(property, value, target) {
@@ -1610,10 +1635,10 @@
         property,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setStyleProperty(property, value);
           opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
-        }
+        },
       });
     }
 
@@ -1622,10 +1647,10 @@
         property,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setStyleProperty(property, value);
           opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
-        }
+        },
       });
     }
 
@@ -1633,10 +1658,10 @@
       return new Patch(Type.REMOVE_STYLE_PROPERTY, {
         property,
         target,
-        apply: () => {
+        apply: function() {
           target.removeStyleProperty(property);
           opr.Toolkit.Document.removeStyleProperty(target.ref, property);
-        }
+        },
       });
     }
 
@@ -1644,10 +1669,10 @@
       return new Patch(Type.ADD_CLASS_NAME, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.addClassName(name);
           opr.Toolkit.Document.addClassName(target.ref, name);
-        }
+        },
       });
     }
 
@@ -1655,10 +1680,10 @@
       return new Patch(Type.REMOVE_CLASS_NAME, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeClassName(name);
           opr.Toolkit.Document.removeClassName(target.ref, name);
-        }
+        },
       });
     }
 
@@ -1667,10 +1692,10 @@
         event,
         listener,
         target,
-        apply: () => {
+        apply: function() {
           target.addListener(event, listener);
           opr.Toolkit.Document.addEventListener(target.ref, event, listener);
-        }
+        },
       });
     }
 
@@ -1680,12 +1705,12 @@
         removed,
         added,
         target,
-        apply: () => {
+        apply: function() {
           target.removeListener(event, removed);
           opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
           target.addListener(event, added);
           opr.Toolkit.Document.addEventListener(target.ref, event, added);
-        }
+        },
       });
     }
 
@@ -1694,10 +1719,10 @@
         event,
         listener,
         target,
-        apply: () => {
+        apply: function() {
           target.removeListener(event, listener);
           opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
-        }
+        },
       });
     }
 
@@ -1706,10 +1731,10 @@
         key,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.metadata[key] = value;
           opr.Toolkit.Document.setMetadata(target.ref, key, value);
-        }
+        },
       });
     }
 
@@ -1718,10 +1743,10 @@
         key,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.metadata[key] = value;
           opr.Toolkit.Document.setMetadata(target.ref, key, value);
-        }
+        },
       });
     }
 
@@ -1729,10 +1754,10 @@
       return new Patch(Type.REMOVE_METADATA, {
         key,
         target,
-        apply: () => {
+        apply: function() {
           delete target.metadata[key];
           opr.Toolkit.Document.removeMetadata(target.ref, key);
-        }
+        },
       });
     }
 
@@ -1740,12 +1765,12 @@
       return new Patch(Type.ADD_ELEMENT, {
         element,
         parent,
-        apply: () => {
+        apply: function() {
           parent.appendChild(element);
           opr.Toolkit.Document.attachElementTree(element, domElement => {
             parent.parentElement.ref.appendChild(domElement);
           });
-        }
+        },
       });
     }
 
@@ -1753,10 +1778,10 @@
       return new Patch(Type.REMOVE_ELEMENT, {
         element,
         parent,
-        apply: () => {
+        apply: function() {
           parent.removeChild(element);
           element.ref.remove();
-        }
+        },
       });
     }
 
@@ -1764,7 +1789,7 @@
       return new Patch(Type.ADD_COMPONENT, {
         component,
         parent,
-        apply: () => {
+        apply: function() {
           const comment = parent.placeholder.ref;
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
@@ -1784,7 +1809,7 @@
                   domNode, comment, parentDomNode);
             });
           }
-        }
+        },
       });
     }
 
@@ -1792,7 +1817,7 @@
       return new Patch(Type.REMOVE_COMPONENT, {
         component,
         parent,
-        apply: () => {
+        apply: function() {
           const domChildNode =
               (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
@@ -1800,7 +1825,7 @@
               opr.Toolkit.Document.createComment(parent.placeholder);
           parent.parentElement.ref.replaceChild(
               parent.placeholder.ref, domChildNode);
-        }
+        },
       });
     }
 
@@ -1809,12 +1834,12 @@
         node,
         at,
         parent,
-        apply: () => {
+        apply: function() {
           parent.insertChild(node, at);
           opr.Toolkit.Document.attachElementTree(node, domNode => {
             parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
           });
-        }
+        },
       });
     }
 
@@ -1824,10 +1849,10 @@
         from,
         to,
         parent,
-        apply: () => {
+        apply: function() {
           parent.moveChild(node, from, to);
           opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
-        }
+        },
       });
     }
 
@@ -1836,10 +1861,10 @@
         node,
         at,
         parent,
-        apply: () => {
+        apply: function() {
           parent.removeChild(node);
           opr.Toolkit.Document.removeChild(node.ref, parent.ref);
-        }
+        },
       });
     }
 
@@ -1847,20 +1872,20 @@
       return new Patch(Type.SET_TEXT_CONTENT, {
         element,
         text,
-        apply: () => {
+        apply: function() {
           element.text = text;
           opr.Toolkit.Document.setTextContent(element.ref, text);
-        }
+        },
       });
     }
 
     static removeTextContent(element) {
       return new Patch(Type.REMOVE_TEXT_CONTENT, {
         element,
-        apply: () => {
+        apply: function() {
           element.text = null;
           opr.Toolkit.Document.setTextContent(element.ref, '');
-        }
+        },
       });
     }
 
@@ -1970,24 +1995,23 @@
 {
   class Renderer {
 
-    constructor(root, container, settings) {
-      this.root = root;
+    constructor(container, settings, root) {
       this.container = container;
       this.settings = settings;
+      this.root = root;
       this.plugins = new Map();
       this.installPlugins();
     }
 
-    calculatePatches() {
+    calculatePatches(command, prevState, nextState) {
       const patches = [];
-      if (!opr.Toolkit.Diff.deepEqual(this.root.state, this.root.props)) {
-        if (this.root.props === undefined) {
-          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
-        }
-        patches.push(
-            opr.Toolkit.Patch.updateComponent(this.root, this.root.state));
-        const componentTree = opr.Toolkit.VirtualDOM.createChildTree(
-            this.root, this.root.state, this.root.child);
+      if (prevState === null) {
+        patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
+      }
+      if (!opr.Toolkit.Diff.deepEqual(prevState, nextState)) {
+        patches.push(opr.Toolkit.Patch.updateComponent(this.root, nextState));
+        const componentTree =
+            opr.Toolkit.VirtualDOM.createChildTree(this.root, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
             this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -1995,18 +2019,22 @@
       return patches;
     }
 
-    updateDOM() {
+    updateDOM(command, prevState, nextState) {
       /* eslint-disable no-console */
       if (this.settings.level === 'debug') {
         console.time('=> Render');
       }
-      const patches = this.calculatePatches();
-      opr.Toolkit.Lifecycle.beforeUpdate(patches);
-      for (const patch of patches) {
-        patch.apply();
+      const patches = this.calculatePatches(command, prevState, nextState);
+      if (patches.length) {
+        opr.Toolkit.Lifecycle.beforeUpdate(patches);
+        for (const patch of patches) {
+          patch.apply();
+        }
+        opr.Toolkit.Lifecycle.afterUpdate(patches);
       }
-      opr.Toolkit.Lifecycle.afterUpdate(patches);
       if (this.settings.level === 'debug') {
+        console.log(
+            'Command:', command.type, 'for', this.root.constructor.name);
         console.log('Patches:', patches.length);
         console.timeEnd('=> Render');
       }
@@ -2015,23 +2043,18 @@
 
     installPlugins() {
       for (const plugin of this.settings.plugins) {
-        this.install(plugin);
+        if (this.plugins.get(plugin.id)) {
+          console.warn(`Plugin "${id}" is already installed!`);
+          return;
+        }
+        const uninstall = plugin.install({
+          container: this.container,
+        });
+        this.plugins.set(plugin.id, {
+          ref: plugin,
+          uninstall,
+        });
       }
-    }
-
-    install(plugin) {
-      if (this.plugins.get(plugin.id)) {
-        console.warn(`Plugin "${id}" is already installed!`);
-        return;
-      }
-      const uninstall = plugin.install({
-        container: this.container,
-        state: this.root.state,
-      });
-      this.plugins.set(plugin.id, {
-        ref: plugin,
-        uninstall,
-      });
     }
   }
 
@@ -2042,24 +2065,23 @@
   const isFunction = (target, property) =>
       typeof target[property] === 'function';
 
-  const properties = [
+  const delegated = [
     'commands',
     'constructor',
     'container',
     'dispatch',
+    'elementName',
+    'getKey',
     'id',
     'ref',
-    'getKey',
-    'elementName',
   ];
   const methods = [
     'broadcast',
     'connectTo',
   ];
-  const stateProperties = [
-    'props',
-    'children',
-  ];
+
+  const CHILDREN = 'children';
+  const PROPS = 'props';
 
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
@@ -2080,11 +2102,21 @@
           if (property === '$component') {
             return component;
           }
-          if (properties.includes(property)) {
-            return target[property];
+          if (property === PROPS) {
+            if (state.props !== undefined) {
+              return state.props;
+            }
+            return target instanceof opr.Toolkit.Root ? target.state :
+                                                        target.props;
           }
-          if (stateProperties.includes(property)) {
-            return state[property];
+          if (property === CHILDREN) {
+            if (state.children !== undefined) {
+              return state.children;
+            }
+            return target.children;
+          }
+          if (delegated.includes(property)) {
+            return target[property];
           }
           if (methods.includes(property) && isFunction(target, property)) {
             return createBoundListener(target[property], target, target);
@@ -2102,7 +2134,7 @@
           return undefined;
         },
         set: (target, property, value) => {
-          if (stateProperties.includes(property)) {
+          if ([CHILDREN, PROPS].includes(property)) {
             state[property] = value;
           }
           return true;
@@ -2469,50 +2501,31 @@
 {
   class VirtualDOM {
 
-    static createComponentFrom(symbol, props = {}) {
+    static getComponentClass(symbol) {
       const ComponentClass = loader.get(symbol);
       opr.Toolkit.assert(
-          ComponentClass, `No module found for: ${String(symbol)}`);
+          ComponentClass, `No component found for: ${String(symbol)}`);
       opr.Toolkit.assert(
           ComponentClass.prototype instanceof opr.Toolkit.Component,
           'Component class', ComponentClass.name,
           'must extend opr.Toolkit.Component');
-      return this.createComponentInstance(ComponentClass, props);
+      return ComponentClass;
     }
 
-    static createComponentInstance(ComponentClass, props = {}) {
-      const instance = new ComponentClass();
-      if (props.key !== undefined) {
-        instance.key = props.key;
-      }
-      if (typeof instance.getKey === 'function') {
-        const key = instance.getKey.bind({props})();
-        if (key) {
-          instance.key = key;
-        }
-      }
-      // TODO: move elsewhere
-      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
-        const reducer =
-            opr.Toolkit.utils.combineReducers(...instance.getReducers());
-        const dispatch = command => {
-          instance.state = reducer(instance.state, command);
-          instance.renderer.updateDOM();
-        };
-        const commands =
-            opr.Toolkit.utils.createCommandsDispatcher(reducer, dispatch);
-
-        instance.reducer = reducer;
-        instance.dispatch = dispatch;
-        instance.commands = commands;
-      }
-      return instance;
+    static createComponentFrom(symbol, props, children) {
+      const ComponentClass = this.getComponentClass(symbol);
+      const normalizedProps = this.normalizeProps(ComponentClass, props);
+      return new ComponentClass(normalizedProps, children);
     }
 
     static createElementInstance(description, component) {
-      const element = new opr.Toolkit.VirtualElement(description.name);
+
+      let element;
+
       if (description.props) {
+
         const props = description.props;
+        element = new opr.Toolkit.VirtualElement(description.name, props.key);
 
         if (opr.Toolkit.isDebug()) {
           const unknownAttrs = Object.keys(props).filter(
@@ -2584,6 +2597,8 @@
         if (props.key) {
           element.key = props.key;
         }
+      } else {
+        element = new opr.Toolkit.VirtualElement(description.name);
       }
       // text
       if (description.text) {
@@ -2627,8 +2642,8 @@
       return element;
     }
 
-    static calculateProps(component, props = {}) {
-      const defaultProps = component.constructor.defaultProps;
+    static normalizeProps(ComponentClass, props = {}) {
+      const defaultProps = ComponentClass.defaultProps;
       if (defaultProps) {
         const result = Object.assign({}, props);
         const keys = Object.keys(defaultProps);
@@ -2642,10 +2657,7 @@
       return props;
     }
 
-    static createChildTree(root, props, previousTree) {
-
-      const sandbox = root.sandbox;
-      sandbox.props = this.calculateProps(root, props);
+    static createChildTree(root, previousTree) {
 
       let template;
       if (root.elementName) {
@@ -2659,7 +2671,13 @@
           },
         ];
       } else {
+        const sandbox = root.sandbox;
+        sandbox.props = root.state;
         template = root.render.call(sandbox);
+
+        opr.Toolkit.assert(
+            template !== undefined,
+            'Invalid undefined template returned when rendering:', root);
       }
       const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
@@ -2671,17 +2689,15 @@
     static createComponent(
         symbol, props = {}, children = [], previousNode, root) {
       try {
-        const instance = this.createComponentFrom(symbol, props);
-        const calculatedProps = this.calculateProps(instance, props);
-        instance.props = calculatedProps;
-        instance.commands = root && root.commands || {};
+        const instance = this.createComponentFrom(symbol, props, children);
 
         const sandbox = instance.isCompatible(previousNode) ?
             previousNode.sandbox :
             instance.sandbox;
-
-        sandbox.props = calculatedProps;
-        sandbox.children = children;
+        Object.assign(sandbox, {
+          props: instance.props,
+          children,
+        });
 
         let template;
         if (instance instanceof opr.Toolkit.Root) {
@@ -2692,14 +2708,15 @@
               customElementName,
             ];
           } else {
+            // clang-format off
             /* eslint-disable max-len */
             throw new Error(
-                `No custom element name defined in "${
-                                                      instance.constructor.name
-                                                    }", implement "static get elementName()" method.`);
+                `No custom element name defined in "${instance.constructor.name}", implement "static get elementName()" method.`);
             /* eslint-enable max-len */
+            // clang-format on
           }
         } else {
+          instance.commands = root && root.commands || {};
           template = instance.render.call(sandbox);
         }
 
@@ -2856,12 +2873,13 @@
 }
 
 {
-  const logLevels = ['debug', 'info', 'warn', 'error'];
+  const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
 
   class Toolkit {
 
     constructor() {
       this.plugins = new Map();
+      this.settings = null;
       this.readyPromise = new Promise(resolve => {
         this.init = resolve;
       });
@@ -2875,7 +2893,7 @@
       const settings = {};
       settings.plugins = options.plugins || [];
       settings.level =
-          logLevels.includes(options.level) ? options.level : 'info';
+          LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
       settings.preload = options.preload || false;
       settings.bundles = options.bundles || [];
@@ -2892,6 +2910,9 @@
     assert(condition, ...messages) {
       if (this.isDebug()) {
         console.assert(condition, ...messages);
+        if (!condition) {
+          throw new Error();
+        }
       }
     }
 
@@ -2949,9 +2970,11 @@
       }
     }
 
+    // TODO: is this needed at all?
     renderStatic(templateProvider, container, props = {}) {
       const parent = new opr.Toolkit.Root();
-      parent.container = container;
+      parent.renderer =
+          new opr.Toolkit.Renderer(container, this.settings, parent);
       const template = templateProvider(props);
       if (template) {
         const element = this.VirtualDOM.createFromTemplate(template);
@@ -2976,21 +2999,19 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = this.VirtualDOM.createComponentInstance(RootClass, props);
+      const root = new RootClass(props);
 
       let destroy;
       const init = async container => {
-        root.renderer = new this.Renderer(root, container, this.settings);
-        root.container = container;
+        root.renderer =
+            new opr.Toolkit.Renderer(container, this.settings, root);
         destroy = () => {
           this.Lifecycle.onComponentDestroyed(root);
           this.Lifecycle.onComponentDetached(root);
         };
         const initialState =
             await root.getInitialState.call(root.sandbox, props);
-
-        // TODO: investigate why dispatch and this.reducer are needed
-        root.dispatch(root.reducer.commands.init(initialState));
+        root.commands.init(initialState);
       };
 
       if (RootClass.elementName) {

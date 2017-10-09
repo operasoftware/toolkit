@@ -50,9 +50,10 @@
     static createRootComponent(root) {
       return new Patch(Type.CREATE_ROOT_COMPONENT, {
         root,
-        apply: () => {
+        apply: function() {
+          // TODO: investigate
           root.props = null;
-        }
+        },
       });
     }
 
@@ -60,9 +61,13 @@
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
         props,
-        apply: () => {
+        apply: function() {
+          this.prevProps = target.props;
+          if (target instanceof opr.Toolkit.Root) {
+            return;
+          }
           target.props = props;
-        }
+        },
       });
     }
 
@@ -71,10 +76,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setAttribute(name, value);
           opr.Toolkit.Document.setAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -83,10 +88,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setAttribute(name, value);
           opr.Toolkit.Document.setAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -94,10 +99,10 @@
       return new Patch(Type.REMOVE_ATTRIBUTE, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeAttribute(name);
           opr.Toolkit.Document.removeAttribute(target.ref, name);
-        }
+        },
       });
     }
 
@@ -106,10 +111,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setDataAttribute(name, value);
           opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -118,10 +123,10 @@
         name,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setDataAttribute(name, value);
           opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
-        }
+        },
       });
     }
 
@@ -129,10 +134,10 @@
       return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeDataAttribute(name);
           opr.Toolkit.Document.removeDataAttribute(target.ref, name);
-        }
+        },
       });
     }
     static addStyleProperty(property, value, target) {
@@ -140,10 +145,10 @@
         property,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setStyleProperty(property, value);
           opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
-        }
+        },
       });
     }
 
@@ -152,10 +157,10 @@
         property,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.setStyleProperty(property, value);
           opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
-        }
+        },
       });
     }
 
@@ -163,10 +168,10 @@
       return new Patch(Type.REMOVE_STYLE_PROPERTY, {
         property,
         target,
-        apply: () => {
+        apply: function() {
           target.removeStyleProperty(property);
           opr.Toolkit.Document.removeStyleProperty(target.ref, property);
-        }
+        },
       });
     }
 
@@ -174,10 +179,10 @@
       return new Patch(Type.ADD_CLASS_NAME, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.addClassName(name);
           opr.Toolkit.Document.addClassName(target.ref, name);
-        }
+        },
       });
     }
 
@@ -185,10 +190,10 @@
       return new Patch(Type.REMOVE_CLASS_NAME, {
         name,
         target,
-        apply: () => {
+        apply: function() {
           target.removeClassName(name);
           opr.Toolkit.Document.removeClassName(target.ref, name);
-        }
+        },
       });
     }
 
@@ -197,10 +202,10 @@
         event,
         listener,
         target,
-        apply: () => {
+        apply: function() {
           target.addListener(event, listener);
           opr.Toolkit.Document.addEventListener(target.ref, event, listener);
-        }
+        },
       });
     }
 
@@ -210,12 +215,12 @@
         removed,
         added,
         target,
-        apply: () => {
+        apply: function() {
           target.removeListener(event, removed);
           opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
           target.addListener(event, added);
           opr.Toolkit.Document.addEventListener(target.ref, event, added);
-        }
+        },
       });
     }
 
@@ -224,10 +229,10 @@
         event,
         listener,
         target,
-        apply: () => {
+        apply: function() {
           target.removeListener(event, listener);
           opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
-        }
+        },
       });
     }
 
@@ -236,10 +241,10 @@
         key,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.metadata[key] = value;
           opr.Toolkit.Document.setMetadata(target.ref, key, value);
-        }
+        },
       });
     }
 
@@ -248,10 +253,10 @@
         key,
         value,
         target,
-        apply: () => {
+        apply: function() {
           target.metadata[key] = value;
           opr.Toolkit.Document.setMetadata(target.ref, key, value);
-        }
+        },
       });
     }
 
@@ -259,10 +264,10 @@
       return new Patch(Type.REMOVE_METADATA, {
         key,
         target,
-        apply: () => {
+        apply: function() {
           delete target.metadata[key];
           opr.Toolkit.Document.removeMetadata(target.ref, key);
-        }
+        },
       });
     }
 
@@ -270,12 +275,12 @@
       return new Patch(Type.ADD_ELEMENT, {
         element,
         parent,
-        apply: () => {
+        apply: function() {
           parent.appendChild(element);
           opr.Toolkit.Document.attachElementTree(element, domElement => {
             parent.parentElement.ref.appendChild(domElement);
           });
-        }
+        },
       });
     }
 
@@ -283,10 +288,10 @@
       return new Patch(Type.REMOVE_ELEMENT, {
         element,
         parent,
-        apply: () => {
+        apply: function() {
           parent.removeChild(element);
           element.ref.remove();
-        }
+        },
       });
     }
 
@@ -294,7 +299,7 @@
       return new Patch(Type.ADD_COMPONENT, {
         component,
         parent,
-        apply: () => {
+        apply: function() {
           const comment = parent.placeholder.ref;
           const parentDomNode = parent.parentElement.ref;
           if (parent.isRoot()) {
@@ -314,7 +319,7 @@
                   domNode, comment, parentDomNode);
             });
           }
-        }
+        },
       });
     }
 
@@ -322,7 +327,7 @@
       return new Patch(Type.REMOVE_COMPONENT, {
         component,
         parent,
-        apply: () => {
+        apply: function() {
           const domChildNode =
               (component.childElement || component.placeholder).ref;
           parent.removeChild(component);
@@ -330,7 +335,7 @@
               opr.Toolkit.Document.createComment(parent.placeholder);
           parent.parentElement.ref.replaceChild(
               parent.placeholder.ref, domChildNode);
-        }
+        },
       });
     }
 
@@ -339,12 +344,12 @@
         node,
         at,
         parent,
-        apply: () => {
+        apply: function() {
           parent.insertChild(node, at);
           opr.Toolkit.Document.attachElementTree(node, domNode => {
             parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
           });
-        }
+        },
       });
     }
 
@@ -354,10 +359,10 @@
         from,
         to,
         parent,
-        apply: () => {
+        apply: function() {
           parent.moveChild(node, from, to);
           opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
-        }
+        },
       });
     }
 
@@ -366,10 +371,10 @@
         node,
         at,
         parent,
-        apply: () => {
+        apply: function() {
           parent.removeChild(node);
           opr.Toolkit.Document.removeChild(node.ref, parent.ref);
-        }
+        },
       });
     }
 
@@ -377,20 +382,20 @@
       return new Patch(Type.SET_TEXT_CONTENT, {
         element,
         text,
-        apply: () => {
+        apply: function() {
           element.text = text;
           opr.Toolkit.Document.setTextContent(element.ref, text);
-        }
+        },
       });
     }
 
     static removeTextContent(element) {
       return new Patch(Type.REMOVE_TEXT_CONTENT, {
         element,
-        apply: () => {
+        apply: function() {
           element.text = null;
           opr.Toolkit.Document.setTextContent(element.ref, '');
-        }
+        },
       });
     }
 

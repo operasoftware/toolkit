@@ -4,8 +4,8 @@
     /*
      * onCreated(),
      * onAttached(),
-     * onPropsReceived(),
-     * onUpdated(),
+     * onPropsReceived(nextProps),
+     * onUpdated(prevProps),
      * onDestroyed(),
      * onDetached()
      */
@@ -60,12 +60,12 @@
       }
     }
 
-    static onComponentReceivedProps(component, props) {
-      component.onPropsReceived.call(component.sandbox, props);
+    static onComponentReceivedProps(component, nextProps) {
+      component.onPropsReceived.call(component.sandbox, nextProps);
     }
 
-    static onComponentUpdated(component, props) {
-      component.onUpdated.call(component.sandbox, props);
+    static onComponentUpdated(component, prevProps) {
+      component.onUpdated.call(component.sandbox, prevProps);
     }
 
     static onComponentDestroyed(component) {
@@ -153,7 +153,7 @@
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
         case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target, patch.props);
+          return this.onComponentUpdated(patch.target, patch.prevProps);
         case Type.CREATE_ROOT_COMPONENT:
           return patch.root.onAttached.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:

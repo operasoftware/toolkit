@@ -19,7 +19,9 @@ describe('Nodes', () => {
       }
     }
     const app = new RootClass();
-    app.container = container;
+    app.renderer = {
+      container,
+    };
 
     const node = VirtualDOM.createFromTemplate(template);
     if (node) {
@@ -29,16 +31,16 @@ describe('Nodes', () => {
   };
 
   beforeEach(() => {
-    sinon.stub(VirtualDOM, 'createComponentFrom', def => {
-      switch (def) {
+    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      switch (symbol) {
         case Component:
-          return new ComponentClass();
+          return ComponentClass;
       }
     });
   });
 
   afterEach(() => {
-    VirtualDOM.createComponentFrom.restore();
+    VirtualDOM.getComponentClass.restore();
   });
 
   describe('get node type', () => {

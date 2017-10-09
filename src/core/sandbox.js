@@ -2,24 +2,23 @@
   const isFunction = (target, property) =>
       typeof target[property] === 'function';
 
-  const properties = [
+  const delegated = [
     'commands',
     'constructor',
     'container',
     'dispatch',
+    'elementName',
+    'getKey',
     'id',
     'ref',
-    'getKey',
-    'elementName',
   ];
   const methods = [
     'broadcast',
     'connectTo',
   ];
-  const stateProperties = [
-    'props',
-    'children',
-  ];
+
+  const CHILDREN = 'children';
+  const PROPS = 'props';
 
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
@@ -40,11 +39,21 @@
           if (property === '$component') {
             return component;
           }
-          if (properties.includes(property)) {
-            return target[property];
+          if (property === PROPS) {
+            if (state.props !== undefined) {
+              return state.props;
+            }
+            return target instanceof opr.Toolkit.Root ? target.state :
+                                                        target.props;
           }
-          if (stateProperties.includes(property)) {
-            return state[property];
+          if (property === CHILDREN) {
+            if (state.children !== undefined) {
+              return state.children;
+            }
+            return target.children;
+          }
+          if (delegated.includes(property)) {
+            return target[property];
           }
           if (methods.includes(property) && isFunction(target, property)) {
             return createBoundListener(target[property], target, target);
@@ -62,7 +71,7 @@
           return undefined;
         },
         set: (target, property, value) => {
-          if (stateProperties.includes(property)) {
+          if ([CHILDREN, PROPS].includes(property)) {
             state[property] = value;
           }
           return true;

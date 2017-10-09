@@ -1,24 +1,23 @@
 {
   class Renderer {
 
-    constructor(root, container, settings) {
-      this.root = root;
+    constructor(container, settings, root) {
       this.container = container;
       this.settings = settings;
+      this.root = root;
       this.plugins = new Map();
       this.installPlugins();
     }
 
-    calculatePatches() {
+    calculatePatches(command, prevState, nextState) {
       const patches = [];
-      if (!opr.Toolkit.Diff.deepEqual(this.root.state, this.root.props)) {
-        if (this.root.props === undefined) {
-          patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
-        }
-        patches.push(
-            opr.Toolkit.Patch.updateComponent(this.root, this.root.state));
-        const componentTree = opr.Toolkit.VirtualDOM.createChildTree(
-            this.root, this.root.state, this.root.child);
+      if (prevState === null) {
+        patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
+      }
+      if (!opr.Toolkit.Diff.deepEqual(prevState, nextState)) {
+        patches.push(opr.Toolkit.Patch.updateComponent(this.root, nextState));
+        const componentTree =
+            opr.Toolkit.VirtualDOM.createChildTree(this.root, this.root.child);
         const childTreePatches = opr.Toolkit.Diff.calculate(
             this.root.child, componentTree, this.root);
         patches.push(...childTreePatches);
@@ -26,18 +25,22 @@
       return patches;
     }
 
-    updateDOM() {
+    updateDOM(command, prevState, nextState) {
       /* eslint-disable no-console */
       if (this.settings.level === 'debug') {
         console.time('=> Render');
       }
-      const patches = this.calculatePatches();
-      opr.Toolkit.Lifecycle.beforeUpdate(patches);
-      for (const patch of patches) {
-        patch.apply();
+      const patches = this.calculatePatches(command, prevState, nextState);
+      if (patches.length) {
+        opr.Toolkit.Lifecycle.beforeUpdate(patches);
+        for (const patch of patches) {
+          patch.apply();
+        }
+        opr.Toolkit.Lifecycle.afterUpdate(patches);
       }
-      opr.Toolkit.Lifecycle.afterUpdate(patches);
       if (this.settings.level === 'debug') {
+        console.log(
+            'Command:', command.type, 'for', this.root.constructor.name);
         console.log('Patches:', patches.length);
         console.timeEnd('=> Render');
       }
@@ -46,23 +49,18 @@
 
     installPlugins() {
       for (const plugin of this.settings.plugins) {
-        this.install(plugin);
+        if (this.plugins.get(plugin.id)) {
+          console.warn(`Plugin "${id}" is already installed!`);
+          return;
+        }
+        const uninstall = plugin.install({
+          container: this.container,
+        });
+        this.plugins.set(plugin.id, {
+          ref: plugin,
+          uninstall,
+        });
       }
-    }
-
-    install(plugin) {
-      if (this.plugins.get(plugin.id)) {
-        console.warn(`Plugin "${id}" is already installed!`);
-        return;
-      }
-      const uninstall = plugin.install({
-        container: this.container,
-        state: this.root.state,
-      });
-      this.plugins.set(plugin.id, {
-        ref: plugin,
-        uninstall,
-      });
     }
   }
 

@@ -18,12 +18,12 @@ describe('Document', () => {
     }
   };
 
-  const createDummyInstance = def => {
-    switch (def) {
+  const getComponentClass = symbol => {
+    switch (symbol) {
       case Component:
-        return new ComponentClass();
+        return ComponentClass;
       case Subcomponent:
-        return new SubcomponentClass();
+        return SubcomponentClass;
     }
   };
 
@@ -300,11 +300,11 @@ describe('Document', () => {
   describe('=> attach element tree', () => {
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'createComponentFrom', createDummyInstance);
+      sinon.stub(VirtualDOM, 'getComponentClass', getComponentClass);
     });
 
     afterEach(() => {
-      VirtualDOM.createComponentFrom.restore();
+      VirtualDOM.getComponentClass.restore();
     });
 
     it('creates a single element', () => {

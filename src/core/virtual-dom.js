@@ -1,50 +1,31 @@
 {
   class VirtualDOM {
 
-    static createComponentFrom(symbol, props = {}) {
+    static getComponentClass(symbol) {
       const ComponentClass = loader.get(symbol);
       opr.Toolkit.assert(
-          ComponentClass, `No module found for: ${String(symbol)}`);
+          ComponentClass, `No component found for: ${String(symbol)}`);
       opr.Toolkit.assert(
           ComponentClass.prototype instanceof opr.Toolkit.Component,
           'Component class', ComponentClass.name,
           'must extend opr.Toolkit.Component');
-      return this.createComponentInstance(ComponentClass, props);
+      return ComponentClass;
     }
 
-    static createComponentInstance(ComponentClass, props = {}) {
-      const instance = new ComponentClass();
-      if (props.key !== undefined) {
-        instance.key = props.key;
-      }
-      if (typeof instance.getKey === 'function') {
-        const key = instance.getKey.bind({props})();
-        if (key) {
-          instance.key = key;
-        }
-      }
-      // TODO: move elsewhere
-      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
-        const reducer =
-            opr.Toolkit.utils.combineReducers(...instance.getReducers());
-        const dispatch = command => {
-          instance.state = reducer(instance.state, command);
-          instance.renderer.updateDOM();
-        };
-        const commands =
-            opr.Toolkit.utils.createCommandsDispatcher(reducer, dispatch);
-
-        instance.reducer = reducer;
-        instance.dispatch = dispatch;
-        instance.commands = commands;
-      }
-      return instance;
+    static createComponentFrom(symbol, props, children) {
+      const ComponentClass = this.getComponentClass(symbol);
+      const normalizedProps = this.normalizeProps(ComponentClass, props);
+      return new ComponentClass(normalizedProps, children);
     }
 
     static createElementInstance(description, component) {
-      const element = new opr.Toolkit.VirtualElement(description.name);
+
+      let element;
+
       if (description.props) {
+
         const props = description.props;
+        element = new opr.Toolkit.VirtualElement(description.name, props.key);
 
         if (opr.Toolkit.isDebug()) {
           const unknownAttrs = Object.keys(props).filter(
@@ -116,6 +97,8 @@
         if (props.key) {
           element.key = props.key;
         }
+      } else {
+        element = new opr.Toolkit.VirtualElement(description.name);
       }
       // text
       if (description.text) {
@@ -159,8 +142,8 @@
       return element;
     }
 
-    static calculateProps(component, props = {}) {
-      const defaultProps = component.constructor.defaultProps;
+    static normalizeProps(ComponentClass, props = {}) {
+      const defaultProps = ComponentClass.defaultProps;
       if (defaultProps) {
         const result = Object.assign({}, props);
         const keys = Object.keys(defaultProps);
@@ -174,10 +157,7 @@
       return props;
     }
 
-    static createChildTree(root, props, previousTree) {
-
-      const sandbox = root.sandbox;
-      sandbox.props = this.calculateProps(root, props);
+    static createChildTree(root, previousTree) {
 
       let template;
       if (root.elementName) {
@@ -191,7 +171,13 @@
           },
         ];
       } else {
+        const sandbox = root.sandbox;
+        sandbox.props = root.state;
         template = root.render.call(sandbox);
+
+        opr.Toolkit.assert(
+            template !== undefined,
+            'Invalid undefined template returned when rendering:', root);
       }
       const tree = this.createFromTemplate(template, previousTree, root, root);
       if (tree) {
@@ -203,17 +189,15 @@
     static createComponent(
         symbol, props = {}, children = [], previousNode, root) {
       try {
-        const instance = this.createComponentFrom(symbol, props);
-        const calculatedProps = this.calculateProps(instance, props);
-        instance.props = calculatedProps;
-        instance.commands = root && root.commands || {};
+        const instance = this.createComponentFrom(symbol, props, children);
 
         const sandbox = instance.isCompatible(previousNode) ?
             previousNode.sandbox :
             instance.sandbox;
-
-        sandbox.props = calculatedProps;
-        sandbox.children = children;
+        Object.assign(sandbox, {
+          props: instance.props,
+          children,
+        });
 
         let template;
         if (instance instanceof opr.Toolkit.Root) {
@@ -224,14 +208,15 @@
               customElementName,
             ];
           } else {
+            // clang-format off
             /* eslint-disable max-len */
             throw new Error(
-                `No custom element name defined in "${
-                                                      instance.constructor.name
-                                                    }", implement "static get elementName()" method.`);
+                `No custom element name defined in "${instance.constructor.name}", implement "static get elementName()" method.`);
             /* eslint-enable max-len */
+            // clang-format on
           }
         } else {
+          instance.commands = root && root.commands || {};
           template = instance.render.call(sandbox);
         }
 
