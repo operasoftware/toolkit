@@ -9,7 +9,9 @@
     "travis": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha --report lcovonly && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "coverage": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha",
     "add-to-index": "git add dist/",
-    "release": "node build.js"
+    "release": "node build.js",
+    "update-opera": "node build.js && cp dist/toolkit.release.js $WORK_DIR/desktop/common/resources/shared/toolkit/",
+    "watch": "npm-watch update-opera"
   },
   "pre-commit": [
     "release",
@@ -43,9 +45,17 @@
     "dom-test": "^0.2.5",
     "express": "^4.14.0",
     "mocha": "^3.2.0",
+    "npm-watch": "^0.3.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",
     "sinon": "^1.17.7",
     "tap": "^10.2.1"
+  },
+  "watch": {
+    "update-opera": {
+      "patterns": ["src", "test"],
+      "extensions": "js",
+      "quiet": true
+    }
   }
 }
