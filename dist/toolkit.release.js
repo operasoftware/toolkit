@@ -706,7 +706,6 @@
       this.metadata = {};
       this.children = [];
       this.text = null;
-      this.key = null;
       this.ref = null;
     }
 
@@ -2022,7 +2021,7 @@
     updateDOM(command, prevState, nextState) {
       /* eslint-disable no-console */
       if (this.settings.level === 'debug') {
-        console.time('=> Render');
+        console.time('=> Render time');
       }
       const patches = this.calculatePatches(command, prevState, nextState);
       if (patches.length) {
@@ -2035,8 +2034,11 @@
       if (this.settings.level === 'debug') {
         console.log(
             'Command:', command.type, 'for', this.root.constructor.name);
-        console.log('Patches:', patches.length);
-        console.timeEnd('=> Render');
+        if (patches.length) {
+          console.log('Patches:', patches.length);
+        }
+        console.timeEnd('=> Render time');
+        console.log(''.padStart(48, '-'));
       }
       /* eslint-enable no-console */
     }
@@ -2593,10 +2595,6 @@
             element.metadata[key] = props.metadata[key];
           });
         }
-        // key
-        if (props.key) {
-          element.key = props.key;
-        }
       } else {
         element = new opr.Toolkit.VirtualElement(description.name);
       }
@@ -2625,16 +2623,22 @@
 
     static createElement(description, previousNode, root, component) {
       const element = this.createElementInstance(description, component);
-      const getPreviousChild = index => {
+      const getPreviousChild = (index, {key = null}) => {
         if (element.isCompatible(previousNode)) {
-          return previousNode.children[index] || null;
+          if (key !== null) {
+            return previousNode.children.find(child => child.key === key);
+          }
+          return previousNode.children[index];
         }
         return null;
       };
       if (description.children) {
-        element.children = description.children.map((desc, index) => {
+        element.children = description.children.map((childTemplate, index) => {
+          const childDescription = opr.Toolkit.Template.describe(childTemplate);
           const child = this.createFromTemplate(
-              desc, getPreviousChild(index), root, component);
+              childTemplate,
+              getPreviousChild(index, childDescription.props || {}), root,
+              component);
           child.parentNode = element;
           return child;
         });
@@ -2694,10 +2698,9 @@
         const sandbox = instance.isCompatible(previousNode) ?
             previousNode.sandbox :
             instance.sandbox;
-        Object.assign(sandbox, {
-          props: instance.props,
-          children,
-        });
+
+        sandbox.props = instance.props;
+        sandbox.children = children;
 
         let template;
         if (instance instanceof opr.Toolkit.Root) {

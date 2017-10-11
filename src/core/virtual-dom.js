@@ -93,10 +93,6 @@
             element.metadata[key] = props.metadata[key];
           });
         }
-        // key
-        if (props.key) {
-          element.key = props.key;
-        }
       } else {
         element = new opr.Toolkit.VirtualElement(description.name);
       }
@@ -125,16 +121,22 @@
 
     static createElement(description, previousNode, root, component) {
       const element = this.createElementInstance(description, component);
-      const getPreviousChild = index => {
+      const getPreviousChild = (index, {key = null}) => {
         if (element.isCompatible(previousNode)) {
-          return previousNode.children[index] || null;
+          if (key !== null) {
+            return previousNode.children.find(child => child.key === key);
+          }
+          return previousNode.children[index];
         }
         return null;
       };
       if (description.children) {
-        element.children = description.children.map((desc, index) => {
+        element.children = description.children.map((childTemplate, index) => {
+          const childDescription = opr.Toolkit.Template.describe(childTemplate);
           const child = this.createFromTemplate(
-              desc, getPreviousChild(index), root, component);
+              childTemplate,
+              getPreviousChild(index, childDescription.props || {}), root,
+              component);
           child.parentNode = element;
           return child;
         });
@@ -194,10 +196,9 @@
         const sandbox = instance.isCompatible(previousNode) ?
             previousNode.sandbox :
             instance.sandbox;
-        Object.assign(sandbox, {
-          props: instance.props,
-          children,
-        });
+
+        sandbox.props = instance.props;
+        sandbox.children = children;
 
         let template;
         if (instance instanceof opr.Toolkit.Root) {

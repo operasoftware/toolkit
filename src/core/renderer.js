@@ -28,7 +28,7 @@
     updateDOM(command, prevState, nextState) {
       /* eslint-disable no-console */
       if (this.settings.level === 'debug') {
-        console.time('=> Render');
+        console.time('=> Render time');
       }
       const patches = this.calculatePatches(command, prevState, nextState);
       if (patches.length) {
@@ -41,8 +41,11 @@
       if (this.settings.level === 'debug') {
         console.log(
             'Command:', command.type, 'for', this.root.constructor.name);
-        console.log('Patches:', patches.length);
-        console.timeEnd('=> Render');
+        if (patches.length) {
+          console.log('Patches:', patches.length);
+        }
+        console.timeEnd('=> Render time');
+        console.log(''.padStart(48, '-'));
       }
       /* eslint-enable no-console */
     }

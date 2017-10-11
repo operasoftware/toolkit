@@ -265,7 +265,6 @@
       this.metadata = {};
       this.children = [];
       this.text = null;
-      this.key = null;
       this.ref = null;
     }
 
