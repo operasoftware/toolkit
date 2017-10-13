@@ -7,7 +7,6 @@ window.loadToolkit = async () => {
 
   Object.assign(Toolkit.prototype, consts, nodes, {
     Diff: await loader.require('core/diff'),
-    Document: await loader.require('core/document'),
     Lifecycle: await loader.require('core/lifecycle'),
     Patch: await loader.require('core/patch'),
     Reconciler: await loader.require('core/reconciler'),

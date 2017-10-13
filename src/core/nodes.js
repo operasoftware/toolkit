@@ -1,6 +1,4 @@
 {
-  const SANDBOX_CONTEXT = Symbol('sandbox-context');
-
   const ID = Symbol('id');
 
   class VirtualNode {
@@ -8,7 +6,6 @@
     constructor(key) {
       this.key = key;
       this[ID] = opr.Toolkit.utils.createUUID();
-      this.parentNode = null;
     }
 
     get id() {
@@ -23,9 +20,9 @@
       return null;
     }
 
-    get rootElement() {
-      if (this.parentElement) {
-        return this.parentElement.rootElement;
+    get container() {
+      if (this.parentNode) {
+        return this.parentNode.container;
       }
       return this;
     }
@@ -53,25 +50,32 @@
 
   class Component extends VirtualNode {
 
+    static get NodeType() {
+      return 'component';
+    }
+
     constructor(props = {}, children = []) {
       super(props.key);
       this.props = props;
       this.children = children;
+      this.sandbox = opr.Toolkit.Sandbox.create(this);
       if (this.key === undefined && this.getKey) {
         this.key = this.getKey.call(this.sandbox);
       }
       this.child = null;
-      this.comment = new Comment(this.constructor.name, this);
+      this.comment = this.createComment();
       this.cleanUpTasks = [];
+      this.attachDOM();
     }
 
-    get sandbox() {
-      let sandbox = this[SANDBOX_CONTEXT];
-      if (!sandbox) {
-        sandbox = opr.Toolkit.Sandbox.create(this);
-        this[SANDBOX_CONTEXT] = sandbox;
-      }
-      return sandbox;
+    createComment() {
+      const comment = new Comment(` ${this.constructor.name} `);
+      comment.parentNode = this;
+      return comment;
+    }
+
+    hasOwnMethod(method) {
+      return this.constructor.prototype.hasOwnProperty(method);
     }
 
     connectTo(service, listeners) {
@@ -89,7 +93,7 @@
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
-      this.comment.parentNode = null;  // TODO: unit test
+      this.comment.parentNode = null;
       this.comment = null;
     }
 
@@ -97,7 +101,14 @@
       console.assert(this.child === child);
       this.child.parentNode = null;
       this.child = null;
-      this.comment = new Comment(this.constructor.name, this);
+      this.comment = this.createComment();
+    }
+
+    replaceChild(child, node) {
+      console.assert(this.child === child);
+      this.child.parentNode = null;
+      this.child = node;
+      this.child.parentNode = this;
     }
 
     get childElement() {
@@ -127,33 +138,20 @@
     }
 
     broadcast(name, data) {
-      this.rootElement.ref.dispatchEvent(new CustomEvent(name, {
+      this.container.dispatchEvent(new CustomEvent(name, {
         detail: data,
         bubbles: true,
         composed: true,
       }))
     }
 
-    onCreated() {
-    }
-
-    onAttached() {
-    }
-
-    onPropsReceived(props) {
-    }
-
-    onUpdated() {
-    }
-
-    onDestroyed() {
-    }
-
-    onDetached() {
+    stopEvent(event) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
     }
 
     get nodeType() {
-      return 'component';
+      return Component.NodeType;
     }
 
     get ref() {
@@ -162,6 +160,22 @@
 
     isCompatible(node) {
       return super.isCompatible(node) && this.constructor === node.constructor;
+    }
+
+    attachDOM() {
+      if (this.child) {
+        this.child.attachDOM();
+      } else {
+        this.comment.attachDOM();
+      }
+    }
+
+    detachDOM() {
+      if (this.child) {
+        this.child.detachDOM();
+      } else {
+        this.comment.detachDOM();
+      }
     }
   }
 
@@ -203,20 +217,37 @@
     }
   }
 
+  const CONTAINER = Symbol('container');
+
   class Root extends Component {
 
-    constructor(props, children) {
-      super(props, children);
+    static get NodeType() {
+      return 'root';
+    }
+
+    constructor(props, container, settings) {
+      super(props, /*= children */ null, /*= parentNode */ null);
+      const {utils, Renderer} = opr.Toolkit;
       this.state = null;
-      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
+      this.reducer = utils.combineReducers(...this.getReducers());
+      this.container = container;
+      this.renderer = new Renderer(this, settings);
       this.dispatch = command => {
         const prevState = this.state;
-        this.state = this.reducer(prevState, command);
-        this.renderer.updateDOM(command, prevState, this.state);
+        const nextState = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, nextState);
       };
       this.commands = opr.Toolkit.utils.createCommandsDispatcher(
           this.reducer, this.dispatch);
       this.plugins = new Map();
+    }
+
+    set container(container) {
+      this[CONTAINER] = container;
+    }
+
+    get container() {
+      return this[CONTAINER];
     }
 
     static get displayName() {
@@ -244,115 +275,227 @@
       return props;
     }
 
-    get parentElement() {
-      const containerElement = new VirtualElement('root');
-      containerElement.children.push(this);
-      containerElement.ref = this.renderer.container;
-      return containerElement;
-    }
-
     get nodeType() {
-      return 'root';
+      return Root.NodeType;
     }
   }
 
   class VirtualElement extends VirtualNode {
 
-    constructor(name, key) {
+    static get NodeType() {
+      return 'element';
+    }
+
+    constructor(name, props = {}, content = null, key) {
       super(key);
+      opr.Toolkit.assert(name, 'Element name is mandatory');
       this.name = name;
-      this.attrs = {};
-      this.dataset = {};
-      this.style = {};
-      this.classNames = [];
-      this.listeners = {};
-      this.metadata = {};
-      this.children = [];
-      this.text = null;
-      this.ref = null;
+      const {
+        listeners = {},
+        attrs = {},
+        dataset = {},
+        classNames = [],
+        style = {},
+        metadata = {},
+      } = props;
+      this.listeners = listeners;
+      this.attrs = attrs;
+      this.dataset = dataset;
+      this.style = style;
+      this.classNames = classNames;
+      this.metadata = metadata;
+      if (Array.isArray(content)) {
+        this.children = content.map(child => {
+          child.parentNode = this;
+          return child;
+        });
+        this.text = null;
+      } else {
+        this.children = [];
+        this.text = content;
+      }
+      this.attachDOM();
     }
 
     setAttribute(name, value) {
-      this.attrs[name] = String(value);
+      this.attrs[name] = value;
+      this.ref.setAttribute(opr.Toolkit.utils.getAttributeName(name), value);
     }
 
     removeAttribute(name) {
       delete this.attrs[name];
+      this.ref.removeAttribute(opr.Toolkit.utils.getAttributeName(name));
     }
 
     setDataAttribute(name, value) {
       this.dataset[name] = String(value);
+      this.ref.dataset[name] = value;
     }
 
     removeDataAttribute(name) {
       delete this.dataset[name];
+      delete this.ref.dataset[name];
     }
 
     addClassName(className) {
       this.classNames.push(className);
+      this.ref.classList.add(className);
     }
 
     removeClassName(className) {
       this.classNames = this.classNames.filter(item => item !== className);
+      this.ref.classList.remove(className);
     }
 
     setStyleProperty(prop, value) {
       this.style[prop] = String(value);
+      this.ref.style[prop] = String(value);
     }
 
     removeStyleProperty(prop) {
       delete this.style[prop];
+      this.ref.style[prop] = null;
     }
 
     addListener(name, listener) {
       this.listeners[name] = listener;
+      const event = opr.Toolkit.utils.getEventName(name);
+      this.ref.addEventListener(event, listener);
     }
 
     removeListener(name, listener) {
       delete this.listeners[name];
+      const event = opr.Toolkit.utils.getEventName(name);
+      this.ref.removeEventListener(event, listener);
+    }
+
+    setMetadata(key, value) {
+      this.metadata[key] = value;
+      this.ref[key] = value;
+    }
+
+    removeMetadata(key, value) {
+      delete this.metadata[key];
+      delete this.ref[key];
     }
 
     insertChild(child, index = this.children.length) {
+      const nextChild = this.children[index];
       this.children.splice(index, 0, child);
+      this.ref.insertBefore(child.ref, nextChild && nextChild.ref);
       child.parentNode = this;
-    }
-
-    removeChild(child) {
-      const index = this.children.indexOf(child);
-      if (index >= 0) {
-        this.children.splice(index, 1);
-        child.parentNode = null;
-        return true;
-      }
-      return false;
     }
 
     moveChild(child, from, to) {
       console.assert(this.children[from] === child);
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
+      this.ref.removeChild(child.ref);
+      this.ref.insertBefore(child.ref, this.ref.children[to]);
+    }
+
+    replaceChild(child, node) {
+      const index = this.children.indexOf(child);
+      console.assert(index >= 0);
+      this.children.splice(index, 1, node);
+      child.parentNode = null;
+      node.parentNode = this;
+      child.ref.replaceWith(node.ref);
+    }
+
+    removeChild(child) {
+      const index = this.children.indexOf(child);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified element:', child, 'is not a child of:', this);
+      this.children.splice(index, 1);
+      child.parentNode = null;
+      this.ref.removeChild(child.ref);
+    }
+
+    setTextContent(text) {
+      this.text = text;
+      this.ref.textContent = text;
+    }
+
+    removeTextContent() {
+      this.text = null;
+      this.ref.textContent = '';
     }
 
     get nodeType() {
-      return 'element';
+      return VirtualElement.NodeType;
     }
 
     isCompatible(node) {
       return super.isCompatible(node) && this.name === node.name;
     }
+
+    createElement() {
+      const element = document.createElement(this.name);
+      if (this.text) {
+        element.textContent = this.text;
+      }
+      Object.entries(this.listeners).forEach(([name, listener]) => {
+        const event = opr.Toolkit.utils.getEventName(name);
+        element.addEventListener(event, listener);
+      });
+      Object.entries(this.attrs).forEach(([attr, value]) => {
+        const name = opr.Toolkit.utils.getAttributeName(attr);
+        element.setAttribute(name, value);
+      });
+      Object.entries(this.dataset).forEach(([attr, value]) => {
+        element.dataset[attr] = value;
+      });
+      this.classNames.forEach(className => {
+        element.classList.add(className);
+      });
+      Object.entries(this.style).forEach(([prop, value]) => {
+        element.style[prop] = value;
+      });
+      Object.entries(this.metadata).forEach(([prop, value]) => {
+        element[prop] = value;
+      });
+      return element;
+    }
+
+    attachDOM() {
+      this.ref = this.createElement();
+      for (const child of this.children) {
+        child.attachDOM();
+        this.ref.appendChild(child.ref);
+      }
+    }
+
+    detachDOM() {
+      for (const child of this.children) {
+        child.detachDOM();
+      }
+      this.ref = null;
+    }
   }
 
   class Comment extends VirtualNode {
 
-    constructor(text, parentNode) {
-      super();
+    static get NodeType() {
+      return 'comment';
+    }
+
+    constructor(text) {
+      super(null);
       this.text = text;
-      this.parentNode = parentNode;
-      this.ref = null;
+      this.attachDOM();
     }
 
     get nodeType() {
-      return 'comment';
+      return Comment.NodeType;
+    }
+
+    attachDOM() {
+      this.ref = document.createComment(this.text);
+    }
+
+    detachDOM() {
+      this.ref = null;
     }
   }
 

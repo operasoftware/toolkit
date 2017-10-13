@@ -1,4 +1,199 @@
 {
+  class Description {
+
+    constructor(type, key, template) {
+      this.type = type;
+      this.key = key;
+      Object.defineProperty(this, 'template', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: template,
+      });
+    }
+
+    isCompatible(desc) {
+      return desc && desc.type === this.type;
+    }
+
+    isComponent() {
+      return this instanceof ComponentDescription;
+    }
+
+    isElement() {
+      return this instanceof ElementDescription;
+    }
+
+    toTemplate() {
+      return this.template;
+    }
+  }
+
+  class ComponentDescription extends Description {
+
+    constructor({component, props, children}, template) {
+      super(opr.Toolkit.Component.NodeType, props && props.key, template);
+      this.component = component;
+      if (props) {
+        this.props = props;
+      }
+      if (children) {
+        this.children = children;
+      }
+    }
+
+    isCompatible(desc) {
+      return super.isCompatible(desc) && desc.component === this.component;
+    }
+  }
+
+  /*
+   * Defines a normalized description of an element. Is used to determine the
+   * differences between compatible elements (with the same tag name).
+   *
+   * Enumerable properties:
+   * - element (a string representing tag name),
+   * - text (a string representing text content),
+   * - children (an array of child nodes),
+   * - props (an object) defining:
+   *    - listeners (an object for event name to listener mapping)
+   *    - attrs (an object for normalized attribute name to value mapping)
+   *    - dataset (an object representing data attributes)
+   *    - classNames (an array of sorted class names)
+   *    - style (an object for style property to string value mapping)
+   *    - metadata (an object for properties set directly on DOM element)
+   *
+   * Non-enumerable properties:
+   * - template: a reference to the source template.
+   */
+  class ElementDescription extends Description {
+
+    constructor({element, text, children, props}, template) {
+      super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+      this.element = element;
+      this.text = text !== undefined ? text : null;
+
+      const {
+        SUPPORTED_ATTRIBUTES,
+        SUPPORTED_EVENTS,
+        SUPPORTED_STYLES,
+        Template,
+      } = opr.Toolkit;
+
+      if (children && children.length > 0) {
+        this.children = children;
+      }
+
+      if (props) {
+
+        if (opr.Toolkit.isDebug()) {
+          const unknownAttrs = Object.keys(props).filter(
+              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
+          for (const unknownAttr of unknownAttrs) {
+            const suggestion = SUPPORTED_ATTRIBUTES.find(
+                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
+            if (suggestion) {
+              opr.Toolkit.warn(
+                  `Attribute name "${
+                                     unknownAttr
+                                   }" should be spelled "${suggestion}"`);
+            } else {
+              opr.Toolkit.warn(`Attribute name "${unknownAttr}" is not valid,`);
+            }
+          }
+        }
+
+        const normalized = {};
+
+        const keys = Object.keys(props);
+
+        // listeners
+        const listeners = {};
+        const events = keys.filter(key => SUPPORTED_EVENTS.includes(key));
+        for (const event of events) {
+          const listener = props[event];
+          if (typeof listener === 'function') {
+            listeners[event] = listener;
+          }
+        }
+        if (Object.keys(listeners).length) {
+          normalized.listeners = listeners;
+        }
+
+        // attributes
+        const attrs = {};
+        const attrNames =
+            keys.filter(key => SUPPORTED_ATTRIBUTES.includes(key));
+        for (const attr of attrNames) {
+          const value = Template.getAttributeValue(props[attr]);
+          if (value !== null && value !== undefined) {
+            attrs[attr] = value;
+          }
+        }
+        if (Object.keys(attrs).length) {
+          normalized.attrs = attrs;
+        }
+
+        // data attributes
+        if (props.dataset) {
+          const dataset = {};
+          for (const key of Object.keys(props.dataset)) {
+            const value = Template.getAttributeValue(props.dataset[key]);
+            if (value !== null && value !== undefined) {
+              dataset[key] = String(value);
+            }
+          }
+          if (Object.keys(dataset).length) {
+            normalized.dataset = dataset;
+          }
+        }
+
+        // class names
+        if (props.class) {
+          const classNames = Template.getClassNames(props.class);
+          if (classNames.length) {
+            normalized.classNames = classNames;
+          }
+        }
+
+        // style
+        if (props.style) {
+          const style = {};
+          const keys = Object.keys(props.style)
+                           .filter(key => SUPPORTED_STYLES.includes(key));
+          for (const key of keys) {
+            const value = Template.getStyleValue(props.style[key], key);
+            if (value !== null && value !== undefined) {
+              style[key] = value;
+            }
+          }
+          if (Object.keys(style).length) {
+            normalized.style = style;
+          }
+        }
+
+        // metadata
+        if (props.metadata) {
+          const metadata = {};
+          for (const key of Object.keys(props.metadata)) {
+            metadata[key] = props.metadata[key];
+          }
+          if (Object.keys(metadata).length) {
+            normalized.metadata = metadata;
+          }
+        }
+
+        if (Object.keys(normalized).length) {
+          this.props = normalized;
+        }
+      }
+    }
+
+    isCompatible(desc) {
+      return super.isCompatible(desc) && desc.element === this.element;
+    }
+  }
+
   class Template {
 
     static get ItemType() {
@@ -43,7 +238,7 @@
         return [];
       }
       classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
-      return [...new Set(classNames)];
+      return [...new Set(classNames)].sort();
     }
 
     static getCompositeValue(obj = {}, whitelist) {
@@ -249,64 +444,105 @@
 
     static describe(template) {
 
-      const {types, error} = this.validate(template);
+      const analyze = template => {
 
-      if (error) {
-        console.error('Invalid template definition:', template);
-        throw error;
-      }
+        const {types, error} = this.validate(template);
 
-      if (types === null) {
-        return null;
-      }
+        if (error) {
+          console.error('Invalid template definition:', template);
+          throw error;
+        }
 
-      const Type = Template.ItemType;
-      const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
+        if (types === null) {
+          return null;
+        }
 
-      const onlyValidElements = element => Array.isArray(element);
+        const Type = Template.ItemType;
 
-      switch (template.length) {
-        case 1:
-          return {
-            [type]: template[0],
-          };
-        case 2:
-          if (types[1] === Type.STRING) {
-            const text = template[1];
-            return {
-              [type]: template[0],
-              text,
-            };
-          } else if (types[1] === Type.PROPS) {
-            return {[type]: template[0], props: template[1]};
-          } else if (types[1] === Type.ELEMENT) {
-            return {
-              [type]: template[0],
-              children: template.slice(1).filter(onlyValidElements),
-            };
+        let attr;
+        let name
+
+        const type = types[0];
+        if (type === Type.COMPONENT) {
+          attr = 'component';
+          name = String(template[0]).slice(7, -1);
+        } else {
+          attr = 'element';
+          name = template[0];
+        }
+
+        const getChildren = nodes => {
+          const isValidNode = element => Array.isArray(element);
+          const children = nodes.filter(isValidNode);
+          switch (type) {
+            case Type.COMPONENT:
+              return children.map(child => this.describe(child));
+            case Type.STRING:
+              return children.map(child => this.describe(child));
+            default:
+              throw new Error(`Unknown type: ${type}`);
           }
-        default:
-          if (types[1] === Type.PROPS) {
-            if (types[2] === Type.STRING) {
+        };
+
+        switch (template.length) {
+          case 1:
+            return {
+              [attr]: name,
+            };
+          case 2:
+            if (types[1] === Type.STRING) {
+              const text = template[1];
               return {
-                [type]: template[0],
+                [attr]: name,
+                text,
+              };
+            } else if (types[1] === Type.PROPS) {
+              return {[attr]: name, props: template[1]};
+            } else if (types[1] === Type.ELEMENT) {
+              return {
+                [attr]: name,
+                children: getChildren(template.slice(1)),
+              };
+            }
+          default:
+            if (types[1] === Type.PROPS) {
+              if (types[2] === Type.STRING) {
+                return {
+                  [attr]: name,
+                  props: template[1],
+                  text: template[2],
+                };
+              }
+              return {
+                [attr]: name,
                 props: template[1],
-                text: template[2],
+                children: getChildren(template.slice(2)),
               };
             }
             return {
-              [type]: template[0],
-              props: template[1],
-              children: template.slice(2).filter(onlyValidElements),
+              [attr]: name,
+              children: getChildren(template.slice(1)),
             };
-          }
-          return {
-            [type]: template[0],
-            children: template.slice(1).filter(onlyValidElements),
-          };
+        }
+      };
+
+      const details = analyze(template);
+
+      if (!details) {
+        return null;
       }
+
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
+    }
+
+    static normalize(details, template = null) {
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
     }
   }
+
+  Template.Description = Description;
 
   module.exports = Template;
 }

@@ -40,7 +40,7 @@
         };
         script.onerror = error => {
           console.error(
-              `Error loading module "${path}" from "${resourcePath}"!`);
+              `Error loading module "${id}" from "${script.src}"!`);
           reject(error);
         };
         document.head.appendChild(script);

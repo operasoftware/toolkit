@@ -1,77 +1,45 @@
 describe('Virtual DOM', () => {
 
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {Template, VirtualDOM} = opr.Toolkit;
+
+  const createElement = details =>
+      VirtualDOM.createFromDescription(Template.normalize(details), null, null);
 
   suppressConsoleErrors();
 
-  const cache = new Map();
-
-  describe('=> create component from', () => {
-
-    const root = Symbol.for('Root');
-
-    class RootClass extends opr.Toolkit.Root {};
-    loader.define('Root', RootClass);
-
-    it('creates a new instance of preloaded component', () => {
-
-      // given
-      const instance = VirtualDOM.createComponentFrom(root);
-
-      // then
-      assert(instance);
-      assert(instance.isComponent());
-      assert(instance.isRoot());
-    });
-
-    it('creates a new instance of preloaded component with key', () => {
-
-      // given
-      const instance = VirtualDOM.createComponentFrom(root, {
-        key: 'key',
-      });
-
-      // then
-      assert(instance);
-      assert(instance.isComponent());
-      assert(instance.isRoot());
-      assert.equal(instance.key, 'key');
-    });
-  });
-
-  describe('=> create element instance', () => {
+  describe('=> create element', () => {
 
     it('creates empty element', () => {
 
       // given
       const description = {
-        name: 'div',
+        element: 'div',
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
       assert(element.isElement());
       assert.equal(element.name, 'div');
       assert.equal(element.text, null);
-      assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert.equal(element.key, undefined);
+      assert(element.ref);
     });
 
     it('creates element with a key', () => {
 
       // given
       const description = {
-        name: 'span',
+        element: 'span',
         props: {
           key: 'key',
         },
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -79,19 +47,19 @@ describe('Virtual DOM', () => {
       assert.equal(element.name, 'span');
       assert.equal(element.text, null);
       assert.equal(element.key, 'key');
-      assert.equal(element.ref, null);
+      assert(element.ref);
     });
 
     it('creates element with text content', () => {
 
       // given
       const description = {
-        name: 'span',
+        element: 'span',
         text: 'Text',
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -99,14 +67,14 @@ describe('Virtual DOM', () => {
       assert.equal(element.name, 'span');
       assert.equal(element.text, 'Text');
       assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert(element.ref);
     });
 
     it('creates element with attributes', () => {
 
       // given
       const description = {
-        name: 'input',
+        element: 'input',
         props: {
           value: 'value',
           id: 'some-id',
@@ -115,8 +83,7 @@ describe('Virtual DOM', () => {
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(
-          description, new opr.Toolkit.Component());
+      const element = createElement(description, new opr.Toolkit.Component());
 
       // then
       assert(element);
@@ -128,15 +95,15 @@ describe('Virtual DOM', () => {
       });
       assert.deepEqual(element.dataset, {});
       assert.equal(element.text, null);
-      assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert.equal(element.key, undefined);
+      assert(element.ref);
     });
 
     it('creates element with data attributes', () => {
 
       // given
       const description = {
-        name: 'input',
+        element: 'input',
         props: {
           dataset: {
             custom: true,
@@ -146,7 +113,7 @@ describe('Virtual DOM', () => {
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -158,15 +125,15 @@ describe('Virtual DOM', () => {
         another: '17',
       });
       assert.equal(element.text, null);
-      assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert.equal(element.key, undefined);
+      assert(element.ref);
     });
 
     it('creates element with class names', () => {
 
       // given
       const description = {
-        name: 'div',
+        element: 'div',
         props: {
           class: [
             'foo',
@@ -188,7 +155,7 @@ describe('Virtual DOM', () => {
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -196,17 +163,17 @@ describe('Virtual DOM', () => {
       assert.equal(element.name, 'div');
       assert.deepEqual(element.attrs, {});
       assert.deepEqual(element.dataset, {});
-      assert.deepEqual(element.classNames, ['foo', 'bar', 'nested']);
+      assert.deepEqual(element.classNames, ['bar', 'foo', 'nested']);
       assert.equal(element.text, null);
-      assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert.equal(element.key, undefined);
+      assert(element.ref);
     });
 
     it('creates element with style', () => {
 
       // given
       const description = {
-        name: 'div',
+        element: 'div',
         props: {
           style: {
             color: 'red',
@@ -217,7 +184,7 @@ describe('Virtual DOM', () => {
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -230,8 +197,8 @@ describe('Virtual DOM', () => {
         backgroundColor: 'black',
       });
       assert.equal(element.text, null);
-      assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert.equal(element.key, undefined);
+      assert(element.ref);
     });
 
     it('creates element with listeners', () => {
@@ -240,7 +207,7 @@ describe('Virtual DOM', () => {
       const onClick = () => {};
       const onChange = () => {};
       const description = {
-        name: 'div',
+        element: 'div',
         props: {
           onClick,
           onChange,
@@ -248,7 +215,7 @@ describe('Virtual DOM', () => {
       };
 
       // when
-      const element = VirtualDOM.createElementInstance(description);
+      const element = createElement(description);
 
       // then
       assert(element);
@@ -257,56 +224,14 @@ describe('Virtual DOM', () => {
       assert.deepEqual(element.attrs, {});
       assert.deepEqual(element.dataset, {});
       assert.deepEqual(element.listeners, {
-        click: onClick,
-        change: onChange,
+        onClick,
+        onChange,
       });
       assert.equal(element.text, null);
       assert.equal(element.key, null);
-      assert.equal(element.ref, null);
+      assert(element.ref);
     });
 
-    it('creates element and reuses existing child nodes', () => {
-
-      const Component = Symbol.for('Component');
-
-      const ComponentClass = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            'span',
-            this.id,
-          ];
-        }
-      };
-
-      loader.define('Component', ComponentClass);
-
-      // given
-      const previousElement = VirtualDOM.createElement({
-        name: 'div',
-        children: [
-          [
-            Component,
-          ],
-        ],
-      });
-
-      // when
-      const element = VirtualDOM.createElement(
-          {
-            name: 'div',
-            children: [
-              [
-                Component,
-              ],
-            ],
-          },
-          previousElement);
-
-      // then
-      assert.equal(
-          element.children[0].child.text,
-          previousElement.children[0].child.text);
-    });
   });
 
   describe('=> create child tree', () => {
@@ -318,249 +243,6 @@ describe('Virtual DOM', () => {
         ];
       }
     };
-
-    it('creates a tree bound to root component', () => {
-
-      // given
-      const app = new App();
-      const props = {};
-
-      // when
-      const child = VirtualDOM.createChildTree(app, props);
-
-      // then
-      assert(child);
-      assert.equal(child.parentNode, app);
-      assert.equal(child.name, 'div');
-    });
-
-    it('handles null tree', () => {
-
-      // given
-      const Empty = class extends opr.Toolkit.Root {
-        render() {
-          return null;
-        }
-      };
-      const app = new Empty();
-      const props = {};
-
-      // when
-      const child = VirtualDOM.createChildTree(app, props);
-
-      // then
-      assert.equal(child, null);
-      assert.equal(app.child, null);
-    });
-  });
-
-  describe('=> create component', () => {
-
-    it('creates a leaf with a single element', () => {
-
-      // given
-      const LeafElementComponent = Symbol.for('LeafElement');
-
-      const LeafElement = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            'a',
-            {
-              href: this.props.url,
-            },
-            this.props.label,
-          ];
-        }
-      };
-
-      loader.define('LeafElement', LeafElement);
-
-      const label = 'Example';
-      const url = 'http://www.example.com';
-      const component =
-          VirtualDOM.createComponent(LeafElementComponent, {url, label});
-
-      // then
-      assert(component.isComponent());
-      assert(component.childElement, component.child);
-
-      assert(component.child.isElement());
-      assert(component.child.parentNode, component);
-
-      assert.equal(component.child.name, 'a');
-      assert.equal(component.child.text, label);
-      assert.equal(component.child.attrs.href, url);
-    });
-
-    it('creates a leaf with nested elements', () => {
-
-      // given
-      const NestedElementsComponent = Symbol.for('NestedElements');
-
-      const NestedElements = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            'div',
-            [
-              'span',
-              {
-                onClick: this.props.onClick,
-              },
-              [
-                'a',
-                {
-                  href: this.props.url,
-                },
-                this.props.label,
-              ],
-            ],
-          ];
-        }
-      };
-
-      loader.define('NestedElements', NestedElements);
-
-      const label = 'Example';
-      const url = 'http://www.example.com';
-      const onClick = () => {};
-      const component = VirtualDOM.createComponent(
-          NestedElementsComponent, {url, label, onClick});
-
-      // then
-      const divElement = component.child;
-      const spanElement = divElement.children[0];
-      const linkElement = spanElement.children[0];
-
-      assert(component.isComponent());
-      assert.equal(component.childElement, divElement);
-
-      assert(divElement.isElement());
-      assert.equal(divElement.parentNode, component);
-
-      assert.equal(divElement.name, 'div');
-      assert(divElement.children);
-      assert.equal(divElement.children.length, 1);
-
-      assert(spanElement.isElement());
-      assert.equal(spanElement.parentNode, divElement);
-      assert.equal(spanElement.parentElement, divElement);
-
-      assert.equal(spanElement.name, 'span');
-      assert.equal(spanElement.listeners['click'], onClick);
-      assert(spanElement.children);
-      assert.equal(spanElement.children.length, 1);
-
-      assert(linkElement.isElement());
-      assert.equal(linkElement.parentNode, spanElement);
-      assert.equal(linkElement.parentElement, spanElement);
-
-      assert.equal(linkElement.name, 'a');
-      assert(linkElement.attrs.href, url);
-      assert(linkElement.text, label);
-    });
-
-    it('creates a branch with nested components', () => {
-
-      const ApplicationComponent = Symbol.for('application');
-      const ParentComponent = Symbol.for('parent');
-      const ChildComponent = Symbol.for('child');
-
-      // given
-      const Application = class extends opr.Toolkit.Component {
-        render() {
-          return [ParentComponent, ['p', {class: 'passed-from-application'}]];
-        }
-      };
-
-      const Parent = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            ChildComponent,
-            [
-              'div',
-              {
-                class: 'passed-from-parent',
-              },
-              ...this.children,
-            ],
-          ];
-        }
-      };
-
-      const Child = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            'span',
-            {
-              id: 'child',
-            },
-            ...this.children,
-          ];
-        }
-      };
-
-      loader.define('application', Application);
-      loader.define('parent', Parent);
-      loader.define('child', Child);
-
-      const component = VirtualDOM.createComponent(ApplicationComponent);
-
-      // then
-      assert(component.isComponent());
-      assert.equal(component.constructor, Application);
-
-      const parent = component.child;
-      assert(parent.isComponent());
-      assert.equal(parent.constructor, Parent);
-
-      const child = parent.child;
-      assert(child.isComponent());
-      assert.equal(child.constructor, Child);
-
-      const spanElement = child.child;
-      assert(spanElement.isElement());
-
-      const divElement = spanElement.children[0];
-      assert(divElement.isElement());
-
-      const paragraphElement = divElement.children[0];
-      assert(paragraphElement.isElement());
-
-      assert.equal(component.childElement, spanElement);
-      assert.equal(parent.childElement, spanElement);
-      assert.equal(child.childElement, spanElement);
-
-      assert.equal(parent.parentNode, component);
-      assert.equal(child.parentNode, parent);
-      assert.equal(spanElement.parentNode, child);
-      assert.equal(divElement.parentNode, spanElement);
-      assert.equal(paragraphElement.parentNode, divElement);
-    });
-
-    it('reuses sandboxed context from the existing component', () => {
-
-      // given
-      const Component = Symbol.for('Component');
-
-      const ReusedComponent = class extends opr.Toolkit.Component {
-        render() {
-          return [
-            'span',
-            this.id,
-          ];
-        }
-      };
-      loader.define('Component', ReusedComponent);
-      const previousComponent = VirtualDOM.createComponent(Component);
-
-      // when
-      const component =
-          VirtualDOM.createComponent(Component, {}, [], previousComponent);
-
-      // then
-      assert.equal(component.child.text, previousComponent.child.text);
-
-    });
   });
 
   describe('=> create from template', () => {
@@ -583,7 +265,7 @@ describe('Virtual DOM', () => {
       ];
 
       // when
-      const divElement = VirtualDOM.createFromTemplate(template);
+      const divElement = utils.createFromTemplate(template);
 
       // then
       assert(divElement.isElement())
@@ -602,20 +284,20 @@ describe('Virtual DOM', () => {
     });
 
     it('returns null for template === null', () => {
-      assert.equal(VirtualDOM.createFromTemplate(null), null);
+      assert.equal(utils.createFromTemplate(null), null);
     });
 
     it('returns null for template === false', () => {
-      assert.equal(VirtualDOM.createFromTemplate(false), null);
+      assert.equal(utils.createFromTemplate(false), null);
     });
 
-    it('returns null for template === []', () => {
-      assert.equal(VirtualDOM.createFromTemplate([]), null);
+    it('throws an error for template === []', () => {
+      assert.throws(() => utils.createFromTemplate([]));
     });
 
     it('throws when template === undefined', () => {
       assert.throws(
-          VirtualDOM.createFromTemplate, Error, 'Invalid undefined template!');
+          utils.createFromTemplate, Error, 'Invalid undefined template!');
     });
   });
 

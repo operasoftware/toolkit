@@ -1,325 +1,373 @@
 {
-  const getType = item => {
-    const type = typeof item;
-    switch (type) {
-      case 'object':
-        if (item === null) {
-          return 'null';
-        } else if (Array.isArray(item)) {
-          return 'array'
-        } else {
-          return 'object'
+  class Diff {
+
+    constructor(root) {
+      this.root = root;
+      this.patches = [];
+    }
+
+    addPatch(patch) {
+      return this.patches.push(patch);
+    }
+
+    updateComponent(component, prevProps, description) {
+      if (!Diff.deepEqual(component.description, description)) {
+        if ((component.hasOwnMethod('onPropsReceived') ||
+             component.hasOwnMethod('onUpdated')) &&
+            !Diff.deepEqual(prevProps, component.props)) {
+          this.addPatch(opr.Toolkit.Patch.updateComponent(component));
         }
-      default:
-        return type;
+        this.componentChildPatches(component.child, description, component);
+        component.description = description;
+      }
     }
-  };
 
-  const listenerPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = opr.Toolkit.Patch;
-
-    const listeners = Object.keys(current);
-    const nextListeners = Object.keys(next);
-
-    const added = nextListeners.filter(event => !listeners.includes(event));
-    const removed = listeners.filter(event => !nextListeners.includes(event));
-    const changed = listeners.filter(
-        event => nextListeners.includes(event) &&
-            current[event] !== next[event] &&
-            (current[event].source === undefined &&
-                 next[event].source === undefined ||
-             current[event].source !== next[event].source));
-
-    for (let event of added) {
-      patches.push(Patch.addListener(event, next[event], target));
+    rootPatches(prevState, nextState, initial) {
+      const description = opr.Toolkit.Renderer.render(this.root);
+      if (initial) {
+        this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
+      }
+      this.updateComponent(this.root, prevState, description);
+      return this.patches;
     }
-    for (let event of removed) {
-      patches.push(Patch.removeListener(event, current[event], target));
+
+    /**
+     * Calculates patches for conversion of a component to match the given
+     * description.
+     */
+    componentPatches(component, description) {
+
+      const {
+        props = {},
+        children = [],
+      } = description;
+
+      const ComponentClass =
+          opr.Toolkit.VirtualDOM.getComponentClass(description.component);
+
+      opr.Toolkit.assert(
+          ComponentClass,
+          `Module not found for path: ${String(description.component)}`);
+      opr.Toolkit.assert(component.constructor === ComponentClass);
+
+      const prevProps = component.props;
+
+      component.props =
+          opr.Toolkit.VirtualDOM.normalizeProps(component.constructor, props);
+      component.children = children.map(child => child.toTemplate());
+
+      this.updateComponent(
+          component, prevProps, opr.Toolkit.Renderer.render(component));
     }
-    for (let event of changed) {
-      patches.push(
-          Patch.replaceListener(event, current[event], next[event], target));
+
+    /**
+     * Calculates patches for conversion of an element to match the given
+     * description.
+     */
+    elementPatches(element, {props = {}, children, text}, parent) {
+
+      const {
+        attrs,
+        dataset,
+        style,
+        classNames,
+        listeners,
+        metadata,
+      } = props;
+
+      this.attributePatches(element.attrs, attrs, element);
+      this.datasetPatches(element.dataset, dataset, element);
+      this.stylePatches(element.style, style, element);
+      this.classNamePatches(element.classNames, classNames, element);
+      this.listenerPatches(element.listeners, listeners, element);
+      this.metadataPatches(element.metadata, metadata, element);
+      // TODO: handle text as a child
+      if (element.text !== null && text === null) {
+        this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
+      }
+      this.elementChildrenPatches(element.children, children, element);
+      if (text !== null && element.text !== text) {
+        this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
+      }
     }
-  };
 
-  const metadataPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = opr.Toolkit.Patch;
+    listenerPatches(current = {}, next = {}, target = null) {
+      const Patch = opr.Toolkit.Patch;
 
-    const keys = Object.keys(current);
-    const nextKeys = Object.keys(next);
+      const listeners = Object.keys(current);
+      const nextListeners = Object.keys(next);
 
-    const added = nextKeys.filter(key => !keys.includes(key));
-    const removed = keys.filter(key => !nextKeys.includes(key));
-    const changed = keys.filter(
-        key =>
-            nextKeys.includes(key) && !Diff.deepEqual(current[key], next[key]));
+      const added = nextListeners.filter(event => !listeners.includes(event));
+      const removed = listeners.filter(event => !nextListeners.includes(event));
+      const changed = listeners.filter(
+          event => nextListeners.includes(event) &&
+              current[event] !== next[event] &&
+              (current[event].source === undefined &&
+                   next[event].source === undefined ||
+               current[event].source !== next[event].source));
 
-    for (let key of added) {
-      patches.push(Patch.addMetadata(key, next[key], target));
+      for (let event of added) {
+        this.addPatch(Patch.addListener(event, next[event], target));
+      }
+      for (let event of removed) {
+        this.addPatch(Patch.removeListener(event, current[event], target));
+      }
+      for (let event of changed) {
+        this.addPatch(
+            Patch.replaceListener(event, current[event], next[event], target));
+      }
     }
-    for (let key of removed) {
-      patches.push(Patch.removeMetadata(key, target));
+
+    metadataPatches(current = {}, next = {}, target = null) {
+      const Patch = opr.Toolkit.Patch;
+
+      const keys = Object.keys(current);
+      const nextKeys = Object.keys(next);
+
+      const added = nextKeys.filter(key => !keys.includes(key));
+      const removed = keys.filter(key => !nextKeys.includes(key));
+      const changed = keys.filter(
+          key => nextKeys.includes(key) &&
+              !Diff.deepEqual(current[key], next[key]));
+
+      for (let key of added) {
+        this.addPatch(Patch.addMetadata(key, next[key], target));
+      }
+      for (let key of removed) {
+        this.addPatch(Patch.removeMetadata(key, target));
+      }
+      for (let key of changed) {
+        this.addPatch(Patch.replaceMetadata(key, next[key], target));
+      }
     }
-    for (let key of changed) {
-      patches.push(Patch.replaceMetadata(key, next[key], target));
+
+    stylePatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const props = Object.keys(current);
+      const nextProps = Object.keys(next);
+
+      const added = nextProps.filter(prop => !props.includes(prop));
+      const removed = props.filter(prop => !nextProps.includes(prop));
+      const changed = props.filter(
+          prop => nextProps.includes(prop) && current[prop] !== next[prop]);
+
+      for (let prop of added) {
+        this.addPatch(Patch.addStyleProperty(prop, next[prop], target));
+      }
+      for (let prop of removed) {
+        this.addPatch(Patch.removeStyleProperty(prop, target));
+      }
+      for (let prop of changed) {
+        this.addPatch(Patch.replaceStyleProperty(prop, next[prop], target));
+      }
     }
-  };
 
-  const stylePatches = (current = {}, next = {}, target, patches) => {
+    classNamePatches(current = [], next = [], target) {
+      const Patch = opr.Toolkit.Patch;
 
-    const props = Object.keys(current);
-    const nextProps = Object.keys(next);
+      const added = next.filter(attr => !current.includes(attr));
+      const removed = current.filter(attr => !next.includes(attr));
 
-    const added = nextProps.filter(prop => !props.includes(prop));
-    const removed = props.filter(prop => !nextProps.includes(prop));
-    const changed = props.filter(
-        prop => nextProps.includes(prop) && current[prop] !== next[prop]);
-
-    for (let prop of added) {
-      patches.push(
-          opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
+      for (let name of added) {
+        this.addPatch(Patch.addClassName(name, target));
+      }
+      for (let name of removed) {
+        this.addPatch(Patch.removeClassName(name, target));
+      }
     }
-    for (let prop of removed) {
-      patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
+
+    datasetPatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const attrs = Object.keys(current);
+      const nextAttrs = Object.keys(next);
+
+      const added = nextAttrs.filter(attr => !attrs.includes(attr));
+      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+      const changed = attrs.filter(
+          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+
+      for (let attr of added) {
+        this.addPatch(Patch.addDataAttribute(attr, next[attr], target));
+      }
+      for (let attr of removed) {
+        this.addPatch(Patch.removeDataAttribute(attr, target));
+      }
+      for (let attr of changed) {
+        this.addPatch(Patch.replaceDataAttribute(attr, next[attr], target));
+      }
     }
-    for (let prop of changed) {
-      patches.push(
-          opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
+
+    attributePatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const attrs = Object.keys(current);
+      const nextAttrs = Object.keys(next);
+
+      const added = nextAttrs.filter(attr => !attrs.includes(attr));
+      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+      const changed = attrs.filter(
+          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+
+      for (let attr of added) {
+        this.addPatch(Patch.addAttribute(attr, next[attr], target));
+      }
+      for (let attr of removed) {
+        this.addPatch(Patch.removeAttribute(attr, target));
+      }
+      for (let attr of changed) {
+        this.addPatch(Patch.replaceAttribute(attr, next[attr], target));
+      }
     }
-  };
 
-  const classNamePatches = (current = [], next = [], target, patches) => {
+    elementChildrenPatches(current = [], descriptions = [], parent) {
+      const {Patch, Reconciler, VirtualDOM} = opr.Toolkit;
+      const Move = Reconciler.Move;
 
-    const added = next.filter(attr => !current.includes(attr));
-    const removed = current.filter(attr => !next.includes(attr));
+      const created = [];
 
-    for (let name of added) {
-      patches.push(opr.Toolkit.Patch.addClassName(name, target));
-    }
-    for (let name of removed) {
-      patches.push(opr.Toolkit.Patch.removeClassName(name, target));
-    }
-  };
-
-  const datasetPatches = (current = {}, next = {}, target, patches) => {
-
-    const attrs = Object.keys(current);
-    const nextAttrs = Object.keys(next);
-
-    const added = nextAttrs.filter(attr => !attrs.includes(attr));
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-    const changed = attrs.filter(
-        attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
-
-    for (let attr of added) {
-      patches.push(
-          opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
-    }
-    for (let attr of removed) {
-      patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
-    }
-    for (let attr of changed) {
-      patches.push(
-          opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
-    }
-  };
-
-  const attributePatches =
-      (current = {}, next = {}, target = null, patches) => {
-        const attrs = Object.keys(current);
-        const nextAttrs = Object.keys(next);
-
-        const added = nextAttrs.filter(attr => !attrs.includes(attr));
-        const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-        const changed = attrs.filter(
-            attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
-
-        for (let attr of added) {
-          patches.push(
-              opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
-        }
-        for (let attr of removed) {
-          patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
-        }
-        for (let attr of changed) {
-          patches.push(
-              opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
-        }
+      const createNode = description => {
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        created.push(node);
+        return node;
       };
 
-  const areCompatible = (current, next) => {
-    if (current.nodeType !== next.nodeType) {
-      return false;
+      const from = current.map((node, index) => node.key || index);
+      const to =
+          descriptions.map((description, index) => description.key || index);
+
+      const getNode = key => {
+        if (from.includes(key)) {
+          return current[from.indexOf(key)];
+        }
+        const index = to.indexOf(key);
+        return createNode(descriptions[index]);
+      };
+
+      const moves = Reconciler.calculateMoves(from, to);
+
+      const children = [...current];
+      for (const move of moves) {
+        const node = getNode(move.item);
+        switch (move.name) {
+          case Move.Name.INSERT:
+            this.addPatch(Patch.insertChildNode(node, move.at, parent));
+            Move.insert(node, move.at).make(children);
+            continue;
+          case Move.Name.MOVE:
+            this.addPatch(
+                Patch.moveChildNode(node, move.from, move.to, parent));
+            Move.move(node, move.from, move.to).make(children);
+            continue;
+          case Move.Name.REMOVE:
+            this.addPatch(Patch.removeChildNode(node, move.at, parent));
+            Move.remove(node, move.at).make(children);
+            continue;
+        }
+      }
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!created.includes(child)) {
+          this.elementChildPatches(child, descriptions[i], parent, i);
+        }
+      }
     }
-    if (current.isComponent()) {
-      return current.constructor === next.constructor;
-    }
-    if (current.isElement()) {
-      return current.name === next.name;
-    }
-  };
 
-  const childrenPatches = (current = [], next = [], parent, patches) => {
+    elementChildPatches(child, description, parent, index) {
+      const {Patch, VirtualDOM} = opr.Toolkit;
 
-    const Patch = opr.Toolkit.Patch;
-    const Move = opr.Toolkit.Reconciler.Move;
+      const areCompatible = (current, description) => {
+        if (current.nodeType !== description.type) {
+          return false;
+        }
+        if (current.isElement()) {
+          return current.name === description.element;
+        }
+        return current.constructor ===
+            VirtualDOM.getComponentClass(description.component);
+      };
 
-    const source = current.map((node, index) => node.key || index);
-    const target = next.map((node, index) => node.key || index);
-
-    const getNode = key => {
-      if (source.includes(key)) {
-        return current[source.indexOf(key)];
+      if (areCompatible(child, description)) {
+        if (child.isElement()) {
+          return this.elementPatches(child, description, parent);
+        }
+        this.componentPatches(child, description);
       } else {
-        return next[target.indexOf(key)];
-      }
-    };
-
-    const moves = opr.Toolkit.Reconciler.calculateMoves(source, target);
-
-    const children = [...current];
-    for (const move of moves) {
-      const node = getNode(move.item);
-      switch (move.name) {
-        case Move.Name.INSERT:
-          patches.push(Patch.insertChildNode(node, move.at, parent));
-          Move.insert(node, move.at).make(children);
-          continue;
-        case Move.Name.MOVE:
-          patches.push(Patch.moveChildNode(node, move.from, move.to, parent));
-          Move.move(node, move.from, move.to).make(children);
-          continue;
-        case Move.Name.REMOVE:
-          patches.push(Patch.removeChildNode(node, move.at, parent));
-          Move.remove(node, move.at).make(children);
-          continue;
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        this.addPatch(Patch.replaceChildNode(child, node, parent));
       }
     }
 
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      reconcileNode(child, next[i], parent, i, patches);
-    }
-  };
+    componentChildPatches(child, description, parent) {
+      const {Diff, Patch, VirtualDOM} = opr.Toolkit;
 
-  const elementPatches = (current, next, patches) => {
-    attributePatches(current.attrs, next.attrs, current, patches);
-    datasetPatches(current.dataset, next.dataset, current, patches);
-    stylePatches(current.style, next.style, current, patches);
-    classNamePatches(current.classNames, next.classNames, current, patches);
-    listenerPatches(current.listeners, next.listeners, current, patches);
-    metadataPatches(current.metadata, next.metadata, current, patches);
-    if (current.text !== null && next.text === null) {
-      patches.push(opr.Toolkit.Patch.removeTextContent(current));
-    }
-    childrenPatches(current.children, next.children, current, patches);
-    if (next.text !== null && current.text !== next.text) {
-      patches.push(opr.Toolkit.Patch.setTextContent(current, next.text));
-    }
-  };
+      const current = parent.description;
+      const next = description;
 
-  const componentPatches = (current, next, patches) => {
-    if (!Diff.deepEqual(current.props, next.props)) {
-      if (current.constructor.prototype.hasOwnProperty('onUpdated') ||
-          current.constructor.prototype.hasOwnProperty('onPropsReceived')) {
-        patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
-      } else {
-        current.props = next.props;
-        current.sandbox.props = next.props;
+      if (!current && !next) {
+        return;
       }
-    }
-    calculatePatches(current.child, next.child, current, patches);
-  };
 
-  const reconcileNode = (current, next, parent, index, patches) => {
-
-    const Patch = opr.Toolkit.Patch;
-
-    if (current === next) {
-      // already inserted
-      return;
-    }
-    if (areCompatible(current, next)) {
-      if (current.isElement()) {
-        elementPatches(current, next, patches);
-      }
-      if (current.isComponent()) {
-        componentPatches(current, next, patches);
-      }
-    } else {
-      patches.push(Patch.removeChildNode(current, index, parent));
-      patches.push(Patch.insertChildNode(next, index, parent));
-    }
-  };
-
-  const calculatePatches =
-      (current, next, parent = null, patches = []) => {
-
-        const Patch = opr.Toolkit.Patch;
-
-        if (!current && !next) {
-          return patches;
+      // insert
+      if (!current && next) {
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        if (node.isElement()) {
+          return this.addPatch(Patch.addElement(node, parent));
         }
-
-        if (!current && next) {
-          if (next.isComponent()) {
-            patches.push(Patch.addComponent(next, parent));
-          } else if (next.isElement()) {
-            patches.push(Patch.addElement(next, parent));
-          }
-          return patches;
-        }
-
-        if (current && !next) {
-          if (current.isComponent()) {
-            patches.push(Patch.removeComponent(current, parent));
-          } else if (current.isElement()) {
-            patches.push(Patch.removeElement(current, parent));
-          }
-          return patches;
-        }
-
-        if (current.isComponent()) {
-          if (next.isComponent()) {
-            if (current.constructor === next.constructor) {
-              componentPatches(current, next, patches);
-            } else {
-              // different components
-              patches.push(Patch.removeComponent(current, parent));
-              patches.push(Patch.addComponent(next, parent));
-            }
-          } else if (next.isElement()) {
-            // replace component with an element
-            patches.push(Patch.removeComponent(current, parent));
-            patches.push(Patch.addElement(next, parent));
-          }
-        } else if (current.isElement()) {
-          if (next.isComponent()) {
-            // replace element with a component
-            patches.push(Patch.removeElement(current, parent));
-            patches.push(Patch.addComponent(next, parent));
-          } else if (next.isElement()) {
-            if (current.name === next.name) {
-              // compatible elements
-              elementPatches(current, next, patches);
-            } else {
-              // different elements
-              patches.push(Patch.removeElement(current, parent));
-              patches.push(Patch.addElement(next, parent));
-            }
-          }
-        }
-        return patches;
+        return this.addPatch(Patch.addComponent(node, parent));
       }
 
-  class Diff {
+      // remove
+      if (current && !next) {
+        if (current.isElement()) {
+          return this.addPatch(Patch.removeElement(child, parent));
+        }
+        return this.addPatch(Patch.removeComponent(child, parent));
+      }
+
+      // update
+      if (current.isCompatible(next)) {
+        if (Diff.deepEqual(current, next)) {
+          return;
+        }
+        if (current.isElement()) {
+          return this.elementPatches(child, description, parent);
+        }
+        return this.componentPatches(child, description);
+      }
+
+      // replace
+      const node =
+          VirtualDOM.createFromDescription(description, parent, this.root);
+      this.addPatch(Patch.replaceChild(child, node, parent));
+    }
+
+    static getType(item) {
+      const type = typeof item;
+      switch (type) {
+        case 'object':
+          if (item === null) {
+            return 'null';
+          } else if (Array.isArray(item)) {
+            return 'array'
+          } else {
+            return 'object'
+          }
+        default:
+          return type;
+      }
+    }
 
     static deepEqual(current, next) {
       if (Object.is(current, next)) {
         return true;
       }
-      const type = getType(current);
-      const nextType = getType(next);
+      const type = this.getType(current);
+      const nextType = this.getType(next);
       if (type !== nextType) {
         return false;
       }
@@ -337,6 +385,9 @@
       } else if (type === 'object') {
         const keys = Object.keys(current);
         const nextKeys = Object.keys(next);
+        if (current.constructor !== next.constructor) {
+          return false;
+        }
         if (keys.length !== nextKeys.length) {
           return false;
         }
@@ -355,10 +406,6 @@
         return true;
       }
       return false;
-    }
-
-    static calculate(tree, nextTree, root) {
-      return calculatePatches(tree, nextTree, root);
     }
   }
 

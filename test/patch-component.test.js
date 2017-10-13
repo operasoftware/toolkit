@@ -11,7 +11,7 @@ describe('Patch component => apply', () => {
 
   const App = class extends opr.Toolkit.Root {
     constructor() {
-      super(container);
+      super({}, container, {});
     }
   };
   const ComponentClass = class extends opr.Toolkit.Component {
@@ -28,6 +28,9 @@ describe('Patch component => apply', () => {
   beforeEach(() => {
     container = document.createElement('app');
     sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      if (typeof symbol === 'string') {
+        symbol = Symbol.for(symbol);
+      }
       switch (symbol) {
         case Component:
           return ComponentClass;
@@ -43,22 +46,12 @@ describe('Patch component => apply', () => {
     VirtualDOM.getComponentClass.restore();
   });
 
-  const createRoot = () => {
-    const root = new App();
-    root.renderer = {
-      container,
-    };
-    return root;
-  };
-
   const createApp = template => {
-    const app = createRoot();
-    app.renderer = {
-      container,
-    };
+    const app = new App();
+    Patch.initRootComponent(app).apply();
     let node = null;
     if (template) {
-      node = VirtualDOM.createFromTemplate(template);
+      node = utils.createFromTemplate(template);
       if (node.isElement()) {
         Patch.addElement(node, app).apply();
       }
@@ -72,28 +65,31 @@ describe('Patch component => apply', () => {
   it('creates root component', () => {
 
     // given
-    const component = createRoot();
+    const component = new App();
 
     // when
-    Patch.createRootComponent(component).apply();
+    Patch.initRootComponent(component).apply();
 
     // then
-    assert.equal(component.props, null);
+    assert.deepEqual(component.props, {});
+    assert.equal(component.ref.nodeType, Node.COMMENT_NODE);
   });
 
   it('updates component', () => {
 
     // given
-    const component = new ComponentClass();
     const props = {
       foo: 'bar',
     };
+    const component = new ComponentClass();
+    component.props = props;
 
     // when
-    Patch.updateComponent(component, props).apply();
+    const patch = Patch.updateComponent(component, props);
+    patch.apply();
 
     // then
-    assert.equal(component.props, props);
+    assert.deepEqual(patch.prevProps, props);
   });
 
   describe('add component', () => {
@@ -101,31 +97,27 @@ describe('Patch component => apply', () => {
     it('adds empty component to a root', () => {
 
       // given
-      const app = createRoot();
-      app.renderer = {
-        container,
-      };
+      const [app] = createApp();
 
-      const component = VirtualDOM.createFromTemplate([Component]);
+      const component = utils.createFromTemplate([Component]);
 
       // when
       Patch.addComponent(component, app).apply();
 
       // then
-      assert.equal(app.parentElement.ref, container);
+      assert.equal(app.container, container);
       assert.equal(app.child, component);
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
-      assert.equal(component.placeholder.text, 'ComponentClass');
+      assert(component.placeholder.text.includes('ComponentClass'));
       assert.equal(component.placeholder, component.comment);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert.equal(comment.textContent, 'ComponentClass');
-      assert.equal(comment.parentNode, container);
+      assert(comment.textContent.includes('ComponentClass'));
 
       assert(container.hasChildNodes());
       assert.equal(container.firstChild, comment);
@@ -136,13 +128,13 @@ describe('Patch component => apply', () => {
       // given
       const [app, subcomponent] = createApp([Subcomponent]);
       Patch.removeComponent(subcomponent, app).apply();
-      const component = VirtualDOM.createFromTemplate([Component]);
+      const component = utils.createFromTemplate([Component]);
 
       // then
       assert(app.comment);
       assert(app.comment.isComment());
       assert.equal(app.placeholder, app.comment);
-      assert.equal(app.placeholder.text, 'App');
+      assert(app.placeholder.text.includes('App'));
 
       assert.equal(container.firstChild, app.comment.ref);
 
@@ -150,19 +142,18 @@ describe('Patch component => apply', () => {
       Patch.addComponent(component, app).apply();
 
       // then
-      assert.equal(app.parentElement.ref, container);
+      assert.equal(app.container, container);
       assert.equal(app.child, component);
-
       assert(component.placeholder);
       assert(component.placeholder.isComment());
-      assert.equal(component.placeholder.text, 'ComponentClass');
+      assert(component.placeholder.text.includes('ComponentClass'));
       assert.equal(component.placeholder, component.comment);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert.equal(comment.textContent, 'ComponentClass');
+      assert(comment.textContent.includes('ComponentClass'));
       assert.equal(comment.parentNode, container);
 
       assert(container.hasChildNodes());
@@ -198,9 +189,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
-      assert.equal(placeholder.textContent, 'ComponentClass');
+      assert(placeholder.textContent.includes('ComponentClass'));
 
-      const subcomponent = VirtualDOM.createFromTemplate([Subcomponent]);
+      const subcomponent = utils.createFromTemplate([Subcomponent]);
 
       // when
       Patch.addComponent(subcomponent, component).apply();
@@ -215,14 +206,14 @@ describe('Patch component => apply', () => {
       assert.equal(component.placeholder, subcomponent.placeholder);
       assert.equal(component.placeholder, subcomponent.comment);
 
-      assert.equal(component.placeholder.text, 'SubcomponentClass');
+      assert(component.placeholder.text.includes('SubcomponentClass'));
       assert.equal(component.comment, null);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert.equal(comment.textContent, 'SubcomponentClass');
+      assert(comment.textContent.includes('SubcomponentClass'));
       assert.equal(comment.parentNode, divElement.ref);
 
       assert.equal(divElement.ref.childNodes[1], comment);
@@ -257,9 +248,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = parentComponent.placeholder.ref;
       assert(placeholder);
-      assert.equal(placeholder.textContent, 'SubcomponentClass');
+      assert(placeholder.textContent.includes('SubcomponentClass'));
 
-      const component = VirtualDOM.createFromTemplate([Component]);
+      const component = utils.createFromTemplate([Component]);
 
       // when
       Patch.addComponent(component, parentComponent).apply();
@@ -274,14 +265,14 @@ describe('Patch component => apply', () => {
       assert.equal(parentComponent.placeholder, component.placeholder);
       assert.equal(parentComponent.placeholder, component.comment);
 
-      assert.equal(parentComponent.placeholder.text, 'ComponentClass');
+      assert(parentComponent.placeholder.text.includes('ComponentClass'));
       assert.equal(parentComponent.comment, null);
 
       const comment = parentComponent.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert.equal(comment.textContent, 'ComponentClass');
+      assert(comment.textContent.includes('ComponentClass'));
       assert.equal(comment.parentNode, divElement.ref);
 
       assert.equal(divElement.ref.childNodes[1], comment);
@@ -290,8 +281,8 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a root', () => {
 
       // given
-      const app = createRoot();
-      const component = VirtualDOM.createFromTemplate([
+      const [app] = createApp();
+      const component = utils.createFromTemplate([
         Component,
         [
           'span',
@@ -302,9 +293,8 @@ describe('Patch component => apply', () => {
       Patch.addComponent(component, app).apply();
 
       // then
-      assert.equal(app.parentElement.ref, container);
+      assert.equal(app.container, container);
       assert.equal(app.child, component);
-
       assert(component.child);
       assert(component.child.isElement());
       assert.equal(component.child.name, 'span');
@@ -342,9 +332,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
-      assert.equal(placeholder.textContent, 'ComponentClass');
+      assert(placeholder.textContent.includes('ComponentClass'));
 
-      const subcomponent = VirtualDOM.createFromTemplate([
+      const subcomponent = utils.createFromTemplate([
         Subcomponent,
         [
           'a',
@@ -398,9 +388,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = parentComponent.placeholder.ref;
       assert(placeholder);
-      assert.equal(placeholder.textContent, 'SubcomponentClass');
+      assert(placeholder.textContent.includes('SubcomponentClass'));
 
-      const component = VirtualDOM.createFromTemplate([
+      const component = utils.createFromTemplate([
         Component,
         [
           'p',
@@ -431,8 +421,8 @@ describe('Patch component => apply', () => {
     it('adds element to the root ', () => {
 
       // given
-      const app = createRoot();
-      const element = VirtualDOM.createFromTemplate([
+      const [app] = createApp();
+      const element = utils.createFromTemplate([
         'div',
         [
           'span',
@@ -443,9 +433,8 @@ describe('Patch component => apply', () => {
       Patch.addElement(element, app).apply();
 
       // then
-      assert(app.parentElement);
-      assert.equal(app.parentElement.ref, container);
-      assert.equal(element.parentElement.ref, container);
+      assert.equal(app.container, container);
+      assert.equal(element.container, container);
 
       assert.equal(app.child, element);
       assert.equal(app.childElement, element);
@@ -461,14 +450,12 @@ describe('Patch component => apply', () => {
       assert(component.placeholder);
       assert(component.placeholder.isComment());
 
-      assert(component.parentElement);
-
       assert.equal(component.placeholder.ref.parentNode, container);
 
       assert(component.placeholder.ref);
-      assert.equal(component.placeholder.ref.textContent, 'ComponentClass');
+      assert(component.placeholder.ref.textContent.includes('ComponentClass'));
 
-      const element = VirtualDOM.createFromTemplate([
+      const element = utils.createFromTemplate([
         'div',
         [
           'span',
@@ -479,8 +466,6 @@ describe('Patch component => apply', () => {
       Patch.addElement(element, component).apply();
 
       // then
-      assert.equal(element.parentElement.ref, container);
-
       assert.equal(app.child, component);
       assert.equal(app.childElement, element);
       assert.equal(component.child, element);
@@ -497,8 +482,6 @@ describe('Patch component => apply', () => {
       assert(component.placeholder);
       assert(component.placeholder.isComment());
 
-      assert(component.parentElement);
-
       assert.equal(component.placeholder.ref.parentNode, container);
 
       const subcomponent = component.child;
@@ -506,9 +489,9 @@ describe('Patch component => apply', () => {
       assert(subcomponent.comment);
 
       assert(component.placeholder.ref);
-      assert.equal(component.placeholder.ref.textContent, 'SubcomponentClass');
+      assert(component.placeholder.ref.textContent.includes('SubcomponentClass'));
 
-      const element = VirtualDOM.createFromTemplate([
+      const element = utils.createFromTemplate([
         'div',
         [
           'span',
@@ -519,7 +502,7 @@ describe('Patch component => apply', () => {
       Patch.addElement(element, subcomponent).apply();
 
       // then
-      assert.equal(element.parentElement.ref, container);
+      assert.equal(element.container, container);
 
       assert.equal(app.child, component);
       assert.equal(app.childElement, element);
@@ -541,7 +524,8 @@ describe('Patch component => apply', () => {
       ]);
 
       // then
-      assert.equal(element.parentElement.ref, container);
+      assert.equal(element.container, container);
+
       const domElement = element.ref;
       assert.equal(domElement.parentElement, container);
       assert.equal(container.firstChild, domElement);
@@ -552,7 +536,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'App');
+      assert(app.placeholder.text.includes('App'));
 
       assert.equal(app.child, null);
 
@@ -574,7 +558,7 @@ describe('Patch component => apply', () => {
       const element = component.child;
 
       // then
-      assert.equal(element.parentElement.ref, container);
+      assert.equal(element.container, container);
       const domElement = element.ref;
       assert.equal(domElement.parentElement, container);
       assert.equal(container.firstChild, domElement);
@@ -585,7 +569,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'ComponentClass');
+      assert(app.placeholder.text.includes('ComponentClass'));
 
       assert.equal(component.child, null);
 
@@ -611,7 +595,7 @@ describe('Patch component => apply', () => {
       const element = subcomponent.child;
 
       // then
-      assert.equal(element.parentElement.ref, container);
+      assert.equal(element.container, container);
       const domElement = element.ref;
       assert.equal(domElement.parentElement, container);
       assert.equal(container.firstChild, domElement);
@@ -622,7 +606,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'SubcomponentClass');
+      assert(app.placeholder.text.includes('SubcomponentClass'));
 
       assert.equal(subcomponent.child, null);
 
@@ -641,9 +625,9 @@ describe('Patch component => apply', () => {
       const [app, component] = createApp([Component]);
 
       // then
-      assert.equal(component.parentElement.ref, container);
+      assert.equal(component.container, container);
       assert.equal(container.firstChild, app.placeholder.ref);
-      assert.equal(app.placeholder.text, 'ComponentClass');
+      assert(app.placeholder.text.includes('ComponentClass'));
 
       // when
       Patch.removeComponent(component, app).apply();
@@ -651,7 +635,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'App');
+      assert(app.placeholder.text.includes('App'));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
@@ -671,7 +655,7 @@ describe('Patch component => apply', () => {
       const element = component.child;
 
       // then
-      assert.equal(component.parentElement.ref, container);
+      assert.equal(component.container, container);
       assert.equal(container.firstChild, element.ref);
 
       // when
@@ -680,7 +664,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'App');
+      assert(app.placeholder.text.includes('App'));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
@@ -695,9 +679,9 @@ describe('Patch component => apply', () => {
       const subcomponent = component.child;
 
       // then
-      assert.equal(component.parentElement.ref, container);
+      assert.equal(component.container, container);
       assert.equal(container.firstChild, app.placeholder.ref);
-      assert.equal(app.placeholder.text, 'SubcomponentClass');
+      assert(app.placeholder.text.includes('SubcomponentClass'));
 
       // when
       Patch.removeComponent(subcomponent, component).apply();
@@ -705,7 +689,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'ComponentClass');
+      assert(app.placeholder.text.includes('ComponentClass'));
 
       assert.equal(component.child, null);
       assert.equal(subcomponent.parentNode, null);
@@ -729,7 +713,7 @@ describe('Patch component => apply', () => {
       const element = subcomponent.child;
 
       // then
-      assert.equal(component.parentElement.ref, container);
+      assert.equal(component.container, container);
       assert.equal(container.firstChild, element.ref);
 
       // when
@@ -738,7 +722,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert.equal(app.placeholder.text, 'ComponentClass');
+      assert(app.placeholder.text.includes('ComponentClass'));
 
       assert.equal(component.child, null);
       assert.equal(subcomponent.parentNode, null);

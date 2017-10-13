@@ -4,16 +4,10 @@ describe('Patch element => apply', () => {
   const Document = opr.Toolkit.Document;
   const VirtualDOM = opr.Toolkit.VirtualDOM;
 
-  const createElement = template => {
-    const element = VirtualDOM.createFromTemplate(template);
-    Document.attachElementTree(element);
-    return element;
-  };
-
   it('adds attribute', () => {
 
     // given
-    const element = createElement(['div']);
+    const element = utils.createFromTemplate(['div']);
 
     // when
     Patch.addAttribute('name', 'value', element).apply();
@@ -35,7 +29,7 @@ describe('Patch element => apply', () => {
   it('replaces attribute', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div', {
         name: 'name',
         noValidate: false,
@@ -72,7 +66,7 @@ describe('Patch element => apply', () => {
   it('removes attribute', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div', {
         name: 'name',
         noValidate: false,
@@ -103,7 +97,7 @@ describe('Patch element => apply', () => {
   it('adds data attributes', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
     ]);
 
@@ -130,7 +124,7 @@ describe('Patch element => apply', () => {
   it('replaces data attributes', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         dataset: {
@@ -176,7 +170,7 @@ describe('Patch element => apply', () => {
   it('removes data attribute', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         dataset: {
@@ -209,7 +203,7 @@ describe('Patch element => apply', () => {
   it('adds style property', () => {
 
     // given
-    const element = createElement(['div']);
+    const element = utils.createFromTemplate(['div']);
 
     // when
     Patch.addStyleProperty('color', 'black', element).apply();
@@ -222,7 +216,7 @@ describe('Patch element => apply', () => {
   it('replaces style property', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div', {
         style: {
           textDecoration: 'underline',
@@ -244,7 +238,7 @@ describe('Patch element => apply', () => {
   it('removes style property', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         style: {
@@ -267,7 +261,7 @@ describe('Patch element => apply', () => {
   it('adds class name', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         class: {},
@@ -288,7 +282,7 @@ describe('Patch element => apply', () => {
   it('removes class name', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         class: 'test',
@@ -309,14 +303,14 @@ describe('Patch element => apply', () => {
   it('adds listener', () => {
 
     // given
-    const element = createElement(['div']);
+    const element = utils.createFromTemplate(['div']);
     const onClick = () => {};
 
     // when
-    Patch.addListener('click', onClick, element).apply();
+    Patch.addListener('onClick', onClick, element).apply();
 
     // then
-    assert.equal(element.listeners.click, onClick);
+    assert.equal(element.listeners.onClick, onClick);
     !(global.window) &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
   });
@@ -326,7 +320,7 @@ describe('Patch element => apply', () => {
     // given
     const doSomething = () => {};
     const doSomethingElse = () => {};
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       {
         onClick: doSomething,
@@ -334,16 +328,16 @@ describe('Patch element => apply', () => {
     ]);
 
     // then
-    assert.equal(element.listeners.click, doSomething);
+    assert.equal(element.listeners.onClick, doSomething);
     !(global.window) &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
 
     // when
-    Patch.replaceListener('click', doSomething, doSomethingElse, element)
+    Patch.replaceListener('onClick', doSomething, doSomethingElse, element)
         .apply();
 
     // then
-    assert.equal(element.listeners.click, doSomethingElse);
+    assert.equal(element.listeners.onClick, doSomethingElse);
     !(global.window) &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
   });
@@ -352,15 +346,15 @@ describe('Patch element => apply', () => {
 
     // given
     const onClick = () => {};
-    const element = createElement(['div', {onClick}]);
+    const element = utils.createFromTemplate(['div', {onClick}]);
 
     // then
-    assert.equal(element.listeners.click, onClick);
+    assert.equal(element.listeners.onClick, onClick);
     !(global.window) &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
 
     // when
-    Patch.removeListener('click', onClick, element).apply();
+    Patch.removeListener('onClick', onClick, element).apply();
 
     // then
     assert.equal(element.listeners.click, undefined);
@@ -370,7 +364,7 @@ describe('Patch element => apply', () => {
   it('adds metadata', () => {
 
     // given
-    const element = createElement(['div']);
+    const element = utils.createFromTemplate(['div']);
 
     assert.equal(element.metadata.customAttribute, undefined);
     assert.equal(element.ref.customAttribute, undefined);
@@ -387,7 +381,7 @@ describe('Patch element => apply', () => {
 
     // given
     const element =
-        createElement(['div', {metadata: {customAttribute: 'customValue'}}]);
+        utils.createFromTemplate(['div', {metadata: {customAttribute: 'customValue'}}]);
 
     assert.equal(element.metadata.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
@@ -404,7 +398,7 @@ describe('Patch element => apply', () => {
 
     // given
     const element =
-        createElement(['div', {metadata: {customAttribute: 'customValue'}}]);
+        utils.createFromTemplate(['div', {metadata: {customAttribute: 'customValue'}}]);
 
     assert.equal(element.metadata.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
@@ -420,7 +414,7 @@ describe('Patch element => apply', () => {
   it('inserts child node', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       [
         'span',
@@ -452,7 +446,7 @@ describe('Patch element => apply', () => {
 
   describe('move child node', () => {
 
-    const Component = Symbol('component');
+    const Component = Symbol.for('Component');
 
     const ComponentClass = class extends opr.Toolkit.Component {
       render() {
@@ -461,12 +455,13 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', def => {
-        switch (def) {
+      sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+        switch (symbol) {
+          case 'Component':
           case Component:
             return ComponentClass;
           default:
-            throw new Error('Unknown definition: ' + def);
+            throw new Error('Unknown definition: ' + symbol);
         }
       });
     });
@@ -478,7 +473,7 @@ describe('Patch element => apply', () => {
     it('moves element', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           'p',
@@ -516,7 +511,7 @@ describe('Patch element => apply', () => {
     it('moves component with child element', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           'p',
@@ -555,7 +550,7 @@ describe('Patch element => apply', () => {
     it('moves empty component', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           Component,
@@ -581,13 +576,13 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes[0].tagName, 'SPAN');
 
       assert.equal(element.children[1].constructor, ComponentClass);
-      assert.equal(element.ref.childNodes[1].textContent, 'ComponentClass');
+      assert(element.ref.childNodes[1].textContent.includes('ComponentClass'));
     });
   });
 
   describe('remove child node', () => {
 
-    const Component = Symbol('component');
+    const Component = Symbol('Component');
 
     const ComponentClass = class extends opr.Toolkit.Component {
       render() {
@@ -596,12 +591,13 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', def => {
-        switch (def) {
+      sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+        switch (symbol) {
+          case 'Component':
           case Component:
             return ComponentClass;
           default:
-            throw new Error('Unknown definition: ' + def);
+            throw new Error('Unknown definition: ' + symbol);
         }
       });
     });
@@ -613,7 +609,7 @@ describe('Patch element => apply', () => {
     it('removes element', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           'p',
@@ -648,7 +644,7 @@ describe('Patch element => apply', () => {
     it('removes component with child element', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           'p',
@@ -680,7 +676,7 @@ describe('Patch element => apply', () => {
     it('removes empty component', () => {
 
       // given
-      const element = createElement([
+      const element = utils.createFromTemplate([
         'div',
         [
           'p',
@@ -696,7 +692,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 2);
 
       assert.equal(element.children[1].constructor, ComponentClass);
-      assert.equal(element.ref.childNodes[1].textContent, 'ComponentClass');
+      assert(element.ref.childNodes[1].textContent.includes('ComponentClass'));
 
       // when
       Patch.removeChildNode(component, 1, element).apply();
@@ -710,7 +706,7 @@ describe('Patch element => apply', () => {
   it('sets text content', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       'one',
     ]);
@@ -729,7 +725,7 @@ describe('Patch element => apply', () => {
   it('removes text content', () => {
 
     // given
-    const element = createElement([
+    const element = utils.createFromTemplate([
       'div',
       'one',
     ]);

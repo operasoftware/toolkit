@@ -6,7 +6,6 @@
 
   Object.assign(Toolkit.prototype, consts, nodes, {
     Diff: loader.get('core/diff'),
-    Document: loader.get('core/document'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
     Reconciler: loader.get('core/reconciler'),

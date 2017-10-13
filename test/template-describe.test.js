@@ -1,45 +1,40 @@
 describe('Template => describe', () => {
 
-  const Template = opr.Toolkit.Template;;
+  const Template = opr.Toolkit.Template;
+  ;
 
   suppressConsoleErrors();
 
   it('detects component', () => {
 
     // given
-    const component = Symbol.for('component');
-    const template = [
-      component
-    ];
+    const component = Symbol.for('Component');
+    const template = [component];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'Component');
   });
 
   it('detects component with properties', () => {
 
     // given
-    const component = Symbol.for('component');
+    const component = Symbol.for('Component');
     const props = {
-      prop: 'prop'
+      prop: 'prop',
     };
-    const template = [
-      component, props
-    ];
+    const template = [component, props];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component,
-      props
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'Component');
+    assert.equal(description.props, props);
   });
 
   it('detects component with child nodes', () => {
@@ -50,18 +45,17 @@ describe('Template => describe', () => {
       ['div'],
       ['span'],
     ];
-    const template = [
-      component, ...children
-    ];
+    const template = [component, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component,
-      children,
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'component');
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects component with filtered child nodes', () => {
@@ -74,21 +68,17 @@ describe('Template => describe', () => {
       ['div'],
       ['span'],
     ];
-    const template = [
-      component, ...children
-    ];
+    const template = [component, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component,
-      children: [
-        ['div'],
-        ['span'],
-      ]
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'component');
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects component with properties and child nodes', () => {
@@ -96,34 +86,31 @@ describe('Template => describe', () => {
     // given
     const component = Symbol.for('component');
     const props = {
-      prop: 'prop'
+      prop: 'prop',
     };
     const children = [
       ['div'],
       ['span'],
     ];
-    const template = [
-      component, props, ...children
-    ];
+    const template = [component, props, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component,
-      props,
-      children,
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'component');
+    assert.equal(description.props, props);
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects component with properties and filtered child nodes', () => {
 
     // given
     const component = Symbol.for('component');
-    const props = {
-      prop: 'prop'
-    };
+    const props = {prop: 'prop'};
     const children = [
       false,
       ['div'],
@@ -131,57 +118,52 @@ describe('Template => describe', () => {
       ['span'],
       null,
     ];
-    const template = [
-      component, props, ...children
-    ];
+    const template = [component, props, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      component,
-      props,
-      children: [
-        ['div'],
-        ['span'],
-      ]
-    });
+    assert.equal(description.type, 'component');
+    assert.equal(description.component, 'component');
+    assert.equal(description.props, props);
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects empty element', () => {
 
     // given
-    const template = [
-      'div'
-    ];
+    const template = ['div'];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name: 'div'
-    });
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
   });
 
   it('detects empty element with properties', () => {
 
     // given
     const props = {
-      prop: 'prop'
+      id: 'some-id',
     };
     const template = [
-      'div', props
+      'div',
+      props,
     ];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name: 'div',
-      props
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.deepEqual(description.props, {
+      attrs: props,
     });
   });
 
@@ -190,18 +172,15 @@ describe('Template => describe', () => {
     // given
     const name = 'div';
     const text = 'text';
-    const template = [
-      name, text
-    ];
+    const template = [name, text];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      text
-    });
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.equal(description.text, 'text');
   });
 
   it('detects text element with properties', () => {
@@ -209,22 +188,19 @@ describe('Template => describe', () => {
     // given
     const name = 'div';
     const text = 'text';
-    const props = {
-      prop: 'prop'
-    };
-    const template = [
-      name, props, text
-    ];
+    const props = {name: 'name'};
+    const template = [name, props, text];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      props,
-      text
-    });
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.deepEqual(description.props, {
+      attrs: props,
+    })
+    assert.equal(description.text, 'text');
   });
 
   it('detects element with child nodes', () => {
@@ -235,18 +211,17 @@ describe('Template => describe', () => {
       ['div'],
       ['span'],
     ];
-    const template = [
-      name, ...children
-    ];
+    const template = [name, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      children
-    });
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects element with filtered child nodes', () => {
@@ -259,47 +234,51 @@ describe('Template => describe', () => {
       ['span'],
       null,
     ];
-    const template = [
-      name, ...children
-    ];
+    const template = [name, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      children: [
-        ['div'],
-        ['span'],
-      ]
-    });
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects element with properties and child nodes', () => {
 
     // given
     const name = 'div';
+    const onClick = () => {};
     const props = {
-      prop: 'prop'
+      tabIndex: 10,
+      onClick,
     };
     const children = [
       ['div'],
       ['span'],
     ];
-    const template = [
-      name, props, ...children
-    ];
+    const template = [name, props, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      props,
-      children
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.deepEqual(description.props, {
+      attrs: {
+        tabIndex: '10',  // TODO: should be a number (?)
+      },
+      listeners: {
+        onClick,
+      },
     });
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('detects element with properties and filtered child nodes', () => {
@@ -307,7 +286,7 @@ describe('Template => describe', () => {
     // given
     const name = 'div';
     const props = {
-      prop: 'prop'
+      id: 'id',
     };
     const children = [
       false,
@@ -316,22 +295,22 @@ describe('Template => describe', () => {
       ['span'],
       null,
     ];
-    const template = [
-      name, props, ...children
-    ];
+    const template = [name, props, ...children];
 
     // when
     const description = Template.describe(template);
 
     // then
-    assert.deepEqual(description, {
-      name,
-      props,
-      children: [
-        ['div'],
-        ['span'],
-      ]
+    assert.equal(description.type, 'element');
+    assert.equal(description.element, 'div');
+    assert.deepEqual(description.props, {
+      attrs: {
+        id: 'id',
+      },
     });
+    assert.equal(description.children.length, 2);
+    assert.equal(description.children[0].element, 'div');
+    assert.equal(description.children[1].element, 'span');
   });
 
   it('returns null description for null template', () => {

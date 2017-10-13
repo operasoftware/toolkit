@@ -1,14 +1,27 @@
 {
   const INIT = Symbol('init');
+  const SET_STATE = Symbol('set-state');
 
   const coreReducer = (state, command) => {
     if (command.type === INIT) {
       return command.state;
     }
+    if (command.type === SET_STATE) {
+      return command.state;
+    }
     return state;
   };
 
-  coreReducer.commands = {init: state => ({type: INIT, state})};
+  coreReducer.commands = {
+    init: state => ({
+      type: INIT,
+      state,
+    }),
+    setState: state => ({
+      type: SET_STATE,
+      state,
+    }),
+  };
 
   const combineReducers = (...reducers) => {
     const commands = {};
@@ -19,7 +32,15 @@
       return state;
     };
     [coreReducer, ...reducers].forEach(reducer => {
-      // TODO: show warning or error when overriding
+      const defined = Object.keys(commands);
+      const incoming = Object.keys(reducer.commands);
+
+      const overriden = incoming.find(key => defined.includes(key));
+      if (overriden) {
+        console.error('Reducer:', reducer, 'conflicts an with exiting one!');
+        throw new Error(`The "${overriden}" command is already defined!`)
+      }
+
       Object.assign(commands, reducer.commands);
     });
     reducer.commands = commands;
@@ -36,7 +57,7 @@
     return dispatcher;
   };
 
-  const throttle = (fn, wait = 200) => {
+  const throttle = (fn, wait = 200, delayFirstEvent = false) => {
 
     let lastTimestamp = 0;
     let taskId = null;
@@ -48,15 +69,22 @@
       if (!taskId) {
         const timestamp = Date.now();
         const elapsed = timestamp - lastTimestamp;
+        const scheduleTask = delay => {
+          taskId = setTimeout(() => {
+            taskId = null;
+            lastTimestamp = Date.now();
+            return fn.call(context, ...params);
+          }, delay);
+        };
         if (elapsed >= wait) {
           lastTimestamp = timestamp;
-          return fn.call(this, ...args);
+          if (!delayFirstEvent) {
+            return fn.call(this, ...args);
+          }
+          scheduleTask(wait);
+        } else {
+          scheduleTask(wait - elapsed);
         }
-        taskId = setTimeout(() => {
-          taskId = null;
-          lastTimestamp = Date.now();
-          return fn.call(context, ...params);
-        }, wait - elapsed);
       }
       context = this;
       params = args;
@@ -85,6 +113,7 @@
       case 'contextMenu':
       case 'crossOrigin':
       case 'dateTime':
+      case 'encType':
       case 'frameBorder':
       case 'hrefLang':
       case 'inputMode':
@@ -104,13 +133,6 @@
       case 'useMap':
       case 'tabIndex':
         return name.toLowerCase();
-      case 'formAction':
-      case 'formEncType':
-      case 'formMethod':
-      case 'formNoValidate':
-      case 'formTarget':
-      case 'htmlFor':
-        return name.slice(4).toLowerCase();
       default:
         return lowerDash(name);
     }

@@ -310,11 +310,6 @@
     'encType',
     'for',
     'form',
-    'formAction',
-    'formEncType',
-    'formMethod',
-    'formNoValidate',
-    'formTarget',
     'frameBorder',
     'headers',
     'height',
@@ -440,8 +435,6 @@
 }
 
 {
-  const SANDBOX_CONTEXT = Symbol('sandbox-context');
-
   const ID = Symbol('id');
 
   class VirtualNode {
@@ -449,7 +442,6 @@
     constructor(key) {
       this.key = key;
       this[ID] = opr.Toolkit.utils.createUUID();
-      this.parentNode = null;
     }
 
     get id() {
@@ -464,9 +456,9 @@
       return null;
     }
 
-    get rootElement() {
-      if (this.parentElement) {
-        return this.parentElement.rootElement;
+    get container() {
+      if (this.parentNode) {
+        return this.parentNode.container;
       }
       return this;
     }
@@ -494,25 +486,32 @@
 
   class Component extends VirtualNode {
 
+    static get NodeType() {
+      return 'component';
+    }
+
     constructor(props = {}, children = []) {
       super(props.key);
       this.props = props;
       this.children = children;
+      this.sandbox = opr.Toolkit.Sandbox.create(this);
       if (this.key === undefined && this.getKey) {
         this.key = this.getKey.call(this.sandbox);
       }
       this.child = null;
-      this.comment = new Comment(this.constructor.name, this);
+      this.comment = this.createComment();
       this.cleanUpTasks = [];
+      this.attachDOM();
     }
 
-    get sandbox() {
-      let sandbox = this[SANDBOX_CONTEXT];
-      if (!sandbox) {
-        sandbox = opr.Toolkit.Sandbox.create(this);
-        this[SANDBOX_CONTEXT] = sandbox;
-      }
-      return sandbox;
+    createComment() {
+      const comment = new Comment(` ${this.constructor.name} `);
+      comment.parentNode = this;
+      return comment;
+    }
+
+    hasOwnMethod(method) {
+      return this.constructor.prototype.hasOwnProperty(method);
     }
 
     connectTo(service, listeners) {
@@ -530,7 +529,7 @@
     appendChild(child) {
       this.child = child;
       this.child.parentNode = this;
-      this.comment.parentNode = null;  // TODO: unit test
+      this.comment.parentNode = null;
       this.comment = null;
     }
 
@@ -538,7 +537,14 @@
       console.assert(this.child === child);
       this.child.parentNode = null;
       this.child = null;
-      this.comment = new Comment(this.constructor.name, this);
+      this.comment = this.createComment();
+    }
+
+    replaceChild(child, node) {
+      console.assert(this.child === child);
+      this.child.parentNode = null;
+      this.child = node;
+      this.child.parentNode = this;
     }
 
     get childElement() {
@@ -568,33 +574,20 @@
     }
 
     broadcast(name, data) {
-      this.rootElement.ref.dispatchEvent(new CustomEvent(name, {
+      this.container.dispatchEvent(new CustomEvent(name, {
         detail: data,
         bubbles: true,
         composed: true,
       }))
     }
 
-    onCreated() {
-    }
-
-    onAttached() {
-    }
-
-    onPropsReceived(props) {
-    }
-
-    onUpdated() {
-    }
-
-    onDestroyed() {
-    }
-
-    onDetached() {
+    stopEvent(event) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
     }
 
     get nodeType() {
-      return 'component';
+      return Component.NodeType;
     }
 
     get ref() {
@@ -603,6 +596,22 @@
 
     isCompatible(node) {
       return super.isCompatible(node) && this.constructor === node.constructor;
+    }
+
+    attachDOM() {
+      if (this.child) {
+        this.child.attachDOM();
+      } else {
+        this.comment.attachDOM();
+      }
+    }
+
+    detachDOM() {
+      if (this.child) {
+        this.child.detachDOM();
+      } else {
+        this.comment.detachDOM();
+      }
     }
   }
 
@@ -644,20 +653,37 @@
     }
   }
 
+  const CONTAINER = Symbol('container');
+
   class Root extends Component {
 
-    constructor(props, children) {
-      super(props, children);
+    static get NodeType() {
+      return 'root';
+    }
+
+    constructor(props, container, settings) {
+      super(props, /*= children */ null, /*= parentNode */ null);
+      const {utils, Renderer} = opr.Toolkit;
       this.state = null;
-      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
+      this.reducer = utils.combineReducers(...this.getReducers());
+      this.container = container;
+      this.renderer = new Renderer(this, settings);
       this.dispatch = command => {
         const prevState = this.state;
-        this.state = this.reducer(prevState, command);
-        this.renderer.updateDOM(command, prevState, this.state);
+        const nextState = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, nextState);
       };
       this.commands = opr.Toolkit.utils.createCommandsDispatcher(
           this.reducer, this.dispatch);
       this.plugins = new Map();
+    }
+
+    set container(container) {
+      this[CONTAINER] = container;
+    }
+
+    get container() {
+      return this[CONTAINER];
     }
 
     static get displayName() {
@@ -685,115 +711,227 @@
       return props;
     }
 
-    get parentElement() {
-      const containerElement = new VirtualElement('root');
-      containerElement.children.push(this);
-      containerElement.ref = this.renderer.container;
-      return containerElement;
-    }
-
     get nodeType() {
-      return 'root';
+      return Root.NodeType;
     }
   }
 
   class VirtualElement extends VirtualNode {
 
-    constructor(name, key) {
+    static get NodeType() {
+      return 'element';
+    }
+
+    constructor(name, props = {}, content = null, key) {
       super(key);
+      opr.Toolkit.assert(name, 'Element name is mandatory');
       this.name = name;
-      this.attrs = {};
-      this.dataset = {};
-      this.style = {};
-      this.classNames = [];
-      this.listeners = {};
-      this.metadata = {};
-      this.children = [];
-      this.text = null;
-      this.ref = null;
+      const {
+        listeners = {},
+        attrs = {},
+        dataset = {},
+        classNames = [],
+        style = {},
+        metadata = {},
+      } = props;
+      this.listeners = listeners;
+      this.attrs = attrs;
+      this.dataset = dataset;
+      this.style = style;
+      this.classNames = classNames;
+      this.metadata = metadata;
+      if (Array.isArray(content)) {
+        this.children = content.map(child => {
+          child.parentNode = this;
+          return child;
+        });
+        this.text = null;
+      } else {
+        this.children = [];
+        this.text = content;
+      }
+      this.attachDOM();
     }
 
     setAttribute(name, value) {
-      this.attrs[name] = String(value);
+      this.attrs[name] = value;
+      this.ref.setAttribute(opr.Toolkit.utils.getAttributeName(name), value);
     }
 
     removeAttribute(name) {
       delete this.attrs[name];
+      this.ref.removeAttribute(opr.Toolkit.utils.getAttributeName(name));
     }
 
     setDataAttribute(name, value) {
       this.dataset[name] = String(value);
+      this.ref.dataset[name] = value;
     }
 
     removeDataAttribute(name) {
       delete this.dataset[name];
+      delete this.ref.dataset[name];
     }
 
     addClassName(className) {
       this.classNames.push(className);
+      this.ref.classList.add(className);
     }
 
     removeClassName(className) {
       this.classNames = this.classNames.filter(item => item !== className);
+      this.ref.classList.remove(className);
     }
 
     setStyleProperty(prop, value) {
       this.style[prop] = String(value);
+      this.ref.style[prop] = String(value);
     }
 
     removeStyleProperty(prop) {
       delete this.style[prop];
+      this.ref.style[prop] = null;
     }
 
     addListener(name, listener) {
       this.listeners[name] = listener;
+      const event = opr.Toolkit.utils.getEventName(name);
+      this.ref.addEventListener(event, listener);
     }
 
     removeListener(name, listener) {
       delete this.listeners[name];
+      const event = opr.Toolkit.utils.getEventName(name);
+      this.ref.removeEventListener(event, listener);
+    }
+
+    setMetadata(key, value) {
+      this.metadata[key] = value;
+      this.ref[key] = value;
+    }
+
+    removeMetadata(key, value) {
+      delete this.metadata[key];
+      delete this.ref[key];
     }
 
     insertChild(child, index = this.children.length) {
+      const nextChild = this.children[index];
       this.children.splice(index, 0, child);
+      this.ref.insertBefore(child.ref, nextChild && nextChild.ref);
       child.parentNode = this;
-    }
-
-    removeChild(child) {
-      const index = this.children.indexOf(child);
-      if (index >= 0) {
-        this.children.splice(index, 1);
-        child.parentNode = null;
-        return true;
-      }
-      return false;
     }
 
     moveChild(child, from, to) {
       console.assert(this.children[from] === child);
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
+      this.ref.removeChild(child.ref);
+      this.ref.insertBefore(child.ref, this.ref.children[to]);
+    }
+
+    replaceChild(child, node) {
+      const index = this.children.indexOf(child);
+      console.assert(index >= 0);
+      this.children.splice(index, 1, node);
+      child.parentNode = null;
+      node.parentNode = this;
+      child.ref.replaceWith(node.ref);
+    }
+
+    removeChild(child) {
+      const index = this.children.indexOf(child);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified element:', child, 'is not a child of:', this);
+      this.children.splice(index, 1);
+      child.parentNode = null;
+      this.ref.removeChild(child.ref);
+    }
+
+    setTextContent(text) {
+      this.text = text;
+      this.ref.textContent = text;
+    }
+
+    removeTextContent() {
+      this.text = null;
+      this.ref.textContent = '';
     }
 
     get nodeType() {
-      return 'element';
+      return VirtualElement.NodeType;
     }
 
     isCompatible(node) {
       return super.isCompatible(node) && this.name === node.name;
     }
+
+    createElement() {
+      const element = document.createElement(this.name);
+      if (this.text) {
+        element.textContent = this.text;
+      }
+      Object.entries(this.listeners).forEach(([name, listener]) => {
+        const event = opr.Toolkit.utils.getEventName(name);
+        element.addEventListener(event, listener);
+      });
+      Object.entries(this.attrs).forEach(([attr, value]) => {
+        const name = opr.Toolkit.utils.getAttributeName(attr);
+        element.setAttribute(name, value);
+      });
+      Object.entries(this.dataset).forEach(([attr, value]) => {
+        element.dataset[attr] = value;
+      });
+      this.classNames.forEach(className => {
+        element.classList.add(className);
+      });
+      Object.entries(this.style).forEach(([prop, value]) => {
+        element.style[prop] = value;
+      });
+      Object.entries(this.metadata).forEach(([prop, value]) => {
+        element[prop] = value;
+      });
+      return element;
+    }
+
+    attachDOM() {
+      this.ref = this.createElement();
+      for (const child of this.children) {
+        child.attachDOM();
+        this.ref.appendChild(child.ref);
+      }
+    }
+
+    detachDOM() {
+      for (const child of this.children) {
+        child.detachDOM();
+      }
+      this.ref = null;
+    }
   }
 
   class Comment extends VirtualNode {
 
-    constructor(text, parentNode) {
-      super();
+    static get NodeType() {
+      return 'comment';
+    }
+
+    constructor(text) {
+      super(null);
       this.text = text;
-      this.parentNode = parentNode;
-      this.ref = null;
+      this.attachDOM();
     }
 
     get nodeType() {
-      return 'comment';
+      return Comment.NodeType;
+    }
+
+    attachDOM() {
+      this.ref = document.createComment(this.text);
+    }
+
+    detachDOM() {
+      this.ref = null;
     }
   }
 
@@ -809,327 +947,375 @@
 }
 
 {
-  const getType = item => {
-    const type = typeof item;
-    switch (type) {
-      case 'object':
-        if (item === null) {
-          return 'null';
-        } else if (Array.isArray(item)) {
-          return 'array'
-        } else {
-          return 'object'
+  class Diff {
+
+    constructor(root) {
+      this.root = root;
+      this.patches = [];
+    }
+
+    addPatch(patch) {
+      return this.patches.push(patch);
+    }
+
+    updateComponent(component, prevProps, description) {
+      if (!Diff.deepEqual(component.description, description)) {
+        if ((component.hasOwnMethod('onPropsReceived') ||
+             component.hasOwnMethod('onUpdated')) &&
+            !Diff.deepEqual(prevProps, component.props)) {
+          this.addPatch(opr.Toolkit.Patch.updateComponent(component));
         }
-      default:
-        return type;
+        this.componentChildPatches(component.child, description, component);
+        component.description = description;
+      }
     }
-  };
 
-  const listenerPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = opr.Toolkit.Patch;
-
-    const listeners = Object.keys(current);
-    const nextListeners = Object.keys(next);
-
-    const added = nextListeners.filter(event => !listeners.includes(event));
-    const removed = listeners.filter(event => !nextListeners.includes(event));
-    const changed = listeners.filter(
-        event => nextListeners.includes(event) &&
-            current[event] !== next[event] &&
-            (current[event].source === undefined &&
-                 next[event].source === undefined ||
-             current[event].source !== next[event].source));
-
-    for (let event of added) {
-      patches.push(Patch.addListener(event, next[event], target));
+    rootPatches(prevState, nextState, initial) {
+      const description = opr.Toolkit.Renderer.render(this.root);
+      if (initial) {
+        this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
+      }
+      this.updateComponent(this.root, prevState, description);
+      return this.patches;
     }
-    for (let event of removed) {
-      patches.push(Patch.removeListener(event, current[event], target));
+
+    /**
+     * Calculates patches for conversion of a component to match the given
+     * description.
+     */
+    componentPatches(component, description) {
+
+      const {
+        props = {},
+        children = [],
+      } = description;
+
+      const ComponentClass =
+          opr.Toolkit.VirtualDOM.getComponentClass(description.component);
+
+      opr.Toolkit.assert(
+          ComponentClass,
+          `Module not found for path: ${String(description.component)}`);
+      opr.Toolkit.assert(component.constructor === ComponentClass);
+
+      const prevProps = component.props;
+
+      component.props =
+          opr.Toolkit.VirtualDOM.normalizeProps(component.constructor, props);
+      component.children = children.map(child => child.toTemplate());
+
+      this.updateComponent(
+          component, prevProps, opr.Toolkit.Renderer.render(component));
     }
-    for (let event of changed) {
-      patches.push(
-          Patch.replaceListener(event, current[event], next[event], target));
+
+    /**
+     * Calculates patches for conversion of an element to match the given
+     * description.
+     */
+    elementPatches(element, {props = {}, children, text}, parent) {
+
+      const {
+        attrs,
+        dataset,
+        style,
+        classNames,
+        listeners,
+        metadata,
+      } = props;
+
+      this.attributePatches(element.attrs, attrs, element);
+      this.datasetPatches(element.dataset, dataset, element);
+      this.stylePatches(element.style, style, element);
+      this.classNamePatches(element.classNames, classNames, element);
+      this.listenerPatches(element.listeners, listeners, element);
+      this.metadataPatches(element.metadata, metadata, element);
+      // TODO: handle text as a child
+      if (element.text !== null && text === null) {
+        this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
+      }
+      this.elementChildrenPatches(element.children, children, element);
+      if (text !== null && element.text !== text) {
+        this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
+      }
     }
-  };
 
-  const metadataPatches = (current = {}, next = {}, target = null, patches) => {
-    const Patch = opr.Toolkit.Patch;
+    listenerPatches(current = {}, next = {}, target = null) {
+      const Patch = opr.Toolkit.Patch;
 
-    const keys = Object.keys(current);
-    const nextKeys = Object.keys(next);
+      const listeners = Object.keys(current);
+      const nextListeners = Object.keys(next);
 
-    const added = nextKeys.filter(key => !keys.includes(key));
-    const removed = keys.filter(key => !nextKeys.includes(key));
-    const changed = keys.filter(
-        key =>
-            nextKeys.includes(key) && !Diff.deepEqual(current[key], next[key]));
+      const added = nextListeners.filter(event => !listeners.includes(event));
+      const removed = listeners.filter(event => !nextListeners.includes(event));
+      const changed = listeners.filter(
+          event => nextListeners.includes(event) &&
+              current[event] !== next[event] &&
+              (current[event].source === undefined &&
+                   next[event].source === undefined ||
+               current[event].source !== next[event].source));
 
-    for (let key of added) {
-      patches.push(Patch.addMetadata(key, next[key], target));
+      for (let event of added) {
+        this.addPatch(Patch.addListener(event, next[event], target));
+      }
+      for (let event of removed) {
+        this.addPatch(Patch.removeListener(event, current[event], target));
+      }
+      for (let event of changed) {
+        this.addPatch(
+            Patch.replaceListener(event, current[event], next[event], target));
+      }
     }
-    for (let key of removed) {
-      patches.push(Patch.removeMetadata(key, target));
+
+    metadataPatches(current = {}, next = {}, target = null) {
+      const Patch = opr.Toolkit.Patch;
+
+      const keys = Object.keys(current);
+      const nextKeys = Object.keys(next);
+
+      const added = nextKeys.filter(key => !keys.includes(key));
+      const removed = keys.filter(key => !nextKeys.includes(key));
+      const changed = keys.filter(
+          key => nextKeys.includes(key) &&
+              !Diff.deepEqual(current[key], next[key]));
+
+      for (let key of added) {
+        this.addPatch(Patch.addMetadata(key, next[key], target));
+      }
+      for (let key of removed) {
+        this.addPatch(Patch.removeMetadata(key, target));
+      }
+      for (let key of changed) {
+        this.addPatch(Patch.replaceMetadata(key, next[key], target));
+      }
     }
-    for (let key of changed) {
-      patches.push(Patch.replaceMetadata(key, next[key], target));
+
+    stylePatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const props = Object.keys(current);
+      const nextProps = Object.keys(next);
+
+      const added = nextProps.filter(prop => !props.includes(prop));
+      const removed = props.filter(prop => !nextProps.includes(prop));
+      const changed = props.filter(
+          prop => nextProps.includes(prop) && current[prop] !== next[prop]);
+
+      for (let prop of added) {
+        this.addPatch(Patch.addStyleProperty(prop, next[prop], target));
+      }
+      for (let prop of removed) {
+        this.addPatch(Patch.removeStyleProperty(prop, target));
+      }
+      for (let prop of changed) {
+        this.addPatch(Patch.replaceStyleProperty(prop, next[prop], target));
+      }
     }
-  };
 
-  const stylePatches = (current = {}, next = {}, target, patches) => {
+    classNamePatches(current = [], next = [], target) {
+      const Patch = opr.Toolkit.Patch;
 
-    const props = Object.keys(current);
-    const nextProps = Object.keys(next);
+      const added = next.filter(attr => !current.includes(attr));
+      const removed = current.filter(attr => !next.includes(attr));
 
-    const added = nextProps.filter(prop => !props.includes(prop));
-    const removed = props.filter(prop => !nextProps.includes(prop));
-    const changed = props.filter(
-        prop => nextProps.includes(prop) && current[prop] !== next[prop]);
-
-    for (let prop of added) {
-      patches.push(
-          opr.Toolkit.Patch.addStyleProperty(prop, next[prop], target));
+      for (let name of added) {
+        this.addPatch(Patch.addClassName(name, target));
+      }
+      for (let name of removed) {
+        this.addPatch(Patch.removeClassName(name, target));
+      }
     }
-    for (let prop of removed) {
-      patches.push(opr.Toolkit.Patch.removeStyleProperty(prop, target));
+
+    datasetPatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const attrs = Object.keys(current);
+      const nextAttrs = Object.keys(next);
+
+      const added = nextAttrs.filter(attr => !attrs.includes(attr));
+      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+      const changed = attrs.filter(
+          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+
+      for (let attr of added) {
+        this.addPatch(Patch.addDataAttribute(attr, next[attr], target));
+      }
+      for (let attr of removed) {
+        this.addPatch(Patch.removeDataAttribute(attr, target));
+      }
+      for (let attr of changed) {
+        this.addPatch(Patch.replaceDataAttribute(attr, next[attr], target));
+      }
     }
-    for (let prop of changed) {
-      patches.push(
-          opr.Toolkit.Patch.replaceStyleProperty(prop, next[prop], target));
+
+    attributePatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const attrs = Object.keys(current);
+      const nextAttrs = Object.keys(next);
+
+      const added = nextAttrs.filter(attr => !attrs.includes(attr));
+      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+      const changed = attrs.filter(
+          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+
+      for (let attr of added) {
+        this.addPatch(Patch.addAttribute(attr, next[attr], target));
+      }
+      for (let attr of removed) {
+        this.addPatch(Patch.removeAttribute(attr, target));
+      }
+      for (let attr of changed) {
+        this.addPatch(Patch.replaceAttribute(attr, next[attr], target));
+      }
     }
-  };
 
-  const classNamePatches = (current = [], next = [], target, patches) => {
+    elementChildrenPatches(current = [], descriptions = [], parent) {
+      const {Patch, Reconciler, VirtualDOM} = opr.Toolkit;
+      const Move = Reconciler.Move;
 
-    const added = next.filter(attr => !current.includes(attr));
-    const removed = current.filter(attr => !next.includes(attr));
+      const created = [];
 
-    for (let name of added) {
-      patches.push(opr.Toolkit.Patch.addClassName(name, target));
-    }
-    for (let name of removed) {
-      patches.push(opr.Toolkit.Patch.removeClassName(name, target));
-    }
-  };
-
-  const datasetPatches = (current = {}, next = {}, target, patches) => {
-
-    const attrs = Object.keys(current);
-    const nextAttrs = Object.keys(next);
-
-    const added = nextAttrs.filter(attr => !attrs.includes(attr));
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-    const changed = attrs.filter(
-        attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
-
-    for (let attr of added) {
-      patches.push(
-          opr.Toolkit.Patch.addDataAttribute(attr, next[attr], target));
-    }
-    for (let attr of removed) {
-      patches.push(opr.Toolkit.Patch.removeDataAttribute(attr, target));
-    }
-    for (let attr of changed) {
-      patches.push(
-          opr.Toolkit.Patch.replaceDataAttribute(attr, next[attr], target));
-    }
-  };
-
-  const attributePatches =
-      (current = {}, next = {}, target = null, patches) => {
-        const attrs = Object.keys(current);
-        const nextAttrs = Object.keys(next);
-
-        const added = nextAttrs.filter(attr => !attrs.includes(attr));
-        const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-        const changed = attrs.filter(
-            attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
-
-        for (let attr of added) {
-          patches.push(
-              opr.Toolkit.Patch.addAttribute(attr, next[attr], target));
-        }
-        for (let attr of removed) {
-          patches.push(opr.Toolkit.Patch.removeAttribute(attr, target));
-        }
-        for (let attr of changed) {
-          patches.push(
-              opr.Toolkit.Patch.replaceAttribute(attr, next[attr], target));
-        }
+      const createNode = description => {
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        created.push(node);
+        return node;
       };
 
-  const areCompatible = (current, next) => {
-    if (current.nodeType !== next.nodeType) {
-      return false;
+      const from = current.map((node, index) => node.key || index);
+      const to =
+          descriptions.map((description, index) => description.key || index);
+
+      const getNode = key => {
+        if (from.includes(key)) {
+          return current[from.indexOf(key)];
+        }
+        const index = to.indexOf(key);
+        return createNode(descriptions[index]);
+      };
+
+      const moves = Reconciler.calculateMoves(from, to);
+
+      const children = [...current];
+      for (const move of moves) {
+        const node = getNode(move.item);
+        switch (move.name) {
+          case Move.Name.INSERT:
+            this.addPatch(Patch.insertChildNode(node, move.at, parent));
+            Move.insert(node, move.at).make(children);
+            continue;
+          case Move.Name.MOVE:
+            this.addPatch(
+                Patch.moveChildNode(node, move.from, move.to, parent));
+            Move.move(node, move.from, move.to).make(children);
+            continue;
+          case Move.Name.REMOVE:
+            this.addPatch(Patch.removeChildNode(node, move.at, parent));
+            Move.remove(node, move.at).make(children);
+            continue;
+        }
+      }
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!created.includes(child)) {
+          this.elementChildPatches(child, descriptions[i], parent, i);
+        }
+      }
     }
-    if (current.isComponent()) {
-      return current.constructor === next.constructor;
-    }
-    if (current.isElement()) {
-      return current.name === next.name;
-    }
-  };
 
-  const childrenPatches = (current = [], next = [], parent, patches) => {
+    elementChildPatches(child, description, parent, index) {
+      const {Patch, VirtualDOM} = opr.Toolkit;
 
-    const Patch = opr.Toolkit.Patch;
-    const Move = opr.Toolkit.Reconciler.Move;
+      const areCompatible = (current, description) => {
+        if (current.nodeType !== description.type) {
+          return false;
+        }
+        if (current.isElement()) {
+          return current.name === description.element;
+        }
+        return current.constructor ===
+            VirtualDOM.getComponentClass(description.component);
+      };
 
-    const source = current.map((node, index) => node.key || index);
-    const target = next.map((node, index) => node.key || index);
-
-    const getNode = key => {
-      if (source.includes(key)) {
-        return current[source.indexOf(key)];
+      if (areCompatible(child, description)) {
+        if (child.isElement()) {
+          return this.elementPatches(child, description, parent);
+        }
+        this.componentPatches(child, description);
       } else {
-        return next[target.indexOf(key)];
-      }
-    };
-
-    const moves = opr.Toolkit.Reconciler.calculateMoves(source, target);
-
-    const children = [...current];
-    for (const move of moves) {
-      const node = getNode(move.item);
-      switch (move.name) {
-        case Move.Name.INSERT:
-          patches.push(Patch.insertChildNode(node, move.at, parent));
-          Move.insert(node, move.at).make(children);
-          continue;
-        case Move.Name.MOVE:
-          patches.push(Patch.moveChildNode(node, move.from, move.to, parent));
-          Move.move(node, move.from, move.to).make(children);
-          continue;
-        case Move.Name.REMOVE:
-          patches.push(Patch.removeChildNode(node, move.at, parent));
-          Move.remove(node, move.at).make(children);
-          continue;
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        this.addPatch(Patch.replaceChildNode(child, node, parent));
       }
     }
 
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      reconcileNode(child, next[i], parent, i, patches);
-    }
-  };
+    componentChildPatches(child, description, parent) {
+      const {Diff, Patch, VirtualDOM} = opr.Toolkit;
 
-  const elementPatches = (current, next, patches) => {
-    attributePatches(current.attrs, next.attrs, current, patches);
-    datasetPatches(current.dataset, next.dataset, current, patches);
-    stylePatches(current.style, next.style, current, patches);
-    classNamePatches(current.classNames, next.classNames, current, patches);
-    listenerPatches(current.listeners, next.listeners, current, patches);
-    metadataPatches(current.metadata, next.metadata, current, patches);
-    if (current.text !== null && next.text === null) {
-      patches.push(opr.Toolkit.Patch.removeTextContent(current));
-    }
-    childrenPatches(current.children, next.children, current, patches);
-    if (next.text !== null && current.text !== next.text) {
-      patches.push(opr.Toolkit.Patch.setTextContent(current, next.text));
-    }
-  };
+      const current = parent.description;
+      const next = description;
 
-  const componentPatches = (current, next, patches) => {
-    if (!Diff.deepEqual(current.props, next.props)) {
-      if (current.constructor.prototype.hasOwnProperty('onUpdated') ||
-          current.constructor.prototype.hasOwnProperty('onPropsReceived')) {
-        patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
-      } else {
-        current.props = next.props;
-        current.sandbox.props = next.props;
+      if (!current && !next) {
+        return;
       }
-    }
-    calculatePatches(current.child, next.child, current, patches);
-  };
 
-  const reconcileNode = (current, next, parent, index, patches) => {
-
-    const Patch = opr.Toolkit.Patch;
-
-    if (current === next) {
-      // already inserted
-      return;
-    }
-    if (areCompatible(current, next)) {
-      if (current.isElement()) {
-        elementPatches(current, next, patches);
-      }
-      if (current.isComponent()) {
-        componentPatches(current, next, patches);
-      }
-    } else {
-      patches.push(Patch.removeChildNode(current, index, parent));
-      patches.push(Patch.insertChildNode(next, index, parent));
-    }
-  };
-
-  const calculatePatches =
-      (current, next, parent = null, patches = []) => {
-
-        const Patch = opr.Toolkit.Patch;
-
-        if (!current && !next) {
-          return patches;
+      // insert
+      if (!current && next) {
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
+        if (node.isElement()) {
+          return this.addPatch(Patch.addElement(node, parent));
         }
-
-        if (!current && next) {
-          if (next.isComponent()) {
-            patches.push(Patch.addComponent(next, parent));
-          } else if (next.isElement()) {
-            patches.push(Patch.addElement(next, parent));
-          }
-          return patches;
-        }
-
-        if (current && !next) {
-          if (current.isComponent()) {
-            patches.push(Patch.removeComponent(current, parent));
-          } else if (current.isElement()) {
-            patches.push(Patch.removeElement(current, parent));
-          }
-          return patches;
-        }
-
-        if (current.isComponent()) {
-          if (next.isComponent()) {
-            if (current.constructor === next.constructor) {
-              componentPatches(current, next, patches);
-            } else {
-              // different components
-              patches.push(Patch.removeComponent(current, parent));
-              patches.push(Patch.addComponent(next, parent));
-            }
-          } else if (next.isElement()) {
-            // replace component with an element
-            patches.push(Patch.removeComponent(current, parent));
-            patches.push(Patch.addElement(next, parent));
-          }
-        } else if (current.isElement()) {
-          if (next.isComponent()) {
-            // replace element with a component
-            patches.push(Patch.removeElement(current, parent));
-            patches.push(Patch.addComponent(next, parent));
-          } else if (next.isElement()) {
-            if (current.name === next.name) {
-              // compatible elements
-              elementPatches(current, next, patches);
-            } else {
-              // different elements
-              patches.push(Patch.removeElement(current, parent));
-              patches.push(Patch.addElement(next, parent));
-            }
-          }
-        }
-        return patches;
+        return this.addPatch(Patch.addComponent(node, parent));
       }
 
-  class Diff {
+      // remove
+      if (current && !next) {
+        if (current.isElement()) {
+          return this.addPatch(Patch.removeElement(child, parent));
+        }
+        return this.addPatch(Patch.removeComponent(child, parent));
+      }
+
+      // update
+      if (current.isCompatible(next)) {
+        if (Diff.deepEqual(current, next)) {
+          return;
+        }
+        if (current.isElement()) {
+          return this.elementPatches(child, description, parent);
+        }
+        return this.componentPatches(child, description);
+      }
+
+      // replace
+      const node =
+          VirtualDOM.createFromDescription(description, parent, this.root);
+      this.addPatch(Patch.replaceChild(child, node, parent));
+    }
+
+    static getType(item) {
+      const type = typeof item;
+      switch (type) {
+        case 'object':
+          if (item === null) {
+            return 'null';
+          } else if (Array.isArray(item)) {
+            return 'array'
+          } else {
+            return 'object'
+          }
+        default:
+          return type;
+      }
+    }
 
     static deepEqual(current, next) {
       if (Object.is(current, next)) {
         return true;
       }
-      const type = getType(current);
-      const nextType = getType(next);
+      const type = this.getType(current);
+      const nextType = this.getType(next);
       if (type !== nextType) {
         return false;
       }
@@ -1147,6 +1333,9 @@
       } else if (type === 'object') {
         const keys = Object.keys(current);
         const nextKeys = Object.keys(next);
+        if (current.constructor !== next.constructor) {
+          return false;
+        }
         if (keys.length !== nextKeys.length) {
           return false;
         }
@@ -1166,154 +1355,9 @@
       }
       return false;
     }
-
-    static calculate(tree, nextTree, root) {
-      return calculatePatches(tree, nextTree, root);
-    }
   }
 
   loader.define('core/diff', Diff);
-}
-
-{
-  class Document {
-
-    static setAttribute(element, name, value) {
-      const attr = opr.Toolkit.utils.getAttributeName(name);
-      element.setAttribute(attr, value);
-    }
-
-    static removeAttribute(element, name) {
-      const attr = opr.Toolkit.utils.getAttributeName(name);
-      element.removeAttribute(attr);
-    }
-
-    static setDataAttribute(element, name, value) {
-      element.dataset[name] = value;
-    }
-
-    static removeDataAttribute(element, name) {
-      delete element.dataset[name];
-    }
-
-    static setStyleProperty(element, prop, value) {
-      element.style[prop] = value;
-    }
-
-    static removeStyleProperty(element, prop, value) {
-      element.style[prop] = null;
-    }
-
-    static addClassName(element, className) {
-      element.classList.add(className);
-    }
-
-    static removeClassName(element, className) {
-      element.classList.remove(className);
-    }
-
-    static addEventListener(element, name, listener) {
-      element.addEventListener(name, listener);
-    }
-
-    static removeEventListener(element, name, listener) {
-      element.removeEventListener(name, listener);
-    }
-
-    static setMetadata(element, key, value) {
-      element[key] = value;
-    }
-
-    static removeMetadata(element, key) {
-      delete element[key];
-    }
-
-    static appendChild(child, parent) {
-      parent.appendChild(child);
-    }
-
-    static replaceChild(child, replaced, parent) {
-      parent.replaceChild(child, replaced);
-    }
-
-    static removeChild(child, parent) {
-      parent.removeChild(child);
-    }
-
-    static moveChild(child, from, to, parent) {
-      parent.removeChild(child);
-      parent.insertBefore(child, parent.childNodes[to]);
-    }
-
-    static setTextContent(element, text) {
-      element.textContent = text;
-    }
-
-    static createElement(node) {
-      const {
-        name,
-        text,
-        attrs,
-        dataset,
-        listeners,
-        style,
-        classNames,
-      } = node;
-
-      const element = document.createElement(name);
-      if (text) {
-        this.setTextContent(element, text);
-      }
-      Object.entries(listeners).forEach(([name, listener]) => {
-        this.addEventListener(element, name, listener);
-      });
-      Object.entries(attrs).forEach(([attr, value]) => {
-        this.setAttribute(element, attr, value);
-      });
-      Object.entries(dataset).forEach(([attr, value]) => {
-        this.setDataAttribute(element, attr, value);
-      });
-      Object.entries(style).forEach(([prop, value]) => {
-        this.setStyleProperty(element, prop, value);
-      });
-      classNames.forEach(className => {
-        this.addClassName(element, className);
-      });
-      return element;
-    }
-
-    static createComment(placeholder) {
-      return document.createComment(placeholder.text);
-    }
-
-    static attachElementTree(node, callback) {
-      const element = node.isComponent() ? node.childElement : node;
-      let domNode;
-      if (element) {
-        domNode = this.createElement(element);
-        Object.keys(element.metadata).forEach(key => {
-          domNode[key] = element.metadata[key];
-        });
-        if (element.children) {
-          for (let child of element.children) {
-            this.attachElementTree(child, childNode => {
-              domNode.appendChild(childNode);
-            });
-          }
-        }
-        element.ref = domNode;
-      } else {
-        domNode = this.createComment(node.placeholder);
-        node.placeholder.ref = domNode;
-      }
-      if (callback) {
-        callback(domNode);
-      }
-      return domNode;
-    }
-  }
-
-  loader.define('core/document', Document);
 }
 
 {
@@ -1329,7 +1373,9 @@
      */
 
     static onComponentCreated(component) {
-      component.onCreated.call(component.sandbox);
+      if (component.hasOwnMethod('onCreated')) {
+        component.onCreated.call(component.sandbox);
+      }
       if (component.child) {
         this.onNodeCreated(component.child);
       }
@@ -1353,11 +1399,19 @@
       }
     }
 
+    static onRootCreated(root) {
+      if (root.hasOwnMethod('onCreated')) {
+        root.onCreated.call(root.sandbox);
+      }
+    }
+
     static onComponentAttached(component) {
       if (component.child) {
         this.onNodeAttached(component.child);
       }
-      component.onAttached.call(component.sandbox);
+      if (component.hasOwnMethod('onAttached')) {
+        component.onAttached.call(component.sandbox);
+      }
     }
 
     static onElementAttached(element) {
@@ -1378,19 +1432,31 @@
       }
     }
 
+    static onRootAttached(root) {
+      if (root.hasOwnMethod('onAttached')) {
+        root.onAttached.call(root.sandbox);
+      }
+    }
+
     static onComponentReceivedProps(component, nextProps) {
-      component.onPropsReceived.call(component.sandbox, nextProps);
+      if (component.hasOwnMethod('onPropsReceived')) {
+        component.onPropsReceived.call(component.sandbox, nextProps);
+      }
     }
 
     static onComponentUpdated(component, prevProps) {
-      component.onUpdated.call(component.sandbox, prevProps);
+      if (component.hasOwnMethod('onUpdated')) {
+        component.onUpdated.call(component.sandbox, prevProps);
+      }
     }
 
     static onComponentDestroyed(component) {
       for (const cleanUpTask of component.cleanUpTasks) {
         cleanUpTask();
       }
-      component.onDestroyed.call(component.sandbox);
+      if (component.hasOwnMethod('onDestroyed')) {
+        component.onDestroyed.call(component.sandbox);
+      }
       if (component.child) {
         this.onNodeDestroyed(component.child);
       }
@@ -1418,7 +1484,9 @@
       if (component.child) {
         this.onNodeDetached(component.child);
       }
-      component.onDetached.call(component.sandbox);
+      if (component.hasOwnMethod('onDetached')) {
+        component.onDetached.call(component.sandbox);
+      }
     }
 
     static onElementDetached(element) {
@@ -1442,22 +1510,26 @@
     static beforePatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentReceivedProps(patch.target, patch.props);
-        case Type.CREATE_ROOT_COMPONENT:
-          return patch.root.onCreated.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentCreated(patch.component);
         case Type.ADD_ELEMENT:
           return this.onElementCreated(patch.element);
+        case Type.INIT_ROOT_COMPONENT:
+          return this.onRootCreated(patch.root);
         case Type.INSERT_CHILD_NODE:
           return this.onNodeCreated(patch.node);
+        case Type.REMOVE_CHILD_NODE:
+          return this.onNodeDestroyed(patch.node);
         case Type.REMOVE_COMPONENT:
           return this.onComponentDestroyed(patch.component);
         case Type.REMOVE_ELEMENT:
           return this.onElementDestroyed(patch.element);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDestroyed(patch.node);
+        case Type.REPLACE_CHILD:
+          this.onNodeDestroyed(patch.child);
+          this.onNodeCreated(patch.node);
+          return;
+        case Type.UPDATE_COMPONENT:
+          return this.onComponentReceivedProps(patch.target, patch.props);
       }
     }
 
@@ -1470,22 +1542,26 @@
     static afterPatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target, patch.prevProps);
-        case Type.CREATE_ROOT_COMPONENT:
-          return patch.root.onAttached.call(patch.root.sandbox);
         case Type.ADD_COMPONENT:
           return this.onComponentAttached(patch.component);
         case Type.ADD_ELEMENT:
           return this.onElementAttached(patch.element);
+        case Type.INIT_ROOT_COMPONENT:
+          return this.onRootAttached(patch.root);
         case Type.INSERT_CHILD_NODE:
           return this.onNodeAttached(patch.node);
+        case Type.REMOVE_CHILD_NODE:
+          return this.onNodeDetached(patch.node);
         case Type.REMOVE_COMPONENT:
           return this.onComponentDetached(patch.component);
         case Type.REMOVE_ELEMENT:
           return this.onElementDetached(patch.element);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDetached(patch.node);
+        case Type.REPLACE_CHILD:
+          this.onNodeDetached(patch.child);
+          this.onNodeAttached(patch.node);
+          return;
+        case Type.UPDATE_COMPONENT:
+          return this.onComponentUpdated(patch.target, patch.prevProps);
       }
     }
 
@@ -1503,7 +1579,7 @@
 {
   const Type = Object.freeze({
 
-    CREATE_ROOT_COMPONENT: Symbol('init-root-component'),
+    INIT_ROOT_COMPONENT: Symbol('init-root-component'),
     UPDATE_COMPONENT: Symbol('update-component'),
 
     ADD_ELEMENT: Symbol('add-element'),
@@ -1511,6 +1587,8 @@
 
     ADD_COMPONENT: Symbol('add-component'),
     REMOVE_COMPONENT: Symbol('remove-component'),
+
+    REPLACE_CHILD: Symbol('replace-child'),
 
     ADD_ATTRIBUTE: Symbol('add-attribute'),
     REPLACE_ATTRIBUTE: Symbol('replace-attribute'),
@@ -1537,6 +1615,7 @@
 
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
+    REPLACE_CHILD_NODE: Symbol('replace-child-node'),
     REMOVE_CHILD_NODE: Symbol('remove-child-node'),
 
     SET_TEXT_CONTENT: Symbol('set-text-content'),
@@ -1549,26 +1628,21 @@
       Object.assign(this, {type}, props);
     }
 
-    static createRootComponent(root) {
-      return new Patch(Type.CREATE_ROOT_COMPONENT, {
+    static initRootComponent(root) {
+      return new Patch(Type.INIT_ROOT_COMPONENT, {
         root,
         apply: function() {
-          // TODO: investigate
-          root.props = null;
+          root.container.appendChild(root.ref);
         },
       });
     }
 
-    static updateComponent(target, props) {
+    static updateComponent(target) {
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
-        props,
+        props: target.props,
         apply: function() {
           this.prevProps = target.props;
-          if (target instanceof opr.Toolkit.Root) {
-            return;
-          }
-          target.props = props;
         },
       });
     }
@@ -1580,7 +1654,6 @@
         target,
         apply: function() {
           target.setAttribute(name, value);
-          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         },
       });
     }
@@ -1592,7 +1665,6 @@
         target,
         apply: function() {
           target.setAttribute(name, value);
-          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         },
       });
     }
@@ -1603,7 +1675,6 @@
         target,
         apply: function() {
           target.removeAttribute(name);
-          opr.Toolkit.Document.removeAttribute(target.ref, name);
         },
       });
     }
@@ -1615,7 +1686,6 @@
         target,
         apply: function() {
           target.setDataAttribute(name, value);
-          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         },
       });
     }
@@ -1627,7 +1697,6 @@
         target,
         apply: function() {
           target.setDataAttribute(name, value);
-          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         },
       });
     }
@@ -1638,7 +1707,6 @@
         target,
         apply: function() {
           target.removeDataAttribute(name);
-          opr.Toolkit.Document.removeDataAttribute(target.ref, name);
         },
       });
     }
@@ -1649,7 +1717,6 @@
         target,
         apply: function() {
           target.setStyleProperty(property, value);
-          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         },
       });
     }
@@ -1661,7 +1728,6 @@
         target,
         apply: function() {
           target.setStyleProperty(property, value);
-          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         },
       });
     }
@@ -1672,7 +1738,6 @@
         target,
         apply: function() {
           target.removeStyleProperty(property);
-          opr.Toolkit.Document.removeStyleProperty(target.ref, property);
         },
       });
     }
@@ -1683,7 +1748,6 @@
         target,
         apply: function() {
           target.addClassName(name);
-          opr.Toolkit.Document.addClassName(target.ref, name);
         },
       });
     }
@@ -1694,46 +1758,41 @@
         target,
         apply: function() {
           target.removeClassName(name);
-          opr.Toolkit.Document.removeClassName(target.ref, name);
         },
       });
     }
 
-    static addListener(event, listener, target) {
+    static addListener(name, listener, target) {
       return new Patch(Type.ADD_LISTENER, {
-        event,
+        name,
         listener,
         target,
         apply: function() {
-          target.addListener(event, listener);
-          opr.Toolkit.Document.addEventListener(target.ref, event, listener);
+          target.addListener(name, listener);
         },
       });
     }
 
-    static replaceListener(event, removed, added, target) {
+    static replaceListener(name, removed, added, target) {
       return new Patch(Type.REPLACE_LISTENER, {
-        event,
+        name,
         removed,
         added,
         target,
         apply: function() {
-          target.removeListener(event, removed);
-          opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
-          target.addListener(event, added);
-          opr.Toolkit.Document.addEventListener(target.ref, event, added);
+          target.removeListener(name, removed);
+          target.addListener(name, added);
         },
       });
     }
 
-    static removeListener(event, listener, target) {
+    static removeListener(name, listener, target) {
       return new Patch(Type.REMOVE_LISTENER, {
-        event,
+        name,
         listener,
         target,
         apply: function() {
-          target.removeListener(event, listener);
-          opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
+          target.removeListener(name, listener);
         },
       });
     }
@@ -1744,8 +1803,7 @@
         value,
         target,
         apply: function() {
-          target.metadata[key] = value;
-          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+          target.setMetadata(key, value);
         },
       });
     }
@@ -1756,8 +1814,7 @@
         value,
         target,
         apply: function() {
-          target.metadata[key] = value;
-          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+          target.setMetadata(key, value);
         },
       });
     }
@@ -1767,8 +1824,7 @@
         key,
         target,
         apply: function() {
-          delete target.metadata[key];
-          opr.Toolkit.Document.removeMetadata(target.ref, key);
+          target.removeMetadata(key);
         },
       });
     }
@@ -1778,10 +1834,9 @@
         element,
         parent,
         apply: function() {
+          const ref = parent.ref;
           parent.appendChild(element);
-          opr.Toolkit.Document.attachElementTree(element, domElement => {
-            parent.parentElement.ref.appendChild(domElement);
-          });
+          ref.replaceWith(element.ref);
         },
       });
     }
@@ -1791,8 +1846,9 @@
         element,
         parent,
         apply: function() {
+          const ref = element.ref;
           parent.removeChild(element);
-          element.ref.remove();
+          ref.replaceWith(parent.ref);
         },
       });
     }
@@ -1802,25 +1858,9 @@
         component,
         parent,
         apply: function() {
-          const comment = parent.placeholder.ref;
-          const parentDomNode = parent.parentElement.ref;
-          if (parent.isRoot()) {
-            parent.appendChild(component);
-            opr.Toolkit.Document.attachElementTree(component, domNode => {
-              if (parentDomNode.hasChildNodes()) {
-                opr.Toolkit.Document.replaceChild(
-                    domNode, parentDomNode.firstChild, parentDomNode);
-              } else {
-                opr.Toolkit.Document.appendChild(domNode, parentDomNode);
-              }
-            });
-          } else {
-            parent.appendChild(component);
-            opr.Toolkit.Document.attachElementTree(component, domNode => {
-              opr.Toolkit.Document.replaceChild(
-                  domNode, comment, parentDomNode);
-            });
-          }
+          const ref = parent.ref;
+          parent.appendChild(component);
+          ref.replaceWith(component.ref);
         },
       });
     }
@@ -1830,13 +1870,22 @@
         component,
         parent,
         apply: function() {
-          const domChildNode =
-              (component.childElement || component.placeholder).ref;
+          const ref = component.ref;
           parent.removeChild(component);
-          parent.placeholder.ref =
-              opr.Toolkit.Document.createComment(parent.placeholder);
-          parent.parentElement.ref.replaceChild(
-              parent.placeholder.ref, domChildNode);
+          ref.replaceWith(parent.ref);
+        },
+      });
+    }
+
+    static replaceChild(child, node, parent) {
+      return new Patch(Type.REPLACE_CHILD, {
+        child,
+        node,
+        parent,
+        apply: function() {
+          const ref = parent.ref;
+          parent.replaceChild(child, node);
+          ref.replaceWith(node.ref);
         },
       });
     }
@@ -1848,9 +1897,6 @@
         parent,
         apply: function() {
           parent.insertChild(node, at);
-          opr.Toolkit.Document.attachElementTree(node, domNode => {
-            parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
-          });
         },
       });
     }
@@ -1863,9 +1909,19 @@
         parent,
         apply: function() {
           parent.moveChild(node, from, to);
-          opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
         },
       });
+    }
+
+    static replaceChildNode(child, node, parent) {
+      return new Patch(Type.REPLACE_CHILD_NODE, {
+        child,
+        node,
+        parent,
+        apply: function() {
+          parent.replaceChild(child, node);
+        },
+      })
     }
 
     static removeChildNode(node, at, parent) {
@@ -1875,7 +1931,6 @@
         parent,
         apply: function() {
           parent.removeChild(node);
-          opr.Toolkit.Document.removeChild(node.ref, parent.ref);
         },
       });
     }
@@ -1885,8 +1940,7 @@
         element,
         text,
         apply: function() {
-          element.text = text;
-          opr.Toolkit.Document.setTextContent(element.ref, text);
+          element.setTextContent(text);
         },
       });
     }
@@ -1895,8 +1949,7 @@
       return new Patch(Type.REMOVE_TEXT_CONTENT, {
         element,
         apply: function() {
-          element.text = null;
-          opr.Toolkit.Document.setTextContent(element.ref, '');
+          element.removeTextContent();
         },
       });
     }
@@ -2007,74 +2060,92 @@
 {
   class Renderer {
 
-    constructor(container, settings, root) {
-      this.container = container;
+    constructor(root, settings) {
       this.settings = settings;
       this.root = root;
       this.plugins = new Map();
       this.installPlugins();
     }
 
-    calculatePatches(command, prevState, nextState) {
-      const patches = [];
-      if (prevState === null) {
-        patches.push(opr.Toolkit.Patch.createRootComponent(this.root));
-      }
-      if (!opr.Toolkit.Diff.deepEqual(prevState, nextState)) {
-        patches.push(opr.Toolkit.Patch.updateComponent(this.root, nextState));
-        const componentTree =
-            opr.Toolkit.VirtualDOM.createChildTree(this.root, this.root.child);
-        const childTreePatches = opr.Toolkit.Diff.calculate(
-            this.root.child, componentTree, this.root);
-        patches.push(...childTreePatches);
-      }
-      return patches;
-    }
+    static render(component) {
 
-    get debug() {
-      return this.settings.level === 'debug';
+      const template = component.render.call(component.sandbox);
+
+      opr.Toolkit.assert(
+          template !== undefined,
+          'Invalid undefined template returned when rendering:', component);
+
+      return opr.Toolkit.Template.describe(template);
     }
 
     updateDOM(command, prevState, nextState) {
-      /* eslint-disable no-console */
       if (this.debug) {
+        /* eslint-disable no-console */
         console.time('=> Render time');
-      }
-      const patches = this.calculatePatches(command, prevState, nextState);
-      if (patches.length) {
-        opr.Toolkit.Lifecycle.beforeUpdate(patches);
-        for (const patch of patches) {
-          patch.apply();
-        }
-        opr.Toolkit.Lifecycle.afterUpdate(patches);
-      }
-      if (this.debug) {
+        const patches = this.update(prevState, nextState);
         console.log(
             'Command:', command.type,
             `for "${this.root.constructor.displayName}"`);
         if (patches.length) {
-          console.log('Patches:', patches);
+          console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', patches);
+        } else {
+          console.log('%c=> No update', 'color: #07a707');
         }
         console.timeEnd('=> Render time');
         console.log(''.padStart(48, '-'));
+        /* eslint-enable no-console */
+      } else {
+        this.update(prevState, nextState);
       }
-      /* eslint-enable no-console */
+    }
+
+    update(prevState, nextState) {
+
+      const {Diff, Lifecycle, VirtualDOM} = opr.Toolkit;
+
+      if (Diff.deepEqual(prevState, nextState)) {
+        return [];
+      }
+
+      this.root.state =
+          VirtualDOM.normalizeProps(this.root.constructor, nextState);
+
+      const diff = new Diff(this.root);
+      const initial = this.root.description === undefined;
+      const patches = diff.rootPatches(prevState, nextState, initial);
+
+      if (patches.length) {
+        Lifecycle.beforeUpdate(patches);
+        for (const patch of patches) {
+          patch.apply();
+        }
+        Lifecycle.afterUpdate(patches);
+      }
+
+      return patches;
     }
 
     installPlugins() {
+      if (!this.settings || !this.settings.plugins) {
+        return;
+      }
       for (const plugin of this.settings.plugins) {
         if (this.plugins.get(plugin.id)) {
           console.warn(`Plugin "${id}" is already installed!`);
           return;
         }
         const uninstall = plugin.install({
-          container: this.container,
+          container: this.root.container,
         });
         this.plugins.set(plugin.id, {
           ref: plugin,
           uninstall,
         });
       }
+    }
+
+    get debug() {
+      return this.settings.level === 'debug';
     }
   }
 
@@ -2093,6 +2164,7 @@
     'elementName',
     'getKey',
     'id',
+    'stopEvent',
     'ref',
   ];
   const methods = [
@@ -2153,12 +2225,7 @@
           }
           return undefined;
         },
-        set: (target, property, value) => {
-          if ([CHILDREN, PROPS].includes(property)) {
-            state[property] = value;
-          }
-          return true;
-        },
+        set: (target, property, value) => true,
       });
     }
   }
@@ -2206,6 +2273,201 @@
 }
 
 {
+  class Description {
+
+    constructor(type, key, template) {
+      this.type = type;
+      this.key = key;
+      Object.defineProperty(this, 'template', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: template,
+      });
+    }
+
+    isCompatible(desc) {
+      return desc && desc.type === this.type;
+    }
+
+    isComponent() {
+      return this instanceof ComponentDescription;
+    }
+
+    isElement() {
+      return this instanceof ElementDescription;
+    }
+
+    toTemplate() {
+      return this.template;
+    }
+  }
+
+  class ComponentDescription extends Description {
+
+    constructor({component, props, children}, template) {
+      super(opr.Toolkit.Component.NodeType, props && props.key, template);
+      this.component = component;
+      if (props) {
+        this.props = props;
+      }
+      if (children) {
+        this.children = children;
+      }
+    }
+
+    isCompatible(desc) {
+      return super.isCompatible(desc) && desc.component === this.component;
+    }
+  }
+
+  /*
+   * Defines a normalized description of an element. Is used to determine the
+   * differences between compatible elements (with the same tag name).
+   *
+   * Enumerable properties:
+   * - element (a string representing tag name),
+   * - text (a string representing text content),
+   * - children (an array of child nodes),
+   * - props (an object) defining:
+   *    - listeners (an object for event name to listener mapping)
+   *    - attrs (an object for normalized attribute name to value mapping)
+   *    - dataset (an object representing data attributes)
+   *    - classNames (an array of sorted class names)
+   *    - style (an object for style property to string value mapping)
+   *    - metadata (an object for properties set directly on DOM element)
+   *
+   * Non-enumerable properties:
+   * - template: a reference to the source template.
+   */
+  class ElementDescription extends Description {
+
+    constructor({element, text, children, props}, template) {
+      super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+      this.element = element;
+      this.text = text !== undefined ? text : null;
+
+      const {
+        SUPPORTED_ATTRIBUTES,
+        SUPPORTED_EVENTS,
+        SUPPORTED_STYLES,
+        Template,
+      } = opr.Toolkit;
+
+      if (children && children.length > 0) {
+        this.children = children;
+      }
+
+      if (props) {
+
+        if (opr.Toolkit.isDebug()) {
+          const unknownAttrs = Object.keys(props).filter(
+              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
+          for (const unknownAttr of unknownAttrs) {
+            const suggestion = SUPPORTED_ATTRIBUTES.find(
+                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
+            if (suggestion) {
+              opr.Toolkit.warn(
+                  `Attribute name "${
+                                     unknownAttr
+                                   }" should be spelled "${suggestion}"`);
+            } else {
+              opr.Toolkit.warn(`Attribute name "${unknownAttr}" is not valid,`);
+            }
+          }
+        }
+
+        const normalized = {};
+
+        const keys = Object.keys(props);
+
+        // listeners
+        const listeners = {};
+        const events = keys.filter(key => SUPPORTED_EVENTS.includes(key));
+        for (const event of events) {
+          const listener = props[event];
+          if (typeof listener === 'function') {
+            listeners[event] = listener;
+          }
+        }
+        if (Object.keys(listeners).length) {
+          normalized.listeners = listeners;
+        }
+
+        // attributes
+        const attrs = {};
+        const attrNames =
+            keys.filter(key => SUPPORTED_ATTRIBUTES.includes(key));
+        for (const attr of attrNames) {
+          const value = Template.getAttributeValue(props[attr]);
+          if (value !== null && value !== undefined) {
+            attrs[attr] = value;
+          }
+        }
+        if (Object.keys(attrs).length) {
+          normalized.attrs = attrs;
+        }
+
+        // data attributes
+        if (props.dataset) {
+          const dataset = {};
+          for (const key of Object.keys(props.dataset)) {
+            const value = Template.getAttributeValue(props.dataset[key]);
+            if (value !== null && value !== undefined) {
+              dataset[key] = String(value);
+            }
+          }
+          if (Object.keys(dataset).length) {
+            normalized.dataset = dataset;
+          }
+        }
+
+        // class names
+        if (props.class) {
+          const classNames = Template.getClassNames(props.class);
+          if (classNames.length) {
+            normalized.classNames = classNames;
+          }
+        }
+
+        // style
+        if (props.style) {
+          const style = {};
+          const keys = Object.keys(props.style)
+                           .filter(key => SUPPORTED_STYLES.includes(key));
+          for (const key of keys) {
+            const value = Template.getStyleValue(props.style[key], key);
+            if (value !== null && value !== undefined) {
+              style[key] = value;
+            }
+          }
+          if (Object.keys(style).length) {
+            normalized.style = style;
+          }
+        }
+
+        // metadata
+        if (props.metadata) {
+          const metadata = {};
+          for (const key of Object.keys(props.metadata)) {
+            metadata[key] = props.metadata[key];
+          }
+          if (Object.keys(metadata).length) {
+            normalized.metadata = metadata;
+          }
+        }
+
+        if (Object.keys(normalized).length) {
+          this.props = normalized;
+        }
+      }
+    }
+
+    isCompatible(desc) {
+      return super.isCompatible(desc) && desc.element === this.element;
+    }
+  }
+
   class Template {
 
     static get ItemType() {
@@ -2250,7 +2512,7 @@
         return [];
       }
       classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
-      return [...new Set(classNames)];
+      return [...new Set(classNames)].sort();
     }
 
     static getCompositeValue(obj = {}, whitelist) {
@@ -2456,64 +2718,105 @@
 
     static describe(template) {
 
-      const {types, error} = this.validate(template);
+      const analyze = template => {
 
-      if (error) {
-        console.error('Invalid template definition:', template);
-        throw error;
-      }
+        const {types, error} = this.validate(template);
 
-      if (types === null) {
-        return null;
-      }
+        if (error) {
+          console.error('Invalid template definition:', template);
+          throw error;
+        }
 
-      const Type = Template.ItemType;
-      const type = (types[0] === Type.COMPONENT ? 'component' : 'name');
+        if (types === null) {
+          return null;
+        }
 
-      const onlyValidElements = element => Array.isArray(element);
+        const Type = Template.ItemType;
 
-      switch (template.length) {
-        case 1:
-          return {
-            [type]: template[0],
-          };
-        case 2:
-          if (types[1] === Type.STRING) {
-            const text = template[1];
-            return {
-              [type]: template[0],
-              text,
-            };
-          } else if (types[1] === Type.PROPS) {
-            return {[type]: template[0], props: template[1]};
-          } else if (types[1] === Type.ELEMENT) {
-            return {
-              [type]: template[0],
-              children: template.slice(1).filter(onlyValidElements),
-            };
+        let attr;
+        let name
+
+        const type = types[0];
+        if (type === Type.COMPONENT) {
+          attr = 'component';
+          name = String(template[0]).slice(7, -1);
+        } else {
+          attr = 'element';
+          name = template[0];
+        }
+
+        const getChildren = nodes => {
+          const isValidNode = element => Array.isArray(element);
+          const children = nodes.filter(isValidNode);
+          switch (type) {
+            case Type.COMPONENT:
+              return children.map(child => this.describe(child));
+            case Type.STRING:
+              return children.map(child => this.describe(child));
+            default:
+              throw new Error(`Unknown type: ${type}`);
           }
-        default:
-          if (types[1] === Type.PROPS) {
-            if (types[2] === Type.STRING) {
+        };
+
+        switch (template.length) {
+          case 1:
+            return {
+              [attr]: name,
+            };
+          case 2:
+            if (types[1] === Type.STRING) {
+              const text = template[1];
               return {
-                [type]: template[0],
+                [attr]: name,
+                text,
+              };
+            } else if (types[1] === Type.PROPS) {
+              return {[attr]: name, props: template[1]};
+            } else if (types[1] === Type.ELEMENT) {
+              return {
+                [attr]: name,
+                children: getChildren(template.slice(1)),
+              };
+            }
+          default:
+            if (types[1] === Type.PROPS) {
+              if (types[2] === Type.STRING) {
+                return {
+                  [attr]: name,
+                  props: template[1],
+                  text: template[2],
+                };
+              }
+              return {
+                [attr]: name,
                 props: template[1],
-                text: template[2],
+                children: getChildren(template.slice(2)),
               };
             }
             return {
-              [type]: template[0],
-              props: template[1],
-              children: template.slice(2).filter(onlyValidElements),
+              [attr]: name,
+              children: getChildren(template.slice(1)),
             };
-          }
-          return {
-            [type]: template[0],
-            children: template.slice(1).filter(onlyValidElements),
-          };
+        }
+      };
+
+      const details = analyze(template);
+
+      if (!details) {
+        return null;
       }
+
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
+    }
+
+    static normalize(details, template = null) {
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
     }
   }
+
+  Template.Description = Description;
 
   loader.define('core/template', Template);
 }
@@ -2521,147 +2824,64 @@
 {
   class VirtualDOM {
 
-    static getComponentClass(symbol) {
-      const ComponentClass = loader.get(symbol);
-      opr.Toolkit.assert(
-          ComponentClass, `No component found for: ${String(symbol)}`);
-      opr.Toolkit.assert(
-          ComponentClass.prototype instanceof opr.Toolkit.Component,
-          'Component class', ComponentClass.name,
-          'must extend opr.Toolkit.Component');
-      return ComponentClass;
+    static createFromDescription(description, parent, root) {
+      if (!description) {
+        return null;
+      }
+      if (description.element) {
+        return this.createElement(description, parent, root);
+      }
+      const children = description.children ?
+          description.children.map(child => child.toTemplate()) :
+          [];
+      const component = this.createComponent(
+          description.component, description.props, children, parent, root);
+      const childDescription = opr.Toolkit.Renderer.render(component);
+      if (childDescription) {
+        component.description = childDescription;
+        component.appendChild(
+            this.createFromDescription(childDescription, component, root));
+      }
+      return component;
     }
 
-    static createComponentFrom(symbol, props, children) {
+    static createElement(description, parent, root) {
+      const props = description.props || {};
+      const children = this.createChildren(description.children, root);
+      const element = new opr.Toolkit.VirtualElement(
+          description.element, props, description.text || children,
+          description.key);
+      return element;
+    }
+
+    static createChildren(descriptions, root) {
+      if (!descriptions) {
+        return null;
+      }
+      return descriptions.map(
+          description => this.createFromDescription(description, null, root));
+    }
+
+    static createComponent(symbol, props = {}, children = [], parent, root) {
+      try {
+        const component =
+            this.createComponentInstance(symbol, props, children, parent);
+        opr.Toolkit.assert(
+            !component.isRoot(), 'Invalid root instance passed as a child!')
+        console.assert(
+            root, 'Root instance not passed for construction of a component ');
+        component.commands = root && root.commands || {};
+        return component;
+      } catch (e) {
+        console.error('Error creating Component Tree:', symbol);
+        throw e;
+      }
+    }
+
+    static createComponentInstance(symbol, props, children, parent) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
-      return new ComponentClass(normalizedProps, children);
-    }
-
-    static createElementInstance(description, component) {
-
-      let element;
-
-      if (description.props) {
-
-        const props = description.props;
-        element = new opr.Toolkit.VirtualElement(description.name, props.key);
-
-        if (opr.Toolkit.isDebug()) {
-          const unknownAttrs = Object.keys(props).filter(
-              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
-          for (const unknownAttr of unknownAttrs) {
-            const suggestion = opr.Toolkit.SUPPORTED_ATTRIBUTES.find(
-                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
-            if (suggestion) {
-              opr.Toolkit.warn(
-                  `Attribute name "${unknownAttr}"`,
-                  `should be spelled "${suggestion}",`,
-                  `check render() method of ${component.constructor.name}`);
-            } else {
-              opr.Toolkit.warn(
-                  `Attribute name "${unknownAttr}" is not valid,`,
-                  `check render() method of ${component.constructor.name}`);
-            }
-          }
-        }
-
-        // attributes
-        Object.keys(props)
-            .filter(attr => opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr))
-            .forEach(attr => {
-              const value = opr.Toolkit.Template.getAttributeValue(props[attr]);
-              if (value !== null && value !== undefined) {
-                element.setAttribute(attr, value);
-              }
-            });
-        // data attributes
-        const dataset = props.dataset || {};
-        Object.keys(dataset).forEach(attr => {
-          const value = opr.Toolkit.Template.getAttributeValue(dataset[attr]);
-          element.setDataAttribute(attr, value);
-        });
-        // class names
-        const classNames = opr.Toolkit.Template.getClassNames(props.class);
-        classNames.forEach(className => {
-          element.addClassName(className);
-        });
-        // style
-        const style = props.style || {};
-        Object.keys(style)
-            .filter(prop => opr.Toolkit.SUPPORTED_STYLES.includes(prop))
-            .forEach(prop => {
-              const value =
-                  opr.Toolkit.Template.getStyleValue(style[prop], prop);
-              if (value !== null && value !== undefined) {
-                element.setStyleProperty(prop, value);
-              }
-            });
-        // listeners
-        Object.keys(props)
-            .filter(event => opr.Toolkit.SUPPORTED_EVENTS.includes(event))
-            .forEach(event => {
-              const name = opr.Toolkit.utils.getEventName(event);
-              const listener = props[event];
-              if (typeof listener === 'function') {
-                element.addListener(name, listener);
-              }
-            });
-        // metadata
-        if (props.metadata) {
-          Object.keys(props.metadata).forEach(key => {
-            element.metadata[key] = props.metadata[key];
-          });
-        }
-      } else {
-        element = new opr.Toolkit.VirtualElement(description.name);
-      }
-      // text
-      if (description.text) {
-        element.text = description.text;
-      }
-      return element;
-    }
-
-    static createFromTemplate(template, previousNode, root, component) {
-      if (template === undefined) {
-        throw new Error('Invalid undefined template!');
-      }
-      if (template === null || template === false || template.length === 0) {
-        return null;
-      }
-      const description = opr.Toolkit.Template.describe(template);
-      if (description.component) {
-        return this.createComponent(
-            description.component, description.props, description.children,
-            previousNode, root);
-      }
-      return this.createElement(description, previousNode, root, component);
-    }
-
-    static createElement(description, previousNode, root, component) {
-      const element = this.createElementInstance(description, component);
-      const getPreviousChild = (index, {key = null}) => {
-        if (element.isCompatible(previousNode)) {
-          if (key !== null) {
-            return previousNode.children.find(child => child.key === key);
-          }
-          return previousNode.children[index];
-        }
-        return null;
-      };
-      if (description.children) {
-        element.children = description.children.map((childTemplate, index) => {
-          const childDescription = opr.Toolkit.Template.describe(childTemplate);
-          const child = this.createFromTemplate(
-              childTemplate,
-              getPreviousChild(index, childDescription.props || {}), root,
-              component);
-          child.parentNode = element;
-          return child;
-        });
-      }
-      return element;
+      return new ComponentClass(normalizedProps, children, parent);
     }
 
     static normalizeProps(ComponentClass, props = {}) {
@@ -2679,88 +2899,14 @@
       return props;
     }
 
-    static createChildTree(root, previousTree) {
-
-      let template;
-      if (root.elementName) {
-        // TODO: do better
-        template = [
-          root.elementName,
-          {
-            metadata: {
-              component: root,
-            },
-          },
-        ];
-      } else {
-        const sandbox = root.sandbox;
-        sandbox.props = root.state;
-        template = root.render.call(sandbox);
-
-        opr.Toolkit.assert(
-            template !== undefined,
-            'Invalid undefined template returned when rendering:', root);
-      }
-      const tree = this.createFromTemplate(template, previousTree, root, root);
-      if (tree) {
-        tree.parentNode = root;
-      }
-      return tree;
-    }
-
-    static createComponent(
-        symbol, props = {}, children = [], previousNode, root) {
-      try {
-        const instance = this.createComponentFrom(symbol, props, children);
-
-        const sandbox = instance.isCompatible(previousNode) ?
-            previousNode.sandbox :
-            instance.sandbox;
-
-        sandbox.props = instance.props;
-        sandbox.children = children;
-
-        let template;
-        if (instance instanceof opr.Toolkit.Root) {
-          const customElementName = instance.constructor.elementName;
-          if (customElementName) {
-            // TODO: static render after element will have attached
-            template = [
-              customElementName,
-            ];
-          } else {
-            // clang-format off
-            /* eslint-disable max-len */
-            throw new Error(
-                `No custom element name defined in "${instance.constructor.name}", implement "static get elementName()" method.`);
-            /* eslint-enable max-len */
-            // clang-format on
-          }
-        } else {
-          instance.commands = root && root.commands || {};
-          template = instance.render.call(sandbox);
-        }
-
-        opr.Toolkit.assert(
-            template !== undefined,
-            'Invalid undefined template returned when rendering:', instance);
-
-        if (template) {
-          const previousChild = previousNode && previousNode.isComponent() ?
-              previousNode.child :
-              null;
-          instance.appendChild(
-              this.createFromTemplate(template, previousChild, root, instance));
-        }
-        return instance;
-      } catch (e) {
-        console.error('Error creating Component Tree:', symbol);
-        throw e;
-      }
-    }
-
-    static async resolve() {
-      // TODO: implement
+    static getComponentClass(path) {
+      const ComponentClass = loader.get(path);
+      opr.Toolkit.assert(ComponentClass, `No component found for: ${path}`);
+      opr.Toolkit.assert(
+          ComponentClass.prototype instanceof opr.Toolkit.Component,
+          'Component class', ComponentClass.name,
+          'must extend opr.Toolkit.Component');
+      return ComponentClass;
     }
   }
 
@@ -2769,15 +2915,28 @@
 
 {
   const INIT = Symbol('init');
+  const SET_STATE = Symbol('set-state');
 
   const coreReducer = (state, command) => {
     if (command.type === INIT) {
       return command.state;
     }
+    if (command.type === SET_STATE) {
+      return command.state;
+    }
     return state;
   };
 
-  coreReducer.commands = {init: state => ({type: INIT, state})};
+  coreReducer.commands = {
+    init: state => ({
+      type: INIT,
+      state,
+    }),
+    setState: state => ({
+      type: SET_STATE,
+      state,
+    }),
+  };
 
   const combineReducers = (...reducers) => {
     const commands = {};
@@ -2788,7 +2947,15 @@
       return state;
     };
     [coreReducer, ...reducers].forEach(reducer => {
-      // TODO: show warning or error when overriding
+      const defined = Object.keys(commands);
+      const incoming = Object.keys(reducer.commands);
+
+      const overriden = incoming.find(key => defined.includes(key));
+      if (overriden) {
+        console.error('Reducer:', reducer, 'conflicts an with exiting one!');
+        throw new Error(`The "${overriden}" command is already defined!`)
+      }
+
       Object.assign(commands, reducer.commands);
     });
     reducer.commands = commands;
@@ -2805,7 +2972,7 @@
     return dispatcher;
   };
 
-  const throttle = (fn, wait = 200) => {
+  const throttle = (fn, wait = 200, delayFirstEvent = false) => {
 
     let lastTimestamp = 0;
     let taskId = null;
@@ -2817,15 +2984,22 @@
       if (!taskId) {
         const timestamp = Date.now();
         const elapsed = timestamp - lastTimestamp;
+        const scheduleTask = delay => {
+          taskId = setTimeout(() => {
+            taskId = null;
+            lastTimestamp = Date.now();
+            return fn.call(context, ...params);
+          }, delay);
+        };
         if (elapsed >= wait) {
           lastTimestamp = timestamp;
-          return fn.call(this, ...args);
+          if (!delayFirstEvent) {
+            return fn.call(this, ...args);
+          }
+          scheduleTask(wait);
+        } else {
+          scheduleTask(wait - elapsed);
         }
-        taskId = setTimeout(() => {
-          taskId = null;
-          lastTimestamp = Date.now();
-          return fn.call(context, ...params);
-        }, wait - elapsed);
       }
       context = this;
       params = args;
@@ -2854,6 +3028,7 @@
       case 'contextMenu':
       case 'crossOrigin':
       case 'dateTime':
+      case 'encType':
       case 'frameBorder':
       case 'hrefLang':
       case 'inputMode':
@@ -2873,13 +3048,6 @@
       case 'useMap':
       case 'tabIndex':
         return name.toLowerCase();
-      case 'formAction':
-      case 'formEncType':
-      case 'formMethod':
-      case 'formNoValidate':
-      case 'formTarget':
-      case 'htmlFor':
-        return name.slice(4).toLowerCase();
       default:
         return lowerDash(name);
     }
@@ -2959,14 +3127,16 @@
     assert(condition, ...messages) {
       if (this.isDebug()) {
         console.assert(condition, ...messages);
-        if (!condition) {
-          throw new Error();
-        }
+      }
+      if (!condition) {
+        throw new Error(messages.join(' '));
       }
     }
 
     warn(...messages) {
-      console.warn(...messages);
+      if (this.isDebug()) {
+        console.warn(...messages);
+      }
     }
 
     getBundleName(root) {
@@ -3009,37 +3179,14 @@
           if (component.prototype instanceof opr.Toolkit.Root) {
             return component;
           }
-          return class RootClass extends opr.Toolkit.Root {
+          return class Anonymous extends opr.Toolkit.Root {
             render() {
-              return component(props);
+              return component(this.props);
             }
           };
         default:
           throw new Error(`Invalid component type: ${type}`);
       }
-    }
-
-    // TODO: is this needed at all?
-    renderStatic(templateProvider, container, props = {}) {
-      const parent = new opr.Toolkit.Root();
-      parent.renderer =
-          new opr.Toolkit.Renderer(container, this.settings, parent);
-      const template = templateProvider(props);
-      if (template) {
-        const element = this.VirtualDOM.createFromTemplate(template);
-        this.Patch.addElement(element, parent).apply();
-      }
-      return props => {
-        const template = templateProvider(props);
-        let element;
-        if (template) {
-          element = this.VirtualDOM.createFromTemplate(template);
-        }
-        const patches = this.Diff.calculate(parent.child, element, parent);
-        for (const patch of patches) {
-          patch.apply();
-        }
-      };
     }
 
     async render(component, container, props = {}) {
@@ -3048,12 +3195,10 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = new RootClass(props);
+      const root = new RootClass(props, container, this.settings);
 
       let destroy;
       const init = async container => {
-        root.renderer =
-            new opr.Toolkit.Renderer(container, this.settings, root);
         destroy = () => {
           this.Lifecycle.onComponentDestroyed(root);
           this.Lifecycle.onComponentDetached(root);
@@ -3104,7 +3249,6 @@
 
   Object.assign(Toolkit.prototype, consts, nodes, {
     Diff: loader.get('core/diff'),
-    Document: loader.get('core/document'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
     Reconciler: loader.get('core/reconciler'),

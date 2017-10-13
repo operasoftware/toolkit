@@ -1,7 +1,7 @@
 {
   const Type = Object.freeze({
 
-    CREATE_ROOT_COMPONENT: Symbol('init-root-component'),
+    INIT_ROOT_COMPONENT: Symbol('init-root-component'),
     UPDATE_COMPONENT: Symbol('update-component'),
 
     ADD_ELEMENT: Symbol('add-element'),
@@ -9,6 +9,8 @@
 
     ADD_COMPONENT: Symbol('add-component'),
     REMOVE_COMPONENT: Symbol('remove-component'),
+
+    REPLACE_CHILD: Symbol('replace-child'),
 
     ADD_ATTRIBUTE: Symbol('add-attribute'),
     REPLACE_ATTRIBUTE: Symbol('replace-attribute'),
@@ -35,6 +37,7 @@
 
     INSERT_CHILD_NODE: Symbol('insert-child-node'),
     MOVE_CHILD_NODE: Symbol('move-child-node'),
+    REPLACE_CHILD_NODE: Symbol('replace-child-node'),
     REMOVE_CHILD_NODE: Symbol('remove-child-node'),
 
     SET_TEXT_CONTENT: Symbol('set-text-content'),
@@ -47,26 +50,21 @@
       Object.assign(this, {type}, props);
     }
 
-    static createRootComponent(root) {
-      return new Patch(Type.CREATE_ROOT_COMPONENT, {
+    static initRootComponent(root) {
+      return new Patch(Type.INIT_ROOT_COMPONENT, {
         root,
         apply: function() {
-          // TODO: investigate
-          root.props = null;
+          root.container.appendChild(root.ref);
         },
       });
     }
 
-    static updateComponent(target, props) {
+    static updateComponent(target) {
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
-        props,
+        props: target.props,
         apply: function() {
           this.prevProps = target.props;
-          if (target instanceof opr.Toolkit.Root) {
-            return;
-          }
-          target.props = props;
         },
       });
     }
@@ -78,7 +76,6 @@
         target,
         apply: function() {
           target.setAttribute(name, value);
-          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         },
       });
     }
@@ -90,7 +87,6 @@
         target,
         apply: function() {
           target.setAttribute(name, value);
-          opr.Toolkit.Document.setAttribute(target.ref, name, value);
         },
       });
     }
@@ -101,7 +97,6 @@
         target,
         apply: function() {
           target.removeAttribute(name);
-          opr.Toolkit.Document.removeAttribute(target.ref, name);
         },
       });
     }
@@ -113,7 +108,6 @@
         target,
         apply: function() {
           target.setDataAttribute(name, value);
-          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         },
       });
     }
@@ -125,7 +119,6 @@
         target,
         apply: function() {
           target.setDataAttribute(name, value);
-          opr.Toolkit.Document.setDataAttribute(target.ref, name, value);
         },
       });
     }
@@ -136,7 +129,6 @@
         target,
         apply: function() {
           target.removeDataAttribute(name);
-          opr.Toolkit.Document.removeDataAttribute(target.ref, name);
         },
       });
     }
@@ -147,7 +139,6 @@
         target,
         apply: function() {
           target.setStyleProperty(property, value);
-          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         },
       });
     }
@@ -159,7 +150,6 @@
         target,
         apply: function() {
           target.setStyleProperty(property, value);
-          opr.Toolkit.Document.setStyleProperty(target.ref, property, value);
         },
       });
     }
@@ -170,7 +160,6 @@
         target,
         apply: function() {
           target.removeStyleProperty(property);
-          opr.Toolkit.Document.removeStyleProperty(target.ref, property);
         },
       });
     }
@@ -181,7 +170,6 @@
         target,
         apply: function() {
           target.addClassName(name);
-          opr.Toolkit.Document.addClassName(target.ref, name);
         },
       });
     }
@@ -192,46 +180,41 @@
         target,
         apply: function() {
           target.removeClassName(name);
-          opr.Toolkit.Document.removeClassName(target.ref, name);
         },
       });
     }
 
-    static addListener(event, listener, target) {
+    static addListener(name, listener, target) {
       return new Patch(Type.ADD_LISTENER, {
-        event,
+        name,
         listener,
         target,
         apply: function() {
-          target.addListener(event, listener);
-          opr.Toolkit.Document.addEventListener(target.ref, event, listener);
+          target.addListener(name, listener);
         },
       });
     }
 
-    static replaceListener(event, removed, added, target) {
+    static replaceListener(name, removed, added, target) {
       return new Patch(Type.REPLACE_LISTENER, {
-        event,
+        name,
         removed,
         added,
         target,
         apply: function() {
-          target.removeListener(event, removed);
-          opr.Toolkit.Document.removeEventListener(target.ref, event, removed);
-          target.addListener(event, added);
-          opr.Toolkit.Document.addEventListener(target.ref, event, added);
+          target.removeListener(name, removed);
+          target.addListener(name, added);
         },
       });
     }
 
-    static removeListener(event, listener, target) {
+    static removeListener(name, listener, target) {
       return new Patch(Type.REMOVE_LISTENER, {
-        event,
+        name,
         listener,
         target,
         apply: function() {
-          target.removeListener(event, listener);
-          opr.Toolkit.Document.removeEventListener(target.ref, event, listener);
+          target.removeListener(name, listener);
         },
       });
     }
@@ -242,8 +225,7 @@
         value,
         target,
         apply: function() {
-          target.metadata[key] = value;
-          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+          target.setMetadata(key, value);
         },
       });
     }
@@ -254,8 +236,7 @@
         value,
         target,
         apply: function() {
-          target.metadata[key] = value;
-          opr.Toolkit.Document.setMetadata(target.ref, key, value);
+          target.setMetadata(key, value);
         },
       });
     }
@@ -265,8 +246,7 @@
         key,
         target,
         apply: function() {
-          delete target.metadata[key];
-          opr.Toolkit.Document.removeMetadata(target.ref, key);
+          target.removeMetadata(key);
         },
       });
     }
@@ -276,10 +256,9 @@
         element,
         parent,
         apply: function() {
+          const ref = parent.ref;
           parent.appendChild(element);
-          opr.Toolkit.Document.attachElementTree(element, domElement => {
-            parent.parentElement.ref.appendChild(domElement);
-          });
+          ref.replaceWith(element.ref);
         },
       });
     }
@@ -289,8 +268,9 @@
         element,
         parent,
         apply: function() {
+          const ref = element.ref;
           parent.removeChild(element);
-          element.ref.remove();
+          ref.replaceWith(parent.ref);
         },
       });
     }
@@ -300,25 +280,9 @@
         component,
         parent,
         apply: function() {
-          const comment = parent.placeholder.ref;
-          const parentDomNode = parent.parentElement.ref;
-          if (parent.isRoot()) {
-            parent.appendChild(component);
-            opr.Toolkit.Document.attachElementTree(component, domNode => {
-              if (parentDomNode.hasChildNodes()) {
-                opr.Toolkit.Document.replaceChild(
-                    domNode, parentDomNode.firstChild, parentDomNode);
-              } else {
-                opr.Toolkit.Document.appendChild(domNode, parentDomNode);
-              }
-            });
-          } else {
-            parent.appendChild(component);
-            opr.Toolkit.Document.attachElementTree(component, domNode => {
-              opr.Toolkit.Document.replaceChild(
-                  domNode, comment, parentDomNode);
-            });
-          }
+          const ref = parent.ref;
+          parent.appendChild(component);
+          ref.replaceWith(component.ref);
         },
       });
     }
@@ -328,13 +292,22 @@
         component,
         parent,
         apply: function() {
-          const domChildNode =
-              (component.childElement || component.placeholder).ref;
+          const ref = component.ref;
           parent.removeChild(component);
-          parent.placeholder.ref =
-              opr.Toolkit.Document.createComment(parent.placeholder);
-          parent.parentElement.ref.replaceChild(
-              parent.placeholder.ref, domChildNode);
+          ref.replaceWith(parent.ref);
+        },
+      });
+    }
+
+    static replaceChild(child, node, parent) {
+      return new Patch(Type.REPLACE_CHILD, {
+        child,
+        node,
+        parent,
+        apply: function() {
+          const ref = parent.ref;
+          parent.replaceChild(child, node);
+          ref.replaceWith(node.ref);
         },
       });
     }
@@ -346,9 +319,6 @@
         parent,
         apply: function() {
           parent.insertChild(node, at);
-          opr.Toolkit.Document.attachElementTree(node, domNode => {
-            parent.ref.insertBefore(domNode, parent.ref.childNodes[at]);
-          });
         },
       });
     }
@@ -361,9 +331,19 @@
         parent,
         apply: function() {
           parent.moveChild(node, from, to);
-          opr.Toolkit.Document.moveChild(node.ref, from, to, parent.ref);
         },
       });
+    }
+
+    static replaceChildNode(child, node, parent) {
+      return new Patch(Type.REPLACE_CHILD_NODE, {
+        child,
+        node,
+        parent,
+        apply: function() {
+          parent.replaceChild(child, node);
+        },
+      })
     }
 
     static removeChildNode(node, at, parent) {
@@ -373,7 +353,6 @@
         parent,
         apply: function() {
           parent.removeChild(node);
-          opr.Toolkit.Document.removeChild(node.ref, parent.ref);
         },
       });
     }
@@ -383,8 +362,7 @@
         element,
         text,
         apply: function() {
-          element.text = text;
-          opr.Toolkit.Document.setTextContent(element.ref, text);
+          element.setTextContent(text);
         },
       });
     }
@@ -393,8 +371,7 @@
       return new Patch(Type.REMOVE_TEXT_CONTENT, {
         element,
         apply: function() {
-          element.text = null;
-          opr.Toolkit.Document.setTextContent(element.ref, '');
+          element.removeTextContent();
         },
       });
     }

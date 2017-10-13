@@ -10,6 +10,7 @@
     'elementName',
     'getKey',
     'id',
+    'stopEvent',
     'ref',
   ];
   const methods = [
@@ -70,12 +71,7 @@
           }
           return undefined;
         },
-        set: (target, property, value) => {
-          if ([CHILDREN, PROPS].includes(property)) {
-            state[property] = value;
-          }
-          return true;
-        },
+        set: (target, property, value) => true,
       });
     }
   }

@@ -32,7 +32,6 @@ global.HTMLElement = class {};
 
   Object.assign(Toolkit.prototype, consts, nodes, {
     Diff: require('../../src/core/diff.js'),
-    Document: require('../../src/core/document.js'),
     Lifecycle: require('../../src/core/lifecycle.js'),
     Patch: require('../../src/core/patch.js'),
     Reconciler: require('../../src/core/reconciler.js'),
@@ -47,6 +46,8 @@ global.HTMLElement = class {};
   global.opr = {
     Toolkit: new Toolkit(),
   };
+
+  global.utils = require('./utils.js');
 
   global.CustomEvent = class {
 

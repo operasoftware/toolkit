@@ -36,14 +36,16 @@
     assert(condition, ...messages) {
       if (this.isDebug()) {
         console.assert(condition, ...messages);
-        if (!condition) {
-          throw new Error();
-        }
+      }
+      if (!condition) {
+        throw new Error(messages.join(' '));
       }
     }
 
     warn(...messages) {
-      console.warn(...messages);
+      if (this.isDebug()) {
+        console.warn(...messages);
+      }
     }
 
     getBundleName(root) {
@@ -86,37 +88,14 @@
           if (component.prototype instanceof opr.Toolkit.Root) {
             return component;
           }
-          return class RootClass extends opr.Toolkit.Root {
+          return class Anonymous extends opr.Toolkit.Root {
             render() {
-              return component(props);
+              return component(this.props);
             }
           };
         default:
           throw new Error(`Invalid component type: ${type}`);
       }
-    }
-
-    // TODO: is this needed at all?
-    renderStatic(templateProvider, container, props = {}) {
-      const parent = new opr.Toolkit.Root();
-      parent.renderer =
-          new opr.Toolkit.Renderer(container, this.settings, parent);
-      const template = templateProvider(props);
-      if (template) {
-        const element = this.VirtualDOM.createFromTemplate(template);
-        this.Patch.addElement(element, parent).apply();
-      }
-      return props => {
-        const template = templateProvider(props);
-        let element;
-        if (template) {
-          element = this.VirtualDOM.createFromTemplate(template);
-        }
-        const patches = this.Diff.calculate(parent.child, element, parent);
-        for (const patch of patches) {
-          patch.apply();
-        }
-      };
     }
 
     async render(component, container, props = {}) {
@@ -125,12 +104,10 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = new RootClass(props);
+      const root = new RootClass(props, container, this.settings);
 
       let destroy;
       const init = async container => {
-        root.renderer =
-            new opr.Toolkit.Renderer(container, this.settings, root);
         destroy = () => {
           this.Lifecycle.onComponentDestroyed(root);
           this.Lifecycle.onComponentDetached(root);

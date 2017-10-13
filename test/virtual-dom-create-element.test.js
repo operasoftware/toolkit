@@ -1,13 +1,20 @@
-describe('Virtual Element => create', () => {
+describe('Virtual DOM => create element', () => {
 
-  const VirtualElement = opr.Toolkit.VirtualElement;
+  const {
+    VirtualElement,
+    VirtualDOM,
+    Template,
+  } = opr.Toolkit;
 
-  const createElement = opr.Toolkit.VirtualDOM.createElementInstance;
+  const createElement = details =>
+      VirtualDOM.createFromDescription(Template.normalize(details), null, null);
 
   it('creates an empty element', () => {
 
     // given
-    const description = {name: 'span'};
+    const description = {
+      element: 'span',
+    };
 
     // when
     const element = createElement(description);
@@ -15,23 +22,19 @@ describe('Virtual Element => create', () => {
     // then
     assert(element instanceof VirtualElement);
     assert.equal(element.name, 'span');
-    assert.deepEqual(element.attrs, {});
-    assert.deepEqual(element.listeners, {});
-    assert.equal(element.text, null);
-    assert.deepEqual(element.children, []);
   });
 
   it('creates an empty element with attributes and listeners', () => {
 
     // given
-    const onChangeListener = () => {};
+    const onChange = () => {};
     const description = {
-      name: 'input',
+      element: 'input',
       props: {
         type: 'text',
         tabIndex: 1,
         autoFocus: true,
-        onChange: onChangeListener,
+        onChange,
       },
     };
 
@@ -47,7 +50,7 @@ describe('Virtual Element => create', () => {
       autoFocus: 'true',
     });
     assert.deepEqual(element.listeners, {
-      'change': onChangeListener,
+      onChange,
     });
     assert.equal(element.text, null);
     assert.deepEqual(element.children, []);
@@ -56,7 +59,10 @@ describe('Virtual Element => create', () => {
   it('creates a text element', () => {
 
     // given
-    const description = {name: 'div', text: 'Text'};
+    const description = {
+      element: 'div',
+      text: 'Text',
+    };
 
     // when
     const element = createElement(description);
@@ -75,7 +81,7 @@ describe('Virtual Element => create', () => {
     // given
     const onClickListener = () => {};
     const description = {
-      name: 'a',
+      element: 'a',
       props: {
         href: 'http://www.example.com/',
         target: '_blank',
@@ -97,7 +103,7 @@ describe('Virtual Element => create', () => {
       'title': 'Example',
     });
     assert.deepEqual(element.listeners, {
-      'click': onClickListener,
+      onClick: onClickListener,
     });
     assert.equal(element.text, 'Example');
     assert.deepEqual(element.children, []);
@@ -107,7 +113,7 @@ describe('Virtual Element => create', () => {
 
     // given
     const description = {
-      name: 'a',
+      element: 'a',
       props: {
         href: null,
         target: undefined,
@@ -132,11 +138,11 @@ describe('Virtual Element => create', () => {
   it('ignores listeners not being functions', () => {
 
     // given
-    const onClickListener = () => {};
+    const onClick = () => {};
     const description = {
-      name: 'a',
+      element: 'a',
       props: {
-        onClick: onClickListener,
+        onClick: onClick,
         onChange: 1,
         onSubmit: false,
         onCopy: 'copy',
@@ -154,7 +160,7 @@ describe('Virtual Element => create', () => {
     assert.equal(element.name, 'a');
     assert.deepEqual(element.attrs, {});
     assert.deepEqual(element.listeners, {
-      'click': onClickListener,
+      onClick,
     });
     assert.equal(element.text, 'Link');
     assert.deepEqual(element.children, []);
@@ -166,7 +172,7 @@ describe('Virtual Element => create', () => {
 
       // given
       const description = {
-        name: 'div',
+        element: 'div',
         props: {
           title: 'Title',
           value: 'Value',
@@ -189,7 +195,7 @@ describe('Virtual Element => create', () => {
 
       // given
       const description = {
-        name: 'span',
+        element: 'span',
         props: {
           height: 0,
           width: 200,
@@ -212,7 +218,7 @@ describe('Virtual Element => create', () => {
 
       // given
       const description = {
-        name: 'input',
+        element: 'input',
         props: {
           checked: true,
           selected: true,
@@ -235,7 +241,7 @@ describe('Virtual Element => create', () => {
 
       // given
       const description = {
-        name: 'section',
+        element: 'section',
         props: {
           title: undefined,
           type: null,
@@ -255,8 +261,8 @@ describe('Virtual Element => create', () => {
     describe('add "class" attribute', () => {
 
       const createElementWithClasses =
-          (name, classNames) => {
-            const description = {name, props: {class: classNames}};
+          (element, classNames) => {
+            const description = {element, props: {class: classNames}};
             return createElement(description);
           }
 
@@ -271,7 +277,7 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.classNames, ['bar', 'foo']);
       });
 
       it('supports arrays', () => {
@@ -285,7 +291,7 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.classNames, ['bar', 'foo']);
       });
 
       it('supports objects', () => {
@@ -304,7 +310,7 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.classNames, ['bar', 'foo']);
       });
 
       it('supports nesting', () => {
@@ -326,7 +332,7 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.classNames, ['bar', 'foo']);
       });
 
       it('removes excess spaces', () => {
@@ -350,7 +356,7 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar', 'test']);
+        assert.deepEqual(element.classNames, ['bar', 'foo', 'test']);
       });
 
       it('removes redundant classes', () => {
@@ -364,15 +370,20 @@ describe('Virtual Element => create', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.classNames, ['bar', 'foo']);
       });
     });
 
     describe('add "style" attribute', () => {
 
       const createElementWithStyle =
-          (name, style) => {
-            const description = {name, props: {style}};
+          (element, style) => {
+            const description = {
+              element,
+              props: {
+                style,
+              },
+            };
             return createElement(description);
           }
 
@@ -435,8 +446,15 @@ describe('Virtual Element => create', () => {
       describe('add "filter"', () => {
 
         const createElementWithFilter =
-            (name, filter) => {
-              const description = {name, props: {style: {filter}}};
+            (element, filter) => {
+              const description = {
+                element,
+                props: {
+                  style: {
+                    filter,
+                  },
+                }
+              };
               return createElement(description);
             }
 
@@ -463,8 +481,15 @@ describe('Virtual Element => create', () => {
       describe('add "transform"', () => {
 
         const createElementWithTransform =
-            (name, transform) => {
-              const description = {name, props: {style: {transform}}};
+            (element, transform) => {
+              const description = {
+                element,
+                props: {
+                  style: {
+                    transform,
+                  },
+                }
+              };
               return createElement(description);
             }
 

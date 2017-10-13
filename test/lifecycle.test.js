@@ -1,8 +1,11 @@
 describe('Lifecycle', () => {
 
-  const Lifecycle = opr.Toolkit.Lifecycle;
-  const Patch = opr.Toolkit.Patch;
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {
+    Lifecycle,
+    Patch,
+    Template,
+    VirtualDOM,
+  } = opr.Toolkit;
 
   let container;
   let stub = sinon.spy();
@@ -68,7 +71,7 @@ describe('Lifecycle', () => {
 
     let node = null;
     if (template) {
-      node = VirtualDOM.createFromTemplate(template);
+      node = utils.createFromTemplate(template);
       if (node.isElement()) {
         Patch.addElement(node, app).apply();
       }
@@ -81,13 +84,49 @@ describe('Lifecycle', () => {
 
   const ComponentClass = class extends AbstractComponent {
     render() {
-      return this.children ? this.children[0] : null;
+      return this.children[0] || null;
+    }
+    onCreated() {
+      stub('onCreated', this);
+    }
+    onAttached() {
+      stub('onAttached', this);
+    }
+    onPropsReceived(props) {
+      stub('onPropsReceived', this, props);
+    }
+    onUpdated(props) {
+      stub('onUpdated', this, props);
+    }
+    onDestroyed() {
+      stub('onDestroyed', this);
+    }
+    onDetached() {
+      stub('onDetached', this);
     }
   };
 
   const SubcomponentClass = class extends AbstractComponent {
     render() {
-      return this.children ? this.children[0] : null;
+      return this.children[0] || null;
+    }
+    onCreated() {
+      stub('onCreated', this);
+    }
+    onAttached() {
+      stub('onAttached', this);
+    }
+    onPropsReceived(props) {
+      stub('onPropsReceived', this, props);
+    }
+    onUpdated(props) {
+      stub('onUpdated', this, props);
+    }
+    onDestroyed() {
+      stub('onDestroyed', this);
+    }
+    onDetached() {
+      stub('onDetached', this);
     }
   };
 
@@ -103,14 +142,17 @@ describe('Lifecycle', () => {
   beforeEach(() => {
     container = document.createElement('app');
     stub.reset();
-    sinon.stub(VirtualDOM, 'getComponentClass', def => {
-      switch (def) {
+    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      if (typeof symbol === 'string') {
+        symbol = Symbol.for(symbol);
+      }
+      switch (symbol) {
         case Component:
           return ComponentClass;
         case Subcomponent:
           return SubcomponentClass;
         default:
-          throw new Error('Unknown definition: ' + def);
+          throw new Error('Unknown definition: ' + symbol);
       }
     });
   });
@@ -131,7 +173,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const patches = [Patch.createRootComponent(app)];
+        const patches = [Patch.initRootComponent(app)];
 
         // when
         Lifecycle.beforeUpdate(patches);
@@ -144,7 +186,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new opr.Toolkit.Root();
-        const component = VirtualDOM.createFromTemplate([Component]);
+        const component = utils.createFromTemplate([Component]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
@@ -158,7 +200,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = VirtualDOM.createFromTemplate([
+        const component = utils.createFromTemplate([
           Component,
           [
             Subcomponent,
@@ -177,7 +219,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = VirtualDOM.createFromTemplate([
+        const element = utils.createFromTemplate([
           'div',
           [
             Component,
@@ -196,7 +238,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = VirtualDOM.createFromTemplate([
+        const element = utils.createFromTemplate([
           'div',
           [
             Component,
@@ -223,7 +265,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const component = VirtualDOM.createFromTemplate([
+        const component = utils.createFromTemplate([
           Component,
         ]);
         const patches = [Patch.insertChildNode(component, 0, element)];
@@ -244,7 +286,7 @@ describe('Lifecycle', () => {
             'span',
           ],
         ]);
-        const component = VirtualDOM.createFromTemplate([
+        const component = utils.createFromTemplate([
           Component,
           [
             Subcomponent,
@@ -265,7 +307,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const spanElement = VirtualDOM.createFromTemplate([
+        const spanElement = utils.createFromTemplate([
           'span',
           [
             Component,
@@ -286,7 +328,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const spanElement = VirtualDOM.createFromTemplate([
+        const spanElement = utils.createFromTemplate([
           'span',
           [
             Component,
@@ -318,7 +360,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const patches = [Patch.createRootComponent(app)];
+        const patches = [Patch.initRootComponent(app)];
 
         // when
         Lifecycle.afterUpdate(patches);
@@ -331,7 +373,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = VirtualDOM.createFromTemplate([Component]);
+        const component = utils.createFromTemplate([Component]);
         const patches = [Patch.addComponent(component, app)];
 
         // when
@@ -345,7 +387,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const component = VirtualDOM.createFromTemplate([
+        const component = utils.createFromTemplate([
           Component,
           [
             Subcomponent,
@@ -364,7 +406,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = VirtualDOM.createFromTemplate([
+        const element = utils.createFromTemplate([
           'div',
           [
             Component,
@@ -383,7 +425,7 @@ describe('Lifecycle', () => {
 
         // given
         const app = new App();
-        const element = VirtualDOM.createFromTemplate([
+        const element = utils.createFromTemplate([
           'div',
           [
             Component,
@@ -410,7 +452,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const component = VirtualDOM.createFromTemplate([
+        const component = utils.createFromTemplate([
           Component,
         ]);
         const patches = [Patch.insertChildNode(component, 0, element)];
@@ -431,8 +473,7 @@ describe('Lifecycle', () => {
             'span',
           ],
         ]);
-        const component =
-            VirtualDOM.createFromTemplate([Component, [Subcomponent]]);
+        const component = utils.createFromTemplate([Component, [Subcomponent]]);
         const patches = [Patch.insertChildNode(component, 1, element)];
 
         // when
@@ -448,7 +489,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const spanElement = VirtualDOM.createFromTemplate([
+        const spanElement = utils.createFromTemplate([
           'span',
           [
             Component,
@@ -469,7 +510,7 @@ describe('Lifecycle', () => {
         const [app, element] = createApp([
           'div',
         ]);
-        const spanElement = VirtualDOM.createFromTemplate([
+        const spanElement = utils.createFromTemplate([
           'span',
           [
             Component,
@@ -501,7 +542,10 @@ describe('Lifecycle', () => {
     it('=> is called before updating component', () => {
 
       // given
+      const prevProps = {};
       const component = new ComponentClass();
+      component.props = prevProps;
+
       const props = {
         test: 'test',
       };
@@ -511,7 +555,7 @@ describe('Lifecycle', () => {
       Lifecycle.beforeUpdate(patches);
 
       // then
-      assertOnPropsReceivedCalled(component, props);
+      assertOnPropsReceivedCalled(component, prevProps);
     });
   });
 

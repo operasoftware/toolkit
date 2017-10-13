@@ -207,8 +207,6 @@ describe('Utils', () => {
       ['tabIndex', 'tabindex'],
       ['autoPlay', 'autoplay'],
       ['acceptCharset', 'accept-charset'],
-      ['htmlFor', 'for'],
-      ['formAction', 'action'],
       ['noValidate', 'novalidate'],
     ];
 

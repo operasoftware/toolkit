@@ -11,9 +11,9 @@
       service = await loader.require('bubbles/bubbles-service');
     }
 
-    static get elementName() {
-      return 'bubbles-demo';
-    }
+    // static get elementName() {
+    //  return 'bubbles-demo';
+    // }
 
     static get styles() {
       return [

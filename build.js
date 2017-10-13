@@ -31,7 +31,6 @@ const Consts = normalizeModule('core/consts');
 const Nodes = normalizeModule('core/nodes');
 
 const Diff = normalizeModule('core/diff');
-const Document = normalizeModule('core/document');
 const Lifecycle = normalizeModule('core/lifecycle');
 const Patch = normalizeModule('core/patch');
 const Reconciler = normalizeModule('core/reconciler');
@@ -46,7 +45,7 @@ const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 const release = merge(
-                    ModuleLoader, Consts, Nodes, Diff, Document, Lifecycle,
+                    ModuleLoader, Consts, Nodes, Diff, Lifecycle,
                     Patch, Reconciler, Renderer, Sandbox, Service, Template,
                     VirtualDOM, utils, Toolkit, Release)
                     .replace(/\n\n\n/g, '\n\n');

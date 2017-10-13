@@ -1,6 +1,10 @@
 describe('Nodes', () => {
 
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {
+    VirtualDOM,
+    VirtualElement,
+    VirtualNode,
+  } = opr.Toolkit;
 
   const Component = Symbol.for('Component');
 
@@ -18,12 +22,9 @@ describe('Nodes', () => {
         return template;
       }
     }
-    const app = new RootClass();
-    app.renderer = {
-      container,
-    };
+    const app = new RootClass({}, container, {plugins: []});
 
-    const node = VirtualDOM.createFromTemplate(template);
+    const node = utils.createFromTemplate(template);
     if (node) {
       app.appendChild(node);
     }
@@ -32,6 +33,9 @@ describe('Nodes', () => {
 
   beforeEach(() => {
     sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      if (typeof symbol === 'string') {
+        symbol = Symbol.for(symbol);
+      }
       switch (symbol) {
         case Component:
           return ComponentClass;
@@ -43,41 +47,48 @@ describe('Nodes', () => {
     VirtualDOM.getComponentClass.restore();
   });
 
+  const root = new opr.Toolkit.Root({}, document.createElement('section'), {
+    plugins: [],
+  });
+  const component = new opr.Toolkit.Component({}, [], null);
+  const element = new VirtualElement('section');
+  const comment = new opr.Toolkit.Comment('Dummy', null);
+
   describe('get node type', () => {
 
     it('returns "root" for a root', () => {
-      assert.equal(new opr.Toolkit.Root().nodeType, 'root');
+      assert.equal(root.nodeType, 'root');
     });
 
     it('returns "component" for a component', () => {
-      assert.equal(new opr.Toolkit.Component().nodeType, 'component');
+      assert.equal(component.nodeType, 'component');
     });
 
     it('returns "element" for an element', () => {
-      assert.equal(new opr.Toolkit.VirtualElement().nodeType, 'element');
+      assert.equal(element.nodeType, 'element');
     });
 
     it('returns "comment" for a comment', () => {
-      assert.equal(new opr.Toolkit.Comment().nodeType, 'comment');
+      assert.equal(comment.nodeType, 'comment');
     });
   });
 
   describe('is root', () => {
 
     it('returns true for a root', () => {
-      assert(new opr.Toolkit.Root().isRoot());
+      assert(root.isRoot());
     });
 
     it('returns false for a component', () => {
-      assert(!new opr.Toolkit.Component().isRoot());
+      assert(!component.isRoot());
     });
 
     it('returns false for an element', () => {
-      assert(!new opr.Toolkit.VirtualElement().isRoot());
+      assert(!element.isRoot());
     });
 
     it('returns false for a comment', () => {
-      assert(!new opr.Toolkit.Comment().isRoot());
+      assert(!comment.isRoot());
     });
 
   });
@@ -85,19 +96,19 @@ describe('Nodes', () => {
   describe('is component', () => {
 
     it('returns true for a root', () => {
-      assert(new opr.Toolkit.Root().isComponent());
+      assert(root.isComponent());
     });
 
     it('returns true for a component', () => {
-      assert(new opr.Toolkit.Component().isComponent());
+      assert(component.isComponent());
     });
 
     it('returns false for an element', () => {
-      assert(!new opr.Toolkit.VirtualElement().isComponent());
+      assert(!element.isComponent());
     });
 
     it('returns false for a comment', () => {
-      assert(!new opr.Toolkit.Comment().isComponent());
+      assert(!comment.isComponent());
     });
 
   });
@@ -105,19 +116,19 @@ describe('Nodes', () => {
   describe('is element', () => {
 
     it('returns false for a root', () => {
-      assert(!new opr.Toolkit.Root().isElement());
+      assert(!root.isElement());
     });
 
     it('returns false for a component', () => {
-      assert(!new opr.Toolkit.Component().isElement());
+      assert(!component.isElement());
     });
 
     it('returns true for an element', () => {
-      assert(new opr.Toolkit.VirtualElement().isElement());
+      assert(element.isElement());
     });
 
     it('returns false for a comment', () => {
-      assert(!new opr.Toolkit.Comment().isElement());
+      assert(!comment.isElement());
     });
 
   });
@@ -125,79 +136,50 @@ describe('Nodes', () => {
   describe('is comment', () => {
 
     it('returns false for a root', () => {
-      assert(!new opr.Toolkit.Root().isComment());
+      assert(!root.isComment());
     });
 
     it('returns false for a component', () => {
-      assert(!new opr.Toolkit.Component().isComment());
+      assert(!component.isComment());
     });
 
     it('returns false for an element', () => {
-      assert(!new opr.Toolkit.VirtualElement().isComment());
+      assert(!element.isComment());
     });
 
     it('returns true for a comment', () => {
-      assert(new opr.Toolkit.Comment().isComment());
+      assert(comment.isComment());
     });
   });
 
   describe('get id', () => {
 
     it('returns a valid id for a root component', () => {
-      assert.equal(new opr.Toolkit.Root().id.length, 36);
+      assert.equal(root.id.length, 36);
     });
 
     it('returns a valid id for a component', () => {
-      assert.equal(new opr.Toolkit.Component().id.length, 36);
+      assert.equal(component.id.length, 36);
     });
 
     it('returns a valid id for an element', () => {
-      assert.equal(new opr.Toolkit.VirtualElement().id.length, 36);
+      assert.equal(element.id.length, 36);
     });
   });
 
   describe('get parent element', () => {
 
-    it('returns container for an app component', () => {
+    it('returns null for a root component', () => {
 
       // given
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, null);
+      const root = createApp(container, null);
 
       // then
-      assert.equal(app.parentElement.ref, container);
-    });
-
-    it('returns container for a top-level element', () => {
-
-      // given
-      const container = document.createElement('container');
-
-      // when
-      const app = createApp(container, [
-        'div',
-      ]);
-      const element = app.child;
-
-      // then
-      assert(element.isElement());
-      assert.equal(element.parentElement.ref, container);
-    })
-
-    it('returns container for a top-level component', () => {
-
-      // given
-      const container = document.createElement('container');
-
-      // when
-      const app = createApp(container, [Component]);
-      const component = app.child;
-
-      // then
-      assert(component.isComponent());
-      assert.equal(component.parentElement.ref, container);
+      assert.equal(root.parentElement, null);
+      assert.equal(root.container, container);
     });
 
     it('returns parent element for a child component', () => {
@@ -278,9 +260,9 @@ describe('Nodes', () => {
     });
   });
 
-  describe('get root element', () => {
+  describe('get container', () => {
 
-    it('returns container for an app component', () => {
+    it('returns container for a root component', () => {
 
       // given
       const container = document.createElement('container');
@@ -289,7 +271,7 @@ describe('Nodes', () => {
       const app = createApp(container, null);
 
       // then
-      assert.equal(app.rootElement.ref, container);
+      assert.equal(app.container, container);
     });
 
     it('returns container for a top-level element', () => {
@@ -305,7 +287,7 @@ describe('Nodes', () => {
 
       // then
       assert(element.isElement());
-      assert.equal(element.rootElement.ref, container);
+      assert.equal(element.container, container);
     })
 
     it('returns container for a top-level component', () => {
@@ -319,7 +301,7 @@ describe('Nodes', () => {
 
       // then
       assert(component.isComponent());
-      assert.equal(component.rootElement.ref, container);
+      assert.equal(component.container, container);
     });
 
     it('returns container for a nested element', () => {
@@ -338,7 +320,7 @@ describe('Nodes', () => {
 
       // then
       assert(span.isElement());
-      assert.equal(span.rootElement.ref, container);
+      assert.equal(span.container, container);
     });
 
     it('returns container for a nested component', () => {
@@ -357,7 +339,7 @@ describe('Nodes', () => {
 
       // then
       assert(component.isComponent());
-      assert.equal(component.rootElement.ref, container);
+      assert.equal(component.container, container);
     });
   });
 
@@ -368,7 +350,7 @@ describe('Nodes', () => {
       it('returns undefined by default', () => {
 
         // given
-        const component = new opr.Toolkit.Root();
+        const component = root;
 
         // then
         assert.equal(component.render(), undefined);
@@ -381,10 +363,14 @@ describe('Nodes', () => {
 
         // given
         const dispatchEvent = sinon.spy();
-        const element = new opr.Toolkit.VirtualElement();
-        const component = new opr.Toolkit.Component()
+        const container = document.createElement('container');
+        container.dispatchEvent = dispatchEvent;
+        
+        const root = new opr.Toolkit.Root({}, container, {});
+        const element = new opr.Toolkit.VirtualElement('section');
+        root.appendChild(element);
+        const component = new opr.Toolkit.Component({}, [], null);
         element.insertChild(component);
-        element.ref = {dispatchEvent};
         const eventName = 'event-name';
         const data = {view: 'speeddial'};
 
@@ -469,28 +455,6 @@ describe('Nodes', () => {
       });
     });
 
-    describe('lifecycle methods', () => {
-
-      const methods = [
-        'onCreated',
-        'onAttached',
-        'onPropsReceived',
-        'onUpdated',
-        'onDestroyed',
-        'onDetached',
-      ];
-
-      const component = new opr.Toolkit.Root();
-
-      methods.forEach(
-          method => {
-
-              it(`defines ${method}()`, () => {
-                assert.equal(typeof component[method], 'function');
-                assert.equal(component[method](), undefined);
-              })});
-    });
-
     describe('append child', () => {
 
       it('removes the comment', () => {
@@ -529,7 +493,7 @@ describe('Nodes', () => {
 
           // given
           const component = new opr.Toolkit.Component();
-          const element = new opr.Toolkit.VirtualElement();
+          const element = new opr.Toolkit.VirtualElement('span');
 
           // when
           component.appendChild(element);
@@ -677,7 +641,7 @@ describe('Nodes', () => {
 
         // given
         const component = new opr.Toolkit.Component();
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('span');
 
         // when
         component.appendChild(element);
@@ -707,7 +671,7 @@ describe('Nodes', () => {
         // given
         const component = new opr.Toolkit.Component();
         const subcomponent = new opr.Toolkit.Component();
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('span');
 
         // when
         component.appendChild(subcomponent);
@@ -732,7 +696,9 @@ describe('Nodes', () => {
 
   describe('Root', () => {
 
-    const component = new opr.Toolkit.Root();
+    const container = document.createElement('body');
+    const settings = {plugins: []};
+    const component = new opr.Toolkit.Root({}, container, settings);
 
     describe('get initial state', () => {
 
@@ -756,8 +722,8 @@ describe('Nodes', () => {
       it('inserts an element', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement();
-        const child = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('section');
+        const child = new opr.Toolkit.VirtualElement('div');
 
         // when
         element.insertChild(child);
@@ -770,7 +736,7 @@ describe('Nodes', () => {
       it('inserts a component', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('section');
         const child = new opr.Toolkit.Component();
 
         // when
@@ -784,7 +750,7 @@ describe('Nodes', () => {
       it('inserts child at the beginning', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('section');
         const component = new opr.Toolkit.Component();
         element.insertChild(component);
         const child = new opr.Toolkit.Component();
@@ -800,29 +766,28 @@ describe('Nodes', () => {
       it('inserts child in the middle', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('section');
         const firstComponent = new opr.Toolkit.Component();
         element.insertChild(firstComponent);
-        const secondComponent = new opr.Toolkit.VirtualElement();
-        element.insertChild(secondComponent);
-        const child = new opr.Toolkit.VirtualElement();
+        const div = new opr.Toolkit.VirtualElement('div');
+        element.insertChild(div);
+        const span = new opr.Toolkit.VirtualElement('span');
 
         // when
-        element.insertChild(child, 1);
+        element.insertChild(span, 1);
 
         // then
-        assert.deepEqual(
-            element.children, [firstComponent, child, secondComponent]);
-        assert.equal(child.parentNode, element);
+        assert.deepEqual(element.children, [firstComponent, span, div]);
+        assert.equal(span.parentNode, element);
       });
 
       it('inserts child at the end', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement();
+        const element = new opr.Toolkit.VirtualElement('section');
         const component = new opr.Toolkit.Component();
         element.insertChild(component);
-        const child = new opr.Toolkit.VirtualElement();
+        const child = new opr.Toolkit.VirtualElement('div');
 
         // when
         element.insertChild(child, 1);
@@ -839,28 +804,28 @@ describe('Nodes', () => {
       it('removes multiple children', () => {
 
         // given
-        const parent = new opr.Toolkit.VirtualElement();
+        const parent = new opr.Toolkit.VirtualElement('section');
         const component = new opr.Toolkit.Component();
         parent.insertChild(component);
-        const child = new opr.Toolkit.VirtualElement();
-        parent.insertChild(child);
-        const element = new opr.Toolkit.VirtualElement();
-        parent.insertChild(element);
+        const div = new opr.Toolkit.VirtualElement('div');
+        parent.insertChild(div);
+        const span = new opr.Toolkit.VirtualElement('span');
+        parent.insertChild(span);
 
         // when
         parent.removeChild(component);
-        parent.removeChild(element);
+        parent.removeChild(span);
 
         // then
-        assert.deepEqual(parent.children, [child]);
+        assert.deepEqual(parent.children, [div]);
         assert.equal(component.parentNode, null);
-        assert.equal(element.parentNode, null);
+        assert.equal(span.parentNode, null);
       });
 
       it('removes the last child', () => {
 
         // given
-        const parent = new opr.Toolkit.VirtualElement();
+        const parent = new opr.Toolkit.VirtualElement('section');
         const child = new opr.Toolkit.Component();
         parent.insertChild(child);
 
@@ -874,14 +839,11 @@ describe('Nodes', () => {
 
       it('ignores node not being child', () => {
 
-        const parent = new opr.Toolkit.VirtualElement();
+        const parent = new opr.Toolkit.VirtualElement('section');
         const node = new opr.Toolkit.Component();
 
         // when
-        parent.removeChild(node);
-
-        // then
-        assert.deepEqual(parent.children, []);
+        assert.throws(() => parent.removeChild(node));
       });
     });
   });
