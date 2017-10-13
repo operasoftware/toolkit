@@ -25,9 +25,13 @@
       return patches;
     }
 
+    get debug() {
+      return this.settings.level === 'debug';
+    }
+
     updateDOM(command, prevState, nextState) {
       /* eslint-disable no-console */
-      if (this.settings.level === 'debug') {
+      if (this.debug) {
         console.time('=> Render time');
       }
       const patches = this.calculatePatches(command, prevState, nextState);
@@ -38,11 +42,12 @@
         }
         opr.Toolkit.Lifecycle.afterUpdate(patches);
       }
-      if (this.settings.level === 'debug') {
+      if (this.debug) {
         console.log(
-            'Command:', command.type, 'for', this.root.constructor.name);
+            'Command:', command.type,
+            `for "${this.root.constructor.displayName}"`);
         if (patches.length) {
-          console.log('Patches:', patches.length);
+          console.log('Patches:', patches);
         }
         console.timeEnd('=> Render time');
         console.log(''.padStart(48, '-'));

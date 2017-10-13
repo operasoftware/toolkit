@@ -219,6 +219,10 @@
       this.plugins = new Map();
     }
 
+    static get displayName() {
+      return this.name;
+    }
+
     static register() {
       let ElementClass = customElements.get(this.elementName);
       if (!ElementClass) {

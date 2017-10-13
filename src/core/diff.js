@@ -218,7 +218,22 @@
     }
   };
 
+  const componentPatches = (current, next, patches) => {
+    if (!Diff.deepEqual(current.props, next.props)) {
+      if (current.constructor.prototype.hasOwnProperty('onUpdated') ||
+          current.constructor.prototype.hasOwnProperty('onPropsReceived')) {
+        patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
+      } else {
+        current.props = next.props;
+        current.sandbox.props = next.props;
+      }
+    }
+    calculatePatches(current.child, next.child, current, patches);
+  };
+
   const reconcileNode = (current, next, parent, index, patches) => {
+
+    const Patch = opr.Toolkit.Patch;
 
     if (current === next) {
       // already inserted
@@ -229,14 +244,11 @@
         elementPatches(current, next, patches);
       }
       if (current.isComponent()) {
-        if (!Diff.deepEqual(current.props, next.props)) {
-          patches.push(opr.Toolkit.Patch.updateComponent(current, next.props));
-        }
-        calculatePatches(current.child, next.child, current, patches);
+        componentPatches(current, next, patches);
       }
     } else {
-      patches.push(opr.Toolkit.Patch.removeChildNode(current, index, parent));
-      patches.push(opr.Toolkit.Patch.insertChildNode(next, index, parent));
+      patches.push(Patch.removeChildNode(current, index, parent));
+      patches.push(Patch.insertChildNode(next, index, parent));
     }
   };
 
@@ -270,10 +282,7 @@
         if (current.isComponent()) {
           if (next.isComponent()) {
             if (current.constructor === next.constructor) {
-              if (!Diff.deepEqual(current.props, next.props)) {
-                patches.push(Patch.updateComponent(current, next.props));
-              }
-              calculatePatches(current.child, next.child, current, patches);
+              componentPatches(current, next, patches);
             } else {
               // different components
               patches.push(Patch.removeComponent(current, parent));

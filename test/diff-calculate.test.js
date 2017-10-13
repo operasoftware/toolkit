@@ -16,6 +16,8 @@ describe('Diff => calculate patches', () => {
     render() {
       return this.children[0] || null;
     }
+    onUpdated() {
+    }
   };
 
   class SubcomponentClass extends opr.Toolkit.Component {
