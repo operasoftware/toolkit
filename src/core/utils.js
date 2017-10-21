@@ -36,6 +36,33 @@
     return dispatcher;
   };
 
+  const throttle = (fn, wait = 200) => {
+
+    let lastTimestamp = 0;
+    let taskId = null;
+
+    let context;
+    let params;
+
+    return function throttled(...args) {
+      if (!taskId) {
+        const timestamp = Date.now();
+        const elapsed = timestamp - lastTimestamp;
+        if (elapsed >= wait) {
+          lastTimestamp = timestamp;
+          return fn.call(this, ...args);
+        }
+        taskId = setTimeout(() => {
+          taskId = null;
+          lastTimestamp = Date.now();
+          return fn.call(context, ...params);
+        }, wait - elapsed);
+      }
+      context = this;
+      params = args;
+    };
+  };
+
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
   const lowerDash = name =>
@@ -111,6 +138,7 @@
       ['key', 'class', 'style', 'dataset', 'metadata'].includes(attr);
 
   const Utils = {
+    throttle,
     combineReducers,
     createCommandsDispatcher,
     addDataPrefix,

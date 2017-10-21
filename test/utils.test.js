@@ -1,11 +1,66 @@
 describe('Utils', () => {
 
-  const lowerDash = opr.Toolkit.utils.lowerDash;
-  const getAttributeName = opr.Toolkit.utils.getAttributeName;
-  const getEventName = opr.Toolkit.utils.getEventName;
-  const addDataPrefix = opr.Toolkit.utils.addDataPrefix;
-  const createUUID = opr.Toolkit.utils.createUUID;
-  const createCommandsDispatcher = opr.Toolkit.utils.createCommandsDispatcher;
+  const {
+    throttle,
+    lowerDash,
+    getAttributeName,
+    getEventName,
+    addDataPrefix,
+    createUUID,
+    createCommandsDispatcher,
+  } = opr.Toolkit.utils;
+
+  describe('throttle', () => {
+
+    it('throttles using specified wait time', async () => {
+
+      // given
+      const wait = 50;
+      const timestamps = [];
+      const fn = () => timestamps.push(Date.now());
+      const waitTimes =
+          new Array(1000).fill(0).map(() => Math.floor(Math.random() * 200));
+
+      // when
+      const throttled = throttle(fn, wait);
+
+      await Promise.all(
+          waitTimes.map(waitTime => new Promise(resolve => setTimeout(() => {
+                                                  throttled();
+                                                  resolve();
+                                                }, waitTime))));
+
+      // then
+      assert.equal(timestamps.length, 4);
+      for (let i = 1; i < timestamps.length; i++) {
+        assert(timestamps[i] + 1 >= timestamps[i - 1] + wait);
+      }
+    });
+
+    it('does not throttle infrequent events', async () => {
+
+      // given
+      const wait = 20;
+      const timestamps = [];
+      const fn = () => timestamps.push(Date.now());
+      const waitTimes = [0, 30, 62, 94, 124];
+
+      // when
+      const throttled = throttle(fn, wait);
+
+      await Promise.all(
+          waitTimes.map(waitTime => new Promise(resolve => setTimeout(() => {
+                                                  throttled();
+                                                  resolve();
+                                                }, waitTime))));
+
+      // then
+      assert.equal(timestamps.length, 5);
+      for (let i = 1; i < timestamps.length; i++) {
+        assert(timestamps[i] + 1 >= timestamps[i - 1] + wait);
+      }
+    });
+  });
 
   describe('core reducer', () => {
 
@@ -13,7 +68,7 @@ describe('Utils', () => {
 
       // given
       const state = {
-        foo: 'bar'
+        foo: 'bar',
       };
       const reducer = opr.Toolkit.utils.combineReducers();
       const command = reducer.commands.init(state);
@@ -59,18 +114,19 @@ describe('Utils', () => {
         default:
           return state;
       }
-    }
+    };
 
     tripleReducer.commands = {
       triple: value => ({
         type: TRIPLE,
-      })
+      }),
     };
 
     it('chains reducers and merges commands', () => {
 
       // given
-      const reducer = opr.Toolkit.utils.combineReducers(doubleReducer, tripleReducer);
+      const reducer =
+          opr.Toolkit.utils.combineReducers(doubleReducer, tripleReducer);
 
       // when
       const initCommand = reducer.commands.init({
@@ -80,7 +136,7 @@ describe('Utils', () => {
 
       // then
       assert.deepEqual(state, {
-        value: 1
+        value: 1,
       });
 
       // when
@@ -89,7 +145,7 @@ describe('Utils', () => {
 
       // then
       assert.deepEqual(state, {
-        value: 2
+        value: 2,
       });
 
       // when
@@ -98,7 +154,7 @@ describe('Utils', () => {
 
       // then
       assert.deepEqual(state, {
-        value: 6
+        value: 6,
       });
     });
   });
@@ -112,8 +168,9 @@ describe('Utils', () => {
       const reducer = () => {};
       reducer.commands = {
         someCommand: (key, value) => ({
-          key, value,
-        })
+          key,
+          value,
+        }),
       };
       const commands = createCommandsDispatcher(reducer, dispatch);
 
