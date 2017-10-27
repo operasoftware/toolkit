@@ -435,17 +435,10 @@
 }
 
 {
-  const ID = Symbol('id');
-
   class VirtualNode {
 
     constructor(key) {
       this.key = key;
-      this[ID] = opr.Toolkit.utils.createUUID();
-    }
-
-    get id() {
-      return this[ID];
     }
 
     get parentElement() {
@@ -882,9 +875,9 @@
       Object.entries(this.dataset).forEach(([attr, value]) => {
         element.dataset[attr] = value;
       });
-      this.classNames.forEach(className => {
-        element.classList.add(className);
-      });
+      if (this.classNames.length) {
+        element.className = this.classNames.join(' ');
+      }
       Object.entries(this.style).forEach(([prop, value]) => {
         element.style[prop] = value;
       });
@@ -963,7 +956,8 @@
         if ((component.hasOwnMethod('onPropsReceived') ||
              component.hasOwnMethod('onUpdated')) &&
             !Diff.deepEqual(prevProps, component.props)) {
-          this.addPatch(opr.Toolkit.Patch.updateComponent(component));
+          this.addPatch(
+              opr.Toolkit.Patch.updateComponent(component, prevProps));
         }
         this.componentChildPatches(component.child, description, component);
         component.description = description;
@@ -1637,13 +1631,12 @@
       });
     }
 
-    static updateComponent(target) {
+    static updateComponent(target, prevProps) {
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
-        props: target.props,
-        apply: function() {
-          this.prevProps = target.props;
-        },
+        prevProps,
+        props: target.sandbox.props,
+        apply: function() {},
       });
     }
 
@@ -1955,7 +1948,7 @@
     }
 
     static get Type() {
-      return Object.assign({}, Type);
+      return Type;
     }
   }
 
@@ -2342,10 +2335,11 @@
    */
   class ElementDescription extends Description {
 
-    constructor({element, text, children, props}, template) {
+    constructor({element, text = null, children, props}, template) {
       super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+
       this.element = element;
-      this.text = text !== undefined ? text : null;
+      this.text = text;
 
       const {
         SUPPORTED_ATTRIBUTES,
@@ -2468,6 +2462,40 @@
     }
   }
 
+  const getClassNames = value => {
+    if (!value) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value.reduce((result, item) => {
+        if (!item) {
+          return result;
+        }
+        if (typeof item === 'string') {
+          result.push(item);
+        }
+        result.push(...getClassNames(item, false));
+        return result;
+      }, []);
+    }
+    if (typeof value === 'string') {
+      if (value.includes(' ')) {
+        return value.split(' ');
+      }
+      return [value];
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return [];
+      }
+      return Object.keys(value)
+          .map(key => value[key] && key)
+          .filter(item => item);
+    }
+    return [];
+  };
+
   class Template {
 
     static get ItemType() {
@@ -2485,34 +2513,10 @@
     }
 
     static getClassNames(value) {
-      const getClassNamesString = value => {
-        if (!value) {
-          return '';
-        }
-        if (value.constructor === Object) {
-          value = Object.keys(value).map(key => value[key] && key);
-        }
-        if (value.constructor === Array) {
-          const classNames = [];
-          for (const item of value) {
-            const className = getClassNamesString(item);
-            if (className) {
-              classNames.push(className);
-            }
-          }
-          value = classNames.join(' ');
-        }
-        if (value.constructor === String) {
-          return value.trim();
-        }
-        return '';
-      };
-      let classNames = getClassNamesString(value);
-      if (classNames === '') {
-        return [];
-      }
-      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
-      return [...new Set(classNames)].sort();
+      const classNames = getClassNames(value);
+      return [
+        ...new Set(classNames.map(item => item.trim()).filter(item => item)),
+      ].sort();
     }
 
     static getCompositeValue(obj = {}, whitelist) {

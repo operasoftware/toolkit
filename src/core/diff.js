@@ -15,7 +15,8 @@
         if ((component.hasOwnMethod('onPropsReceived') ||
              component.hasOwnMethod('onUpdated')) &&
             !Diff.deepEqual(prevProps, component.props)) {
-          this.addPatch(opr.Toolkit.Patch.updateComponent(component));
+          this.addPatch(
+              opr.Toolkit.Patch.updateComponent(component, prevProps));
         }
         this.componentChildPatches(component.child, description, component);
         component.description = description;

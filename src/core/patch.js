@@ -59,13 +59,12 @@
       });
     }
 
-    static updateComponent(target) {
+    static updateComponent(target, prevProps) {
       return new Patch(Type.UPDATE_COMPONENT, {
         target,
-        props: target.props,
-        apply: function() {
-          this.prevProps = target.props;
-        },
+        prevProps,
+        props: target.sandbox.props,
+        apply: function() {},
       });
     }
 
@@ -377,7 +376,7 @@
     }
 
     static get Type() {
-      return Object.assign({}, Type);
+      return Type;
     }
   }
 

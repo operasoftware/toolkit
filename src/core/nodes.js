@@ -1,15 +1,8 @@
 {
-  const ID = Symbol('id');
-
   class VirtualNode {
 
     constructor(key) {
       this.key = key;
-      this[ID] = opr.Toolkit.utils.createUUID();
-    }
-
-    get id() {
-      return this[ID];
     }
 
     get parentElement() {
@@ -446,9 +439,9 @@
       Object.entries(this.dataset).forEach(([attr, value]) => {
         element.dataset[attr] = value;
       });
-      this.classNames.forEach(className => {
-        element.classList.add(className);
-      });
+      if (this.classNames.length) {
+        element.className = this.classNames.join(' ');
+      }
       Object.entries(this.style).forEach(([prop, value]) => {
         element.style[prop] = value;
       });

@@ -1,6 +1,6 @@
 {
   "name": "opera-toolkit",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "description": "Opera Web UI Toolkit",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "coverage": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha",
     "add-to-index": "git add dist/",
     "release": "node build.js",
-    "update-opera": "node build.js && cp dist/toolkit.release.js $WORK_DIR/desktop/common/resources/shared/toolkit/",
+    "update-opera": "node build.js && cp dist/toolkit.release.js $WORK_DIR",
     "watch": "npm-watch update-opera"
   },
   "pre-commit": [

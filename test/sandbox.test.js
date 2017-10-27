@@ -56,7 +56,6 @@ describe('Sandbox', () => {
       assert.equal(context.b, context.b);
       assert.equal(context.b(), 666);
       assert.equal(context.c(), 'c');
-      assert.equal(context.id.length, 36);
     })
 
     it('does not return built-in component properties', () => {

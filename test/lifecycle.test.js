@@ -561,27 +561,28 @@ describe('Lifecycle', () => {
 
   describe('on updated', () => {
 
-    const assertOnUpdatedCalled = (component, props) => {
+    const assertOnUpdatedCalled = (component, prevProps) => {
       assert.equal(stub.callCount, 1);
       assert.equal(stub.firstCall.args[0], 'onUpdated');
       assert.equal(stub.firstCall.args[1], component.sandbox);
-      assert.equal(stub.firstCall.args[2], null);
+      assert.equal(stub.firstCall.args[2], prevProps);
     };
 
     it('=> is called after updating component', () => {
 
       // given
       const component = new ComponentClass();
+      const prevProps = {};
       const props = {
         foo: 'bar',
       };
-      const patches = [Patch.updateComponent(component, props)];
+      const patches = [Patch.updateComponent(component, prevProps)];
 
       // when
       Lifecycle.afterUpdate(patches);
 
       // then
-      assertOnUpdatedCalled(component, props);
+      assertOnUpdatedCalled(component, prevProps);
     });
   });
 

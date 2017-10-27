@@ -152,21 +152,6 @@ describe('Nodes', () => {
     });
   });
 
-  describe('get id', () => {
-
-    it('returns a valid id for a root component', () => {
-      assert.equal(root.id.length, 36);
-    });
-
-    it('returns a valid id for a component', () => {
-      assert.equal(component.id.length, 36);
-    });
-
-    it('returns a valid id for an element', () => {
-      assert.equal(element.id.length, 36);
-    });
-  });
-
   describe('get parent element', () => {
 
     it('returns null for a root component', () => {

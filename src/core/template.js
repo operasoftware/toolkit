@@ -68,10 +68,11 @@
    */
   class ElementDescription extends Description {
 
-    constructor({element, text, children, props}, template) {
+    constructor({element, text = null, children, props}, template) {
       super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+
       this.element = element;
-      this.text = text !== undefined ? text : null;
+      this.text = text;
 
       const {
         SUPPORTED_ATTRIBUTES,
@@ -194,6 +195,40 @@
     }
   }
 
+  const getClassNames = value => {
+    if (!value) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value.reduce((result, item) => {
+        if (!item) {
+          return result;
+        }
+        if (typeof item === 'string') {
+          result.push(item);
+        }
+        result.push(...getClassNames(item, false));
+        return result;
+      }, []);
+    }
+    if (typeof value === 'string') {
+      if (value.includes(' ')) {
+        return value.split(' ');
+      }
+      return [value];
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return [];
+      }
+      return Object.keys(value)
+          .map(key => value[key] && key)
+          .filter(item => item);
+    }
+    return [];
+  };
+
   class Template {
 
     static get ItemType() {
@@ -211,34 +246,10 @@
     }
 
     static getClassNames(value) {
-      const getClassNamesString = value => {
-        if (!value) {
-          return '';
-        }
-        if (value.constructor === Object) {
-          value = Object.keys(value).map(key => value[key] && key);
-        }
-        if (value.constructor === Array) {
-          const classNames = [];
-          for (const item of value) {
-            const className = getClassNamesString(item);
-            if (className) {
-              classNames.push(className);
-            }
-          }
-          value = classNames.join(' ');
-        }
-        if (value.constructor === String) {
-          return value.trim();
-        }
-        return '';
-      };
-      let classNames = getClassNamesString(value);
-      if (classNames === '') {
-        return [];
-      }
-      classNames = classNames.replace(/( )+/g, ' ').trim().split(' ');
-      return [...new Set(classNames)].sort();
+      const classNames = getClassNames(value);
+      return [
+        ...new Set(classNames.map(item => item.trim()).filter(item => item)),
+      ].sort();
     }
 
     static getCompositeValue(obj = {}, whitelist) {
