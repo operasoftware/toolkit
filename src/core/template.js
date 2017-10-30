@@ -23,10 +23,6 @@
     isElement() {
       return this instanceof ElementDescription;
     }
-
-    toTemplate() {
-      return this.template;
-    }
   }
 
   class ComponentDescription extends Description {
@@ -247,9 +243,7 @@
 
     static getClassNames(value) {
       const classNames = getClassNames(value);
-      return [
-        ...new Set(classNames.map(item => item.trim()).filter(item => item)),
-      ].sort();
+      return [...new Set(classNames.filter(item => item))];
     }
 
     static getCompositeValue(obj = {}, whitelist) {
@@ -487,9 +481,8 @@
           const children = nodes.filter(isValidNode);
           switch (type) {
             case Type.COMPONENT:
-              return children.map(child => this.describe(child));
             case Type.STRING:
-              return children.map(child => this.describe(child));
+              return children;
             default:
               throw new Error(`Unknown type: ${type}`);
           }

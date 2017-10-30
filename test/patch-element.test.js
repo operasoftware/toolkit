@@ -4,6 +4,8 @@ describe('Patch element => apply', () => {
   const Document = opr.Toolkit.Document;
   const VirtualDOM = opr.Toolkit.VirtualDOM;
 
+  const createElement = name => new opr.Toolkit.VirtualElement({element: name});
+
   it('adds attribute', () => {
 
     // given
@@ -426,7 +428,7 @@ describe('Patch element => apply', () => {
         'span',
       ],
     ]);
-    const link = new opr.Toolkit.VirtualElement('a');
+    const link = createElement('a');
 
     // then
     assert.equal(element.children.length, 3);

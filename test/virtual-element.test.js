@@ -2,12 +2,14 @@ describe('Virtual Element => amend', () => {
 
   const VirtualElement = opr.Toolkit.VirtualElement;
 
+  const createElement = name => new VirtualElement({element: name});
+
   describe('add class name', () => {
 
     it('adds new class', () => {
 
       // given
-      const div = new VirtualElement('div');
+      const div = createElement('div');
 
       // when
       div.addClassName('class');
@@ -19,7 +21,7 @@ describe('Virtual Element => amend', () => {
     it('adds already-existing class', () => {
 
       // given
-      const div = new VirtualElement('div');
+      const div = createElement('div');
       div.classNames = ['class'];
 
       // when
@@ -35,7 +37,7 @@ describe('Virtual Element => amend', () => {
     it('removes duplicated class names', () => {
 
       // given
-      const div = new VirtualElement('div');
+      const div = createElement('div');
       div.classNames = ['class', 'another', 'class'];
 
       // when

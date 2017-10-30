@@ -22,7 +22,7 @@ describe('Nodes', () => {
         return template;
       }
     }
-    const app = new RootClass({}, container, {plugins: []});
+    const app = new RootClass(null, {}, container, {plugins: []});
 
     const node = utils.createFromTemplate(template);
     if (node) {
@@ -30,6 +30,8 @@ describe('Nodes', () => {
     }
     return app;
   };
+
+  const createElement = name => new VirtualElement({element: name});
 
   beforeEach(() => {
     sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
@@ -51,7 +53,7 @@ describe('Nodes', () => {
     plugins: [],
   });
   const component = new opr.Toolkit.Component({}, [], null);
-  const element = new VirtualElement('section');
+  const element = createElement('section');
   const comment = new opr.Toolkit.Comment('Dummy', null);
 
   describe('get node type', () => {
@@ -350,9 +352,9 @@ describe('Nodes', () => {
         const dispatchEvent = sinon.spy();
         const container = document.createElement('container');
         container.dispatchEvent = dispatchEvent;
-        
-        const root = new opr.Toolkit.Root({}, container, {});
-        const element = new opr.Toolkit.VirtualElement('section');
+
+        const root = new opr.Toolkit.Root(null, {}, container, {});
+        const element = createElement('section');
         root.appendChild(element);
         const component = new opr.Toolkit.Component({}, [], null);
         element.insertChild(component);
@@ -419,7 +421,7 @@ describe('Nodes', () => {
 
         // given
         const component = new opr.Toolkit.Component();
-        const element = new opr.Toolkit.VirtualElement('span');
+        const element = createElement('span');
         const span = document.createElement('span');
         element.ref = span;
         component.appendChild(element);
@@ -478,7 +480,7 @@ describe('Nodes', () => {
 
           // given
           const component = new opr.Toolkit.Component();
-          const element = new opr.Toolkit.VirtualElement('span');
+          const element = createElement('span');
 
           // when
           component.appendChild(element);
@@ -626,7 +628,7 @@ describe('Nodes', () => {
 
         // given
         const component = new opr.Toolkit.Component();
-        const element = new opr.Toolkit.VirtualElement('span');
+        const element = createElement('span');
 
         // when
         component.appendChild(element);
@@ -656,7 +658,7 @@ describe('Nodes', () => {
         // given
         const component = new opr.Toolkit.Component();
         const subcomponent = new opr.Toolkit.Component();
-        const element = new opr.Toolkit.VirtualElement('span');
+        const element = createElement('span');
 
         // when
         component.appendChild(subcomponent);
@@ -707,8 +709,8 @@ describe('Nodes', () => {
       it('inserts an element', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement('section');
-        const child = new opr.Toolkit.VirtualElement('div');
+        const element = createElement('section');
+        const child = createElement('div');
 
         // when
         element.insertChild(child);
@@ -721,7 +723,7 @@ describe('Nodes', () => {
       it('inserts a component', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement('section');
+        const element = createElement('section');
         const child = new opr.Toolkit.Component();
 
         // when
@@ -735,7 +737,7 @@ describe('Nodes', () => {
       it('inserts child at the beginning', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement('section');
+        const element = createElement('section');
         const component = new opr.Toolkit.Component();
         element.insertChild(component);
         const child = new opr.Toolkit.Component();
@@ -751,12 +753,12 @@ describe('Nodes', () => {
       it('inserts child in the middle', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement('section');
+        const element = createElement('section');
         const firstComponent = new opr.Toolkit.Component();
         element.insertChild(firstComponent);
-        const div = new opr.Toolkit.VirtualElement('div');
+        const div = createElement('div');
         element.insertChild(div);
-        const span = new opr.Toolkit.VirtualElement('span');
+        const span = createElement('span');
 
         // when
         element.insertChild(span, 1);
@@ -769,10 +771,10 @@ describe('Nodes', () => {
       it('inserts child at the end', () => {
 
         // given
-        const element = new opr.Toolkit.VirtualElement('section');
+        const element = createElement('section');
         const component = new opr.Toolkit.Component();
         element.insertChild(component);
-        const child = new opr.Toolkit.VirtualElement('div');
+        const child = createElement('div');
 
         // when
         element.insertChild(child, 1);
@@ -789,12 +791,12 @@ describe('Nodes', () => {
       it('removes multiple children', () => {
 
         // given
-        const parent = new opr.Toolkit.VirtualElement('section');
+        const parent = createElement('section');
         const component = new opr.Toolkit.Component();
         parent.insertChild(component);
-        const div = new opr.Toolkit.VirtualElement('div');
+        const div = createElement('div');
         parent.insertChild(div);
-        const span = new opr.Toolkit.VirtualElement('span');
+        const span = createElement('span');
         parent.insertChild(span);
 
         // when
@@ -810,7 +812,7 @@ describe('Nodes', () => {
       it('removes the last child', () => {
 
         // given
-        const parent = new opr.Toolkit.VirtualElement('section');
+        const parent = createElement('section');
         const child = new opr.Toolkit.Component();
         parent.insertChild(child);
 
@@ -824,7 +826,7 @@ describe('Nodes', () => {
 
       it('ignores node not being child', () => {
 
-        const parent = new opr.Toolkit.VirtualElement('section');
+        const parent = createElement('section');
         const node = new opr.Toolkit.Component();
 
         // when

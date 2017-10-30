@@ -39,8 +39,8 @@
         {
           onClick: event => {
             // TODO: use a single dispatch
-            this.dispatch(
-                reducer.commands.move(service.moveBubbles(this.props.bubbles)));
+            //this.dispatch(
+            //    reducer.commands.move(service.moveBubbles(this.props.bubbles)));
             const id =
                 Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1;
             const x = event.offsetX / event.target.offsetWidth;
@@ -51,16 +51,12 @@
         },
         ...this.props.bubbles.map(
             bubble => [
+                'div', [
                 // clang-format off
-                  Bubble, {
-                    ...bubble,
-                    onClick: event => {
-                      this.dispatch(reducer.commands.highlight(bubble.id));
-                      event.stopPropagation();
-                    },
-                  }
+                  Bubble, bubble,
                 ]
             // clang-format on
+            ]
             ),
       ];
     }

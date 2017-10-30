@@ -1290,7 +1290,7 @@ describe('Diff => calculate patches', () => {
         assert.equal(patches[1].type, Patch.Type.INSERT_CHILD_NODE);
         assert.equal(patches[1].parent, element);
         assert.equal(patches[1].at, 0);
-        assert.equal(patches[1].node.name, description.children[0].element);
+        assert.equal(patches[1].node.name, description.children[0][0]);
       });
     });
   });

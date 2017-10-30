@@ -1,6 +1,11 @@
 {
   class VirtualDOM {
 
+    static createFromTemplate(template, parent, root) {
+      const description = opr.Toolkit.Template.describe(template);
+      return this.createFromDescription(description, parent, root);
+    }
+
     static createFromDescription(description, parent, root) {
       if (!description) {
         return null;
@@ -8,14 +13,12 @@
       if (description.element) {
         return this.createElement(description, parent, root);
       }
-      const children = description.children ?
-          description.children.map(child => child.toTemplate()) :
-          [];
+      const children = description.children || [];
       const component = this.createComponent(
           description.component, description.props, children, parent, root);
       const childDescription = opr.Toolkit.Renderer.render(component);
+      component.description = childDescription;
       if (childDescription) {
-        component.description = childDescription;
         component.appendChild(
             this.createFromDescription(childDescription, component, root));
       }
@@ -23,20 +26,23 @@
     }
 
     static createElement(description, parent, root) {
-      const props = description.props || {};
-      const children = this.createChildren(description.children, root);
-      const element = new opr.Toolkit.VirtualElement(
-          description.element, props, description.text || children,
-          description.key);
+      const element = new opr.Toolkit.VirtualElement(description, parent);
+      const children = this.createChildren(description.children, element, root);
+      if (children) {
+        element.children = children;
+        for (const child of children) {
+          element.ref.appendChild(child.ref);
+        }
+      }
       return element;
     }
 
-    static createChildren(descriptions, root) {
-      if (!descriptions) {
+    static createChildren(templates, parent, root) {
+      if (!templates) {
         return null;
       }
-      return descriptions.map(
-          description => this.createFromDescription(description, null, root));
+      return templates.map(
+          template => this.createFromTemplate(template, parent, root));
     }
 
     static createComponent(symbol, props = {}, children = [], parent, root) {
@@ -58,7 +64,7 @@
     static createComponentInstance(symbol, props, children, parent) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
-      return new ComponentClass(normalizedProps, children, parent);
+      return new ComponentClass(symbol, normalizedProps, children, parent);
     }
 
     static normalizeProps(ComponentClass, props = {}) {

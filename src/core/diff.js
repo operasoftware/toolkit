@@ -11,7 +11,8 @@
     }
 
     updateComponent(component, prevProps, description) {
-      if (!Diff.deepEqual(component.description, description)) {
+      if (!Diff.deepEqual(component.description, description) ||
+          !Diff.deepEqual(component.props, prevProps)) {
         if ((component.hasOwnMethod('onPropsReceived') ||
              component.hasOwnMethod('onUpdated')) &&
             !Diff.deepEqual(prevProps, component.props)) {
@@ -55,7 +56,7 @@
 
       component.props =
           opr.Toolkit.VirtualDOM.normalizeProps(component.constructor, props);
-      component.children = children.map(child => child.toTemplate());
+      component.children = children;
 
       this.updateComponent(
           component, prevProps, opr.Toolkit.Renderer.render(component));
@@ -65,7 +66,13 @@
      * Calculates patches for conversion of an element to match the given
      * description.
      */
-    elementPatches(element, {props = {}, children, text}, parent) {
+    elementPatches(element, description, parent) {
+
+      const {
+        props = {},
+        children,
+        text,
+      } = description;
 
       const {
         attrs,
@@ -90,6 +97,8 @@
       if (text !== null && element.text !== text) {
         this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
       }
+
+      element.description = description;
     }
 
     listenerPatches(current = {}, next = {}, target = null) {
@@ -222,29 +231,28 @@
       }
     }
 
-    elementChildrenPatches(current = [], descriptions = [], parent) {
+    elementChildrenPatches(current = [], templates = [], parent) {
       const {Patch, Reconciler, VirtualDOM} = opr.Toolkit;
       const Move = Reconciler.Move;
 
       const created = [];
 
-      const createNode = description => {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
+      const createNode = template => {
+        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         created.push(node);
         return node;
       };
 
       const from = current.map((node, index) => node.key || index);
-      const to =
-          descriptions.map((description, index) => description.key || index);
+      const to = templates.map(
+          (template, index) => template[1] && template[1].key || index);
 
       const getNode = key => {
         if (from.includes(key)) {
           return current[from.indexOf(key)];
         }
         const index = to.indexOf(key);
-        return createNode(descriptions[index]);
+        return createNode(templates[index]);
       };
 
       const moves = Reconciler.calculateMoves(from, to);
@@ -271,33 +279,33 @@
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (!created.includes(child)) {
-          this.elementChildPatches(child, descriptions[i], parent, i);
+          const index = from.indexOf(child.key || i);
+          let sourceTemplate = null;
+          if (index >= 0) {
+            sourceTemplate = parent.description.children[index];
+          }
+          this.elementChildPatches(
+              child, sourceTemplate, templates[i], parent, i);
         }
       }
     }
 
-    elementChildPatches(child, description, parent, index) {
-      const {Patch, VirtualDOM} = opr.Toolkit;
+    elementChildPatches(child, sourceTemplate, template, parent, index) {
+      const {Patch, VirtualDOM, Template} = opr.Toolkit;
 
-      const areCompatible = (current, description) => {
-        if (current.nodeType !== description.type) {
-          return false;
+      if (sourceTemplate && sourceTemplate[0] === template[0]) {
+        if (opr.Toolkit.Diff.deepEqual(sourceTemplate, template)) {
+          return;
         }
-        if (current.isElement()) {
-          return current.name === description.element;
-        }
-        return current.constructor ===
-            VirtualDOM.getComponentClass(description.component);
-      };
-
-      if (areCompatible(child, description)) {
+        const description = Template.describe(template);
         if (child.isElement()) {
-          return this.elementPatches(child, description, parent);
+          this.elementPatches(child, description, parent);
+        } else {
+          this.componentPatches(child, description);
         }
-        this.componentPatches(child, description);
+        child.description = description;
       } else {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
+        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         this.addPatch(Patch.replaceChildNode(child, node, parent));
       }
     }
@@ -305,15 +313,12 @@
     componentChildPatches(child, description, parent) {
       const {Diff, Patch, VirtualDOM} = opr.Toolkit;
 
-      const current = parent.description;
-      const next = description;
-
-      if (!current && !next) {
+      if (!child && !description) {
         return;
       }
 
       // insert
-      if (!current && next) {
+      if (!child && description) {
         const node =
             VirtualDOM.createFromDescription(description, parent, this.root);
         if (node.isElement()) {
@@ -323,19 +328,26 @@
       }
 
       // remove
-      if (current && !next) {
-        if (current.isElement()) {
+      if (child && !description) {
+        if (child.isElement()) {
           return this.addPatch(Patch.removeElement(child, parent));
         }
         return this.addPatch(Patch.removeComponent(child, parent));
       }
 
+      const areCompatible = (node, description) => {
+        if (node.isElement()) {
+          return node.name === description.element;
+        }
+        return node.id === description.component;
+      };
+
       // update
-      if (current.isCompatible(next)) {
-        if (Diff.deepEqual(current, next)) {
+      if (areCompatible(child, description)) {
+        if (Diff.deepEqual(child, description)) {
           return;
         }
-        if (current.isElement()) {
+        if (child.isElement()) {
           return this.elementPatches(child, description, parent);
         }
         return this.componentPatches(child, description);

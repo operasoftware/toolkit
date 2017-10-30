@@ -163,7 +163,7 @@ describe('Virtual DOM', () => {
       assert.equal(element.name, 'div');
       assert.deepEqual(element.attrs, {});
       assert.deepEqual(element.dataset, {});
-      assert.deepEqual(element.classNames, ['bar', 'foo', 'nested']);
+      assert.deepEqual(element.classNames, ['foo', 'bar', 'nested']);
       assert.equal(element.text, null);
       assert.equal(element.key, undefined);
       assert(element.ref);

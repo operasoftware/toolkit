@@ -437,8 +437,9 @@
 {
   class VirtualNode {
 
-    constructor(key) {
+    constructor(key, parentNode) {
       this.key = key;
+      this.parentNode = parentNode;
     }
 
     get parentElement() {
@@ -483,8 +484,9 @@
       return 'component';
     }
 
-    constructor(props = {}, children = []) {
-      super(props.key);
+    constructor(id, props = {}, children = [], parentNode) {
+      super(props.key, parentNode);
+      this.id = id;
       this.props = props;
       this.children = children;
       this.sandbox = opr.Toolkit.Sandbox.create(this);
@@ -498,9 +500,7 @@
     }
 
     createComment() {
-      const comment = new Comment(` ${this.constructor.name} `);
-      comment.parentNode = this;
-      return comment;
+      return new Comment(` ${this.constructor.name} `, this);
     }
 
     hasOwnMethod(method) {
@@ -654,8 +654,8 @@
       return 'root';
     }
 
-    constructor(props, container, settings) {
-      super(props, /*= children */ null, /*= parentNode */ null);
+    constructor(id, props, container, settings) {
+      super(id, props, /*= children */ null, /*= parentNode */ null);
       const {utils, Renderer} = opr.Toolkit;
       this.state = null;
       this.reducer = utils.combineReducers(...this.getReducers());
@@ -715,10 +715,18 @@
       return 'element';
     }
 
-    constructor(name, props = {}, content = null, key) {
-      super(key);
-      opr.Toolkit.assert(name, 'Element name is mandatory');
-      this.name = name;
+    constructor(description, parentNode) {
+      super(description.key || null, parentNode);
+
+      const {
+        element,
+        props = {},
+        text = null,
+      } = description;
+      this.description = description;
+
+      opr.Toolkit.assert(element, 'Element name is mandatory');
+      this.name = element;
       const {
         listeners = {},
         attrs = {},
@@ -733,16 +741,8 @@
       this.style = style;
       this.classNames = classNames;
       this.metadata = metadata;
-      if (Array.isArray(content)) {
-        this.children = content.map(child => {
-          child.parentNode = this;
-          return child;
-        });
-        this.text = null;
-      } else {
-        this.children = [];
-        this.text = content;
-      }
+      this.text = text;
+      this.children = [];
       this.attachDOM();
     }
 
@@ -859,7 +859,7 @@
       return super.isCompatible(node) && this.name === node.name;
     }
 
-    createElement() {
+    attachDOM() {
       const element = document.createElement(this.name);
       if (this.text) {
         element.textContent = this.text;
@@ -884,15 +884,7 @@
       Object.entries(this.metadata).forEach(([prop, value]) => {
         element[prop] = value;
       });
-      return element;
-    }
-
-    attachDOM() {
-      this.ref = this.createElement();
-      for (const child of this.children) {
-        child.attachDOM();
-        this.ref.appendChild(child.ref);
-      }
+      this.ref = element;
     }
 
     detachDOM() {
@@ -909,8 +901,8 @@
       return 'comment';
     }
 
-    constructor(text) {
-      super(null);
+    constructor(text, parentNode) {
+      super(null, parentNode);
       this.text = text;
       this.attachDOM();
     }
@@ -952,7 +944,8 @@
     }
 
     updateComponent(component, prevProps, description) {
-      if (!Diff.deepEqual(component.description, description)) {
+      if (!Diff.deepEqual(component.description, description) ||
+          !Diff.deepEqual(component.props, prevProps)) {
         if ((component.hasOwnMethod('onPropsReceived') ||
              component.hasOwnMethod('onUpdated')) &&
             !Diff.deepEqual(prevProps, component.props)) {
@@ -996,7 +989,7 @@
 
       component.props =
           opr.Toolkit.VirtualDOM.normalizeProps(component.constructor, props);
-      component.children = children.map(child => child.toTemplate());
+      component.children = children;
 
       this.updateComponent(
           component, prevProps, opr.Toolkit.Renderer.render(component));
@@ -1006,7 +999,13 @@
      * Calculates patches for conversion of an element to match the given
      * description.
      */
-    elementPatches(element, {props = {}, children, text}, parent) {
+    elementPatches(element, description, parent) {
+
+      const {
+        props = {},
+        children,
+        text,
+      } = description;
 
       const {
         attrs,
@@ -1031,6 +1030,8 @@
       if (text !== null && element.text !== text) {
         this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
       }
+
+      element.description = description;
     }
 
     listenerPatches(current = {}, next = {}, target = null) {
@@ -1163,29 +1164,28 @@
       }
     }
 
-    elementChildrenPatches(current = [], descriptions = [], parent) {
+    elementChildrenPatches(current = [], templates = [], parent) {
       const {Patch, Reconciler, VirtualDOM} = opr.Toolkit;
       const Move = Reconciler.Move;
 
       const created = [];
 
-      const createNode = description => {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
+      const createNode = template => {
+        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         created.push(node);
         return node;
       };
 
       const from = current.map((node, index) => node.key || index);
-      const to =
-          descriptions.map((description, index) => description.key || index);
+      const to = templates.map(
+          (template, index) => template[1] && template[1].key || index);
 
       const getNode = key => {
         if (from.includes(key)) {
           return current[from.indexOf(key)];
         }
         const index = to.indexOf(key);
-        return createNode(descriptions[index]);
+        return createNode(templates[index]);
       };
 
       const moves = Reconciler.calculateMoves(from, to);
@@ -1212,33 +1212,33 @@
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (!created.includes(child)) {
-          this.elementChildPatches(child, descriptions[i], parent, i);
+          const index = from.indexOf(child.key || i);
+          let sourceTemplate = null;
+          if (index >= 0) {
+            sourceTemplate = parent.description.children[index];
+          }
+          this.elementChildPatches(
+              child, sourceTemplate, templates[i], parent, i);
         }
       }
     }
 
-    elementChildPatches(child, description, parent, index) {
-      const {Patch, VirtualDOM} = opr.Toolkit;
+    elementChildPatches(child, sourceTemplate, template, parent, index) {
+      const {Patch, VirtualDOM, Template} = opr.Toolkit;
 
-      const areCompatible = (current, description) => {
-        if (current.nodeType !== description.type) {
-          return false;
+      if (sourceTemplate && sourceTemplate[0] === template[0]) {
+        if (opr.Toolkit.Diff.deepEqual(sourceTemplate, template)) {
+          return;
         }
-        if (current.isElement()) {
-          return current.name === description.element;
-        }
-        return current.constructor ===
-            VirtualDOM.getComponentClass(description.component);
-      };
-
-      if (areCompatible(child, description)) {
+        const description = Template.describe(template);
         if (child.isElement()) {
-          return this.elementPatches(child, description, parent);
+          this.elementPatches(child, description, parent);
+        } else {
+          this.componentPatches(child, description);
         }
-        this.componentPatches(child, description);
+        child.description = description;
       } else {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
+        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         this.addPatch(Patch.replaceChildNode(child, node, parent));
       }
     }
@@ -1246,15 +1246,12 @@
     componentChildPatches(child, description, parent) {
       const {Diff, Patch, VirtualDOM} = opr.Toolkit;
 
-      const current = parent.description;
-      const next = description;
-
-      if (!current && !next) {
+      if (!child && !description) {
         return;
       }
 
       // insert
-      if (!current && next) {
+      if (!child && description) {
         const node =
             VirtualDOM.createFromDescription(description, parent, this.root);
         if (node.isElement()) {
@@ -1264,19 +1261,26 @@
       }
 
       // remove
-      if (current && !next) {
-        if (current.isElement()) {
+      if (child && !description) {
+        if (child.isElement()) {
           return this.addPatch(Patch.removeElement(child, parent));
         }
         return this.addPatch(Patch.removeComponent(child, parent));
       }
 
+      const areCompatible = (node, description) => {
+        if (node.isElement()) {
+          return node.name === description.element;
+        }
+        return node.id === description.component;
+      };
+
       // update
-      if (current.isCompatible(next)) {
-        if (Diff.deepEqual(current, next)) {
+      if (areCompatible(child, description)) {
+        if (Diff.deepEqual(child, description)) {
           return;
         }
-        if (current.isElement()) {
+        if (child.isElement()) {
           return this.elementPatches(child, description, parent);
         }
         return this.componentPatches(child, description);
@@ -1990,56 +1994,114 @@
 
   class Reconciler {
 
-    static calculateMoves(current, next) {
+    static comparator(a, b) {
+      if (Object.is(a.key, b.key)) {
+        return 0;
+      }
+      return a.key > b.key ? 1 : -1;
+    }
 
-      const makeMoves = (reversed = false) => {
-        const source = [...current];
-        const target = [...next];
+    static calculateMoves(source, target) {
+
+      const moves = [];
+
+      const createItem = function(key, index) {
+        return ({key, index});
+      };
+
+      const before = source.map(createItem).sort(this.comparator);
+      const after = target.map(createItem).sort(this.comparator);
+
+      let removed = [];
+      let inserted = [];
+
+      while (before.length || after.length) {
+        if (!before.length) {
+          inserted = inserted.concat(after);
+          break;
+        }
+        if (!after.length) {
+          removed = removed.concat(before);
+          break;
+        }
+        const result = this.comparator(after[0], before[0]);
+        if (result === 0) {
+          before.shift();
+          after.shift()
+        } else if (result === 1) {
+          removed.push(before.shift());
+        } else {
+          inserted.push(after.shift());
+        }
+      }
+
+      const sortByIndex = function(foo, bar) {
+        return foo.index - bar.index
+      };
+
+      removed.sort(sortByIndex).reverse();
+      inserted.sort(sortByIndex);
+
+      const result = [...source];
+
+      for (let item of removed) {
+        const move = Move.remove(item.key, item.index);
+        move.make(result);
+        moves.push(move);
+      }
+      for (let item of inserted) {
+        const move = Move.insert(item.key, item.index);
+        move.make(result);
+        moves.push(move);
+      }
+
+      if (opr.Toolkit.Diff.deepEqual(result, target)) {
+        moves.result = result;
+        return moves;
+      }
+
+      const calculateIndexChanges = (source, target, reversed = false) => {
+
         const moves = [];
 
-        const makeMove = move => {
-          move.make(source);
-          moves.push(move);
-        };
-        for (let i = source.length - 1; i >= 0; i--) {
-          const item = source[i];
-          if (!target.includes(item)) {
-            makeMove(Move.remove(item, i));
-          }
-        }
-        for (const item of target) {
-          if (!source.includes(item)) {
-            const index = target.indexOf(item);
-            makeMove(Move.insert(item, index));
-          }
-        }
-        const moveAndInsert = index => {
+        const moveItemIfNeeded = index => {
           const item = target[index];
           if (source[index] !== item) {
             const from = source.indexOf(item);
-            makeMove(Move.move(item, from, index));
+            const move = Move.move(item, from, index);
+            move.make(source);
+            moves.push(move);
           }
         };
 
         if (reversed) {
           for (let i = target.length - 1; i >= 0; i--) {
-            moveAndInsert(i);
+            moveItemIfNeeded(i);
           }
         } else {
           for (let i = 0; i < target.length; i++) {
-            moveAndInsert(i);
+            moveItemIfNeeded(i);
           }
         }
         moves.result = source;
         return moves;
       };
 
-      const moves = makeMoves();
-      if (moves.filter(move => (move.name === Name.MOVE)).length > 1) {
-        const alternativeMoves = makeMoves(true);
-        return alternativeMoves.length < moves.length ? alternativeMoves :
-                                                        moves;
+      const defaultMoves = calculateIndexChanges([...result], target);
+      if (defaultMoves.length > 1) {
+        const alternativeMoves =
+            calculateIndexChanges([...result], target, /*= reversed*/ true);
+        if (alternativeMoves.length < defaultMoves.length) {
+          moves.push(...alternativeMoves);
+          moves.result = alternativeMoves.result;
+        } else {
+          moves.push(...defaultMoves);
+          moves.result = defaultMoves.result;
+        }
+        return moves;
       }
+      moves.push(...defaultMoves);
+      moves.result = defaultMoves.result;
       return moves;
     }
   }
@@ -2290,10 +2352,6 @@
     isElement() {
       return this instanceof ElementDescription;
     }
-
-    toTemplate() {
-      return this.template;
-    }
   }
 
   class ComponentDescription extends Description {
@@ -2514,9 +2572,7 @@
 
     static getClassNames(value) {
       const classNames = getClassNames(value);
-      return [
-        ...new Set(classNames.map(item => item.trim()).filter(item => item)),
-      ].sort();
+      return [...new Set(classNames.filter(item => item))];
     }
 
     static getCompositeValue(obj = {}, whitelist) {
@@ -2754,9 +2810,8 @@
           const children = nodes.filter(isValidNode);
           switch (type) {
             case Type.COMPONENT:
-              return children.map(child => this.describe(child));
             case Type.STRING:
-              return children.map(child => this.describe(child));
+              return children;
             default:
               throw new Error(`Unknown type: ${type}`);
           }
@@ -2828,6 +2883,11 @@
 {
   class VirtualDOM {
 
+    static createFromTemplate(template, parent, root) {
+      const description = opr.Toolkit.Template.describe(template);
+      return this.createFromDescription(description, parent, root);
+    }
+
     static createFromDescription(description, parent, root) {
       if (!description) {
         return null;
@@ -2835,14 +2895,12 @@
       if (description.element) {
         return this.createElement(description, parent, root);
       }
-      const children = description.children ?
-          description.children.map(child => child.toTemplate()) :
-          [];
+      const children = description.children || [];
       const component = this.createComponent(
           description.component, description.props, children, parent, root);
       const childDescription = opr.Toolkit.Renderer.render(component);
+      component.description = childDescription;
       if (childDescription) {
-        component.description = childDescription;
         component.appendChild(
             this.createFromDescription(childDescription, component, root));
       }
@@ -2850,20 +2908,23 @@
     }
 
     static createElement(description, parent, root) {
-      const props = description.props || {};
-      const children = this.createChildren(description.children, root);
-      const element = new opr.Toolkit.VirtualElement(
-          description.element, props, description.text || children,
-          description.key);
+      const element = new opr.Toolkit.VirtualElement(description, parent);
+      const children = this.createChildren(description.children, element, root);
+      if (children) {
+        element.children = children;
+        for (const child of children) {
+          element.ref.appendChild(child.ref);
+        }
+      }
       return element;
     }
 
-    static createChildren(descriptions, root) {
-      if (!descriptions) {
+    static createChildren(templates, parent, root) {
+      if (!templates) {
         return null;
       }
-      return descriptions.map(
-          description => this.createFromDescription(description, null, root));
+      return templates.map(
+          template => this.createFromTemplate(template, parent, root));
     }
 
     static createComponent(symbol, props = {}, children = [], parent, root) {
@@ -2885,7 +2946,7 @@
     static createComponentInstance(symbol, props, children, parent) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
-      return new ComponentClass(normalizedProps, children, parent);
+      return new ComponentClass(symbol, normalizedProps, children, parent);
     }
 
     static normalizeProps(ComponentClass, props = {}) {
@@ -3199,7 +3260,7 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = new RootClass(props, container, this.settings);
+      const root = new RootClass(null, props, container, this.settings);
 
       let destroy;
       const init = async container => {

@@ -7,6 +7,7 @@
     static createBubble(id, x, y) {
       const radius = randomRadius();
       return {
+        highlighted: false,
         id,
         radius,
         x: x ? (x - radius) : randomPosition(radius),

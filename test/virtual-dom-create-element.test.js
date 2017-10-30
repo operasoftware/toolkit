@@ -277,7 +277,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo']);
+        assert.deepEqual(element.classNames, ['foo', 'bar']);
       });
 
       it('supports arrays', () => {
@@ -291,7 +291,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo']);
+        assert.deepEqual(element.classNames, ['foo', 'bar']);
       });
 
       it('supports objects', () => {
@@ -310,7 +310,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo']);
+        assert.deepEqual(element.classNames, ['foo', 'bar']);
       });
 
       it('supports nesting', () => {
@@ -332,31 +332,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo']);
-      });
-
-      it('removes excess spaces', () => {
-
-        // given
-        const classNames = [
-          null,
-          ' foo ',
-          [
-            {
-              bar: true,
-            },
-            '   test',
-            ' ',
-          ],
-        ];
-
-        // when
-        const element = createElementWithClasses('div', classNames);
-
-        // then
-        assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo', 'test']);
+        assert.deepEqual(element.classNames, ['foo', 'bar']);
       });
 
       it('removes redundant classes', () => {
@@ -370,7 +346,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['bar', 'foo']);
+        assert.deepEqual(element.classNames, ['foo', 'bar']);
       });
     });
 

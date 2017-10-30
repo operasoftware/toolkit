@@ -1,8 +1,9 @@
 {
   class VirtualNode {
 
-    constructor(key) {
+    constructor(key, parentNode) {
       this.key = key;
+      this.parentNode = parentNode;
     }
 
     get parentElement() {
@@ -47,8 +48,9 @@
       return 'component';
     }
 
-    constructor(props = {}, children = []) {
-      super(props.key);
+    constructor(id, props = {}, children = [], parentNode) {
+      super(props.key, parentNode);
+      this.id = id;
       this.props = props;
       this.children = children;
       this.sandbox = opr.Toolkit.Sandbox.create(this);
@@ -62,9 +64,7 @@
     }
 
     createComment() {
-      const comment = new Comment(` ${this.constructor.name} `);
-      comment.parentNode = this;
-      return comment;
+      return new Comment(` ${this.constructor.name} `, this);
     }
 
     hasOwnMethod(method) {
@@ -218,8 +218,8 @@
       return 'root';
     }
 
-    constructor(props, container, settings) {
-      super(props, /*= children */ null, /*= parentNode */ null);
+    constructor(id, props, container, settings) {
+      super(id, props, /*= children */ null, /*= parentNode */ null);
       const {utils, Renderer} = opr.Toolkit;
       this.state = null;
       this.reducer = utils.combineReducers(...this.getReducers());
@@ -279,10 +279,18 @@
       return 'element';
     }
 
-    constructor(name, props = {}, content = null, key) {
-      super(key);
-      opr.Toolkit.assert(name, 'Element name is mandatory');
-      this.name = name;
+    constructor(description, parentNode) {
+      super(description.key || null, parentNode);
+
+      const {
+        element,
+        props = {},
+        text = null,
+      } = description;
+      this.description = description;
+
+      opr.Toolkit.assert(element, 'Element name is mandatory');
+      this.name = element;
       const {
         listeners = {},
         attrs = {},
@@ -297,16 +305,8 @@
       this.style = style;
       this.classNames = classNames;
       this.metadata = metadata;
-      if (Array.isArray(content)) {
-        this.children = content.map(child => {
-          child.parentNode = this;
-          return child;
-        });
-        this.text = null;
-      } else {
-        this.children = [];
-        this.text = content;
-      }
+      this.text = text;
+      this.children = [];
       this.attachDOM();
     }
 
@@ -423,7 +423,7 @@
       return super.isCompatible(node) && this.name === node.name;
     }
 
-    createElement() {
+    attachDOM() {
       const element = document.createElement(this.name);
       if (this.text) {
         element.textContent = this.text;
@@ -448,15 +448,7 @@
       Object.entries(this.metadata).forEach(([prop, value]) => {
         element[prop] = value;
       });
-      return element;
-    }
-
-    attachDOM() {
-      this.ref = this.createElement();
-      for (const child of this.children) {
-        child.attachDOM();
-        this.ref.appendChild(child.ref);
-      }
+      this.ref = element;
     }
 
     detachDOM() {
@@ -473,8 +465,8 @@
       return 'comment';
     }
 
-    constructor(text) {
-      super(null);
+    constructor(text, parentNode) {
+      super(null, parentNode);
       this.text = text;
       this.attachDOM();
     }

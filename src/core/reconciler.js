@@ -33,56 +33,114 @@
 
   class Reconciler {
 
-    static calculateMoves(current, next) {
+    static comparator(a, b) {
+      if (Object.is(a.key, b.key)) {
+        return 0;
+      }
+      return a.key > b.key ? 1 : -1;
+    }
 
-      const makeMoves = (reversed = false) => {
-        const source = [...current];
-        const target = [...next];
+    static calculateMoves(source, target) {
+
+      const moves = [];
+
+      const createItem = function(key, index) {
+        return ({key, index});
+      };
+
+      const before = source.map(createItem).sort(this.comparator);
+      const after = target.map(createItem).sort(this.comparator);
+
+      let removed = [];
+      let inserted = [];
+
+      while (before.length || after.length) {
+        if (!before.length) {
+          inserted = inserted.concat(after);
+          break;
+        }
+        if (!after.length) {
+          removed = removed.concat(before);
+          break;
+        }
+        const result = this.comparator(after[0], before[0]);
+        if (result === 0) {
+          before.shift();
+          after.shift()
+        } else if (result === 1) {
+          removed.push(before.shift());
+        } else {
+          inserted.push(after.shift());
+        }
+      }
+
+      const sortByIndex = function(foo, bar) {
+        return foo.index - bar.index
+      };
+
+      removed.sort(sortByIndex).reverse();
+      inserted.sort(sortByIndex);
+
+      const result = [...source];
+
+      for (let item of removed) {
+        const move = Move.remove(item.key, item.index);
+        move.make(result);
+        moves.push(move);
+      }
+      for (let item of inserted) {
+        const move = Move.insert(item.key, item.index);
+        move.make(result);
+        moves.push(move);
+      }
+
+      if (opr.Toolkit.Diff.deepEqual(result, target)) {
+        moves.result = result;
+        return moves;
+      }
+
+      const calculateIndexChanges = (source, target, reversed = false) => {
+
         const moves = [];
 
-        const makeMove = move => {
-          move.make(source);
-          moves.push(move);
-        };
-        for (let i = source.length - 1; i >= 0; i--) {
-          const item = source[i];
-          if (!target.includes(item)) {
-            makeMove(Move.remove(item, i));
-          }
-        }
-        for (const item of target) {
-          if (!source.includes(item)) {
-            const index = target.indexOf(item);
-            makeMove(Move.insert(item, index));
-          }
-        }
-        const moveAndInsert = index => {
+        const moveItemIfNeeded = index => {
           const item = target[index];
           if (source[index] !== item) {
             const from = source.indexOf(item);
-            makeMove(Move.move(item, from, index));
+            const move = Move.move(item, from, index);
+            move.make(source);
+            moves.push(move);
           }
         };
 
         if (reversed) {
           for (let i = target.length - 1; i >= 0; i--) {
-            moveAndInsert(i);
+            moveItemIfNeeded(i);
           }
         } else {
           for (let i = 0; i < target.length; i++) {
-            moveAndInsert(i);
+            moveItemIfNeeded(i);
           }
         }
         moves.result = source;
         return moves;
       };
 
-      const moves = makeMoves();
-      if (moves.filter(move => (move.name === Name.MOVE)).length > 1) {
-        const alternativeMoves = makeMoves(true);
-        return alternativeMoves.length < moves.length ? alternativeMoves :
-                                                        moves;
+      const defaultMoves = calculateIndexChanges([...result], target);
+      if (defaultMoves.length > 1) {
+        const alternativeMoves =
+            calculateIndexChanges([...result], target, /*= reversed*/ true);
+        if (alternativeMoves.length < defaultMoves.length) {
+          moves.push(...alternativeMoves);
+          moves.result = alternativeMoves.result;
+        } else {
+          moves.push(...defaultMoves);
+          moves.result = defaultMoves.result;
+        }
+        return moves;
       }
+      moves.push(...defaultMoves);
+      moves.result = defaultMoves.result;
       return moves;
     }
   }

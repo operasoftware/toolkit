@@ -104,7 +104,7 @@
 
       const RootClass = await this.getRootClass(component, props);
 
-      const root = new RootClass(props, container, this.settings);
+      const root = new RootClass(null, props, container, this.settings);
 
       let destroy;
       const init = async container => {

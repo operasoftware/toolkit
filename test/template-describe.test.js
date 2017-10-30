@@ -1,7 +1,6 @@
 describe('Template => describe', () => {
 
   const Template = opr.Toolkit.Template;
-  ;
 
   suppressConsoleErrors();
 
@@ -54,8 +53,8 @@ describe('Template => describe', () => {
     assert.equal(description.type, 'component');
     assert.equal(description.component, 'component');
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects component with filtered child nodes', () => {
@@ -77,8 +76,8 @@ describe('Template => describe', () => {
     assert.equal(description.type, 'component');
     assert.equal(description.component, 'component');
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects component with properties and child nodes', () => {
@@ -102,8 +101,8 @@ describe('Template => describe', () => {
     assert.equal(description.component, 'component');
     assert.equal(description.props, props);
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects component with properties and filtered child nodes', () => {
@@ -128,8 +127,8 @@ describe('Template => describe', () => {
     assert.equal(description.component, 'component');
     assert.equal(description.props, props);
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects empty element', () => {
@@ -220,8 +219,8 @@ describe('Template => describe', () => {
     assert.equal(description.type, 'element');
     assert.equal(description.element, 'div');
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects element with filtered child nodes', () => {
@@ -243,8 +242,8 @@ describe('Template => describe', () => {
     assert.equal(description.type, 'element');
     assert.equal(description.element, 'div');
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects element with properties and child nodes', () => {
@@ -277,8 +276,8 @@ describe('Template => describe', () => {
       },
     });
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('detects element with properties and filtered child nodes', () => {
@@ -309,8 +308,8 @@ describe('Template => describe', () => {
       },
     });
     assert.equal(description.children.length, 2);
-    assert.equal(description.children[0].element, 'div');
-    assert.equal(description.children[1].element, 'span');
+    assert.equal(description.children[0][0], 'div');
+    assert.equal(description.children[1][0], 'span');
   });
 
   it('returns null description for null template', () => {

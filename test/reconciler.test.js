@@ -31,7 +31,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [];
-    const target = [X]
+    const target = [X];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -46,7 +46,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, C, D];
-    const target = [A, B, X, C, D]
+    const target = [A, B, X, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -61,7 +61,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, C, D];
-    const target = [X, A, B, C, D]
+    const target = [X, A, B, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -76,7 +76,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, C, D];
-    const target = [A, B, C, D, X]
+    const target = [A, B, C, D, X];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -91,7 +91,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [X];
-    const target = []
+    const target = [];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -106,7 +106,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, X, C, D];
-    const target = [A, B, C, D]
+    const target = [A, B, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -121,7 +121,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [X, A, B, C, D];
-    const target = [A, B, C, D]
+    const target = [A, B, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -136,7 +136,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, C, D, X];
-    const target = [A, B, C, D]
+    const target = [A, B, C, D];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
@@ -151,7 +151,7 @@ describe('Reconciler', () => {
 
     // given
     const source = [A, B, C, D, E, F, G, H];
-    const target = [A, B, C]
+    const target = [A, B, C];
 
     // when
     const moves = Reconciler.calculateMoves(source, target);
