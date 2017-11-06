@@ -574,6 +574,10 @@
       }))
     }
 
+    preventDefault(event) {
+      event.preventDefault();
+    }
+
     stopEvent(event) {
       event.stopImmediatePropagation();
       event.preventDefault();
@@ -2219,8 +2223,9 @@
     'elementName',
     'getKey',
     'id',
-    'stopEvent',
+    'preventDefault',
     'ref',
+    'stopEvent',
   ];
   const methods = [
     'broadcast',

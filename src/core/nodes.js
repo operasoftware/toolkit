@@ -138,6 +138,10 @@
       }))
     }
 
+    preventDefault(event) {
+      event.preventDefault();
+    }
+
     stopEvent(event) {
       event.stopImmediatePropagation();
       event.preventDefault();

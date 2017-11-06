@@ -10,8 +10,9 @@
     'elementName',
     'getKey',
     'id',
-    'stopEvent',
+    'preventDefault',
     'ref',
+    'stopEvent',
   ];
   const methods = [
     'broadcast',
