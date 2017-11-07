@@ -1579,384 +1579,478 @@
 }
 
 {
-  const Type = Object.freeze({
+  const INIT_ROOT_COMPONENT = {
+    type: Symbol('init-root-component'),
+    apply: function() {
+      this.root.container.appendChild(this.root.ref);
+    },
+  };
+  const UPDATE_COMPONENT = {
+    type: Symbol('update-component'),
+  };
 
-    INIT_ROOT_COMPONENT: Symbol('init-root-component'),
-    UPDATE_COMPONENT: Symbol('update-component'),
+  const ADD_ELEMENT = {
+    type: Symbol('add-element'),
+    apply: function() {
+      const ref = this.parent.ref;
+      this.parent.appendChild(this.element);
+      ref.replaceWith(this.element.ref);
+    },
+  };
+  const REMOVE_ELEMENT = {
+    type: Symbol('remove-element'),
+    apply: function() {
+      const ref = this.element.ref;
+      this.parent.removeChild(this.element);
+      ref.replaceWith(this.parent.ref);
+    },
+  };
 
-    ADD_ELEMENT: Symbol('add-element'),
-    REMOVE_ELEMENT: Symbol('remove-element'),
+  const ADD_COMPONENT = {
+    type: Symbol('add-component'),
+    apply: function() {
+      const ref = this.parent.ref;
+      this.parent.appendChild(this.component);
+      ref.replaceWith(this.component.ref);
+    },
+  };
+  const REMOVE_COMPONENT = {
+    type: Symbol('remove-component'),
+    apply: function() {
+      const ref = this.component.ref;
+      this.parent.removeChild(this.component);
+      ref.replaceWith(this.parent.ref);
+    },
+  };
 
-    ADD_COMPONENT: Symbol('add-component'),
-    REMOVE_COMPONENT: Symbol('remove-component'),
+  const REPLACE_CHILD = {
+    type: Symbol('replace-child'),
+    apply: function() {
+      const ref = this.parent.ref;
+      this.parent.replaceChild(this.child, this.node);
+      ref.replaceWith(this.node.ref);
+    },
+  };
 
-    REPLACE_CHILD: Symbol('replace-child'),
+  const ADD_ATTRIBUTE = {
+    type: Symbol('add-attribute'),
+    apply: function() {
+      this.target.setAttribute(this.name, this.value);
+    },
+  };
+  const REPLACE_ATTRIBUTE = {
+    type: Symbol('replace-attribute'),
+    apply: function() {
+      this.target.setAttribute(this.name, this.value);
+    },
+  };
+  const REMOVE_ATTRIBUTE = {
+    type: Symbol('remove-attribute'),
+    apply: function() {
+      this.target.removeAttribute(this.name);
+    },
+  };
 
-    ADD_ATTRIBUTE: Symbol('add-attribute'),
-    REPLACE_ATTRIBUTE: Symbol('replace-attribute'),
-    REMOVE_ATTRIBUTE: Symbol('remove-attribute'),
+  const ADD_DATA_ATTRIBUTE = {
+    type: Symbol('add-data-attribute'),
+    apply: function() {
+      this.target.setDataAttribute(this.name, this.value);
+    },
+  };
+  const REPLACE_DATA_ATTRIBUTE = {
+    type: Symbol('replace-data-attribute'),
+    apply: function() {
+      this.target.setDataAttribute(this.name, this.value);
+    },
+  };
+  const REMOVE_DATA_ATTRIBUTE = {
+    type: Symbol('remove-data-attribute'),
+    apply: function() {
+      this.target.removeDataAttribute(this.name);
+    },
+  };
 
-    ADD_DATA_ATTRIBUTE: Symbol('add-data-attribute'),
-    REPLACE_DATA_ATTRIBUTE: Symbol('replace-data-attribute'),
-    REMOVE_DATA_ATTRIBUTE: Symbol('remove-data-attribute'),
+  const ADD_STYLE_PROPERTY = {
+    type: Symbol('add-style-property'),
+    apply: function() {
+      this.target.setStyleProperty(this.property, this.value);
+    },
+  };
+  const REPLACE_STYLE_PROPERTY = {
+    type: Symbol('replace-style-property'),
+    apply: function() {
+      this.target.setStyleProperty(this.property, this.value);
+    },
+  };
+  const REMOVE_STYLE_PROPERTY = {
+    type: Symbol('remove-style-property'),
+    apply: function() {
+      this.target.removeStyleProperty(this.property);
+    },
+  };
 
-    ADD_STYLE_PROPERTY: Symbol('add-style-property'),
-    REPLACE_STYLE_PROPERTY: Symbol('replace-style-property'),
-    REMOVE_STYLE_PROPERTY: Symbol('remove-style-property'),
+  const ADD_CLASS_NAME = {
+    type: Symbol('add-class-name'),
+    apply: function() {
+      this.target.addClassName(this.name);
+    },
+  };
+  const REMOVE_CLASS_NAME = {
+    type: Symbol('remove-class-name'),
+    apply: function() {
+      this.target.removeClassName(this.name);
+    },
+  };
 
-    ADD_CLASS_NAME: Symbol('add-class-name'),
-    REMOVE_CLASS_NAME: Symbol('remove-class-name'),
+  const ADD_LISTENER = {
+    type: Symbol('add-listener'),
+    apply: function() {
+      this.target.addListener(this.name, this.listener);
+    },
+  };
+  const REPLACE_LISTENER = {
+    type: Symbol('replace-listener'),
+    apply: function() {
+      this.target.removeListener(this.name, this.removed);
+      this.target.addListener(this.name, this.added);
+    },
+  };
+  const REMOVE_LISTENER = {
+    type: Symbol('remove-listener'),
+    apply: function() {
+      this.target.removeListener(this.name, this.listener);
+    },
+  };
 
-    ADD_LISTENER: Symbol('add-listener'),
-    REPLACE_LISTENER: Symbol('replace-listener'),
-    REMOVE_LISTENER: Symbol('remove-listener'),
+  const ADD_METADATA = {
+    type: Symbol('add-metadata'),
+    apply: function() {
+      this.target.setMetadata(this.key, this.value);
+    },
+  };
+  const REPLACE_METADATA = {
+    type: Symbol('replace-metadata'),
+    apply: function() {
+      this.target.setMetadata(this.key, this.value);
+    },
+  };
+  const REMOVE_METADATA = {
+    type: Symbol('remove-metadata'),
+    apply: function() {
+      this.target.removeMetadata(this.key);
+    },
+  };
 
-    ADD_METADATA: Symbol('add-metadata'),
-    REPLACE_METADATA: Symbol('replace-metadata'),
-    REMOVE_METADATA: Symbol('remove-metadata'),
+  const INSERT_CHILD_NODE = {
+    type: Symbol('insert-child-node'),
+    apply: function() {
+      this.parent.insertChild(this.node, this.at);
+    },
+  };
+  const MOVE_CHILD_NODE = {
+    type: Symbol('move-child-node'),
+    apply: function() {
+      this.parent.moveChild(this.node, this.from, this.to);
+    },
+  };
+  const REPLACE_CHILD_NODE = {
+    type: Symbol('replace-child-node'),
+    apply: function() {
+      this.parent.replaceChild(this.child, this.node);
+    },
+  };
+  const REMOVE_CHILD_NODE = {
+    type: Symbol('remove-child-node'),
+    apply: function() {
+      this.parent.removeChild(this.node);
+    },
+  };
 
-    INSERT_CHILD_NODE: Symbol('insert-child-node'),
-    MOVE_CHILD_NODE: Symbol('move-child-node'),
-    REPLACE_CHILD_NODE: Symbol('replace-child-node'),
-    REMOVE_CHILD_NODE: Symbol('remove-child-node'),
+  const SET_TEXT_CONTENT = {
+    type: Symbol('set-text-content'),
+    apply: function() {
+      this.element.setTextContent(this.text);
+    },
+  };
+  const REMOVE_TEXT_CONTENT = {
+    type: Symbol('remove-text-content'),
+    apply: function() {
+      this.element.removeTextContent();
+    },
+  };
 
-    SET_TEXT_CONTENT: Symbol('set-text-content'),
-    REMOVE_TEXT_CONTENT: Symbol('remove-text-content'),
-  });
+  const Types = {
+    INIT_ROOT_COMPONENT,
+    UPDATE_COMPONENT,
+    ADD_ELEMENT,
+    REMOVE_ELEMENT,
+    ADD_COMPONENT,
+    REMOVE_COMPONENT,
+    REPLACE_CHILD,
+    ADD_ATTRIBUTE,
+    REPLACE_ATTRIBUTE,
+    REMOVE_ATTRIBUTE,
+    ADD_DATA_ATTRIBUTE,
+    REPLACE_DATA_ATTRIBUTE,
+    REMOVE_DATA_ATTRIBUTE,
+    ADD_STYLE_PROPERTY,
+    REPLACE_STYLE_PROPERTY,
+    REMOVE_STYLE_PROPERTY,
+    ADD_CLASS_NAME,
+    REMOVE_CLASS_NAME,
+    ADD_LISTENER,
+    REPLACE_LISTENER,
+    REMOVE_LISTENER,
+    ADD_METADATA,
+    REPLACE_METADATA,
+    REMOVE_METADATA,
+    INSERT_CHILD_NODE,
+    MOVE_CHILD_NODE,
+    REPLACE_CHILD_NODE,
+    REMOVE_CHILD_NODE,
+    SET_TEXT_CONTENT,
+    REMOVE_TEXT_CONTENT,
+  };
+  const PatchTypes = Object.keys(Types).reduce((result, key) => {
+    result[key] = Types[key].type;
+    return result;
+  }, {});
 
   class Patch {
-
-    constructor(type, props) {
-      Object.assign(this, {type}, props);
+    constructor(def) {
+      this.type = def.type;
+      this.apply = def.apply || opr.Toolkit.noop;
     }
 
     static initRootComponent(root) {
-      return new Patch(Type.INIT_ROOT_COMPONENT, {
-        root,
-        apply: function() {
-          root.container.appendChild(root.ref);
-        },
-      });
+      const patch = new Patch(INIT_ROOT_COMPONENT);
+      patch.root = root;
+      return patch;
     }
 
     static updateComponent(target, prevProps) {
-      return new Patch(Type.UPDATE_COMPONENT, {
-        target,
-        prevProps,
-        props: target.sandbox.props,
-        apply: function() {},
-      });
-    }
-
-    static addAttribute(name, value, target) {
-      return new Patch(Type.ADD_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: function() {
-          target.setAttribute(name, value);
-        },
-      });
-    }
-
-    static replaceAttribute(name, value, target) {
-      return new Patch(Type.REPLACE_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: function() {
-          target.setAttribute(name, value);
-        },
-      });
-    }
-
-    static removeAttribute(name, target) {
-      return new Patch(Type.REMOVE_ATTRIBUTE, {
-        name,
-        target,
-        apply: function() {
-          target.removeAttribute(name);
-        },
-      });
-    }
-
-    static addDataAttribute(name, value, target) {
-      return new Patch(Type.ADD_DATA_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: function() {
-          target.setDataAttribute(name, value);
-        },
-      });
-    }
-
-    static replaceDataAttribute(name, value, target) {
-      return new Patch(Type.REPLACE_DATA_ATTRIBUTE, {
-        name,
-        value,
-        target,
-        apply: function() {
-          target.setDataAttribute(name, value);
-        },
-      });
-    }
-
-    static removeDataAttribute(name, target) {
-      return new Patch(Type.REMOVE_DATA_ATTRIBUTE, {
-        name,
-        target,
-        apply: function() {
-          target.removeDataAttribute(name);
-        },
-      });
-    }
-    static addStyleProperty(property, value, target) {
-      return new Patch(Type.ADD_STYLE_PROPERTY, {
-        property,
-        value,
-        target,
-        apply: function() {
-          target.setStyleProperty(property, value);
-        },
-      });
-    }
-
-    static replaceStyleProperty(property, value, target) {
-      return new Patch(Type.REPLACE_STYLE_PROPERTY, {
-        property,
-        value,
-        target,
-        apply: function() {
-          target.setStyleProperty(property, value);
-        },
-      });
-    }
-
-    static removeStyleProperty(property, target) {
-      return new Patch(Type.REMOVE_STYLE_PROPERTY, {
-        property,
-        target,
-        apply: function() {
-          target.removeStyleProperty(property);
-        },
-      });
-    }
-
-    static addClassName(name, target) {
-      return new Patch(Type.ADD_CLASS_NAME, {
-        name,
-        target,
-        apply: function() {
-          target.addClassName(name);
-        },
-      });
-    }
-
-    static removeClassName(name, target) {
-      return new Patch(Type.REMOVE_CLASS_NAME, {
-        name,
-        target,
-        apply: function() {
-          target.removeClassName(name);
-        },
-      });
-    }
-
-    static addListener(name, listener, target) {
-      return new Patch(Type.ADD_LISTENER, {
-        name,
-        listener,
-        target,
-        apply: function() {
-          target.addListener(name, listener);
-        },
-      });
-    }
-
-    static replaceListener(name, removed, added, target) {
-      return new Patch(Type.REPLACE_LISTENER, {
-        name,
-        removed,
-        added,
-        target,
-        apply: function() {
-          target.removeListener(name, removed);
-          target.addListener(name, added);
-        },
-      });
-    }
-
-    static removeListener(name, listener, target) {
-      return new Patch(Type.REMOVE_LISTENER, {
-        name,
-        listener,
-        target,
-        apply: function() {
-          target.removeListener(name, listener);
-        },
-      });
-    }
-
-    static addMetadata(key, value, target) {
-      return new Patch(Type.ADD_METADATA, {
-        key,
-        value,
-        target,
-        apply: function() {
-          target.setMetadata(key, value);
-        },
-      });
-    }
-
-    static replaceMetadata(key, value, target) {
-      return new Patch(Type.REPLACE_METADATA, {
-        key,
-        value,
-        target,
-        apply: function() {
-          target.setMetadata(key, value);
-        },
-      });
-    }
-
-    static removeMetadata(key, target) {
-      return new Patch(Type.REMOVE_METADATA, {
-        key,
-        target,
-        apply: function() {
-          target.removeMetadata(key);
-        },
-      });
+      const patch = new Patch(UPDATE_COMPONENT);
+      patch.target = target;
+      patch.prevProps = prevProps;
+      patch.props = target.sandbox.props;
+      return patch;
     }
 
     static addElement(element, parent) {
-      return new Patch(Type.ADD_ELEMENT, {
-        element,
-        parent,
-        apply: function() {
-          const ref = parent.ref;
-          parent.appendChild(element);
-          ref.replaceWith(element.ref);
-        },
-      });
+      const patch = new Patch(ADD_ELEMENT);
+      patch.element = element;
+      patch.parent = parent;
+      return patch;
     }
 
     static removeElement(element, parent) {
-      return new Patch(Type.REMOVE_ELEMENT, {
-        element,
-        parent,
-        apply: function() {
-          const ref = element.ref;
-          parent.removeChild(element);
-          ref.replaceWith(parent.ref);
-        },
-      });
+      const patch = new Patch(REMOVE_ELEMENT);
+      patch.element = element;
+      patch.parent = parent;
+      return patch;
     }
 
     static addComponent(component, parent) {
-      return new Patch(Type.ADD_COMPONENT, {
-        component,
-        parent,
-        apply: function() {
-          const ref = parent.ref;
-          parent.appendChild(component);
-          ref.replaceWith(component.ref);
-        },
-      });
+      const patch = new Patch(ADD_COMPONENT);
+      patch.component = component;
+      patch.parent = parent;
+      return patch;
     }
 
     static removeComponent(component, parent) {
-      return new Patch(Type.REMOVE_COMPONENT, {
-        component,
-        parent,
-        apply: function() {
-          const ref = component.ref;
-          parent.removeChild(component);
-          ref.replaceWith(parent.ref);
-        },
-      });
+      const patch = new Patch(REMOVE_COMPONENT);
+      patch.component = component;
+      patch.parent = parent;
+      return patch;
     }
 
     static replaceChild(child, node, parent) {
-      return new Patch(Type.REPLACE_CHILD, {
-        child,
-        node,
-        parent,
-        apply: function() {
-          const ref = parent.ref;
-          parent.replaceChild(child, node);
-          ref.replaceWith(node.ref);
-        },
-      });
+      const patch = new Patch(REPLACE_CHILD);
+      patch.child = child;
+      patch.node = node;
+      patch.parent = parent;
+      return patch;
+    }
+
+    static addAttribute(name, value, target) {
+      const patch = new Patch(ADD_ATTRIBUTE);
+      patch.name = name;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static replaceAttribute(name, value, target) {
+      const patch = new Patch(REPLACE_ATTRIBUTE);
+      patch.name = name;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeAttribute(name, target) {
+      const patch = new Patch(REMOVE_ATTRIBUTE);
+      patch.name = name;
+      patch.target = target;
+      return patch;
+    }
+
+    static addDataAttribute(name, value, target) {
+      const patch = new Patch(ADD_DATA_ATTRIBUTE);
+      patch.name = name;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static replaceDataAttribute(name, value, target) {
+      const patch = new Patch(REPLACE_DATA_ATTRIBUTE);
+      patch.name = name;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeDataAttribute(name, target) {
+      const patch = new Patch(REMOVE_DATA_ATTRIBUTE);
+      patch.name = name;
+      patch.target = target;
+      return patch;
+    }
+
+    static addStyleProperty(property, value, target) {
+      const patch = new Patch(ADD_STYLE_PROPERTY);
+      patch.property = property;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static replaceStyleProperty(property, value, target) {
+      const patch = new Patch(REPLACE_STYLE_PROPERTY);
+      patch.property = property;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeStyleProperty(property, target) {
+      const patch = new Patch(REMOVE_STYLE_PROPERTY);
+      patch.property = property;
+      patch.target = target;
+      return patch;
+    }
+
+    static addClassName(name, target) {
+      const patch = new Patch(ADD_CLASS_NAME);
+      patch.name = name;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeClassName(name, target) {
+      const patch = new Patch(REMOVE_CLASS_NAME);
+      patch.name = name;
+      patch.target = target;
+      return patch;
+    }
+
+    static addListener(name, listener, target) {
+      const patch = new Patch(ADD_LISTENER);
+      patch.name = name;
+      patch.listener = listener;
+      patch.target = target;
+      return patch;
+    }
+
+    static replaceListener(name, removed, added, target) {
+      const patch = new Patch(REPLACE_LISTENER);
+      patch.name = name;
+      patch.removed = removed;
+      patch.added = added;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeListener(name, listener, target) {
+      const patch = new Patch(REMOVE_LISTENER);
+      patch.name = name;
+      patch.listener = listener;
+      patch.target = target;
+      return patch;
+    }
+
+    static addMetadata(key, value, target) {
+      const patch = new Patch(ADD_METADATA);
+      patch.key = key;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static replaceMetadata(key, value, target) {
+      const patch = new Patch(REPLACE_METADATA);
+      patch.key = key;
+      patch.value = value;
+      patch.target = target;
+      return patch;
+    }
+
+    static removeMetadata(key, target) {
+      const patch = new Patch(REMOVE_METADATA);
+      patch.key = key;
+      patch.target = target;
+      return patch;
     }
 
     static insertChildNode(node, at, parent) {
-      return new Patch(Type.INSERT_CHILD_NODE, {
-        node,
-        at,
-        parent,
-        apply: function() {
-          parent.insertChild(node, at);
-        },
-      });
+      const patch = new Patch(INSERT_CHILD_NODE);
+      patch.node = node;
+      patch.at = at;
+      patch.parent = parent;
+      return patch;
     }
 
     static moveChildNode(node, from, to, parent) {
-      return new Patch(Type.MOVE_CHILD_NODE, {
-        node,
-        from,
-        to,
-        parent,
-        apply: function() {
-          parent.moveChild(node, from, to);
-        },
-      });
+      const patch = new Patch(MOVE_CHILD_NODE);
+      patch.node = node;
+      patch.from = from;
+      patch.to = to;
+      patch.parent = parent;
+      return patch;
     }
 
     static replaceChildNode(child, node, parent) {
-      return new Patch(Type.REPLACE_CHILD_NODE, {
-        child,
-        node,
-        parent,
-        apply: function() {
-          parent.replaceChild(child, node);
-        },
-      })
+      const patch = new Patch(REPLACE_CHILD_NODE);
+      patch.child = child;
+      patch.node = node;
+      patch.parent = parent;
+      return patch;
     }
 
     static removeChildNode(node, at, parent) {
-      return new Patch(Type.REMOVE_CHILD_NODE, {
-        node,
-        at,
-        parent,
-        apply: function() {
-          parent.removeChild(node);
-        },
-      });
+      const patch = new Patch(REMOVE_CHILD_NODE);
+      patch.node = node;
+      patch.at = at;
+      patch.parent = parent;
+      return patch;
     }
 
     static setTextContent(element, text) {
-      return new Patch(Type.SET_TEXT_CONTENT, {
-        element,
-        text,
-        apply: function() {
-          element.setTextContent(text);
-        },
-      });
+      const patch = new Patch(SET_TEXT_CONTENT);
+      patch.element = element;
+      patch.text = text;
+      return patch;
     }
 
     static removeTextContent(element) {
-      return new Patch(Type.REMOVE_TEXT_CONTENT, {
-        element,
-        apply: function() {
-          element.removeTextContent();
-        },
-      });
+      const patch = new Patch(REMOVE_TEXT_CONTENT);
+      patch.element = element;
+      return patch;
     }
 
     static get Type() {
-      return Type;
+      return PatchTypes;
     }
   }
 
@@ -1973,7 +2067,12 @@
   class Move {
 
     constructor(name, item, props, make) {
-      Object.assign(this, {name, item, make}, props);
+      this.name = name;
+      this.item = item;
+      this.at = props.at;
+      this.from = props.from;
+      this.to = props.to;
+      this.make = make;
     }
 
     static insert(item, at) {
@@ -2216,6 +2315,7 @@
       typeof target[property] === 'function';
 
   const delegated = [
+    'children',
     'commands',
     'constructor',
     'container',
@@ -2232,9 +2332,6 @@
     'connectTo',
   ];
 
-  const CHILDREN = 'children';
-  const PROPS = 'props';
-
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
     boundListener.source = listener;
@@ -2248,24 +2345,16 @@
       const blacklist =
           Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
       const autobound = {};
-      const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
           if (property === '$component') {
             return component;
           }
-          if (property === PROPS) {
-            if (state.props !== undefined) {
-              return state.props;
+          if (property === 'props') {
+            if (target instanceof opr.Toolkit.Root) {
+              return target.state;
             }
-            return target instanceof opr.Toolkit.Root ? target.state :
-                                                        target.props;
-          }
-          if (property === CHILDREN) {
-            if (state.children !== undefined) {
-              return state.children;
-            }
-            return target.children;
+            return target.props;
           }
           if (delegated.includes(property)) {
             return target[property];
@@ -2866,12 +2955,11 @@
 
       const details = analyze(template);
 
-      if (!details) {
-        return null;
+      if (details) {
+        return this.normalize(details, template);
       }
 
-      return details.component ? new ComponentDescription(details, template) :
-                                 new ElementDescription(details, template);
+      return null;
     }
 
     static normalize(details, template = null) {
@@ -2986,6 +3074,7 @@
 {
   const INIT = Symbol('init');
   const SET_STATE = Symbol('set-state');
+  const UPDATE = Symbol('update');
 
   const coreReducer = (state, command) => {
     if (command.type === INIT) {
@@ -2993,6 +3082,12 @@
     }
     if (command.type === SET_STATE) {
       return command.state;
+    }
+    if (command.type === UPDATE) {
+      return {
+        ...state,
+        ...command.state,
+      };
     }
     return state;
   };
@@ -3004,6 +3099,10 @@
     }),
     setState: state => ({
       type: SET_STATE,
+      state,
+    }),
+    update: state => ({
+      type: UPDATE,
       state,
     }),
   };
@@ -3022,7 +3121,9 @@
 
       const overriden = incoming.find(key => defined.includes(key));
       if (overriden) {
-        console.error('Reducer:', reducer, 'conflicts an with exiting one!');
+        console.error(
+            'Reducer:', reducer,
+            `conflicts an with exiting one with method: "${overriden}"`);
         throw new Error(`The "${overriden}" command is already defined!`)
       }
 
@@ -3305,6 +3406,9 @@
       }
 
       return root;
+    }
+
+    noop() {
     }
   }
 

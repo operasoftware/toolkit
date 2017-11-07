@@ -8,7 +8,12 @@
   class Move {
 
     constructor(name, item, props, make) {
-      Object.assign(this, {name, item, make}, props);
+      this.name = name;
+      this.item = item;
+      this.at = props.at;
+      this.from = props.from;
+      this.to = props.to;
+      this.make = make;
     }
 
     static insert(item, at) {

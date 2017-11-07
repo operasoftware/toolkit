@@ -3,6 +3,7 @@
       typeof target[property] === 'function';
 
   const delegated = [
+    'children',
     'commands',
     'constructor',
     'container',
@@ -19,9 +20,6 @@
     'connectTo',
   ];
 
-  const CHILDREN = 'children';
-  const PROPS = 'props';
-
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
     boundListener.source = listener;
@@ -35,24 +33,16 @@
       const blacklist =
           Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
       const autobound = {};
-      const state = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
           if (property === '$component') {
             return component;
           }
-          if (property === PROPS) {
-            if (state.props !== undefined) {
-              return state.props;
+          if (property === 'props') {
+            if (target instanceof opr.Toolkit.Root) {
+              return target.state;
             }
-            return target instanceof opr.Toolkit.Root ? target.state :
-                                                        target.props;
-          }
-          if (property === CHILDREN) {
-            if (state.children !== undefined) {
-              return state.children;
-            }
-            return target.children;
+            return target.props;
           }
           if (delegated.includes(property)) {
             return target[property];

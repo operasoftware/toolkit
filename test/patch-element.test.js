@@ -382,8 +382,8 @@ describe('Patch element => apply', () => {
   it('removes metadata', () => {
 
     // given
-    const element =
-        utils.createFromTemplate(['div', {metadata: {customAttribute: 'customValue'}}]);
+    const element = utils.createFromTemplate(
+        ['div', {metadata: {customAttribute: 'customValue'}}]);
 
     assert.equal(element.metadata.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
@@ -399,8 +399,8 @@ describe('Patch element => apply', () => {
   it('replaces metadata', () => {
 
     // given
-    const element =
-        utils.createFromTemplate(['div', {metadata: {customAttribute: 'customValue'}}]);
+    const element = utils.createFromTemplate(
+        ['div', {metadata: {customAttribute: 'customValue'}}]);
 
     assert.equal(element.metadata.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
@@ -579,6 +579,117 @@ describe('Patch element => apply', () => {
 
       assert.equal(element.children[1].constructor, ComponentClass);
       assert(element.ref.childNodes[1].textContent.includes('ComponentClass'));
+    });
+  });
+
+  describe('replace child node', () => {
+
+    const Component = Symbol('Component');
+
+    const ComponentClass = class extends opr.Toolkit.Component {
+      render() {
+        return ['component'];
+      }
+    };
+
+    beforeEach(() => {
+      sinon.stub(VirtualDOM, 'getComponentClass', symbol => ComponentClass);
+    });
+
+    afterEach(() => {
+      VirtualDOM.getComponentClass.restore();
+    });
+
+    it('replaces element with component', () => {
+
+      // given
+      const element = utils.createFromTemplate([
+        'div',
+        [
+          'p',
+        ],
+      ]);
+      const child = element.children[0];
+
+      const component = utils.createFromTemplate([
+        Component,
+      ]);
+
+      // when
+      Patch.replaceChildNode(child, component, element).apply();
+
+      // then
+      assert.equal(element.children[0], component);
+      assert.equal(element.children[0].ref.tagName, 'COMPONENT');
+    });
+
+    it('replaces element with element', () => {
+
+      // given
+      const element = utils.createFromTemplate([
+        'div',
+        [
+          'p',
+        ],
+      ]);
+      const child = element.children[0];
+
+      const span = utils.createFromTemplate([
+        'span',
+      ]);
+
+      // when
+      Patch.replaceChildNode(child, span, element).apply();
+
+      // then
+      assert.equal(element.children[0], span);
+      assert.equal(element.children[0].ref.tagName, 'SPAN');
+    });
+
+    it('replaces component with component', () => {
+
+      // given
+      const element = utils.createFromTemplate([
+        'div',
+        [
+          Component,
+        ],
+      ]);
+      const child = element.children[0];
+
+      const component = utils.createFromTemplate([
+        Component,
+      ]);
+
+      // when
+      Patch.replaceChildNode(child, component, element).apply();
+
+      // then
+      assert.equal(element.children[0], component);
+      assert.equal(element.children[0].ref.tagName, 'COMPONENT');
+    });
+
+    it('replaces component with element', () => {
+
+      // given
+      const element = utils.createFromTemplate([
+        'div',
+        [
+          Component,
+        ],
+      ]);
+      const child = element.children[0];
+
+      const span = utils.createFromTemplate([
+        'span',
+      ]);
+
+      // when
+      Patch.replaceChildNode(child, span, element).apply();
+
+      // then
+      assert.equal(element.children[0], span);
+      assert.equal(element.children[0].ref.tagName, 'SPAN');
     });
   });
 

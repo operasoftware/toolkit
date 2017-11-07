@@ -2,9 +2,9 @@ describe('Sandbox', () => {
 
   const Sandbox = opr.Toolkit.Sandbox;
 
-  describe('create context', () => {
+  describe('create sandbox', () => {
 
-    it('returns a context containing own methods', () => {
+    it('returns a sandbox containing own methods', () => {
 
       // given
       const SomeComponent = class extends opr.Toolkit.Component {
@@ -15,19 +15,19 @@ describe('Sandbox', () => {
           return 'b';
         }
       }
-      const instance = new SomeComponent();
+      const component = new SomeComponent();
 
       // when
-      const context = Sandbox.create(instance);
+      const sandbox = Sandbox.create(component);
 
       // then
-      assert.equal(typeof context, 'object');
-      assert.equal(context.a, context.a);
-      assert.equal(context.a(), context);
-      assert.equal(context.b(), 'b');
+      assert.equal(typeof sandbox, 'object');
+      assert.equal(sandbox.a, sandbox.a);
+      assert.equal(sandbox.a(), sandbox);
+      assert.equal(sandbox.b(), 'b');
     })
 
-    it('returns a context containing inherited methods', () => {
+    it('returns a sandbox containing inherited methods', () => {
 
       // given
       const ParentComponent = class extends opr.Toolkit.Component {
@@ -44,88 +44,129 @@ describe('Sandbox', () => {
           return 'c';
         }
       };
-      const instance = new SomeComponent();
+      const component = new SomeComponent();
 
       // when
-      const context = Sandbox.create(instance);
+      const sandbox = Sandbox.create(component);
 
       // then
-      assert.equal(typeof context, 'object');
-      assert.equal(context.a, context.a);
-      assert.equal(context.a(), context);
-      assert.equal(context.b, context.b);
-      assert.equal(context.b(), 666);
-      assert.equal(context.c(), 'c');
+      assert.equal(typeof sandbox, 'object');
+      assert.equal(sandbox.a, sandbox.a);
+      assert.equal(sandbox.a(), sandbox);
+      assert.equal(sandbox.b, sandbox.b);
+      assert.equal(sandbox.b(), 666);
+      assert.equal(sandbox.c(), 'c');
     })
 
     it('does not return built-in component properties', () => {
 
       // given
-      const instance = new opr.Toolkit.Component();
+      const component = new opr.Toolkit.Component();
 
       // when
-      const context = Sandbox.create(instance);
+      const sandbox = Sandbox.create(component);
 
       // then
-      assert.equal(context.constructor, opr.Toolkit.Component);
-      assert.equal(context.appendChild, undefined);
-      assert.equal(context.nodeType, undefined);
-      assert.equal(context.onUpdated, undefined);
-      assert.equal(context.unknown, undefined);
+      assert.equal(sandbox.constructor, opr.Toolkit.Component);
+      assert.equal(sandbox.appendChild, undefined);
+      assert.equal(sandbox.nodeType, undefined);
+      assert.equal(sandbox.onUpdated, undefined);
+      assert.equal(sandbox.unknown, undefined);
     })
 
-    it('allows to set and get rendering-related properties', () => {
+    it('allows to get component children', () => {
 
       // given
-      const instance = new opr.Toolkit.Component();
+      const component = new opr.Toolkit.Component();
       const children = [];
-      const container = document.createElement('div');
 
       // when
-      const context = Sandbox.create(instance);
-      context.children = children;
+      const sandbox = Sandbox.create(component);
+      sandbox.children = children;
 
       // then
-      assert.deepEqual(context.children, children);
+      assert.deepEqual(sandbox.children, children);
     })
 
-    it('allows to set and get root-specific properties', () => {
+    it('allows to get root state as props', () => {
+
+      // given
+      const root = new opr.Toolkit.Root();
+      root.state = {
+        foo: 'bar',
+      };
+
+      // when
+      const sandbox = Sandbox.create(root);
+
+      // then
+      assert.equal(sandbox.props, root.state);
+    })
+
+    it('allows to get component props', () => {
+
+      // given
+      const component = new opr.Toolkit.Component();
+      component.props = {
+        foo: 'bar',
+      };
+
+      // when
+      const sandbox = Sandbox.create(component);
+
+      // then
+      assert.equal(sandbox.props, component.props);
+    })
+
+    it('allows to get root-specific properties', () => {
 
       // given
       const dispatch = () => {};
-      const instance = new opr.Toolkit.Root();
-      instance.dispatch = dispatch;
+      const component = new opr.Toolkit.Root();
+      component.dispatch = dispatch;
 
       // when
-      const context = Sandbox.create(instance);
+      const sandbox = Sandbox.create(component);
 
       // then
-      assert.equal(context.dispatch, dispatch);
+      assert.equal(sandbox.dispatch, dispatch);
     });
 
     it('allows to register services', () => {
 
       // given
-      const instance = new opr.Toolkit.Component();
+      const component = new opr.Toolkit.Component();
 
       // when
-      const context = Sandbox.create(instance);
+      const sandbox = Sandbox.create(component);
 
       // then
-      assert.equal(typeof context.connectTo, 'function');
+      assert.equal(typeof sandbox.connectTo, 'function');
     });
 
     it('ignores unknown properties', () => {
 
       // given
-      const instance = new opr.Toolkit.Component();
+      const component = new opr.Toolkit.Component();
 
       // when
-      const context = Sandbox.create(instance);
-      context.unknown = 'unknown';
+      const sandbox = Sandbox.create(component);
+      sandbox.unknown = 'unknown';
 
       // then
-      assert.equal(context.unknown, undefined);
+      assert.equal(sandbox.unknown, undefined);
+    });
+
+    it('returns a reference to the component', () => {
+
+      // given
+      const component = new opr.Toolkit.Component();
+
+      // when
+      const sandbox = Sandbox.create(component);
+
+      // then
+      assert.equal(sandbox.$component, component);
     });
 
   });

@@ -1,6 +1,7 @@
 {
   const INIT = Symbol('init');
   const SET_STATE = Symbol('set-state');
+  const UPDATE = Symbol('update');
 
   const coreReducer = (state, command) => {
     if (command.type === INIT) {
@@ -8,6 +9,12 @@
     }
     if (command.type === SET_STATE) {
       return command.state;
+    }
+    if (command.type === UPDATE) {
+      return {
+        ...state,
+        ...command.state,
+      };
     }
     return state;
   };
@@ -19,6 +26,10 @@
     }),
     setState: state => ({
       type: SET_STATE,
+      state,
+    }),
+    update: state => ({
+      type: UPDATE,
       state,
     }),
   };
@@ -37,7 +48,9 @@
 
       const overriden = incoming.find(key => defined.includes(key));
       if (overriden) {
-        console.error('Reducer:', reducer, 'conflicts an with exiting one!');
+        console.error(
+            'Reducer:', reducer,
+            `conflicts an with exiting one with method: "${overriden}"`);
         throw new Error(`The "${overriden}" command is already defined!`)
       }
 

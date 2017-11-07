@@ -33,17 +33,18 @@ describe('Virtual Element => Attach DOM', () => {
     }
   };
 
-  const createElement = (name, props = {}, content = []) => {
-    const details = {
-      type: 'element',
-      element: name,
-      children: Array.isArray(content) ? content : undefined,
-      text: typeof content === 'string' ? content : null,
-      props,
-    };
-    const description = Template.normalize(details);
-    return VirtualDOM.createFromDescription(description, null, null);
-  }
+  const createElement =
+      (name, props = {}, content = []) => {
+        const details = {
+          type: 'element',
+          element: name,
+          children: Array.isArray(content) ? content : undefined,
+          text: typeof content === 'string' ? content : null,
+          props,
+        };
+        const description = Template.normalize(details);
+        return VirtualDOM.createFromDescription(description, null, null);
+      }
 
   describe('=> DOM operations', () => {
 

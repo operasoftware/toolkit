@@ -231,18 +231,69 @@ describe('Virtual DOM', () => {
       assert.equal(element.key, null);
       assert(element.ref);
     });
-
   });
 
-  describe('=> create child tree', () => {
+  describe('=> create from description', () => {
 
-    const App = class extends opr.Toolkit.Root {
+    class SomeComponent extends opr.Toolkit.Component {
       render() {
-        return [
-          'div',
-        ];
+        return ['span'];
       }
-    };
+    }
+
+    const root = new opr.Toolkit.Root();
+
+    beforeEach(() => {
+      sinon.stub(VirtualDOM, 'getComponentClass', () => SomeComponent);
+    });
+
+    afterEach(() => {
+      VirtualDOM.getComponentClass.restore();
+    });
+
+    it('returns null for no description', () => {
+
+      // given
+      const description = null;
+
+      // when
+      const node = VirtualDOM.createFromDescription(description, root, root);
+
+      // then
+      assert.equal(node, null);
+    });
+
+    it('creates an element', () => {
+
+      // given
+      const description = {
+        element: 'div',
+      };
+
+      // when
+      const element = VirtualDOM.createFromDescription(description, root, root);
+
+      // then
+      assert(element);
+      assert.equal(element.name, 'div');
+    });
+
+    it('creates a component', () => {
+
+      // given
+      const symbol = Symbol.for('some-component');
+      const description = {
+        component: symbol,
+      };
+
+      // when
+      const component =
+          VirtualDOM.createFromDescription(description, root, root);
+
+      // then
+      assert(component);
+      assert.equal(component.id, symbol);
+    });
   });
 
   describe('=> create from template', () => {
@@ -265,7 +316,7 @@ describe('Virtual DOM', () => {
       ];
 
       // when
-      const divElement = utils.createFromTemplate(template);
+      const divElement = VirtualDOM.createFromTemplate(template);
 
       // then
       assert(divElement.isElement())
@@ -284,20 +335,20 @@ describe('Virtual DOM', () => {
     });
 
     it('returns null for template === null', () => {
-      assert.equal(utils.createFromTemplate(null), null);
+      assert.equal(VirtualDOM.createFromTemplate(null), null);
     });
 
     it('returns null for template === false', () => {
-      assert.equal(utils.createFromTemplate(false), null);
+      assert.equal(VirtualDOM.createFromTemplate(false), null);
     });
 
     it('throws an error for template === []', () => {
-      assert.throws(() => utils.createFromTemplate([]));
+      assert.throws(() => VirtualDOM.createFromTemplate([]));
     });
 
     it('throws when template === undefined', () => {
       assert.throws(
-          utils.createFromTemplate, Error, 'Invalid undefined template!');
+          VirtualDOM.createFromTemplate, Error, 'Invalid undefined template!');
     });
   });
 
@@ -310,6 +361,34 @@ describe('Virtual DOM', () => {
         }
       }
     };
+
+    it('returns original props when no default defined', () => {
+
+      // given
+      const props = {
+        foo: 'bar',
+      };
+
+      const ComponentClass = createComponentClass();
+
+      // when
+      const normalizedProps = VirtualDOM.normalizeProps(ComponentClass, props);
+
+      // then
+      assert.equal(normalizedProps, props);
+    });
+
+    it('returns an empty object when no props defined', () => {
+
+      // given
+      const ComponentClass = createComponentClass();
+
+      // when
+      const normalizedProps = VirtualDOM.normalizeProps(ComponentClass);
+
+      // then
+      assert.deepEqual(normalizedProps, {});
+    });
 
     it('overrides undefined values', () => {
 
@@ -373,6 +452,33 @@ describe('Virtual DOM', () => {
 
       // then
       assert.deepEqual(normalizedProps, props);
+    });
+  });
+
+  describe('get component class', () => {
+
+    it('reports missing component', () => {
+      assert.throws(() => VirtualDOM.getComponentClass('invalid/path'));
+    });
+
+    it('reports invalid module', () => {
+      const path = 'not/a/component';
+      loader.define(path, true);
+      assert.throws(() => VirtualDOM.getComponentClass(path));
+    });
+
+    it('returns the component', () => {
+
+      // given
+      const path = 'some/component';
+      class SomeComponent extends opr.Toolkit.Component {};
+
+      // when
+      loader.define(path, SomeComponent);
+      const module = VirtualDOM.getComponentClass(path);
+
+      // then
+      assert.equal(module, SomeComponent);
     });
   });
 });

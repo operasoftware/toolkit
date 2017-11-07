@@ -8,6 +8,7 @@ describe('Utils', () => {
     addDataPrefix,
     createUUID,
     createCommandsDispatcher,
+    isSupportedAttribute,
   } = opr.Toolkit.utils;
 
   describe('throttle', () => {
@@ -35,6 +36,29 @@ describe('Utils', () => {
       for (let i = 1; i < timestamps.length; i++) {
         assert(timestamps[i] + 1 >= timestamps[i - 1] + wait);
       }
+    });
+
+    it('delays first event', async () => {
+
+      // given
+      const wait = 50;
+      const timestamps = [];
+      const startTimestamp = Date.now();
+      const fn = () => timestamps.push(Date.now());
+      const waitTimes =
+          new Array(1000).fill(0).map(() => Math.floor(Math.random() * 200));
+
+      // when
+      const throttled = throttle(fn, wait, true);
+
+      await Promise.all(
+          waitTimes.map(waitTime => new Promise(resolve => setTimeout(() => {
+                                                  throttled();
+                                                  resolve();
+                                                }, waitTime))));
+
+      // then
+      assert(timestamps[0] >= startTimestamp + wait);
     });
 
     it('does not throttle infrequent events', async () => {
@@ -122,6 +146,58 @@ describe('Utils', () => {
       }),
     };
 
+    it('allows to use setState command from the core reducer', () => {
+
+      // given
+      const reducer = opr.Toolkit.utils.combineReducers();
+      const state = {};
+      const newState = {
+        foo: 'bar',
+      };
+
+      // when
+      const command = reducer.commands.setState(newState);
+      const result = reducer(state, command);
+
+      // then
+      assert.equal(result, newState);
+    });
+
+    it('allows to use update command from the core reducer', () => {
+
+      // given
+      const reducer = opr.Toolkit.utils.combineReducers();
+      const state = {
+        some: 'value',
+      };
+      const newState = {
+        foo: 'bar',
+      };
+
+      // when
+      const command = reducer.commands.update(newState);
+      const result = reducer(state, command);
+
+      // then
+      assert.equal(result.some, state.some);
+      assert.equal(result.foo, newState.foo);
+    });
+
+    it('detects name conflicts', () => {
+
+      // given
+      const conflictingReducer = (state, command) => state;
+      conflictingReducer.commands = {
+        update: () => ({
+          type: Symbol('update'),
+        }),
+      };
+
+      // when
+      assert.throws(
+          () => opr.Toolkit.utils.combineReducers(conflictingReducer));
+    });
+
     it('chains reducers and merges commands', () => {
 
       // given
@@ -204,6 +280,7 @@ describe('Utils', () => {
   describe('get attribute name', () => {
 
     const convertions = [
+      ['accessKey', 'accesskey'],
       ['tabIndex', 'tabindex'],
       ['autoPlay', 'autoplay'],
       ['acceptCharset', 'accept-charset'],
@@ -252,6 +329,39 @@ describe('Utils', () => {
     it('creates valid UUID', () => {
       const uuid = createUUID();
       assert.equal(/........\-....\-....\-............/.test(uuid), true);
+    });
+  })
+
+  describe('is supported attribute', () => {
+
+    it('returns true for standard attributes', () => {
+      assert(isSupportedAttribute('name'));
+      assert(isSupportedAttribute('id'));
+      assert(isSupportedAttribute('tabIndex'));
+    });
+
+    it('returns true for key attribute', () => {
+      assert.equal(isSupportedAttribute('key'), true);
+    });
+
+    it('returns true for class attribute', () => {
+      assert.equal(isSupportedAttribute('class'), true);
+    });
+
+    it('returns true for style attribute', () => {
+      assert.equal(isSupportedAttribute('style'), true);
+    });
+
+    it('returns true for dataset attribute', () => {
+      assert.equal(isSupportedAttribute('dataset'), true);
+    });
+
+    it('returns true for metadata attribute', () => {
+      assert.equal(isSupportedAttribute('metadata'), true);
+    });
+
+    it('returns false for invalid attribute', () => {
+      assert.equal(isSupportedAttribute('invalid'), false);
     });
   })
 });

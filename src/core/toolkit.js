@@ -145,6 +145,9 @@
 
       return root;
     }
+
+    noop() {
+    }
   }
 
   module.exports = Toolkit;

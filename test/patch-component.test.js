@@ -489,7 +489,8 @@ describe('Patch component => apply', () => {
       assert(subcomponent.comment);
 
       assert(component.placeholder.ref);
-      assert(component.placeholder.ref.textContent.includes('SubcomponentClass'));
+      assert(
+          component.placeholder.ref.textContent.includes('SubcomponentClass'));
 
       const element = utils.createFromTemplate([
         'div',
@@ -728,6 +729,97 @@ describe('Patch component => apply', () => {
       assert.equal(subcomponent.parentNode, null);
 
       assert(app.placeholder.ref);
+    });
+  });
+
+  describe('replace child', () => {
+
+    it('replaces element with component', () => {
+
+      // given
+      const component = utils.createFromTemplate([
+        Component,
+        [
+          'p',
+        ],
+      ]);
+
+      const subcomponent = utils.createFromTemplate([
+        Subcomponent,
+      ]);
+
+      // when
+      Patch.replaceChild(component.child, subcomponent, component).apply();
+
+      // then
+      assert.equal(component.child, subcomponent);
+      assert(component.child.ref.textContent.includes('SubcomponentClass'));
+    });
+
+    it('replaces element with element', () => {
+
+      // given
+      const component = utils.createFromTemplate([
+        Component,
+        [
+          'p',
+        ],
+      ]);
+
+      const span = utils.createFromTemplate([
+        'span',
+      ]);
+
+      // when
+      Patch.replaceChild(component.child, span, component).apply();
+
+      // then
+      assert.equal(component.child, span);
+      assert.equal(component.child.ref.tagName, 'SPAN');
+    });
+
+    it('replaces component with component', () => {
+
+      // given
+      const component = utils.createFromTemplate([
+        Component,
+        [
+          Component,
+        ],
+      ]);
+
+      const subcomponent = utils.createFromTemplate([
+        Subcomponent,
+      ]);
+
+      // when
+      Patch.replaceChild(component.child, subcomponent, component).apply();
+
+      // then
+      assert.equal(component.child, subcomponent);
+      assert(component.child.ref.textContent.includes('SubcomponentClass'));
+    });
+
+    it('replaces component with element', () => {
+
+      // given
+      const component = utils.createFromTemplate([
+        Component,
+        [
+          Component,
+        ],
+      ]);
+
+      const div = utils.createFromTemplate([
+        'div',
+      ]);
+
+      // when
+      Patch.replaceChild(component.child, div, component).apply();
+
+      // then
+      assert.equal(component.child, div);
+      assert.equal(component.child.ref.tagName, 'DIV');
     });
   });
 });

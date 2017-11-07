@@ -532,12 +532,11 @@
 
       const details = analyze(template);
 
-      if (!details) {
-        return null;
+      if (details) {
+        return this.normalize(details, template);
       }
 
-      return details.component ? new ComponentDescription(details, template) :
-                                 new ElementDescription(details, template);
+      return null;
     }
 
     static normalize(details, template = null) {

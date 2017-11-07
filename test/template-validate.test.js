@@ -17,7 +17,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: null
+      types: null,
     });
     assert(!console.error.called);
   });
@@ -29,7 +29,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: null
+      types: null,
     });
     assert(!console.error.called);
   });
@@ -37,16 +37,14 @@ describe('Template => validate', () => {
   it('accepts an empty element', () => {
 
     // given
-    const template = [
-      'span'
-    ];
+    const template = ['span'];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['string']
+      types: ['string'],
     });
     assert(!console.error.called);
   });
@@ -55,7 +53,8 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'span', {}
+      'span',
+      {},
     ];
 
     // when
@@ -63,7 +62,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'props']
+      types: ['string', 'props'],
     });
     assert(!console.error.called);
   });
@@ -71,16 +70,14 @@ describe('Template => validate', () => {
   it('accepts a text element', () => {
 
     // given
-    const template = [
-      'span', 'Text'
-    ];
+    const template = ['span', 'Text'];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'string']
+      types: ['string', 'string'],
     });
     assert(!console.error.called);
   });
@@ -88,16 +85,14 @@ describe('Template => validate', () => {
   it('accepts a text element with properties', () => {
 
     // given
-    const template = [
-      'span', {}, 'Text'
-    ];
+    const template = ['span', {}, 'Text'];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'props', 'string']
+      types: ['string', 'props', 'string'],
     });
     assert(!console.error.called);
   });
@@ -105,18 +100,14 @@ describe('Template => validate', () => {
   it('accepts an element with a single child', () => {
 
     // given
-    const template = [
-      'div', [
-        'span'
-      ]
-    ];
+    const template = ['div', ['span']];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'element']
+      types: ['string', 'element'],
     });
     assert(!console.error.called);
   });
@@ -125,7 +116,8 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', null,
+      'div',
+      null,
     ];
 
     // when
@@ -133,7 +125,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'null']
+      types: ['string', 'null'],
     });
     assert(!console.error.called);
   });
@@ -142,113 +134,7 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', false,
-    ];
-
-    // when
-    const result = Template.validate(template);
-
-    // then
-    assert.deepEqual(result, {
-      types: ['string', 'boolean']
-    });
-    assert(!console.error.called);
-  });
-
-  it('accepts an element with multiple children', () => {
-
-    // given
-    const template = [
-      'div', [
-        'span', '1'
-      ],
-      [
-        'span', '2'
-      ],
-      [
-        'span', '3'
-      ]
-    ];
-
-    // when
-    const result = Template.validate(template);
-
-    // then
-    assert.deepEqual(result, {
-      types: ['string', 'element', 'element', 'element']
-    });
-    assert(!console.error.called);
-  });
-
-  it('accepts an element with properties and a single child', () => {
-
-    // given
-    const template = [
-      'div', {},
-      [
-        'span'
-      ]
-    ];
-
-    // when
-    const result = Template.validate(template);
-
-    // then
-    assert.deepEqual(result, {
-      types: ['string', 'props', 'element']
-    });
-    assert(!console.error.called);
-  });
-
-  it('accepts an element with properties and multiple children', () => {
-
-    // given
-    const template = [
-      'div', {},
-      [
-        'span', '1'
-      ],
-      [
-        'span', '2'
-      ],
-      [
-        'span', '3'
-      ]
-    ];
-
-    // when
-    const result = Template.validate(template);
-
-    // then
-    assert.deepEqual(result, {
-      types: ['string', 'props', 'element', 'element', 'element']
-    });
-    assert(!console.error.called);
-  });
-
-  it('accepts an element with properties and null children', () => {
-
-    // given
-    const template = [
-      'div', {},
-      null, null,
-    ];
-
-    // when
-    const result = Template.validate(template);
-
-    // then
-    assert.deepEqual(result, {
-      types: ['string', 'props', 'null', 'null']
-    });
-    assert(!console.error.called);
-  });
-
-  it('accepts an element with properties and false children', () => {
-
-    // given
-    const template = [
-      'div', {},
+      'div',
       false,
     ];
 
@@ -257,7 +143,102 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['string', 'props', 'boolean']
+      types: ['string', 'boolean'],
+    });
+    assert(!console.error.called);
+  });
+
+  it('accepts an element with multiple children', () => {
+
+    // given
+    const template = [
+      'div',
+      ['span', '1'],
+      ['span', '2'],
+      ['span', '3'],
+    ];
+
+    // when
+    const result = Template.validate(template);
+
+    // then
+    assert.deepEqual(result, {
+      types: ['string', 'element', 'element', 'element'],
+    });
+    assert(!console.error.called);
+  });
+
+  it('accepts an element with properties and a single child', () => {
+
+    // given
+    const template = ['div', {}, ['span']];
+
+    // when
+    const result = Template.validate(template);
+
+    // then
+    assert.deepEqual(result, {
+      types: ['string', 'props', 'element'],
+    });
+    assert(!console.error.called);
+  });
+
+  it('accepts an element with properties and multiple children', () => {
+
+    // given
+    const template = [
+      'div',
+      {},
+      ['span', '1'],
+      ['span', '2'],
+      ['span', '3'],
+    ];
+
+    // when
+    const result = Template.validate(template);
+
+    // then
+    assert.deepEqual(result, {
+      types: ['string', 'props', 'element', 'element', 'element'],
+    });
+    assert(!console.error.called);
+  });
+
+  it('accepts an element with properties and null children', () => {
+
+    // given
+    const template = [
+      'div',
+      {},
+      null,
+      null,
+    ];
+
+    // when
+    const result = Template.validate(template);
+
+    // then
+    assert.deepEqual(result, {
+      types: ['string', 'props', 'null', 'null'],
+    });
+    assert(!console.error.called);
+  });
+
+  it('accepts an element with properties and false children', () => {
+
+    // given
+    const template = [
+      'div',
+      {},
+      false,
+    ];
+
+    // when
+    const result = Template.validate(template);
+
+    // then
+    assert.deepEqual(result, {
+      types: ['string', 'props', 'boolean'],
     });
     assert(!console.error.called);
   });
@@ -266,16 +247,14 @@ describe('Template => validate', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component
-    ];
+    const template = [component];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component']
+      types: ['component'],
     });
     assert(!console.error.called);
   });
@@ -284,18 +263,14 @@ describe('Template => validate', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component, [
-        'span'
-      ]
-    ];
+    const template = [component, ['span']];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'element']
+      types: ['component', 'element'],
     });
     assert(!console.error.called);
   });
@@ -305,15 +280,10 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, [
-        'span', '1'
-      ],
-      [
-        'span', '2'
-      ],
-      [
-        'span', '3'
-      ]
+      component,
+      ['span', '1'],
+      ['span', '2'],
+      ['span', '3'],
     ];
 
     // when
@@ -321,7 +291,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'element', 'element', 'element']
+      types: ['component', 'element', 'element', 'element'],
     });
     assert(!console.error.called);
   });
@@ -331,10 +301,10 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, [
-        'span', '1'
-      ],
-      null, null,
+      component,
+      ['span', '1'],
+      null,
+      null,
     ];
 
     // when
@@ -342,7 +312,7 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'element', 'null', 'null']
+      types: ['component', 'element', 'null', 'null'],
     });
     assert(!console.error.called);
   });
@@ -351,19 +321,14 @@ describe('Template => validate', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component, [
-        'span', '1'
-      ],
-      false
-    ];
+    const template = [component, ['span', '1'], false];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'element', 'boolean']
+      types: ['component', 'element', 'boolean'],
     });
     assert(!console.error.called);
   });
@@ -372,16 +337,14 @@ describe('Template => validate', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component, {}
-    ];
+    const template = [component, {}];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'props']
+      types: ['component', 'props'],
     });
     assert(!console.error.called);
   });
@@ -390,19 +353,14 @@ describe('Template => validate', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component, {},
-      [
-        'span'
-      ]
-    ];
+    const template = [component, {}, ['span']];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'props', 'element']
+      types: ['component', 'props', 'element'],
     });
     assert(!console.error.called);
   });
@@ -412,7 +370,8 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, {},
+      component,
+      {},
       null,
     ];
 
@@ -421,53 +380,45 @@ describe('Template => validate', () => {
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'props', 'null']
+      types: ['component', 'props', 'null'],
     });
     assert(!console.error.called);
   });
 
-  it('accepts a subcomponent with properties and false value as a child', () => {
+  it('accepts a subcomponent with properties and false value as a child',
+     () => {
 
-    // given
-    const component = Symbol.for('component');
-    const template = [
-      component, {},
-      false,
-    ];
+       // given
+       const component = Symbol.for('component');
+       const template = [
+         component,
+         {},
+         false,
+       ];
 
-    // when
-    const result = Template.validate(template);
+       // when
+       const result = Template.validate(template);
 
-    // then
-    assert.deepEqual(result, {
-      types: ['component', 'props', 'boolean']
-    });
-    assert(!console.error.called);
-  });
+       // then
+       assert.deepEqual(result, {
+         types: ['component', 'props', 'boolean'],
+       });
+       assert(!console.error.called);
+     });
 
   it('accepts a subcomponent with properties and multiple children', () => {
 
     // given
     const component = Symbol.for('component');
-    const template = [
-      component, {},
-      [
-        'span', '1'
-      ],
-      [
-        'span', '2'
-      ],
-      [
-        'span', '3'
-      ]
-    ];
+    const template =
+        [component, {}, ['span', '1'], ['span', '2'], ['span', '3']];
 
     // when
     const result = Template.validate(template);
 
     // then
     assert.deepEqual(result, {
-      types: ['component', 'props', 'element', 'element', 'element']
+      types: ['component', 'props', 'element', 'element', 'element'],
     });
     assert(!console.error.called);
   });
@@ -479,7 +430,8 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Invalid parameter type "number" at index 0');
+    assert.equal(
+        result.error.message, 'Invalid parameter type "number" at index 0');
     assert(console.error.called);
   });
 
@@ -490,7 +442,8 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Invalid parameter type "boolean" at index 0');
+    assert.equal(
+        result.error.message, 'Invalid parameter type "boolean" at index 0');
     assert(console.error.called);
   });
 
@@ -501,7 +454,8 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Invalid parameter type "function" at index 0');
+    assert.equal(
+        result.error.message, 'Invalid parameter type "function" at index 0');
     assert(console.error.called);
   });
 
@@ -512,42 +466,52 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Invalid parameter type "undefined" at index 0');
+    assert.equal(
+        result.error.message, 'Invalid parameter type "undefined" at index 0');
     assert(console.error.called);
   });
 
   it('rejects second parameter being a boolean value', () => {
 
     // when
-    const result = Template.validate(['span', true]);
+    const result = Template.validate(
+        ['span', true],
+    );
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message,
-      'Invalid parameter type "boolean" at index 1, expecting: properties object, text content or first child element');
+    assert.equal(
+        result.error.message,
+        'Invalid parameter type "boolean" at index 1, expecting: properties object, text content or first child element');
     assert(console.error.called);
   });
 
   it('rejects second parameter being a function', () => {
 
     // when
-    const result = Template.validate(['span', () => {}]);
+    const result = Template.validate(
+        ['span', () => {}],
+    );
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message,
-      'Invalid parameter type "function" at index 1, expecting: properties object, text content or first child element');
+    assert.equal(
+        result.error.message,
+        'Invalid parameter type "function" at index 1, expecting: properties object, text content or first child element');
     assert(console.error.called);
   });
 
   it('rejects third parameter', () => {
 
     // when
-    const result = Template.validate(['span', {}, () => {}]);
+    const result = Template.validate(
+        ['span', {}, () => {}],
+    );
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Invalid parameter type "function" at index 2');
+    assert.equal(
+        result.error.message, 'Invalid parameter type "function" at index 2');
     assert(console.error.called);
   });
 
@@ -555,9 +519,12 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', 'Text', [
-        'span', '1'
-      ]
+      'div',
+      'Text',
+      [
+        'span',
+        '1',
+      ],
     ];
 
     // when
@@ -573,9 +540,10 @@ describe('Template => validate', () => {
 
     // given
     const template = [
-      'div', {}, 'Text', [
-        'span', '1'
-      ]
+      'div',
+      {},
+      'Text',
+      ['span', '1'],
     ];
 
     // when
@@ -592,7 +560,8 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const template = [
-      component, 'Text'
+      component,
+      'Text',
     ];
 
     // when
@@ -600,7 +569,8 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Subcomponents do not accept text content');
+    assert.equal(
+        result.error.message, 'Subcomponents do not accept text content');
     assert(console.error.called);
   });
 
@@ -609,10 +579,12 @@ describe('Template => validate', () => {
     // given
     const component = Symbol.for('component');
     const props = {
-      prop: 'prop'
+      prop: 'prop',
     };
     const template = [
-      component, props, 'Text'
+      component,
+      props,
+      'Text',
     ];
 
     // when
@@ -620,7 +592,8 @@ describe('Template => validate', () => {
 
     // then
     assert(result.error instanceof Error);
-    assert.equal(result.error.message, 'Subcomponents do not accept text content');
+    assert.equal(
+        result.error.message, 'Subcomponents do not accept text content');
     assert(console.error.called);
   });
 

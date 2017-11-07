@@ -3,15 +3,15 @@ describe('Template => get value', () => {
   const Template = opr.Toolkit.Template;
 
   const resolved = [
-    [ undefined, null ],
-    [ null, null ],
-    [ '', '' ],
-    [ [], null ],
-    [ {}, null ],
-    [ 5, '5' ],
-    [ 'inherit', 'inherit' ],
-    [ [100, 'px'], '100px' ],
-    [ [12, 'r', 'em'], '12rem' ],
+    [undefined, null],
+    [null, null],
+    ['', ''],
+    [[], null],
+    [{}, null],
+    [5, '5'],
+    ['inherit', 'inherit'],
+    [[100, 'px'], '100px'],
+    [[12, 'r', 'em'], '12rem'],
   ];
 
   resolved.forEach(([v1, v2, d1, d2]) => {
