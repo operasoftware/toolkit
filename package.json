@@ -39,17 +39,17 @@
     "babel-istanbul": "^0.12.1",
     "babel-plugin-transform-class-properties": "^6.19.0",
     "babel-polyfill": "^6.20.0",
-    "babel-preset-env": "^1.6.0",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.16.0",
     "babel-register": "^6.18.0",
     "dom-test": "^0.2.6",
-    "express": "^4.14.0",
-    "mocha": "^3.2.0",
+    "express": "^4.16.2",
+    "mocha": "^4.0.1",
     "npm-watch": "^0.3.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",
     "sinon": "^1.17.7",
-    "tap": "^10.2.1"
+    "tap": "^10.7.3"
   },
   "watch": {
     "update-opera": {
