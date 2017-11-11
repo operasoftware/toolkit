@@ -735,7 +735,7 @@
         listeners = {},
         attrs = {},
         dataset = {},
-        classNames = [],
+        className = '',
         style = {},
         metadata = {},
       } = props;
@@ -743,7 +743,7 @@
       this.attrs = attrs;
       this.dataset = dataset;
       this.style = style;
-      this.classNames = classNames;
+      this.className = className;
       this.metadata = metadata;
       this.text = text;
       this.children = [];
@@ -770,14 +770,9 @@
       delete this.ref.dataset[name];
     }
 
-    addClassName(className) {
-      this.classNames.push(className);
-      this.ref.classList.add(className);
-    }
-
-    removeClassName(className) {
-      this.classNames = this.classNames.filter(item => item !== className);
-      this.ref.classList.remove(className);
+    setClassName(className = '') {
+      this.className = className;
+      this.ref.className = className;
     }
 
     setStyleProperty(prop, value) {
@@ -879,8 +874,8 @@
       Object.entries(this.dataset).forEach(([attr, value]) => {
         element.dataset[attr] = value;
       });
-      if (this.classNames.length) {
-        element.className = this.classNames.join(' ');
+      if (this.className) {
+        element.className = this.className;
       }
       Object.entries(this.style).forEach(([prop, value]) => {
         element.style[prop] = value;
@@ -1015,7 +1010,7 @@
         attrs,
         dataset,
         style,
-        classNames,
+        className,
         listeners,
         metadata,
       } = props;
@@ -1023,14 +1018,16 @@
       this.attributePatches(element.attrs, attrs, element);
       this.datasetPatches(element.dataset, dataset, element);
       this.stylePatches(element.style, style, element);
-      this.classNamePatches(element.classNames, classNames, element);
+      this.classNamePatches(element.className, className, element);
       this.listenerPatches(element.listeners, listeners, element);
       this.metadataPatches(element.metadata, metadata, element);
       // TODO: handle text as a child
       if (element.text !== null && text === null) {
         this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
       }
-      this.elementChildrenPatches(element.children, children, element);
+      if (element.children.length || children) {
+        this.elementChildrenPatches(element.children, children, element);
+      }
       if (text !== null && element.text !== text) {
         this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
       }
@@ -1110,17 +1107,9 @@
       }
     }
 
-    classNamePatches(current = [], next = [], target) {
-      const Patch = opr.Toolkit.Patch;
-
-      const added = next.filter(attr => !current.includes(attr));
-      const removed = current.filter(attr => !next.includes(attr));
-
-      for (let name of added) {
-        this.addPatch(Patch.addClassName(name, target));
-      }
-      for (let name of removed) {
-        this.addPatch(Patch.removeClassName(name, target));
+    classNamePatches(current = '', next = '', target) {
+      if (current !== next) {
+        this.addPatch(opr.Toolkit.Patch.setClassName(next, target));
       }
     }
 
@@ -1298,18 +1287,16 @@
 
     static getType(item) {
       const type = typeof item;
-      switch (type) {
-        case 'object':
-          if (item === null) {
-            return 'null';
-          } else if (Array.isArray(item)) {
-            return 'array'
-          } else {
-            return 'object'
-          }
-        default:
-          return type;
+      if (type !== 'object') {
+        return type;
       }
+      if (item === null) {
+        return 'null';
+      }
+      if (Array.isArray(item)) {
+        return 'array';
+      }
+      return 'object';
     }
 
     static deepEqual(current, next) {
@@ -1333,11 +1320,11 @@
         }
         return true;
       } else if (type === 'object') {
-        const keys = Object.keys(current);
-        const nextKeys = Object.keys(next);
         if (current.constructor !== next.constructor) {
           return false;
         }
+        const keys = Object.keys(current);
+        const nextKeys = Object.keys(next);
         if (keys.length !== nextKeys.length) {
           return false;
         }
@@ -1689,16 +1676,10 @@
     },
   };
 
-  const ADD_CLASS_NAME = {
-    type: Symbol('add-class-name'),
+  const SET_CLASS_NAME = {
+    type: Symbol('set-class-name'),
     apply: function() {
-      this.target.addClassName(this.name);
-    },
-  };
-  const REMOVE_CLASS_NAME = {
-    type: Symbol('remove-class-name'),
-    apply: function() {
-      this.target.removeClassName(this.name);
+      this.target.setClassName(this.className);
     },
   };
 
@@ -1796,8 +1777,7 @@
     ADD_STYLE_PROPERTY,
     REPLACE_STYLE_PROPERTY,
     REMOVE_STYLE_PROPERTY,
-    ADD_CLASS_NAME,
-    REMOVE_CLASS_NAME,
+    SET_CLASS_NAME,
     ADD_LISTENER,
     REPLACE_LISTENER,
     REMOVE_LISTENER,
@@ -1941,16 +1921,9 @@
       return patch;
     }
 
-    static addClassName(name, target) {
-      const patch = new Patch(ADD_CLASS_NAME);
-      patch.name = name;
-      patch.target = target;
-      return patch;
-    }
-
-    static removeClassName(name, target) {
-      const patch = new Patch(REMOVE_CLASS_NAME);
-      patch.name = name;
+    static setClassName(className, target) {
+      const patch = new Patch(SET_CLASS_NAME);
+      patch.className = className;
       patch.target = target;
       return patch;
     }
@@ -2570,9 +2543,9 @@
 
         // class names
         if (props.class) {
-          const classNames = Template.getClassNames(props.class);
-          if (classNames.length) {
-            normalized.classNames = classNames;
+          const className = Template.getClassName(props.class);
+          if (className.length) {
+            normalized.className = className;
           }
         }
 
@@ -2614,40 +2587,6 @@
     }
   }
 
-  const getClassNames = value => {
-    if (!value) {
-      return [];
-    }
-    if (Array.isArray(value)) {
-      return value.reduce((result, item) => {
-        if (!item) {
-          return result;
-        }
-        if (typeof item === 'string') {
-          result.push(item);
-        }
-        result.push(...getClassNames(item, false));
-        return result;
-      }, []);
-    }
-    if (typeof value === 'string') {
-      if (value.includes(' ')) {
-        return value.split(' ');
-      }
-      return [value];
-    }
-    if (typeof value === 'object') {
-      const keys = Object.keys(value);
-      if (keys.length === 0) {
-        return [];
-      }
-      return Object.keys(value)
-          .map(key => value[key] && key)
-          .filter(item => item);
-    }
-    return [];
-  };
-
   class Template {
 
     static get ItemType() {
@@ -2664,9 +2603,42 @@
       };
     }
 
-    static getClassNames(value) {
-      const classNames = getClassNames(value);
-      return [...new Set(classNames.filter(item => item))];
+    static getClassName(value) {
+      if (!value) {
+        return '';
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      if (Array.isArray(value)) {
+        return value
+            .reduce(
+                (result, item) => {
+                  if (!item) {
+                    return result;
+                  }
+                  if (typeof item === 'string') {
+                    result.push(item);
+                    return result;
+                  }
+                  result.push(this.getClassName(item));
+                  return result;
+                },
+                [])
+            .filter(item => item)
+            .join(' ');
+      }
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        if (keys.length === 0) {
+          return [];
+        }
+        return Object.keys(value)
+            .map(key => value[key] && key)
+            .filter(item => item)
+            .join(' ');
+      }
+      return '';
     }
 
     static getCompositeValue(obj = {}, whitelist) {
@@ -3240,10 +3212,12 @@
         s4() + s4();
   };
 
+  const isSpecialProperty =
+      prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
+
   const isSupportedAttribute = attr =>
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
-      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) ||
-      ['key', 'class', 'style', 'dataset', 'metadata'].includes(attr);
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) || isSpecialProperty(attr);
 
   const Utils = {
     throttle,
@@ -3255,6 +3229,7 @@
     getEventName,
     createUUID,
     isSupportedAttribute,
+    isSpecialProperty,
   };
 
   loader.define('core/utils', Utils);

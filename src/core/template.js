@@ -147,9 +147,9 @@
 
         // class names
         if (props.class) {
-          const classNames = Template.getClassNames(props.class);
-          if (classNames.length) {
-            normalized.classNames = classNames;
+          const className = Template.getClassName(props.class);
+          if (className.length) {
+            normalized.className = className;
           }
         }
 
@@ -191,40 +191,6 @@
     }
   }
 
-  const getClassNames = value => {
-    if (!value) {
-      return [];
-    }
-    if (Array.isArray(value)) {
-      return value.reduce((result, item) => {
-        if (!item) {
-          return result;
-        }
-        if (typeof item === 'string') {
-          result.push(item);
-        }
-        result.push(...getClassNames(item, false));
-        return result;
-      }, []);
-    }
-    if (typeof value === 'string') {
-      if (value.includes(' ')) {
-        return value.split(' ');
-      }
-      return [value];
-    }
-    if (typeof value === 'object') {
-      const keys = Object.keys(value);
-      if (keys.length === 0) {
-        return [];
-      }
-      return Object.keys(value)
-          .map(key => value[key] && key)
-          .filter(item => item);
-    }
-    return [];
-  };
-
   class Template {
 
     static get ItemType() {
@@ -241,9 +207,42 @@
       };
     }
 
-    static getClassNames(value) {
-      const classNames = getClassNames(value);
-      return [...new Set(classNames.filter(item => item))];
+    static getClassName(value) {
+      if (!value) {
+        return '';
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      if (Array.isArray(value)) {
+        return value
+            .reduce(
+                (result, item) => {
+                  if (!item) {
+                    return result;
+                  }
+                  if (typeof item === 'string') {
+                    result.push(item);
+                    return result;
+                  }
+                  result.push(this.getClassName(item));
+                  return result;
+                },
+                [])
+            .filter(item => item)
+            .join(' ');
+      }
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        if (keys.length === 0) {
+          return [];
+        }
+        return Object.keys(value)
+            .map(key => value[key] && key)
+            .filter(item => item)
+            .join(' ');
+      }
+      return '';
     }
 
     static getCompositeValue(obj = {}, whitelist) {

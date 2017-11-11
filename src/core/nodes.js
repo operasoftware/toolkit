@@ -299,7 +299,7 @@
         listeners = {},
         attrs = {},
         dataset = {},
-        classNames = [],
+        className = '',
         style = {},
         metadata = {},
       } = props;
@@ -307,7 +307,7 @@
       this.attrs = attrs;
       this.dataset = dataset;
       this.style = style;
-      this.classNames = classNames;
+      this.className = className;
       this.metadata = metadata;
       this.text = text;
       this.children = [];
@@ -334,14 +334,9 @@
       delete this.ref.dataset[name];
     }
 
-    addClassName(className) {
-      this.classNames.push(className);
-      this.ref.classList.add(className);
-    }
-
-    removeClassName(className) {
-      this.classNames = this.classNames.filter(item => item !== className);
-      this.ref.classList.remove(className);
+    setClassName(className = '') {
+      this.className = className;
+      this.ref.className = className;
     }
 
     setStyleProperty(prop, value) {
@@ -443,8 +438,8 @@
       Object.entries(this.dataset).forEach(([attr, value]) => {
         element.dataset[attr] = value;
       });
-      if (this.classNames.length) {
-        element.className = this.classNames.join(' ');
+      if (this.className) {
+        element.className = this.className;
       }
       Object.entries(this.style).forEach(([prop, value]) => {
         element.style[prop] = value;

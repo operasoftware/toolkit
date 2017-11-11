@@ -277,7 +277,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.className, 'foo bar');
       });
 
       it('supports arrays', () => {
@@ -291,7 +291,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.className, 'foo bar');
       });
 
       it('supports objects', () => {
@@ -310,7 +310,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.className, 'foo bar');
       });
 
       it('supports nesting', () => {
@@ -332,10 +332,10 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.className, 'foo bar');
       });
 
-      it('removes redundant classes', () => {
+      it('keeps redundant classes', () => {
 
         // given
         const classNames = ['foo', 'bar', 'bar'];
@@ -346,7 +346,7 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement);
         assert.equal(element.name, 'div');
-        assert.deepEqual(element.classNames, ['foo', 'bar']);
+        assert.deepEqual(element.className, 'foo bar bar');
       });
     });
 

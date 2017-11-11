@@ -167,10 +167,12 @@
         s4() + s4();
   };
 
+  const isSpecialProperty =
+      prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
+
   const isSupportedAttribute = attr =>
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
-      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) ||
-      ['key', 'class', 'style', 'dataset', 'metadata'].includes(attr);
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) || isSpecialProperty(attr);
 
   const Utils = {
     throttle,
@@ -182,6 +184,7 @@
     getEventName,
     createUUID,
     isSupportedAttribute,
+    isSpecialProperty,
   };
 
   module.exports = Utils;

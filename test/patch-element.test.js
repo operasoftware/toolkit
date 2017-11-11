@@ -270,15 +270,15 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    assert.deepEqual(element.classNames, []);
-    assert.deepEqual(Array.from(element.ref.classList), []);
+    assert.deepEqual(element.className, '');
+    assert.deepEqual([...element.ref.classList], []);
 
     // when
-    Patch.addClassName('test', element).apply();
+    Patch.setClassName('test', element).apply();
 
     // then
-    assert.deepEqual(element.classNames, ['test']);
-    assert.deepEqual(Array.from(element.ref.classList), ['test']);
+    assert.deepEqual(element.className, 'test');
+    assert.deepEqual([...element.ref.classList], ['test']);
   });
 
   it('removes class name', () => {
@@ -291,15 +291,15 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    assert.deepEqual(element.classNames, ['test']);
-    assert.deepEqual(Array.from(element.ref.classList), ['test']);
+    assert.equal(element.className, 'test');
+    assert.deepEqual([...element.ref.classList], ['test']);
 
     // when
-    Patch.removeClassName('test', element).apply();
+    Patch.setClassName('', element).apply();
 
     // then
-    assert.deepEqual(element.classNames, []);
-    assert.deepEqual(Array.from(element.ref.classList), []);
+    assert.deepEqual(element.className, '');
+    assert.deepEqual([...element.ref.classList], []);
   });
 
   it('adds listener', () => {

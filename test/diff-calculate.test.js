@@ -353,8 +353,8 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
-      assert.equal(patches[0].type, Patch.Type.ADD_CLASS_NAME);
-      assert.equal(patches[0].name, 'two');
+      assert.equal(patches[0].type, Patch.Type.SET_CLASS_NAME);
+      assert.equal(patches[0].className, 'one two');
       assert(patches[0].target.isElement());
     });
 
@@ -377,8 +377,8 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
-      assert.equal(patches[0].type, Patch.Type.REMOVE_CLASS_NAME);
-      assert.equal(patches[0].name, 'some-name');
+      assert.equal(patches[0].type, Patch.Type.SET_CLASS_NAME);
+      assert.equal(patches[0].className, '');
       assert(patches[0].target.isElement());
     });
 

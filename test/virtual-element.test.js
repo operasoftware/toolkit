@@ -4,7 +4,7 @@ describe('Virtual Element => amend', () => {
 
   const createElement = name => new VirtualElement({element: name});
 
-  describe('add class name', () => {
+  describe('set class name', () => {
 
     it('adds new class', () => {
 
@@ -12,40 +12,36 @@ describe('Virtual Element => amend', () => {
       const div = createElement('div');
 
       // when
-      div.addClassName('class');
+      div.setClassName('class');
 
       // then
-      assert.deepEqual(div.classNames, ['class']);
+      assert.equal(div.className, 'class');
     });
 
-    it('adds already-existing class', () => {
+    it('replaces class', () => {
 
       // given
       const div = createElement('div');
-      div.classNames = ['class'];
+      div.className = 'class';
 
       // when
-      div.addClassName('class');
+      div.setClassName('another-class');
 
       // then
-      assert.deepEqual(div.classNames, ['class', 'class']);
+      assert.equal(div.className, 'another-class');
     });
-  });
 
-  describe('remove class name', () => {
-
-    it('removes duplicated class names', () => {
+    it('removes class', () => {
 
       // given
       const div = createElement('div');
-      div.classNames = ['class', 'another', 'class'];
+      div.className = 'class';
 
       // when
-      div.removeClassName('class');
+      div.setClassName('');
 
       // then
-      assert.deepEqual(div.classNames, ['another']);
+      assert.equal(div.className, '');
     });
-
   });
 });

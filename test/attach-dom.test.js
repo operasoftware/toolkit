@@ -190,16 +190,16 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(element.ref.attributes.length, 0);
     });
 
-    it('adds a class name', () => {
+    it('sets a class name', () => {
 
       // given
       const element = createElement('section');
 
       // when
-      element.addClassName('some-name');
+      element.setClassName('some-name');
 
       // then
-      assert.deepEqual(element.classNames, ['some-name']);
+      assert.deepEqual(element.className, 'some-name');
       assert.deepEqual([...element.ref.classList], ['some-name']);
     });
 
@@ -210,14 +210,14 @@ describe('Virtual Element => Attach DOM', () => {
         class: ['to-be-removed'],
       });
 
-      assert.deepEqual(element.classNames, ['to-be-removed']);
+      assert.equal(element.className, 'to-be-removed');
       assert.deepEqual([...element.ref.classList], ['to-be-removed']);
 
       // when
-      element.removeClassName('to-be-removed');
+      element.setClassName('');
 
       // then
-      assert.deepEqual(element.classNames, []);
+      assert.deepEqual(element.className, '');
       assert.deepEqual([...element.ref.classList], []);
     });
 

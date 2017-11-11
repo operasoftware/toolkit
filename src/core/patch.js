@@ -109,16 +109,10 @@
     },
   };
 
-  const ADD_CLASS_NAME = {
-    type: Symbol('add-class-name'),
+  const SET_CLASS_NAME = {
+    type: Symbol('set-class-name'),
     apply: function() {
-      this.target.addClassName(this.name);
-    },
-  };
-  const REMOVE_CLASS_NAME = {
-    type: Symbol('remove-class-name'),
-    apply: function() {
-      this.target.removeClassName(this.name);
+      this.target.setClassName(this.className);
     },
   };
 
@@ -216,8 +210,7 @@
     ADD_STYLE_PROPERTY,
     REPLACE_STYLE_PROPERTY,
     REMOVE_STYLE_PROPERTY,
-    ADD_CLASS_NAME,
-    REMOVE_CLASS_NAME,
+    SET_CLASS_NAME,
     ADD_LISTENER,
     REPLACE_LISTENER,
     REMOVE_LISTENER,
@@ -361,16 +354,9 @@
       return patch;
     }
 
-    static addClassName(name, target) {
-      const patch = new Patch(ADD_CLASS_NAME);
-      patch.name = name;
-      patch.target = target;
-      return patch;
-    }
-
-    static removeClassName(name, target) {
-      const patch = new Patch(REMOVE_CLASS_NAME);
-      patch.name = name;
+    static setClassName(className, target) {
+      const patch = new Patch(SET_CLASS_NAME);
+      patch.className = className;
       patch.target = target;
       return patch;
     }

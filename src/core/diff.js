@@ -78,7 +78,7 @@
         attrs,
         dataset,
         style,
-        classNames,
+        className,
         listeners,
         metadata,
       } = props;
@@ -86,14 +86,16 @@
       this.attributePatches(element.attrs, attrs, element);
       this.datasetPatches(element.dataset, dataset, element);
       this.stylePatches(element.style, style, element);
-      this.classNamePatches(element.classNames, classNames, element);
+      this.classNamePatches(element.className, className, element);
       this.listenerPatches(element.listeners, listeners, element);
       this.metadataPatches(element.metadata, metadata, element);
       // TODO: handle text as a child
       if (element.text !== null && text === null) {
         this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
       }
-      this.elementChildrenPatches(element.children, children, element);
+      if (element.children.length || children) {
+        this.elementChildrenPatches(element.children, children, element);
+      }
       if (text !== null && element.text !== text) {
         this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
       }
@@ -173,17 +175,9 @@
       }
     }
 
-    classNamePatches(current = [], next = [], target) {
-      const Patch = opr.Toolkit.Patch;
-
-      const added = next.filter(attr => !current.includes(attr));
-      const removed = current.filter(attr => !next.includes(attr));
-
-      for (let name of added) {
-        this.addPatch(Patch.addClassName(name, target));
-      }
-      for (let name of removed) {
-        this.addPatch(Patch.removeClassName(name, target));
+    classNamePatches(current = '', next = '', target) {
+      if (current !== next) {
+        this.addPatch(opr.Toolkit.Patch.setClassName(next, target));
       }
     }
 
@@ -361,18 +355,16 @@
 
     static getType(item) {
       const type = typeof item;
-      switch (type) {
-        case 'object':
-          if (item === null) {
-            return 'null';
-          } else if (Array.isArray(item)) {
-            return 'array'
-          } else {
-            return 'object'
-          }
-        default:
-          return type;
+      if (type !== 'object') {
+        return type;
       }
+      if (item === null) {
+        return 'null';
+      }
+      if (Array.isArray(item)) {
+        return 'array';
+      }
+      return 'object';
     }
 
     static deepEqual(current, next) {
@@ -396,11 +388,11 @@
         }
         return true;
       } else if (type === 'object') {
-        const keys = Object.keys(current);
-        const nextKeys = Object.keys(next);
         if (current.constructor !== next.constructor) {
           return false;
         }
+        const keys = Object.keys(current);
+        const nextKeys = Object.keys(next);
         if (keys.length !== nextKeys.length) {
           return false;
         }
