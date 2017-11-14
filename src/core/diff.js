@@ -230,10 +230,12 @@
       const Move = Reconciler.Move;
 
       const created = [];
+      const createdNodesMap = new Map();
 
-      const createNode = template => {
+      const createNode = (template, key) => {
         const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         created.push(node);
+        createdNodesMap.set(key, node);
         return node;
       };
 
@@ -241,20 +243,27 @@
       const to = templates.map(
           (template, index) => template[1] && template[1].key || index);
 
-      const getNode = key => {
+      const getNode = (key, isMove) => {
         if (from.includes(key)) {
           return current[from.indexOf(key)];
         }
+        if (isMove) {
+          return createdNodesMap.get(key);
+        }
         const index = to.indexOf(key);
-        return createNode(templates[index]);
+        return createNode(templates[index], key);
       };
 
       const moves = Reconciler.calculateMoves(from, to);
 
       const children = [...current];
       for (const move of moves) {
-        const node = getNode(move.item);
+        const node = getNode(move.item, move.name === Move.Name.MOVE);
         switch (move.name) {
+          case Move.Name.REMOVE:
+            this.addPatch(Patch.removeChildNode(node, move.at, parent));
+            Move.remove(node, move.at).make(children);
+            continue;
           case Move.Name.INSERT:
             this.addPatch(Patch.insertChildNode(node, move.at, parent));
             Move.insert(node, move.at).make(children);
@@ -263,10 +272,6 @@
             this.addPatch(
                 Patch.moveChildNode(node, move.from, move.to, parent));
             Move.move(node, move.from, move.to).make(children);
-            continue;
-          case Move.Name.REMOVE:
-            this.addPatch(Patch.removeChildNode(node, move.at, parent));
-            Move.remove(node, move.at).make(children);
             continue;
         }
       }
