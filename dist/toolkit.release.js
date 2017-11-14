@@ -1224,7 +1224,11 @@
     elementChildPatches(child, sourceTemplate, template, parent, index) {
       const {Patch, VirtualDOM, Template} = opr.Toolkit;
 
-      if (sourceTemplate && sourceTemplate[0] === template[0]) {
+      const areCompatible = (currentTemplate, nextTemplate) => {
+        return currentTemplate && currentTemplate[0] === nextTemplate[0];
+      };
+
+      if (areCompatible(sourceTemplate, template)) {
         if (opr.Toolkit.Diff.deepEqual(sourceTemplate, template)) {
           return;
         }
@@ -1275,10 +1279,10 @@
 
       // update
       if (areCompatible(child, description)) {
-        if (Diff.deepEqual(child, description)) {
-          return;
-        }
         if (child.isElement()) {
+          if (Diff.deepEqual(child.description, description)) {
+            return;
+          }
           return this.elementPatches(child, description, parent);
         }
         return this.componentPatches(child, description);
