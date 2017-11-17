@@ -32,7 +32,7 @@ describe('Utils', () => {
                                                 }, waitTime))));
 
       // then
-      assert.equal(timestamps.length, 4);
+      assert([3,4].includes(timestamps.length));
       for (let i = 1; i < timestamps.length; i++) {
         assert(timestamps[i] + 1 >= timestamps[i - 1] + wait);
       }

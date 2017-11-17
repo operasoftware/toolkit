@@ -658,6 +658,17 @@ describe('Diff => calculate patches', () => {
           return createChildren({keys: true}).from(...items);
         };
 
+        it('throws an error for non-unique keys', () => {
+
+            // given
+          const template = ['section', ...getChildren('p', 'div', 'span', 'p')];
+          const nextTemplate = ['section', ...getChildren('div', 'span', 'p')];
+
+          // when
+          const [element, description] = createTrees(template, nextTemplate);
+          assert.throws(() => calculatePatches(element, description), Error);
+        });
+
         it('inserts element at the beginning', () => {
 
           // given

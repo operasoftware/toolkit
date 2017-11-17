@@ -43,9 +43,15 @@ global.HTMLElement = class {};
     utils: require('../../src/core/utils.js'),
   });
 
+  const toolkit = new Toolkit();
+
   global.opr = {
-    Toolkit: new Toolkit(),
+    Toolkit: toolkit,
   };
+
+  toolkit.configure({
+    debug: true,
+  });
 
   global.utils = require('./utils.js');
 

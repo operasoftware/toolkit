@@ -1186,6 +1186,19 @@
         return createNode(templates[index], key);
       };
 
+      if (opr.Toolkit.isDebug()) {
+        const assertUniqueKeys = keys => {
+          if (keys.length) {
+            const uniqueKeys = [...new Set(keys)];
+            if (uniqueKeys.length !== keys.length) {
+              throw new Error('Non-unique keys detected in:', keys);
+            }
+          }
+        };
+        assertUniqueKeys(from);
+        assertUniqueKeys(to);
+      }
+
       const moves = Reconciler.calculateMoves(from, to);
 
       const children = [...current];
