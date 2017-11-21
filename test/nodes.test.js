@@ -22,7 +22,8 @@ describe('Nodes', () => {
         return template;
       }
     }
-    const app = new RootClass(null, {}, container, {plugins: []});
+    const app = new RootClass(null, {}, {plugins: []});
+    app.container = container;
 
     const node = utils.createFromTemplate(template);
     if (node) {
@@ -353,7 +354,8 @@ describe('Nodes', () => {
         const container = document.createElement('container');
         container.dispatchEvent = dispatchEvent;
 
-        const root = new opr.Toolkit.Root(null, {}, container, {});
+        const root = new opr.Toolkit.Root(null, {}, {});
+        root.container = container;
         const element = createElement('section');
         root.appendChild(element);
         const component = new opr.Toolkit.Component({}, [], null);
@@ -685,7 +687,8 @@ describe('Nodes', () => {
 
     const container = document.createElement('body');
     const settings = {plugins: []};
-    const component = new opr.Toolkit.Root({}, container, settings);
+    const component = new opr.Toolkit.Root({}, settings);
+    component.container = container;
 
     describe('get initial state', () => {
 

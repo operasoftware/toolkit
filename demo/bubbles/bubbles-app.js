@@ -11,9 +11,13 @@
       service = await loader.require('bubbles/bubbles-service');
     }
 
-    // static get elementName() {
-    //  return 'bubbles-demo';
-    // }
+    static get displayName() {
+      return 'Bubbles';
+    }
+
+    static get elementName() {
+      return 'bubbles-demo';
+    }
 
     static get styles() {
       return [
@@ -33,31 +37,42 @@
       };
     }
 
+    onBackgroundClick(event) {
+      let id = this.props.bubbles.length ?
+          Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1 :
+          0;
+      const x = event.offsetX / event.target.offsetWidth;
+      const y = event.offsetY / event.target.offsetHeight;
+      this.dispatch(reducer.commands.create(service.createBubble(id, x, y)));
+    }
+
+    onDoubleClick(event) {
+      const id = parseInt(event.target.parentNode.id);
+      this.commands.destroy(id);
+    }
+
     render() {
       return [
         'bubbles',
         {
-          onClick: event => {
-            // TODO: use a single dispatch
-            //this.dispatch(
-            //    reducer.commands.move(service.moveBubbles(this.props.bubbles)));
-            const id =
-                Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1;
-            const x = event.offsetX / event.target.offsetWidth;
-            const y = event.offsetY / event.target.offsetHeight;
-            this.dispatch(
-                reducer.commands.create(service.createBubble(id, x, y)));
-          },
+          onClick: this.onBackgroundClick,
+          onDoubleClick: this.onDoubleClick,
         },
         ...this.props.bubbles.map(
-            bubble => [
-                'div', [
-                // clang-format off
-                  Bubble, bubble,
-                ]
-            // clang-format on
-            ]
-            ),
+            props =>
+                ['section',
+                 {
+                   key: props.id,
+                   id: props.id,
+                   style: {
+                     width: [props.radius * 200, '%'],
+                     height: [props.radius * 200, '%'],
+                     left: [props.x * 100, '%'],
+                     top: [props.y * 100, '%'],
+                   },
+                 },
+                 [Bubble, props],
+      ]),
       ];
     }
   };

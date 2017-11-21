@@ -1,18 +1,17 @@
 {
   const CREATE = Symbol('create');
   const MOVE = Symbol('move');
-  const HIGHLIGHT = Symbol('highlight');
+  const DESTROY = Symbol('destroy');
 
-  const addBubble = (state, bubble) => (
-    Object.assign({}, state, {
-      bubbles: [...state.bubbles, createBubble(bubble, {
+  const addBubble = (state, bubble) => (Object.assign({}, state, {
+    bubbles: [
+      ...state.bubbles, createBubble(bubble, {
         highlighted: false,
-      })],
-    })
-  );
-  const updateBubbles = (state, createBubble) => (Object.assign({}, state, {
-    bubbles: state.bubbles.map(bubble => createBubble(bubble))
+      })
+    ],
   }));
+  const updateBubbles = (state, createBubble) => (Object.assign(
+      {}, state, {bubbles: state.bubbles.map(bubble => createBubble(bubble))}));
   const createBubble = (...props) => Object.assign({}, ...props);
 
   const reducer = (state, command) => {
@@ -20,12 +19,14 @@
       case CREATE:
         return addBubble(state, command.bubble);
       case MOVE:
-        return updateBubbles(state,
-          bubble => createBubble(bubble, command.positions[bubble.id]))
-      case HIGHLIGHT:
-        return updateBubbles(state, bubble => createBubble(bubble, {
-          highlighted: bubble.highlighted || bubble.id === command.id,
-        }));
+        return updateBubbles(
+            state,
+            bubble => createBubble(bubble, command.positions[bubble.id]));
+      case DESTROY:
+        return {
+          ...state,
+          bubbles: state.bubbles.filter(bubble => bubble.id !== command.id),
+        };
       default:
         return state;
     }
@@ -34,15 +35,15 @@
   reducer.commands = {
     create: bubble => ({
       type: CREATE,
-      bubble
+      bubble,
     }),
     move: positions => ({
       type: MOVE,
-      positions
+      positions,
     }),
-    highlight: id => ({
-      type: HIGHLIGHT,
-      id
+    destroy: id => ({
+      type: DESTROY,
+      id,
     }),
   };
 

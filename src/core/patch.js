@@ -2,7 +2,7 @@
   const INIT_ROOT_COMPONENT = {
     type: Symbol('init-root-component'),
     apply: function() {
-      this.root.container.appendChild(this.root.ref);
+      this.root.container.appendChild(this.root.placeholder.ref);
     },
   };
   const UPDATE_COMPONENT = {
@@ -12,7 +12,7 @@
   const ADD_ELEMENT = {
     type: Symbol('add-element'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.parent.placeholder.ref;
       this.parent.appendChild(this.element);
       ref.replaceWith(this.element.ref);
     },
@@ -22,14 +22,14 @@
     apply: function() {
       const ref = this.element.ref;
       this.parent.removeChild(this.element);
-      ref.replaceWith(this.parent.ref);
+      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
 
   const ADD_COMPONENT = {
     type: Symbol('add-component'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.parent.placeholder.ref;
       this.parent.appendChild(this.component);
       ref.replaceWith(this.component.ref);
     },
@@ -39,14 +39,14 @@
     apply: function() {
       const ref = this.component.ref;
       this.parent.removeChild(this.component);
-      ref.replaceWith(this.parent.ref);
+      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
 
   const REPLACE_CHILD = {
     type: Symbol('replace-child'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.child.ref;
       this.parent.replaceChild(this.child, this.node);
       ref.replaceWith(this.node.ref);
     },

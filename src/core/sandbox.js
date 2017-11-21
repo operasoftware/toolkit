@@ -12,7 +12,6 @@
     'getKey',
     'id',
     'preventDefault',
-    'ref',
     'stopEvent',
   ];
   const methods = [
@@ -35,14 +34,22 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (property === 'props') {
+            if (target.isRoot()) {
+              return target.state || target.props || {};
+            }
+            return target.props || {};
+          }
+          if (property === 'ref') {
+            if (target.isRoot()) {
+              // returns rendered node instead of custom element for usage of
+              // this.ref.querySelector
+              return target.renderedNode;
+            }
+            return target.ref;
+          }
           if (property === '$component') {
             return component;
-          }
-          if (property === 'props') {
-            if (target instanceof opr.Toolkit.Root) {
-              return target.state;
-            }
-            return target.props;
           }
           if (delegated.includes(property)) {
             return target[property];

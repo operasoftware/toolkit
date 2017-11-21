@@ -11,7 +11,8 @@ describe('Patch component => apply', () => {
 
   const App = class extends opr.Toolkit.Root {
     constructor() {
-      super(null, {}, container, {});
+      super(null, {}, {});
+      this.container = container;
     }
   };
   const ComponentClass = class extends opr.Toolkit.Component {

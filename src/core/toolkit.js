@@ -99,50 +99,10 @@
     }
 
     async render(component, container, props = {}) {
-
       await this.ready();
-
       const RootClass = await this.getRootClass(component, props);
-
-      const root = new RootClass(null, props, container, this.settings);
-
-      let destroy;
-      const init = async container => {
-        destroy = () => {
-          this.Lifecycle.onComponentDestroyed(root);
-          this.Lifecycle.onComponentDetached(root);
-        };
-        const initialState =
-            await root.getInitialState.call(root.sandbox, props);
-        root.commands.init(initialState);
-      };
-
-      if (RootClass.elementName) {
-        RootClass.register();
-        const customElement = document.createElement(RootClass.elementName);
-        customElement.props = {
-          onLoad: container => init(container),
-          onUnload: () => destroy(),
-          styles: RootClass.styles,
-        };
-        container.appendChild(customElement);
-      } else {
-        const observer = new MutationObserver(mutations => {
-          const isContainerRemoved = mutations.find(
-              mutation => [...mutation.removedNodes].find(
-                  node => node === container));
-          if (isContainerRemoved) {
-            destroy();
-          }
-        });
-        if (container.parentElement) {
-          observer.observe(container.parentElement, {
-            childList: true,
-          });
-        }
-        await init(container);
-      }
-
+      const root = new RootClass(null, props, this.settings);
+      await root.mount(container);
       return root;
     }
 

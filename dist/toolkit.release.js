@@ -497,6 +497,13 @@
       return this;
     }
 
+    get rootNode() {
+      if (this.parentNode) {
+        return this.parentNode.rootNode;
+      }
+      return this;
+    }
+
     isRoot() {
       return this instanceof Root;
     }
@@ -536,7 +543,6 @@
       this.child = null;
       this.comment = this.createComment();
       this.cleanUpTasks = [];
-      this.attachDOM();
     }
 
     createComment() {
@@ -582,11 +588,11 @@
 
     get childElement() {
       if (this.child) {
+        if (this.child.isElement() || this.child.isRoot()) {
+          return this.child;
+        }
         if (this.child.isComponent()) {
           return this.child.childElement;
-        }
-        if (this.child.isElement()) {
-          return this.child;
         }
       }
       return null;
@@ -628,6 +634,10 @@
     }
 
     get ref() {
+      return this.renderedNode;
+    }
+
+    get renderedNode() {
       return this.childElement ? this.childElement.ref : this.placeholder.ref;
     }
 
@@ -652,45 +662,8 @@
     }
   }
 
-  class ComponentElement extends HTMLElement {
-
-    cssImports(paths) {
-      return paths.map(loader.getPath)
-          .map(path => `@import url(${path});`)
-          .join('\n');
-    }
-
-    async connectedCallback() {
-      const shadow = this.attachShadow({
-        mode: 'open',
-      });
-      const data = {
-        styles: this.props.styles,
-        onStylesLoaded: () =>
-            this.props.onLoad(shadow.querySelector(':host > slot')),
-      };
-      opr.Toolkit.render(props => this.render(props), shadow, data);
-    }
-
-    disconnectedCallback() {
-      this.props.onUnload();
-    }
-
-    render({styles = [], onStylesLoaded}) {
-      return [
-        'slot',
-        [
-          'style',
-          {
-            onLoad: onStylesLoaded,
-          },
-          this.cssImports(styles),
-        ],
-      ];
-    }
-  }
-
   const CONTAINER = Symbol('container');
+  const CUSTOM_ELEMENT = Symbol('custom-element');
 
   class Root extends Component {
 
@@ -698,21 +671,59 @@
       return 'root';
     }
 
-    constructor(id, props, container, settings) {
+    constructor(id, props, settings) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
-      const {utils, Renderer} = opr.Toolkit;
+      const {utils} = opr.Toolkit;
       this.state = null;
       this.reducer = utils.combineReducers(...this.getReducers());
-      this.container = container;
-      this.renderer = new Renderer(this, settings);
       this.dispatch = command => {
         const prevState = this.state;
         const nextState = this.reducer(prevState, command);
         this.renderer.updateDOM(command, prevState, nextState);
       };
-      this.commands = opr.Toolkit.utils.createCommandsDispatcher(
-          this.reducer, this.dispatch);
+      this.commands =
+          utils.createCommandsDispatcher(this.reducer, this.dispatch);
+      this.settings = settings;
       this.plugins = new Map();
+      this.ready = new Promise(resolve => {
+        this.markAsReady = resolve;
+      });
+    }
+
+    get ref() {
+      return this[CUSTOM_ELEMENT] || super.renderedNode;
+    }
+
+    set ref(ref) {
+      this[CUSTOM_ELEMENT] = ref;
+    }
+
+    attachDOM() {
+      const customElementName = this.constructor.elementName;
+      if (customElementName) {
+        const ElementClass = this.constructor.register();
+        this.ref = new ElementClass(this);
+      } else {
+        super.attachDOM();
+      }
+    }
+
+    async init(container) {
+      this.container = container;
+      this.renderer = new opr.Toolkit.Renderer(this, this.settings);
+      const state = await this.getInitialState.call(this.sandbox, this.props);
+      this.commands.init(state);
+      this.markAsReady();
+    }
+
+    async mount(container) {
+      this.attachDOM();
+      const elementName = this.constructor.elementName;
+      if (elementName) {
+        container.appendChild(this.ref);
+      } else {
+        await this.init(container);
+      }
     }
 
     set container(container) {
@@ -734,9 +745,10 @@
         customElements.define(this.elementName, ElementClass);
         this.prototype.elementClass = ElementClass;
       }
+      return ElementClass;
     }
 
-    static styles() {
+    static get styles() {
       return [];
     }
 
@@ -750,6 +762,67 @@
 
     get nodeType() {
       return Root.NodeType;
+    }
+  }
+
+  const cssImports = paths =>
+      paths.map(loader.getPath).map(path => `@import url(${path});`).join('\n');
+
+  class ComponentElement extends HTMLElement {
+
+    constructor(root) {
+      super();
+
+      this.$root = root;
+      this.isBeingMoved_ = false;
+
+      const shadow = this.attachShadow({
+        mode: 'open',
+      });
+      const slot = document.createElement('slot');
+
+      const styles = root.constructor.styles;
+
+      if (styles && styles.length) {
+
+        const style = document.createElement('style');
+        style.textContent = cssImports(styles);
+
+        style.onload = () => root.init(slot);
+        style.onerror = () => {
+          throw new Error(`Error loading styles: ${styles.join(', ')}`);
+        };
+        shadow.appendChild(style);
+        shadow.appendChild(slot);
+      } else {
+        shadow.appendChild(slot);
+        root.init(slot);
+      }
+    }
+
+    get isComponentElement() {
+      return true;
+    }
+
+    async connectedCallback() {
+      opr.Toolkit.assert(
+          this.$root, 'Custom Element is not bound to Root component!');
+      if (this.isBeingMoved_) {
+        this.isBeingMoved_ = false;
+      }
+    }
+
+    disconnectedCallback() {
+      if (!this.isBeingMoved_) {
+        this.destroy();
+      }
+    }
+
+    destroy() {
+      const Lifecycle = opr.Toolkit.Lifecycle;
+      const root = this.$root;
+      Lifecycle.onComponentDestroyed(root);
+      Lifecycle.onComponentDetached(root);
     }
   }
 
@@ -858,6 +931,9 @@
       console.assert(this.children[from] === child);
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
+      if (child.ref.isComponentElement) {
+        child.ref.isBeingMoved_ = true;
+      }
       this.ref.removeChild(child.ref);
       this.ref.insertBefore(child.ref, this.ref.children[to]);
     }
@@ -1439,14 +1515,11 @@
     }
 
     static onNodeCreated(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentCreated(node);
-        case 'element':
-          return this.onElementCreated(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementCreated(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentCreated(node);
       }
     }
 
@@ -1472,14 +1545,11 @@
     }
 
     static onNodeAttached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentAttached(node);
-        case 'element':
-          return this.onElementAttached(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementAttached(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentAttached(node);
       }
     }
 
@@ -1520,14 +1590,11 @@
     }
 
     static onNodeDestroyed(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDestroyed(node);
-        case 'element':
-          return this.onElementDestroyed(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementDestroyed(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentDestroyed(node);
       }
     }
 
@@ -1547,14 +1614,11 @@
     }
 
     static onNodeDetached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDetached(node);
-        case 'element':
-          return this.onElementDetached(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementDetached(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentDetached(node);
       }
     }
 
@@ -1631,7 +1695,7 @@
   const INIT_ROOT_COMPONENT = {
     type: Symbol('init-root-component'),
     apply: function() {
-      this.root.container.appendChild(this.root.ref);
+      this.root.container.appendChild(this.root.placeholder.ref);
     },
   };
   const UPDATE_COMPONENT = {
@@ -1641,7 +1705,7 @@
   const ADD_ELEMENT = {
     type: Symbol('add-element'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.parent.placeholder.ref;
       this.parent.appendChild(this.element);
       ref.replaceWith(this.element.ref);
     },
@@ -1651,14 +1715,14 @@
     apply: function() {
       const ref = this.element.ref;
       this.parent.removeChild(this.element);
-      ref.replaceWith(this.parent.ref);
+      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
 
   const ADD_COMPONENT = {
     type: Symbol('add-component'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.parent.placeholder.ref;
       this.parent.appendChild(this.component);
       ref.replaceWith(this.component.ref);
     },
@@ -1668,14 +1732,14 @@
     apply: function() {
       const ref = this.component.ref;
       this.parent.removeChild(this.component);
-      ref.replaceWith(this.parent.ref);
+      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
 
   const REPLACE_CHILD = {
     type: Symbol('replace-child'),
     apply: function() {
-      const ref = this.parent.ref;
+      const ref = this.child.ref;
       this.parent.replaceChild(this.child, this.node);
       ref.replaceWith(this.node.ref);
     },
@@ -2329,6 +2393,7 @@
         }
         const uninstall = plugin.install({
           container: this.root.container,
+          root: this.root,
         });
         this.plugins.set(plugin.id, {
           ref: plugin,
@@ -2359,7 +2424,6 @@
     'getKey',
     'id',
     'preventDefault',
-    'ref',
     'stopEvent',
   ];
   const methods = [
@@ -2382,14 +2446,22 @@
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
+          if (property === 'props') {
+            if (target.isRoot()) {
+              return target.state || target.props || {};
+            }
+            return target.props || {};
+          }
+          if (property === 'ref') {
+            if (target.isRoot()) {
+              // returns rendered node instead of custom element for usage of
+              // this.ref.querySelector
+              return target.renderedNode;
+            }
+            return target.ref;
+          }
           if (property === '$component') {
             return component;
-          }
-          if (property === 'props') {
-            if (target instanceof opr.Toolkit.Root) {
-              return target.state;
-            }
-            return target.props;
           }
           if (delegated.includes(property)) {
             return target[property];
@@ -3025,11 +3097,21 @@
       const children = description.children || [];
       const component = this.createComponent(
           description.component, description.props, children, parent, root);
+      if (component.isRoot()) {
+        opr.Toolkit.assert(
+            component.constructor.elementName,
+            `Root component "${
+                               component.constructor.displayName
+                             }" does not define custom element name!`);
+        component.constructor.register();
+        return component;
+      }
       const childDescription = opr.Toolkit.Renderer.render(component);
       component.description = childDescription;
       if (childDescription) {
-        component.appendChild(
-            this.createFromDescription(childDescription, component, root));
+        const child =
+            this.createFromDescription(childDescription, component, root);
+        component.appendChild(child);
       }
       return component;
     }
@@ -3058,11 +3140,12 @@
       try {
         const component =
             this.createComponentInstance(symbol, props, children, parent);
-        opr.Toolkit.assert(
-            !component.isRoot(), 'Invalid root instance passed as a child!')
-        console.assert(
-            root, 'Root instance not passed for construction of a component ');
-        component.commands = root && root.commands || {};
+        if (!component.isRoot()) {
+          console.assert(
+              root,
+              'Root instance not passed for construction of a component ');
+          component.commands = root && root.commands || {};
+        }
         return component;
       } catch (e) {
         console.error('Error creating Component Tree:', symbol);
@@ -3073,6 +3156,12 @@
     static createComponentInstance(symbol, props, children, parent) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
+      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
+        const instance = new ComponentClass(
+            symbol, normalizedProps, parent.rootNode.renderer.settings);
+        instance.attachDOM();
+        return instance;
+      }
       return new ComponentClass(symbol, normalizedProps, children, parent);
     }
 
@@ -3215,7 +3304,7 @@
 
   const lowerDash = name => {
     if (name.startsWith('aria')) {
-      return `aria-${name.slice(4).toLowerCase()}`;      
+      return `aria-${name.slice(4).toLowerCase()}`;
     }
     return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
@@ -3403,50 +3492,10 @@
     }
 
     async render(component, container, props = {}) {
-
       await this.ready();
-
       const RootClass = await this.getRootClass(component, props);
-
-      const root = new RootClass(null, props, container, this.settings);
-
-      let destroy;
-      const init = async container => {
-        destroy = () => {
-          this.Lifecycle.onComponentDestroyed(root);
-          this.Lifecycle.onComponentDetached(root);
-        };
-        const initialState =
-            await root.getInitialState.call(root.sandbox, props);
-        root.commands.init(initialState);
-      };
-
-      if (RootClass.elementName) {
-        RootClass.register();
-        const customElement = document.createElement(RootClass.elementName);
-        customElement.props = {
-          onLoad: container => init(container),
-          onUnload: () => destroy(),
-          styles: RootClass.styles,
-        };
-        container.appendChild(customElement);
-      } else {
-        const observer = new MutationObserver(mutations => {
-          const isContainerRemoved = mutations.find(
-              mutation => [...mutation.removedNodes].find(
-                  node => node === container));
-          if (isContainerRemoved) {
-            destroy();
-          }
-        });
-        if (container.parentElement) {
-          observer.observe(container.parentElement, {
-            childList: true,
-          });
-        }
-        await init(container);
-      }
-
+      const root = new RootClass(null, props, this.settings);
+      await root.mount(container);
       return root;
     }
 

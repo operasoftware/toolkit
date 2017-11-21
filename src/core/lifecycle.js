@@ -26,14 +26,11 @@
     }
 
     static onNodeCreated(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentCreated(node);
-        case 'element':
-          return this.onElementCreated(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementCreated(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentCreated(node);
       }
     }
 
@@ -59,14 +56,11 @@
     }
 
     static onNodeAttached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentAttached(node);
-        case 'element':
-          return this.onElementAttached(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementAttached(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentAttached(node);
       }
     }
 
@@ -107,14 +101,11 @@
     }
 
     static onNodeDestroyed(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDestroyed(node);
-        case 'element':
-          return this.onElementDestroyed(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementDestroyed(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentDestroyed(node);
       }
     }
 
@@ -134,14 +125,11 @@
     }
 
     static onNodeDetached(node) {
-      switch (node.nodeType) {
-        case 'root':
-        case 'component':
-          return this.onComponentDetached(node);
-        case 'element':
-          return this.onElementDetached(node);
-        default:
-          throw new Error(`Unsupported node type: ${node.nodeType}`);
+      if (node.isElement()) {
+        return this.onElementDetached(node);
+      }
+      if (!node.isRoot()) {
+        return this.onComponentDetached(node);
       }
     }
 

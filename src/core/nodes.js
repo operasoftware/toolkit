@@ -21,6 +21,13 @@
       return this;
     }
 
+    get rootNode() {
+      if (this.parentNode) {
+        return this.parentNode.rootNode;
+      }
+      return this;
+    }
+
     isRoot() {
       return this instanceof Root;
     }
@@ -60,7 +67,6 @@
       this.child = null;
       this.comment = this.createComment();
       this.cleanUpTasks = [];
-      this.attachDOM();
     }
 
     createComment() {
@@ -106,11 +112,11 @@
 
     get childElement() {
       if (this.child) {
+        if (this.child.isElement() || this.child.isRoot()) {
+          return this.child;
+        }
         if (this.child.isComponent()) {
           return this.child.childElement;
-        }
-        if (this.child.isElement()) {
-          return this.child;
         }
       }
       return null;
@@ -152,6 +158,10 @@
     }
 
     get ref() {
+      return this.renderedNode;
+    }
+
+    get renderedNode() {
       return this.childElement ? this.childElement.ref : this.placeholder.ref;
     }
 
@@ -176,45 +186,8 @@
     }
   }
 
-  class ComponentElement extends HTMLElement {
-
-    cssImports(paths) {
-      return paths.map(loader.getPath)
-          .map(path => `@import url(${path});`)
-          .join('\n');
-    }
-
-    async connectedCallback() {
-      const shadow = this.attachShadow({
-        mode: 'open',
-      });
-      const data = {
-        styles: this.props.styles,
-        onStylesLoaded: () =>
-            this.props.onLoad(shadow.querySelector(':host > slot')),
-      };
-      opr.Toolkit.render(props => this.render(props), shadow, data);
-    }
-
-    disconnectedCallback() {
-      this.props.onUnload();
-    }
-
-    render({styles = [], onStylesLoaded}) {
-      return [
-        'slot',
-        [
-          'style',
-          {
-            onLoad: onStylesLoaded,
-          },
-          this.cssImports(styles),
-        ],
-      ];
-    }
-  }
-
   const CONTAINER = Symbol('container');
+  const CUSTOM_ELEMENT = Symbol('custom-element');
 
   class Root extends Component {
 
@@ -222,21 +195,59 @@
       return 'root';
     }
 
-    constructor(id, props, container, settings) {
+    constructor(id, props, settings) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
-      const {utils, Renderer} = opr.Toolkit;
+      const {utils} = opr.Toolkit;
       this.state = null;
       this.reducer = utils.combineReducers(...this.getReducers());
-      this.container = container;
-      this.renderer = new Renderer(this, settings);
       this.dispatch = command => {
         const prevState = this.state;
         const nextState = this.reducer(prevState, command);
         this.renderer.updateDOM(command, prevState, nextState);
       };
-      this.commands = opr.Toolkit.utils.createCommandsDispatcher(
-          this.reducer, this.dispatch);
+      this.commands =
+          utils.createCommandsDispatcher(this.reducer, this.dispatch);
+      this.settings = settings;
       this.plugins = new Map();
+      this.ready = new Promise(resolve => {
+        this.markAsReady = resolve;
+      });
+    }
+
+    get ref() {
+      return this[CUSTOM_ELEMENT] || super.renderedNode;
+    }
+
+    set ref(ref) {
+      this[CUSTOM_ELEMENT] = ref;
+    }
+
+    attachDOM() {
+      const customElementName = this.constructor.elementName;
+      if (customElementName) {
+        const ElementClass = this.constructor.register();
+        this.ref = new ElementClass(this);
+      } else {
+        super.attachDOM();
+      }
+    }
+
+    async init(container) {
+      this.container = container;
+      this.renderer = new opr.Toolkit.Renderer(this, this.settings);
+      const state = await this.getInitialState.call(this.sandbox, this.props);
+      this.commands.init(state);
+      this.markAsReady();
+    }
+
+    async mount(container) {
+      this.attachDOM();
+      const elementName = this.constructor.elementName;
+      if (elementName) {
+        container.appendChild(this.ref);
+      } else {
+        await this.init(container);
+      }
     }
 
     set container(container) {
@@ -258,9 +269,10 @@
         customElements.define(this.elementName, ElementClass);
         this.prototype.elementClass = ElementClass;
       }
+      return ElementClass;
     }
 
-    static styles() {
+    static get styles() {
       return [];
     }
 
@@ -274,6 +286,67 @@
 
     get nodeType() {
       return Root.NodeType;
+    }
+  }
+
+  const cssImports = paths =>
+      paths.map(loader.getPath).map(path => `@import url(${path});`).join('\n');
+
+  class ComponentElement extends HTMLElement {
+
+    constructor(root) {
+      super();
+
+      this.$root = root;
+      this.isBeingMoved_ = false;
+
+      const shadow = this.attachShadow({
+        mode: 'open',
+      });
+      const slot = document.createElement('slot');
+
+      const styles = root.constructor.styles;
+
+      if (styles && styles.length) {
+
+        const style = document.createElement('style');
+        style.textContent = cssImports(styles);
+
+        style.onload = () => root.init(slot);
+        style.onerror = () => {
+          throw new Error(`Error loading styles: ${styles.join(', ')}`);
+        };
+        shadow.appendChild(style);
+        shadow.appendChild(slot);
+      } else {
+        shadow.appendChild(slot);
+        root.init(slot);
+      }
+    }
+
+    get isComponentElement() {
+      return true;
+    }
+
+    async connectedCallback() {
+      opr.Toolkit.assert(
+          this.$root, 'Custom Element is not bound to Root component!');
+      if (this.isBeingMoved_) {
+        this.isBeingMoved_ = false;
+      }
+    }
+
+    disconnectedCallback() {
+      if (!this.isBeingMoved_) {
+        this.destroy();
+      }
+    }
+
+    destroy() {
+      const Lifecycle = opr.Toolkit.Lifecycle;
+      const root = this.$root;
+      Lifecycle.onComponentDestroyed(root);
+      Lifecycle.onComponentDetached(root);
     }
   }
 
@@ -382,6 +455,9 @@
       console.assert(this.children[from] === child);
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
+      if (child.ref.isComponentElement) {
+        child.ref.isBeingMoved_ = true;
+      }
       this.ref.removeChild(child.ref);
       this.ref.insertBefore(child.ref, this.ref.children[to]);
     }

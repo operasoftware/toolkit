@@ -16,11 +16,21 @@
       const children = description.children || [];
       const component = this.createComponent(
           description.component, description.props, children, parent, root);
+      if (component.isRoot()) {
+        opr.Toolkit.assert(
+            component.constructor.elementName,
+            `Root component "${
+                               component.constructor.displayName
+                             }" does not define custom element name!`);
+        component.constructor.register();
+        return component;
+      }
       const childDescription = opr.Toolkit.Renderer.render(component);
       component.description = childDescription;
       if (childDescription) {
-        component.appendChild(
-            this.createFromDescription(childDescription, component, root));
+        const child =
+            this.createFromDescription(childDescription, component, root);
+        component.appendChild(child);
       }
       return component;
     }
@@ -49,11 +59,12 @@
       try {
         const component =
             this.createComponentInstance(symbol, props, children, parent);
-        opr.Toolkit.assert(
-            !component.isRoot(), 'Invalid root instance passed as a child!')
-        console.assert(
-            root, 'Root instance not passed for construction of a component ');
-        component.commands = root && root.commands || {};
+        if (!component.isRoot()) {
+          console.assert(
+              root,
+              'Root instance not passed for construction of a component ');
+          component.commands = root && root.commands || {};
+        }
         return component;
       } catch (e) {
         console.error('Error creating Component Tree:', symbol);
@@ -64,6 +75,12 @@
     static createComponentInstance(symbol, props, children, parent) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
+      if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
+        const instance = new ComponentClass(
+            symbol, normalizedProps, parent.rootNode.renderer.settings);
+        instance.attachDOM();
+        return instance;
+      }
       return new ComponentClass(symbol, normalizedProps, children, parent);
     }
 

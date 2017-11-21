@@ -77,6 +77,7 @@
         }
         const uninstall = plugin.install({
           container: this.root.container,
+          root: this.root,
         });
         this.plugins.set(plugin.id, {
           ref: plugin,

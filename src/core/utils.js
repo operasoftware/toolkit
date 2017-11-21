@@ -108,7 +108,7 @@
 
   const lowerDash = name => {
     if (name.startsWith('aria')) {
-      return `aria-${name.slice(4).toLowerCase()}`;      
+      return `aria-${name.slice(4).toLowerCase()}`;
     }
     return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
