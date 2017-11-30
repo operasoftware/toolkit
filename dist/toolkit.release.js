@@ -394,41 +394,41 @@
     'wrap',
 
     // aria attributes
-    'ariaActivedescendant',
+    'ariaActiveDescendant',
     'ariaAtomic',
-    'ariaAutocomplete',
+    'ariaAutoComplete',
     'ariaBusy',
     'ariaChecked',
     'ariaControls',
-    'ariaDescribedby',
+    'ariaDescribedBy',
     'ariaDisabled',
-    'ariaDropeffect',
+    'ariaDropEffect',
     'ariaExpanded',
-    'ariaFlowto',
+    'ariaFlowTo',
     'ariaGrabbed',
-    'ariaHaspopup',
+    'ariaHasPopup',
     'ariaHidden',
     'ariaInvalid',
     'ariaLabel',
-    'ariaLabelledby',
+    'ariaLabelLedBy',
     'ariaLevel',
     'ariaLive',
-    'ariaMultiline',
-    'ariaMultiselectable',
+    'ariaMultiLine',
+    'ariaMultiSelectable',
     'ariaOrientation',
     'ariaOwns',
-    'ariaPosinset',
+    'ariaPosInSet',
     'ariaPressed',
-    'ariaReadonly',
+    'ariaReadOnly',
     'ariaRelevant',
     'ariaRequired',
     'ariaSelected',
-    'ariaSetsize',
+    'ariaSetSize',
     'ariaSort',
-    'ariaValuemax',
-    'ariaValuemin',
-    'ariaValuenow',
-    'ariaValuetext',
+    'ariaValueMax',
+    'ariaValueMin',
+    'ariaValueNow',
+    'ariaValueText',
   ];
 
   const getSupportedStyles = element => {
@@ -3213,8 +3213,12 @@
 
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
-  const lowerDash = name =>
-      name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  const lowerDash = name => {
+    if (name.startsWith('aria')) {
+      return `aria-${name.slice(4).toLowerCase()}`;      
+    }
+    return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
 
   const getAttributeName = name => {
     switch (name) {
