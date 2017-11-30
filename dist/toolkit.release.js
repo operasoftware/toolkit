@@ -184,25 +184,6 @@
 
 {
   const SUPPORTED_EVENTS = [
-    // clipboard events
-    'onCopy',
-    'onCut',
-    'onPaste',
-    // composition events
-    'onCompositionEnd',
-    'onCompositionStart',
-    'onCompositionUpdate',
-    // keyboard events
-    'onKeyDown',
-    'onKeyPress',
-    'onKeyUp',
-    // focus events
-    'onFocus',
-    'onBlur',
-    // form events
-    'onChange',
-    'onInput',
-    'onSubmit',
     // mouse events
     'onAuxClick',
     'onClick',
@@ -223,6 +204,25 @@
     'onMouseOut',
     'onMouseOver',
     'onMouseUp',
+    // keyboard events
+    'onKeyDown',
+    'onKeyPress',
+    'onKeyUp',
+    // focus events
+    'onFocus',
+    'onBlur',
+    // form events
+    'onChange',
+    'onInput',
+    'onSubmit',
+    // clipboard events
+    'onCopy',
+    'onCut',
+    'onPaste',
+    // composition events
+    'onCompositionEnd',
+    'onCompositionStart',
+    'onCompositionUpdate',
     // selection events
     'onSelect',
     // touch events
@@ -272,13 +272,38 @@
   ];
 
   const SUPPORTED_ATTRIBUTES = [
+    // most used attributes
+    'tabIndex',
+    'href',
+    'draggable',
+    'name',
+    'disabled',
+    'type',
+    'value',
+    'id',
+    'checked',
+    'contentEditable',
+    'readOnly',
+    'alt',
+    'title',
+    'width',
+    'height',
+    'required',
+    'for',
+    'label',
+    'minLength',
+    'maxLength',
+    'method',
+    'src',
+    'rel',
+
+    // other attributes
     'accept',
     'acceptCharset',
     'accessKey',
     'action',
     'allowFullScreen',
     'allowTransparency',
-    'alt',
     'async',
     'autoComplete',
     'autoFocus',
@@ -288,13 +313,11 @@
     'cellSpacing',
     'challenge',
     'charSet',
-    'checked',
     'cite',
     'classID',
     'colSpan',
     'cols',
     'content',
-    'contentEditable',
     'contextMenu',
     'controls',
     'coords',
@@ -304,22 +327,16 @@
     'default',
     'defer',
     'dir',
-    'disabled',
     'download',
-    'draggable',
     'encType',
-    'for',
     'form',
     'frameBorder',
     'headers',
-    'height',
     'hidden',
     'high',
-    'href',
     'hrefLang',
     'httpEquiv',
     'icon',
-    'id',
     'incremental',
     'inputMode',
     'integrity',
@@ -327,7 +344,6 @@
     'keyParams',
     'keyType',
     'kind',
-    'label',
     'lang',
     'list',
     'loop',
@@ -336,15 +352,11 @@
     'marginHeight',
     'marginWidth',
     'max',
-    'maxLength',
     'media',
     'mediaGroup',
-    'method',
     'min',
-    'minLength',
     'multiple',
     'muted',
-    'name',
     'noValidate',
     'nonce',
     'open',
@@ -355,9 +367,6 @@
     'preload',
     'profile',
     'radioGroup',
-    'readOnly',
-    'rel',
-    'required',
     'reversed',
     'role',
     'rowSpan',
@@ -373,22 +382,53 @@
     'sizes',
     'span',
     'spellCheck',
-    'src',
     'srcDoc',
     'srcLang',
     'srcSet',
     'start',
     'step',
     'summary',
-    'tabIndex',
     'target',
-    'title',
-    'type',
     'useMap',
-    'value',
-    'width',
     'wmode',
     'wrap',
+
+    // aria attributes
+    'ariaActiveDescendant',
+    'ariaAtomic',
+    'ariaAutoComplete',
+    'ariaBusy',
+    'ariaChecked',
+    'ariaControls',
+    'ariaDescribedBy',
+    'ariaDisabled',
+    'ariaDropEffect',
+    'ariaExpanded',
+    'ariaFlowTo',
+    'ariaGrabbed',
+    'ariaHasPopup',
+    'ariaHidden',
+    'ariaInvalid',
+    'ariaLabel',
+    'ariaLabelLedBy',
+    'ariaLevel',
+    'ariaLive',
+    'ariaMultiLine',
+    'ariaMultiSelectable',
+    'ariaOrientation',
+    'ariaOwns',
+    'ariaPosInSet',
+    'ariaPressed',
+    'ariaReadOnly',
+    'ariaRelevant',
+    'ariaRequired',
+    'ariaSelected',
+    'ariaSetSize',
+    'ariaSort',
+    'ariaValueMax',
+    'ariaValueMin',
+    'ariaValueNow',
+    'ariaValueText',
   ];
 
   const getSupportedStyles = element => {
@@ -3173,8 +3213,12 @@
 
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
-  const lowerDash = name =>
-      name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  const lowerDash = name => {
+    if (name.startsWith('aria')) {
+      return `aria-${name.slice(4).toLowerCase()}`;      
+    }
+    return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
 
   const getAttributeName = name => {
     switch (name) {
@@ -3238,8 +3282,9 @@
       prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
 
   const isSupportedAttribute = attr =>
+      isSpecialProperty(attr) ||
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
-      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) || isSpecialProperty(attr);
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 
   const Utils = {
     throttle,

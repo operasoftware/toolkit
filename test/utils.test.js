@@ -285,6 +285,11 @@ describe('Utils', () => {
       ['autoPlay', 'autoplay'],
       ['acceptCharset', 'accept-charset'],
       ['noValidate', 'novalidate'],
+      ['ariaActiveDescendant', 'aria-activedescendant'],
+      ['ariaMultiSelectable', 'aria-multiselectable'],
+      ['ariaSetSize', 'aria-setsize'],
+      ['ariaRequired', 'aria-required'],
+      ['ariaAutoComplete', 'aria-autocomplete'],
     ];
 
     convertions.forEach(([from, to]) => {
