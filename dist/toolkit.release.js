@@ -273,26 +273,28 @@
 
   const SUPPORTED_ATTRIBUTES = [
     // most used attributes
-    'id',
+    'tabIndex',
     'href',
+    'draggable',
+    'name',
+    'disabled',
+    'type',
+    'value',
+    'id',
+    'checked',
+    'contentEditable',
+    'readOnly',
     'alt',
-    'title',    
+    'title',
     'width',
     'height',
-    'name',
-    'value',
-    'tabIndex',
-    'checked',
-    'disabled',
     'required',
     'for',
-    'label',    
+    'label',
     'minLength',
     'maxLength',
     'method',
-    'type',
     'src',
-    'readOnly',
     'rel',
 
     // other attributes
@@ -316,7 +318,6 @@
     'colSpan',
     'cols',
     'content',
-    'contentEditable',
     'contextMenu',
     'controls',
     'coords',
@@ -327,7 +328,6 @@
     'defer',
     'dir',
     'download',
-    'draggable',
     'encType',
     'form',
     'frameBorder',
@@ -3278,8 +3278,9 @@
       prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
 
   const isSupportedAttribute = attr =>
+      isSpecialProperty(attr) ||
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
-      opr.Toolkit.SUPPORTED_EVENTS.includes(attr) || isSpecialProperty(attr);
+      opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 
   const Utils = {
     throttle,
