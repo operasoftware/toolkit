@@ -1,4 +1,4 @@
-describe('Template => validate', () => {
+describe.only('Template => validate', () => {
 
   const Template = opr.Toolkit.Template;
 
@@ -246,16 +246,15 @@ describe('Template => validate', () => {
   it('accepts a subcomponent', () => {
 
     // given
-    const component = Symbol.for('component');
+    const component = Symbol.for('some/component');
     const template = [component];
 
     // when
-    const result = Template.validate(template);
+    const result = Template.describe(template);
 
     // then
-    assert.deepEqual(result, {
-      types: ['component'],
-    });
+    assert.equal(result.type, 'component');
+    assert.equal(result.symbol, 'some/component');
     assert(!console.error.called);
   });
 

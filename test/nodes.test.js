@@ -32,7 +32,7 @@ describe('Nodes', () => {
     return app;
   };
 
-  const createElement = name => new VirtualElement({element: name});
+  const createElement = name => new VirtualElement({name});
 
   beforeEach(() => {
     sinon.stub(VirtualDOM, 'getComponentClass', symbol => {

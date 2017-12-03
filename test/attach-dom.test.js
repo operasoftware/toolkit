@@ -37,7 +37,7 @@ describe('Virtual Element => Attach DOM', () => {
       (name, props = {}, content = []) => {
         const details = {
           type: 'element',
-          element: name,
+          name,
           children: Array.isArray(content) ? content : undefined,
           text: typeof content === 'string' ? content : null,
           props,

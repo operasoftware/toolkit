@@ -10,12 +10,12 @@
       if (!description) {
         return null;
       }
-      if (description.element) {
+      if (description.type === 'element') {
         return this.createElement(description, parent, root);
       }
       const children = description.children || [];
       const component = this.createComponent(
-          description.component, description.props, children, parent, root);
+          description.symbol, description.props, children, parent, root);
       if (component.isRoot()) {
         opr.Toolkit.assert(
             component.constructor.elementName,

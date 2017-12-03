@@ -1,4 +1,101 @@
 {
+  const SUPPORTED_EVENTS = [
+    // mouse events
+    'onAuxClick',
+    'onClick',
+    'onContextMenu',
+    'onDoubleClick',
+    'onDrag',
+    'onDragEnd',
+    'onDragEnter',
+    'onDragExit',
+    'onDragLeave',
+    'onDragOver',
+    'onDragStart',
+    'onDrop',
+    'onMouseDown',
+    'onMouseEnter',
+    'onMouseLeave',
+    'onMouseMove',
+    'onMouseOut',
+    'onMouseOver',
+    'onMouseUp',
+    // keyboard events
+    'onKeyDown',
+    'onKeyPress',
+    'onKeyUp',
+    // focus events
+    'onFocus',
+    'onBlur',
+    // form events
+    'onChange',
+    'onInput',
+    'onSubmit',
+    // clipboard events
+    'onCopy',
+    'onCut',
+    'onPaste',
+    // composition events
+    'onCompositionEnd',
+    'onCompositionStart',
+    'onCompositionUpdate',
+    // selection events
+    'onSelect',
+    // touch events
+    'onTouchCancel',
+    'onTouchEnd',
+    'onTouchMove',
+    'onTouchStart',
+    // UI events
+    'onScroll',
+    // wheel events
+    'onWheel',
+    // media events
+    'onAbort',
+    'onCanPlay',
+    'onCanPlayThrough',
+    'onDurationChange',
+    'onEmptied',
+    'onEncrypted',
+    'onEnded',
+    'onError',
+    'onLoadedData',
+    'onLoadedMetadata',
+    'onLoadStart',
+    'onPause',
+    'onPlay',
+    'onPlaying',
+    'onProgress',
+    'onRateChange',
+    'onSeeked',
+    'onSeeking',
+    'onStalled',
+    'onSuspend',
+    'onTimeUpdate',
+    'onVolumeChange',
+    'onWaiting',
+    // image events
+    'onLoad',
+    'onError',
+    // animation events
+    'onAnimationStart',
+    'onAnimationEnd',
+    'onAnimationIteration',
+    // transition events
+    'onTransitionEnd',
+    // search events
+    'onSearch',
+  ];
+
+  const SUPPORTED_ATTRIBUTES = [
+    // most used attributes
+    'tabIndex', 'href',  'draggable', 'name',      'disabled',
+    'type',     'value', 'id',        'checked',   'contentEditable',
+    'readOnly', 'alt',   'title',     'width',     'height',
+    'required', 'for',   'label',     'minLength', 'maxLength',
+    'method',   'src',   'rel',
+  ];
+
   class Description {
 
     constructor(type, key, template) {
@@ -27,9 +124,9 @@
 
   class ComponentDescription extends Description {
 
-    constructor({symbol, props, children}, template) {
-      super(opr.Toolkit.Component.NodeType, props && props.key, template);
-      this.symbol = symbol;
+    constructor({component, props, children}, template) {
+      super('component', props && props.key, template);
+      this.component = component;
       if (props) {
         this.props = props;
       }
@@ -48,7 +145,7 @@
    * differences between compatible elements (with the same tag name).
    *
    * Enumerable properties:
-   * - name (a string representing tag name),
+   * - element (a string representing tag name),
    * - text (a string representing text content),
    * - children (an array of child nodes),
    * - props (an object) defining:
@@ -64,41 +161,17 @@
    */
   class ElementDescription extends Description {
 
-    constructor({name, text = null, children, props}, template) {
-      super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+    constructor({element, text = null, children, props}, template) {
+      super('element', props && props.key, template);
 
-      this.name = name;
+      this.element = element;
       this.text = text;
-
-      const {
-        SUPPORTED_ATTRIBUTES,
-        SUPPORTED_EVENTS,
-        SUPPORTED_STYLES,
-        Template,
-      } = opr.Toolkit;
 
       if (children && children.length > 0) {
         this.children = children;
       }
 
       if (props) {
-
-        if (opr.Toolkit.isDebug()) {
-          const unknownAttrs = Object.keys(props).filter(
-              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
-          for (const unknownAttr of unknownAttrs) {
-            const suggestion = SUPPORTED_ATTRIBUTES.find(
-                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
-            if (suggestion) {
-              opr.Toolkit.warn(
-                  `Attribute name "${
-                                     unknownAttr
-                                   }" should be spelled "${suggestion}"`);
-            } else {
-              opr.Toolkit.warn(`Attribute name "${unknownAttr}" is not valid,`);
-            }
-          }
-        }
 
         const normalized = {};
 
@@ -187,7 +260,7 @@
     }
 
     isCompatible(desc) {
-      return super.isCompatible(desc) && desc.name === this.name;
+      return super.isCompatible(desc) && desc.element === this.element;
     }
   }
 
@@ -287,7 +360,8 @@
         COMPONENT: 'component',
         ELEMENT: 'element',
         PROPS: 'props',
-        FUNCTION: 'function',
+        RENDERER: 'renderer',
+        SYMBOL: 'symbol',
       };
     }
 
@@ -322,133 +396,6 @@
       }
     }
 
-    static validate(template) {
-
-      const validParamTypes =
-          'properties object, text content or first child element';
-
-      const createErrorDescription = (val, i, types) =>
-          `Invalid parameter type "${val}" at index ${i}, expecting: ${types}`;
-
-      if (template === null || template === false) {
-        return {types: null};
-      }
-
-      if (!Array.isArray(template)) {
-        const error =
-            new Error(`Specified template: "${template}" is not an array!`);
-        console.error('Specified template', template, 'is not an array!');
-        return {error};
-      }
-
-      const Type = Template.ItemType;
-      const types = template.map(this.getItemType);
-
-      if (![Type.STRING, Type.COMPONENT].includes(types[0])) {
-        console.error(
-            'Invalid element:', template[0],
-            ', expecting component or tag name');
-        const error =
-            new Error(`Invalid parameter type "${types[0]}" at index 0`);
-        return {error, types};
-      }
-
-      if (types.length <= 1) {
-        return {types};
-      }
-
-      let firstChildIndex = 1;
-
-      switch (types[1]) {
-        case Type.STRING:
-          if (types.length > 2) {
-            const error = new Error('Text elements cannot have child nodes');
-            console.error(
-                'Text elements cannot have child nodes:', template.slice(1));
-            return {
-              error,
-              types,
-            };
-          } else if (types[0] === Type.COMPONENT) {
-            const error = new Error('Subcomponents do not accept text content');
-            console.error(
-                'Subcomponents do not accept text content:', template[1]);
-            return {
-              error,
-              types,
-            };
-          }
-        case Type.PROPS:
-          firstChildIndex = 2;
-        case Type.NULL:
-        case Type.BOOLEAN:
-          if (template[1] === true) {
-            const error =
-                new Error(createErrorDescription(types[1], 1, validParamTypes));
-            console.error(
-                'Invalid parameter', template[1],
-                ', expecting:', validParamTypes);
-            return {
-              error,
-              types,
-            };
-          }
-        case Type.ELEMENT:
-          if (types.length > 2) {
-            if (types[2] === Type.STRING) {
-              if (types.length > 3) {
-                const error =
-                    new Error('Text elements cannot have child nodes');
-                console.error(
-                    'Text elements cannot have child nodes:',
-                    template.slice(2));
-                return {
-                  error,
-                  types,
-                };
-              } else if (types[0] === Type.COMPONENT) {
-                const error =
-                    new Error('Subcomponents do not accept text content');
-                console.error(
-                    'Subcomponents do not accept text content:', template[2]);
-                return {
-                  error,
-                  types,
-                };
-              }
-              return {
-                types,
-              };
-            }
-          }
-          for (let i = firstChildIndex; i < template.length; i++) {
-            const expected = i === 1 ? validParamTypes : 'child element';
-            if (types[i] !== Type.ELEMENT && template[i] !== null &&
-                template[i] !== false) {
-              const error = new Error(
-                  `Invalid parameter type "${types[i]}" at index ${i}`);
-              console.error(
-                  'Invalid parameter:', template[i], ', expecting:', expected);
-              return {
-                error,
-                types,
-              };
-            }
-          }
-          return {
-            types,
-          };
-      }
-      const error =
-          new Error(createErrorDescription(types[1], 1, validParamTypes));
-      console.error(
-          'Invalid parameter', template[1], ', expecting:', validParamTypes);
-      return {
-        error,
-        types,
-      };
-    }
-
     static describe(template) {
 
       if (template === false || template === null) {
@@ -460,33 +407,12 @@
         const Type = this.ItemType;
         const details = {};
 
-        const getParams = item => {
-          const type = typeof item;
-          switch (type) {
-            case 'string':
-              return ['element', 'name', item];
-            case 'symbol':
-              return ['component', 'symbol', String(item).slice(7, -1)];
-            case 'function':
-              if (item.prototype instanceof opr.Toolkit.Component) {
-                return ['component', 'component', item];
-              } else {
-                return ['component', 'renderer', item];
-              }
-            default:
-              throw new Error('Invalid type:' + item);
-          }
-        };
-        const isProps = item =>
-            item && !Array.isArray(item) && typeof item === 'object';
-
-        const [type, name, value] = getParams(template[0]);
-
-        details.type = type;
-        details[name] = value;
+        const type = this.getItemType(template[0]);
+        details[type] = template[0];
 
         let index = 1;
-        if (template.length > 1 && isProps(template[1])) {
+        if (template.length > 1 &&
+            this.getItemType(template[1]) === Type.PROPS) {
           details.props = template[1];
           index = 2;
         }
@@ -494,14 +420,13 @@
         for (let i = index; i < template.length; i++) {
           const item = template[i];
           if (item !== null && item !== false) {
-            if (Array.isArray(item)) {
+            const type = this.getItemType(item);
+            if (type === Type.ELEMENT) {
               if (details.children) {
                 details.children.push(item);
               } else {
                 details.children = [item];
               }
-            } else if (typeof item === 'string') {
-              details.text = item;
             } else {
               throw new Error('Invalid item!');
             }
@@ -513,13 +438,64 @@
     }
 
     static normalize(details, template = null) {
-      return details.type === 'element' ?
-          new ElementDescription(details, template) :
-          new ComponentDescription(details, template);
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
     }
   }
 
-  Template.Description = Description;
-
-  module.exports = Template;
+  for (let i = 0; i < 10000; i++) {
+    Template.describe([
+      'tr', {
+        key: i,
+        metadata: {
+          data_id: i,
+        },
+        class: '',
+      },
+      [
+        'td',
+        {
+          class: 'col-md-1',
+        },
+        String(i),
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-4',
+        },
+        [
+          'a',
+          {
+            class: 'lbl',
+          },
+          `label-{$i}`,
+        ],
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-1',
+        },
+        [
+          'a',
+          {
+            class: 'remove',
+          },
+          [
+            'span',
+            {
+              class: 'glyphicon glyphicon-remove remove',
+            },
+          ],
+        ],
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-6',
+        },
+      ]
+    ]);
+  }
 }

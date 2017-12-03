@@ -15,7 +15,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'Component');
+    assert.equal(description.symbol, 'Component');
   });
 
   it('detects component with properties', () => {
@@ -32,14 +32,14 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'Component');
+    assert.equal(description.symbol, 'Component');
     assert.equal(description.props, props);
   });
 
   it('detects component with child nodes', () => {
 
     // given
-    const component = Symbol.for('component');
+    const component = Symbol.for('Component');
     const children = [
       ['div'],
       ['span'],
@@ -51,7 +51,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'component');
+    assert.equal(description.symbol, 'Component');
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
     assert.equal(description.children[1][0], 'span');
@@ -74,7 +74,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'component');
+    assert.equal(description.symbol, 'component');
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
     assert.equal(description.children[1][0], 'span');
@@ -98,7 +98,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'component');
+    assert.equal(description.symbol, 'component');
     assert.equal(description.props, props);
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
@@ -124,7 +124,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'component');
-    assert.equal(description.component, 'component');
+    assert.equal(description.symbol, 'component');
     assert.equal(description.props, props);
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
@@ -141,7 +141,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
   });
 
   it('detects empty element with properties', () => {
@@ -160,7 +160,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.deepEqual(description.props, {
       attrs: props,
     });
@@ -178,7 +178,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.equal(description.text, 'text');
   });
 
@@ -195,7 +195,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.deepEqual(description.props, {
       attrs: props,
     })
@@ -217,7 +217,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
     assert.equal(description.children[1][0], 'span');
@@ -240,7 +240,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.equal(description.children.length, 2);
     assert.equal(description.children[0][0], 'div');
     assert.equal(description.children[1][0], 'span');
@@ -266,7 +266,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.deepEqual(description.props, {
       attrs: {
         tabIndex: '10',  // TODO: should be a number (?)
@@ -301,7 +301,7 @@ describe('Template => describe', () => {
 
     // then
     assert.equal(description.type, 'element');
-    assert.equal(description.element, 'div');
+    assert.equal(description.name, 'div');
     assert.deepEqual(description.props, {
       attrs: {
         id: 'id',

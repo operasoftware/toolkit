@@ -44,12 +44,14 @@
         children = [],
       } = description;
 
+      // TODO: add support for direct references to component classes and
+      // renderer
       const ComponentClass =
-          opr.Toolkit.VirtualDOM.getComponentClass(description.component);
+          opr.Toolkit.VirtualDOM.getComponentClass(description.symbol);
 
       opr.Toolkit.assert(
           ComponentClass,
-          `Module not found for path: ${String(description.component)}`);
+          `Module not found for path: ${String(description.symbol)}`);
       opr.Toolkit.assert(component.constructor === ComponentClass);
 
       const prevProps = component.props;
@@ -354,9 +356,9 @@
 
       const areCompatible = (node, description) => {
         if (node.isElement()) {
-          return node.name === description.element;
+          return node.name === description.name;
         }
-        return node.id === description.component;
+        return node.id === description.symbol;
       };
 
       // update

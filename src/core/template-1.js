@@ -1,4 +1,101 @@
 {
+  const SUPPORTED_EVENTS = [
+    // mouse events
+    'onAuxClick',
+    'onClick',
+    'onContextMenu',
+    'onDoubleClick',
+    'onDrag',
+    'onDragEnd',
+    'onDragEnter',
+    'onDragExit',
+    'onDragLeave',
+    'onDragOver',
+    'onDragStart',
+    'onDrop',
+    'onMouseDown',
+    'onMouseEnter',
+    'onMouseLeave',
+    'onMouseMove',
+    'onMouseOut',
+    'onMouseOver',
+    'onMouseUp',
+    // keyboard events
+    'onKeyDown',
+    'onKeyPress',
+    'onKeyUp',
+    // focus events
+    'onFocus',
+    'onBlur',
+    // form events
+    'onChange',
+    'onInput',
+    'onSubmit',
+    // clipboard events
+    'onCopy',
+    'onCut',
+    'onPaste',
+    // composition events
+    'onCompositionEnd',
+    'onCompositionStart',
+    'onCompositionUpdate',
+    // selection events
+    'onSelect',
+    // touch events
+    'onTouchCancel',
+    'onTouchEnd',
+    'onTouchMove',
+    'onTouchStart',
+    // UI events
+    'onScroll',
+    // wheel events
+    'onWheel',
+    // media events
+    'onAbort',
+    'onCanPlay',
+    'onCanPlayThrough',
+    'onDurationChange',
+    'onEmptied',
+    'onEncrypted',
+    'onEnded',
+    'onError',
+    'onLoadedData',
+    'onLoadedMetadata',
+    'onLoadStart',
+    'onPause',
+    'onPlay',
+    'onPlaying',
+    'onProgress',
+    'onRateChange',
+    'onSeeked',
+    'onSeeking',
+    'onStalled',
+    'onSuspend',
+    'onTimeUpdate',
+    'onVolumeChange',
+    'onWaiting',
+    // image events
+    'onLoad',
+    'onError',
+    // animation events
+    'onAnimationStart',
+    'onAnimationEnd',
+    'onAnimationIteration',
+    // transition events
+    'onTransitionEnd',
+    // search events
+    'onSearch',
+  ];
+
+  const SUPPORTED_ATTRIBUTES = [
+    // most used attributes
+    'tabIndex', 'href',  'draggable', 'name',      'disabled',
+    'type',     'value', 'id',        'checked',   'contentEditable',
+    'readOnly', 'alt',   'title',     'width',     'height',
+    'required', 'for',   'label',     'minLength', 'maxLength',
+    'method',   'src',   'rel',
+  ];
+
   class Description {
 
     constructor(type, key, template) {
@@ -27,9 +124,9 @@
 
   class ComponentDescription extends Description {
 
-    constructor({symbol, props, children}, template) {
-      super(opr.Toolkit.Component.NodeType, props && props.key, template);
-      this.symbol = symbol;
+    constructor({component, props, children}, template) {
+      super('component', props && props.key, template);
+      this.component = component;
       if (props) {
         this.props = props;
       }
@@ -48,7 +145,7 @@
    * differences between compatible elements (with the same tag name).
    *
    * Enumerable properties:
-   * - name (a string representing tag name),
+   * - element (a string representing tag name),
    * - text (a string representing text content),
    * - children (an array of child nodes),
    * - props (an object) defining:
@@ -64,41 +161,17 @@
    */
   class ElementDescription extends Description {
 
-    constructor({name, text = null, children, props}, template) {
-      super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
+    constructor({element, text = null, children, props}, template) {
+      super('element', props && props.key, template);
 
-      this.name = name;
+      this.element = element;
       this.text = text;
-
-      const {
-        SUPPORTED_ATTRIBUTES,
-        SUPPORTED_EVENTS,
-        SUPPORTED_STYLES,
-        Template,
-      } = opr.Toolkit;
 
       if (children && children.length > 0) {
         this.children = children;
       }
 
       if (props) {
-
-        if (opr.Toolkit.isDebug()) {
-          const unknownAttrs = Object.keys(props).filter(
-              attr => !opr.Toolkit.utils.isSupportedAttribute(attr));
-          for (const unknownAttr of unknownAttrs) {
-            const suggestion = SUPPORTED_ATTRIBUTES.find(
-                attr => attr.toLowerCase() === unknownAttr.toLowerCase());
-            if (suggestion) {
-              opr.Toolkit.warn(
-                  `Attribute name "${
-                                     unknownAttr
-                                   }" should be spelled "${suggestion}"`);
-            } else {
-              opr.Toolkit.warn(`Attribute name "${unknownAttr}" is not valid,`);
-            }
-          }
-        }
 
         const normalized = {};
 
@@ -187,11 +260,25 @@
     }
 
     isCompatible(desc) {
-      return super.isCompatible(desc) && desc.name === this.name;
+      return super.isCompatible(desc) && desc.element === this.element;
     }
   }
 
   class Template {
+
+    static get ItemType() {
+      return {
+        STRING: 'string',
+        NUMBER: 'number',
+        BOOLEAN: 'boolean',
+        UNDEFINED: 'undefined',
+        NULL: 'null',
+        COMPONENT: 'component',
+        ELEMENT: 'element',
+        PROPS: 'props',
+        FUNCTION: 'function',
+      };
+    }
 
     static getClassName(value) {
       if (!value) {
@@ -277,20 +364,6 @@
       }
     }
 
-    static get ItemType() {
-      return {
-        STRING: 'string',
-        NUMBER: 'number',
-        BOOLEAN: 'boolean',
-        UNDEFINED: 'undefined',
-        NULL: 'null',
-        COMPONENT: 'component',
-        ELEMENT: 'element',
-        PROPS: 'props',
-        FUNCTION: 'function',
-      };
-    }
-
     static getItemType(item) {
 
       const Type = Template.ItemType;
@@ -306,12 +379,9 @@
         case 'undefined':
           return Type.UNDEFINED;
         case 'symbol':
-          return Type.SYMBOL;
+          return Type.COMPONENT;
         case 'function':
-          if (type.prototype instanceof opr.Toolkit.Component) {
-            return Type.COMPONENT;
-          }
-          return Type.RENDERER;
+          return Type.FUNCTION;
         case 'object':
           if (item === null) {
             return Type.NULL;
@@ -451,75 +521,155 @@
 
     static describe(template) {
 
-      if (template === false || template === null) {
-        return null;
-      }
+      const analyze = template => {
 
-      if (Array.isArray(template) && template.length > 0) {
+        const {types, error} = this.validate(template);
 
-        const Type = this.ItemType;
-        const details = {};
+        if (error) {
+          console.error('Invalid template definition:', template);
+          throw error;
+        }
 
-        const getParams = item => {
-          const type = typeof item;
+        if (types === null) {
+          return null;
+        }
+
+        const Type = Template.ItemType;
+
+        let attr;
+        let name
+
+        const type = types[0];
+        if (type === Type.COMPONENT) {
+          attr = 'component';
+          name = String(template[0]).slice(7, -1);
+        } else {
+          attr = 'element';
+          name = template[0];
+        }
+
+        const getChildren = nodes => {
+          const isValidNode = element => Array.isArray(element);
+          const children = nodes.filter(isValidNode);
           switch (type) {
-            case 'string':
-              return ['element', 'name', item];
-            case 'symbol':
-              return ['component', 'symbol', String(item).slice(7, -1)];
-            case 'function':
-              if (item.prototype instanceof opr.Toolkit.Component) {
-                return ['component', 'component', item];
-              } else {
-                return ['component', 'renderer', item];
-              }
+            case Type.COMPONENT:
+            case Type.STRING:
+              return children;
             default:
-              throw new Error('Invalid type:' + item);
+              throw new Error(`Unknown type: ${type}`);
           }
         };
-        const isProps = item =>
-            item && !Array.isArray(item) && typeof item === 'object';
 
-        const [type, name, value] = getParams(template[0]);
-
-        details.type = type;
-        details[name] = value;
-
-        let index = 1;
-        if (template.length > 1 && isProps(template[1])) {
-          details.props = template[1];
-          index = 2;
-        }
-
-        for (let i = index; i < template.length; i++) {
-          const item = template[i];
-          if (item !== null && item !== false) {
-            if (Array.isArray(item)) {
-              if (details.children) {
-                details.children.push(item);
-              } else {
-                details.children = [item];
-              }
-            } else if (typeof item === 'string') {
-              details.text = item;
-            } else {
-              throw new Error('Invalid item!');
+        switch (template.length) {
+          case 1:
+            return {
+              [attr]: name,
+            };
+          case 2:
+            if (types[1] === Type.STRING) {
+              const text = template[1];
+              return {
+                [attr]: name,
+                text,
+              };
+            } else if (types[1] === Type.PROPS) {
+              return {[attr]: name, props: template[1]};
+            } else if (types[1] === Type.ELEMENT) {
+              return {
+                [attr]: name,
+                children: getChildren(template.slice(1)),
+              };
             }
-          }
+          default:
+            if (types[1] === Type.PROPS) {
+              if (types[2] === Type.STRING) {
+                return {
+                  [attr]: name,
+                  props: template[1],
+                  text: template[2],
+                };
+              }
+              return {
+                [attr]: name,
+                props: template[1],
+                children: getChildren(template.slice(2)),
+              };
+            }
+            return {
+              [attr]: name,
+              children: getChildren(template.slice(1)),
+            };
         }
+      };
+
+      const details = analyze(template);
+
+      if (details) {
         return this.normalize(details, template);
       }
-      throw new Error('Invalid template!');
+
+      return null;
     }
 
     static normalize(details, template = null) {
-      return details.type === 'element' ?
-          new ElementDescription(details, template) :
-          new ComponentDescription(details, template);
+      return details.component ? new ComponentDescription(details, template) :
+                                 new ElementDescription(details, template);
     }
   }
 
-  Template.Description = Description;
-
-  module.exports = Template;
+  for (let i = 0; i < 10000; i++) {
+    Template.describe([
+      'tr', {
+        key: i,
+        metadata: {
+          data_id: i,
+        },
+        class: '',
+      },
+      [
+        'td',
+        {
+          class: 'col-md-1',
+        },
+        String(i),
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-4',
+        },
+        [
+          'a',
+          {
+            class: 'lbl',
+          },
+          `label-{$i}`,
+        ],
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-1',
+        },
+        [
+          'a',
+          {
+            class: 'remove',
+          },
+          [
+            'span',
+            {
+              class: 'glyphicon glyphicon-remove remove',
+            },
+          ],
+        ],
+      ],
+      [
+        'td',
+        {
+          class: 'col-md-6',
+        },
+      ]
+    ]);
+  }
 }

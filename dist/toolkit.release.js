@@ -838,14 +838,14 @@
       super(description.key || null, parentNode);
 
       const {
-        element,
+        name,
         props = {},
         text = null,
       } = description;
       this.description = description;
 
-      opr.Toolkit.assert(element, 'Element name is mandatory');
-      this.name = element;
+      opr.Toolkit.assert(name, 'Element name is mandatory');
+      this.name = name;
       const {
         listeners = {},
         attrs = {},
@@ -1094,12 +1094,14 @@
         children = [],
       } = description;
 
+      // TODO: add support for direct references to component classes and
+      // renderer
       const ComponentClass =
-          opr.Toolkit.VirtualDOM.getComponentClass(description.component);
+          opr.Toolkit.VirtualDOM.getComponentClass(description.symbol);
 
       opr.Toolkit.assert(
           ComponentClass,
-          `Module not found for path: ${String(description.component)}`);
+          `Module not found for path: ${String(description.symbol)}`);
       opr.Toolkit.assert(component.constructor === ComponentClass);
 
       const prevProps = component.props;
@@ -1404,9 +1406,9 @@
 
       const areCompatible = (node, description) => {
         if (node.isElement()) {
-          return node.name === description.element;
+          return node.name === description.name;
         }
-        return node.id === description.component;
+        return node.id === description.symbol;
       };
 
       // update
@@ -2562,9 +2564,9 @@
 
   class ComponentDescription extends Description {
 
-    constructor({component, props, children}, template) {
+    constructor({symbol, props, children}, template) {
       super(opr.Toolkit.Component.NodeType, props && props.key, template);
-      this.component = component;
+      this.symbol = symbol;
       if (props) {
         this.props = props;
       }
@@ -2583,7 +2585,7 @@
    * differences between compatible elements (with the same tag name).
    *
    * Enumerable properties:
-   * - element (a string representing tag name),
+   * - name (a string representing tag name),
    * - text (a string representing text content),
    * - children (an array of child nodes),
    * - props (an object) defining:
@@ -2599,10 +2601,10 @@
    */
   class ElementDescription extends Description {
 
-    constructor({element, text = null, children, props}, template) {
+    constructor({name, text = null, children, props}, template) {
       super(opr.Toolkit.VirtualElement.NodeType, props && props.key, template);
 
-      this.element = element;
+      this.name = name;
       this.text = text;
 
       const {
@@ -2722,25 +2724,11 @@
     }
 
     isCompatible(desc) {
-      return super.isCompatible(desc) && desc.element === this.element;
+      return super.isCompatible(desc) && desc.name === this.name;
     }
   }
 
   class Template {
-
-    static get ItemType() {
-      return {
-        STRING: 'string',
-        NUMBER: 'number',
-        BOOLEAN: 'boolean',
-        UNDEFINED: 'undefined',
-        NULL: 'null',
-        COMPONENT: 'component',
-        ELEMENT: 'element',
-        PROPS: 'props',
-        FUNCTION: 'function',
-      };
-    }
 
     static getClassName(value) {
       if (!value) {
@@ -2826,6 +2814,20 @@
       }
     }
 
+    static get ItemType() {
+      return {
+        STRING: 'string',
+        NUMBER: 'number',
+        BOOLEAN: 'boolean',
+        UNDEFINED: 'undefined',
+        NULL: 'null',
+        COMPONENT: 'component',
+        ELEMENT: 'element',
+        PROPS: 'props',
+        FUNCTION: 'function',
+      };
+    }
+
     static getItemType(item) {
 
       const Type = Template.ItemType;
@@ -2841,9 +2843,12 @@
         case 'undefined':
           return Type.UNDEFINED;
         case 'symbol':
-          return Type.COMPONENT;
+          return Type.SYMBOL;
         case 'function':
-          return Type.FUNCTION;
+          if (type.prototype instanceof opr.Toolkit.Component) {
+            return Type.COMPONENT;
+          }
+          return Type.RENDERER;
         case 'object':
           if (item === null) {
             return Type.NULL;
@@ -2983,99 +2988,71 @@
 
     static describe(template) {
 
-      const analyze = template => {
-
-        const {types, error} = this.validate(template);
-
-        if (error) {
-          console.error('Invalid template definition:', template);
-          throw error;
-        }
-
-        if (types === null) {
-          return null;
-        }
-
-        const Type = Template.ItemType;
-
-        let attr;
-        let name
-
-        const type = types[0];
-        if (type === Type.COMPONENT) {
-          attr = 'component';
-          name = String(template[0]).slice(7, -1);
-        } else {
-          attr = 'element';
-          name = template[0];
-        }
-
-        const getChildren = nodes => {
-          const isValidNode = element => Array.isArray(element);
-          const children = nodes.filter(isValidNode);
-          switch (type) {
-            case Type.COMPONENT:
-            case Type.STRING:
-              return children;
-            default:
-              throw new Error(`Unknown type: ${type}`);
-          }
-        };
-
-        switch (template.length) {
-          case 1:
-            return {
-              [attr]: name,
-            };
-          case 2:
-            if (types[1] === Type.STRING) {
-              const text = template[1];
-              return {
-                [attr]: name,
-                text,
-              };
-            } else if (types[1] === Type.PROPS) {
-              return {[attr]: name, props: template[1]};
-            } else if (types[1] === Type.ELEMENT) {
-              return {
-                [attr]: name,
-                children: getChildren(template.slice(1)),
-              };
-            }
-          default:
-            if (types[1] === Type.PROPS) {
-              if (types[2] === Type.STRING) {
-                return {
-                  [attr]: name,
-                  props: template[1],
-                  text: template[2],
-                };
-              }
-              return {
-                [attr]: name,
-                props: template[1],
-                children: getChildren(template.slice(2)),
-              };
-            }
-            return {
-              [attr]: name,
-              children: getChildren(template.slice(1)),
-            };
-        }
-      };
-
-      const details = analyze(template);
-
-      if (details) {
-        return this.normalize(details, template);
+      if (template === false || template === null) {
+        return null;
       }
 
-      return null;
+      if (Array.isArray(template) && template.length > 0) {
+
+        const Type = this.ItemType;
+        const details = {};
+
+        const getParams = item => {
+          const type = typeof item;
+          switch (type) {
+            case 'string':
+              return ['element', 'name', item];
+            case 'symbol':
+              return ['component', 'symbol', String(item).slice(7, -1)];
+            case 'function':
+              if (item.prototype instanceof opr.Toolkit.Component) {
+                return ['component', 'component', item];
+              } else {
+                return ['component', 'renderer', item];
+              }
+            default:
+              throw new Error('Invalid type:' + item);
+          }
+        };
+        const isProps = item =>
+            item && !Array.isArray(item) && typeof item === 'object';
+
+        const [type, name, value] = getParams(template[0]);
+
+        details.type = type;
+        details[name] = value;
+
+        let index = 1;
+        if (template.length > 1 && isProps(template[1])) {
+          details.props = template[1];
+          index = 2;
+        }
+
+        for (let i = index; i < template.length; i++) {
+          const item = template[i];
+          if (item !== null && item !== false) {
+            if (Array.isArray(item)) {
+              if (details.children) {
+                details.children.push(item);
+              } else {
+                details.children = [item];
+              }
+            } else if (typeof item === 'string') {
+              details.text = item;
+            } else {
+              throw new Error('Invalid item!');
+            }
+          }
+        }
+        return this.normalize(details, template);
+      }
+      throw new Error('Invalid template!');
     }
 
     static normalize(details, template = null) {
-      return details.component ? new ComponentDescription(details, template) :
-                                 new ElementDescription(details, template);
+      return details.type === 'element' ?
+          new ElementDescription(details, template) :
+          new ComponentDescription(details, template);
     }
   }
 
@@ -3096,12 +3073,12 @@
       if (!description) {
         return null;
       }
-      if (description.element) {
+      if (description.type === 'element') {
         return this.createElement(description, parent, root);
       }
       const children = description.children || [];
       const component = this.createComponent(
-          description.component, description.props, children, parent, root);
+          description.symbol, description.props, children, parent, root);
       if (component.isRoot()) {
         opr.Toolkit.assert(
             component.constructor.elementName,

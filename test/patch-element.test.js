@@ -4,7 +4,7 @@ describe('Patch element => apply', () => {
   const Document = opr.Toolkit.Document;
   const VirtualDOM = opr.Toolkit.VirtualDOM;
 
-  const createElement = name => new opr.Toolkit.VirtualElement({element: name});
+  const createElement = name => new opr.Toolkit.VirtualElement({name});
 
   it('adds attribute', () => {
 

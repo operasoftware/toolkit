@@ -1,8 +1,6 @@
 describe('Virtual Element => amend', () => {
 
-  const VirtualElement = opr.Toolkit.VirtualElement;
-
-  const createElement = name => new VirtualElement({element: name});
+  const createElement = name => new opr.Toolkit.VirtualElement({name});
 
   describe('set class name', () => {
 

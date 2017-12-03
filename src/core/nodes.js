@@ -362,14 +362,14 @@
       super(description.key || null, parentNode);
 
       const {
-        element,
+        name,
         props = {},
         text = null,
       } = description;
       this.description = description;
 
-      opr.Toolkit.assert(element, 'Element name is mandatory');
-      this.name = element;
+      opr.Toolkit.assert(name, 'Element name is mandatory');
+      this.name = name;
       const {
         listeners = {},
         attrs = {},
