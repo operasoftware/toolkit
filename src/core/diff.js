@@ -316,10 +316,11 @@
         const description = Template.describe(template);
         if (child.isElement()) {
           this.elementPatches(child, description, parent);
-        } else {
+          child.description = description;
+        } else if (!child.isRoot()) {
           this.componentPatches(child, description);
+          child.description = description;
         }
-        child.description = description;
       } else {
         const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         this.addPatch(Patch.replaceChildNode(child, node, parent));
@@ -366,7 +367,9 @@
           }
           return this.elementPatches(child, description, parent);
         }
-        return this.componentPatches(child, description);
+        if (!child.isRoot()) {
+          return this.componentPatches(child, description);
+        }
       }
 
       // replace

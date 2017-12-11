@@ -347,6 +347,8 @@
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
+      root.ref = null;
+      this.$root = null;
     }
   }
 

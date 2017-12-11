@@ -174,8 +174,7 @@
   const isSpecialProperty =
       prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
 
-  const isSupportedAttribute = attr =>
-      isSpecialProperty(attr) ||
+  const isSupportedAttribute = attr => isSpecialProperty(attr) ||
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
       opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 

@@ -102,7 +102,8 @@
       await this.ready();
       const RootClass = await this.getRootClass(component, props);
       const root = new RootClass(null, props, this.settings);
-      await root.mount(container);
+      root.mount(container);
+      await root.ready;
       return root;
     }
 

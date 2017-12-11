@@ -823,6 +823,8 @@
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
+      root.ref = null;
+      this.$root = null;
     }
   }
 
@@ -1364,10 +1366,11 @@
         const description = Template.describe(template);
         if (child.isElement()) {
           this.elementPatches(child, description, parent);
-        } else {
+          child.description = description;
+        } else if (!child.isRoot()) {
           this.componentPatches(child, description);
+          child.description = description;
         }
-        child.description = description;
       } else {
         const node = VirtualDOM.createFromTemplate(template, parent, this.root);
         this.addPatch(Patch.replaceChildNode(child, node, parent));
@@ -1414,7 +1417,9 @@
           }
           return this.elementPatches(child, description, parent);
         }
-        return this.componentPatches(child, description);
+        if (!child.isRoot()) {
+          return this.componentPatches(child, description);
+        }
       }
 
       // replace
@@ -3370,8 +3375,7 @@
   const isSpecialProperty =
       prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
 
-  const isSupportedAttribute = attr =>
-      isSpecialProperty(attr) ||
+  const isSupportedAttribute = attr => isSpecialProperty(attr) ||
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
       opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 
@@ -3495,7 +3499,8 @@
       await this.ready();
       const RootClass = await this.getRootClass(component, props);
       const root = new RootClass(null, props, this.settings);
-      await root.mount(container);
+      root.mount(container);
+      await root.ready;
       return root;
     }
 
