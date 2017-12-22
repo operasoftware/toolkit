@@ -104,6 +104,27 @@
     };
   };
 
+  const debounce = (fn, wait = 200) => {
+
+    let taskId = null;
+
+    let context;
+    let params;
+
+    return function debounced(...args) {
+      if (taskId) {
+        clearTimeout(taskId);
+      }
+      taskId = setTimeout(() => {
+        taskId = null;
+        return fn.call(context, ...params);
+      }, wait);
+
+      context = this;
+      params = args;
+    };
+  };
+
   const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
 
   const lowerDash = name => {
@@ -180,6 +201,7 @@
 
   const Utils = {
     throttle,
+    debounce,
     combineReducers,
     createCommandsDispatcher,
     addDataPrefix,
