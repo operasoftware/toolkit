@@ -199,6 +199,14 @@
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
       opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 
+  const postRender = fn => {
+    // since Chromium 64 there are some problems with animations not being
+    // triggered correctly, this hack solves the problem across all OS-es
+    requestAnimationFrame(function() {
+      requestAnimationFrame(fn);
+    });
+  };
+
   const Utils = {
     throttle,
     debounce,
@@ -211,6 +219,7 @@
     createUUID,
     isSupportedAttribute,
     isSpecialProperty,
+    postRender,
   };
 
   module.exports = Utils;
