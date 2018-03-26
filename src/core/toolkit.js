@@ -1,13 +1,15 @@
 {
   const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
 
+  let initialize;
+
   class Toolkit {
 
     constructor() {
       this.plugins = new Map();
       this.settings = null;
       this.readyPromise = new Promise(resolve => {
-        this.init = resolve;
+        initialize = resolve;
       });
     }
 
@@ -15,18 +17,26 @@
       await this.readyPromise;
     }
 
-    configure(options) {
+    async configure(options) {
       const settings = {};
       settings.plugins = options.plugins || [];
       settings.level =
           LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
-      settings.preload = options.preload || false;
-      settings.bundles = options.bundles || [];
-      settings.bundleRootPath = options.bundleRootPath || '';
+      const bundleOptions = options.bundles || {};
+      settings.bundles = {
+        rootPath: bundleOptions.rootPath || '',
+        mapping: bundleOptions.mapping || [],
+        preloaded: bundleOptions.preloaded || [],
+      };
       Object.freeze(settings);
       this.settings = settings;
-      this.init();
+      if (!settings.debug) {
+        for (const module of settings.bundles.preloaded) {
+          await this.preload(module);
+        }
+      }
+      initialize();
     }
 
     isDebug() {
@@ -52,23 +62,21 @@
       if (typeof root === 'symbol') {
         root = String(this.symbol).slice(7, -1);
       }
-      for (const bundle of this.settings.bundles) {
-        if (bundle.root === root) {
-          return bundle.name;
-        }
+      const bundle =
+          this.settings.bundles.mapping.find(entry => entry.root === root);
+      if (bundle) {
+        return bundle.name;
       }
       return null;
     }
 
     async preload(symbol) {
       if (this.settings.debug) {
-        if (this.settings.preload) {
-          await loader.foreload(symbol);
-        }
+        await loader.foreload(symbol);
       } else {
         const bundle = this.getBundleName(symbol);
         if (bundle) {
-          await loader.require(`${this.settings.bundleRootPath}/${bundle}`);
+          await loader.require(`${this.settings.bundles.rootPath}/${bundle}`);
         }
       }
     }
