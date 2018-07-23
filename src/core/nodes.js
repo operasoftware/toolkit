@@ -195,7 +195,7 @@
       return 'root';
     }
 
-    constructor(id, props, settings) {
+    constructor(id, props, settings, origin = null) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
       const {utils} = opr.Toolkit;
       this.state = null;
@@ -208,6 +208,7 @@
       this.commands =
           utils.createCommandsDispatcher(this.reducer, this.dispatch);
       this.settings = settings;
+      this.origin = origin;
       this.plugins = new Map();
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
@@ -235,6 +236,8 @@
     async init(container) {
       this.container = container;
       this.renderer = new opr.Toolkit.Renderer(this, this.settings);
+      this.plugins = new opr.Toolkit.Plugins(this);
+      await this.plugins.installAll(this.settings.plugins);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();

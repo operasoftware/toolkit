@@ -18,6 +18,7 @@
     'broadcast',
     'connectTo',
   ];
+  const pluginMethods = [];
 
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
@@ -27,6 +28,10 @@
   };
 
   class Sandbox {
+
+    static registerPluginMethod(name) {
+      pluginMethods.push(name);
+    }
 
     static create(component) {
       const blacklist =
@@ -56,6 +61,9 @@
           }
           if (methods.includes(property) && isFunction(target, property)) {
             return createBoundListener(target[property], target, target);
+          }
+          if (pluginMethods.includes(property)) {
+            return target.rootNode[property];
           }
           if (blacklist.includes(property)) {
             return undefined;

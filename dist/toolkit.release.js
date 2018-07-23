@@ -671,7 +671,7 @@
       return 'root';
     }
 
-    constructor(id, props, settings) {
+    constructor(id, props, settings, origin = null) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
       const {utils} = opr.Toolkit;
       this.state = null;
@@ -684,6 +684,7 @@
       this.commands =
           utils.createCommandsDispatcher(this.reducer, this.dispatch);
       this.settings = settings;
+      this.origin = origin;
       this.plugins = new Map();
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
@@ -711,6 +712,8 @@
     async init(container) {
       this.container = container;
       this.renderer = new opr.Toolkit.Renderer(this, this.settings);
+      this.plugins = new opr.Toolkit.Plugins(this);
+      await this.plugins.installAll(this.settings.plugins);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
@@ -2162,6 +2165,39 @@
 }
 
 {
+  class Plugins {
+
+    constructor(root) {
+      this.root = root;
+      this.installed = new Map();
+    }
+
+    async installAll(plugins = []) {
+      for (const plugin of plugins) {
+        await this.install(plugin);
+      }
+    }
+
+    async install(plugin) {
+      if (this.installed.get(plugin.id)) {
+        console.warn(`Plugin "${id}" is already installed!`);
+        return;
+      }
+      const uninstall = await plugin.install({
+        container: this.root.container,
+        root: this.root,
+      });
+      this.installed.set(plugin.id, {
+        ref: plugin,
+        uninstall,
+      });
+    }
+  }
+
+  loader.define('core/plugins', Plugins);
+}
+
+{
   const Name = {
     INSERT: Symbol('insert'),
     MOVE: Symbol('move'),
@@ -2325,8 +2361,6 @@
     constructor(root, settings) {
       this.settings = settings;
       this.root = root;
-      this.plugins = new Map();
-      this.installPlugins();
     }
 
     static render(component) {
@@ -2387,26 +2421,6 @@
       return patches;
     }
 
-    installPlugins() {
-      if (!this.settings || !this.settings.plugins) {
-        return;
-      }
-      for (const plugin of this.settings.plugins) {
-        if (this.plugins.get(plugin.id)) {
-          console.warn(`Plugin "${id}" is already installed!`);
-          return;
-        }
-        const uninstall = plugin.install({
-          container: this.root.container,
-          root: this.root,
-        });
-        this.plugins.set(plugin.id, {
-          ref: plugin,
-          uninstall,
-        });
-      }
-    }
-
     get debug() {
       return this.settings.level === 'debug';
     }
@@ -2435,6 +2449,7 @@
     'broadcast',
     'connectTo',
   ];
+  const pluginMethods = [];
 
   const createBoundListener = (listener, component, context) => {
     const boundListener = listener.bind(context);
@@ -2444,6 +2459,10 @@
   };
 
   class Sandbox {
+
+    static registerPluginMethod(name) {
+      pluginMethods.push(name);
+    }
 
     static create(component) {
       const blacklist =
@@ -2473,6 +2492,9 @@
           }
           if (methods.includes(property) && isFunction(target, property)) {
             return createBoundListener(target[property], target, target);
+          }
+          if (pluginMethods.includes(property)) {
+            return target.rootNode[property];
           }
           if (blacklist.includes(property)) {
             return undefined;
@@ -3144,7 +3166,7 @@
     static createComponent(symbol, props = {}, children = [], parent, root) {
       try {
         const component =
-            this.createComponentInstance(symbol, props, children, parent);
+            this.createComponentInstance(symbol, props, children, parent, root);
         if (!component.isRoot()) {
           console.assert(
               root,
@@ -3158,12 +3180,12 @@
       }
     }
 
-    static createComponentInstance(symbol, props, children, parent) {
+    static createComponentInstance(symbol, props, children, parent, root) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
         const instance = new ComponentClass(
-            symbol, normalizedProps, parent.rootNode.renderer.settings);
+            symbol, normalizedProps, parent.rootNode.renderer.settings, root);
         instance.attachDOM();
         return instance;
       }
@@ -3434,7 +3456,6 @@
   class Toolkit {
 
     constructor() {
-      this.plugins = new Map();
       this.settings = null;
       this.readyPromise = new Promise(resolve => {
         initialize = resolve;
@@ -3464,7 +3485,20 @@
           await this.preload(module);
         }
       }
+      this.registerPlugins();
       initialize();
+    }
+
+    registerPlugins() {
+      const context = {
+        registerComponentMethod: name =>
+            opr.Toolkit.Sandbox.registerPluginMethod(name),
+      };
+      for (const plugin of this.settings.plugins) {
+        if (typeof plugin.register === 'function') {
+          plugin.register(context);
+        }
+      }
     }
 
     isDebug() {
@@ -3560,6 +3594,7 @@
     Diff: loader.get('core/diff'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
+    Plugins: loader.get('core/plugins'),
     Reconciler: loader.get('core/reconciler'),
     Renderer: loader.get('core/renderer'),
     Sandbox: loader.get('core/sandbox'),

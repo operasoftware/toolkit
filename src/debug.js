@@ -9,6 +9,7 @@ window.loadToolkit = async () => {
     Diff: await loader.require('core/diff'),
     Lifecycle: await loader.require('core/lifecycle'),
     Patch: await loader.require('core/patch'),
+    Plugins: await loader.require('core/plugins'),
     Reconciler: await loader.require('core/reconciler'),
     Renderer: await loader.require('core/renderer'),
     Sandbox: await loader.require('core/sandbox'),

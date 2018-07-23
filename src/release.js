@@ -8,6 +8,7 @@
     Diff: loader.get('core/diff'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
+    Plugins: loader.get('core/plugins'),
     Reconciler: loader.get('core/reconciler'),
     Renderer: loader.get('core/renderer'),
     Sandbox: loader.get('core/sandbox'),

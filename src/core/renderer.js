@@ -4,8 +4,6 @@
     constructor(root, settings) {
       this.settings = settings;
       this.root = root;
-      this.plugins = new Map();
-      this.installPlugins();
     }
 
     static render(component) {
@@ -64,26 +62,6 @@
       }
 
       return patches;
-    }
-
-    installPlugins() {
-      if (!this.settings || !this.settings.plugins) {
-        return;
-      }
-      for (const plugin of this.settings.plugins) {
-        if (this.plugins.get(plugin.id)) {
-          console.warn(`Plugin "${id}" is already installed!`);
-          return;
-        }
-        const uninstall = plugin.install({
-          container: this.root.container,
-          root: this.root,
-        });
-        this.plugins.set(plugin.id, {
-          ref: plugin,
-          uninstall,
-        });
-      }
     }
 
     get debug() {

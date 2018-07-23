@@ -34,6 +34,7 @@ global.HTMLElement = class {};
     Diff: require('../../src/core/diff.js'),
     Lifecycle: require('../../src/core/lifecycle.js'),
     Patch: require('../../src/core/patch.js'),
+    Plugins: require('../../src/core/plugins.js'),
     Reconciler: require('../../src/core/reconciler.js'),
     Renderer: require('../../src/core/renderer.js'),
     Sandbox: require('../../src/core/sandbox.js'),

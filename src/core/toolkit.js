@@ -6,7 +6,6 @@
   class Toolkit {
 
     constructor() {
-      this.plugins = new Map();
       this.settings = null;
       this.readyPromise = new Promise(resolve => {
         initialize = resolve;
@@ -36,7 +35,20 @@
           await this.preload(module);
         }
       }
+      this.registerPlugins();
       initialize();
+    }
+
+    registerPlugins() {
+      const context = {
+        registerComponentMethod: name =>
+            opr.Toolkit.Sandbox.registerPluginMethod(name),
+      };
+      for (const plugin of this.settings.plugins) {
+        if (typeof plugin.register === 'function') {
+          plugin.register(context);
+        }
+      }
     }
 
     isDebug() {

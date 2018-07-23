@@ -58,7 +58,7 @@
     static createComponent(symbol, props = {}, children = [], parent, root) {
       try {
         const component =
-            this.createComponentInstance(symbol, props, children, parent);
+            this.createComponentInstance(symbol, props, children, parent, root);
         if (!component.isRoot()) {
           console.assert(
               root,
@@ -72,12 +72,12 @@
       }
     }
 
-    static createComponentInstance(symbol, props, children, parent) {
+    static createComponentInstance(symbol, props, children, parent, root) {
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
         const instance = new ComponentClass(
-            symbol, normalizedProps, parent.rootNode.renderer.settings);
+            symbol, normalizedProps, parent.rootNode.renderer.settings, root);
         instance.attachDOM();
         return instance;
       }
