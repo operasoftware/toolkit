@@ -283,7 +283,11 @@ limitations under the License.
         assertUniqueKeys(to);
       }
 
-      const moves = Reconciler.calculateMoves(from, to);
+      const nodeFavoredToMove =
+          current.find(node => node.props && node.props.beingDragged);
+
+      const moves = Reconciler.calculateMoves(
+          from, to, nodeFavoredToMove && nodeFavoredToMove.key);
 
       const children = [...current];
       for (const move of moves) {
