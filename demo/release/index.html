@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Opera Toolkit demo (release)</title>
+  <base href = "/" />
+  <link rel="stylesheet" href="styles/page.css" />
+  <script src="/dist/toolkit.release.js"></script>
+</head>
+<body>
+  <div class="background"></div>
+  <apps>
+    <app id="left"></app>
+    <app id="right"></app>
+  </apps>
+  <script>
+    (async () => {
+      opr.Toolkit.configure({
+        debug: false,
+        level: 'info',
+      });
+      await opr.Toolkit.ready();
+      opr.Toolkit.render('src/demo', document.querySelector('#left'));
+      opr.Toolkit.render('src/demo', document.querySelector('#right'));
+    })();
+  </script>
+</body>
+</html>

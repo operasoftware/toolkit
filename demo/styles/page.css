@@ -1,0 +1,53 @@
+:root, :host {
+  background-color: black;
+  --margin-size: 40px;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  border: 1px solid black;
+  font: menu;
+  font-size: 12pt;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.background {
+  background: url('/images/background.jpeg');
+  background-size: cover;
+  background-attachment: fixed;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+apps {
+  display: flex;
+  justify-content: space-around;
+  height: 100%;
+  align-items: center;
+  z-index: 2;
+}
+
+app {
+  box-sizing: border-box;
+  display: inline-block;
+  border-radius: 20px;
+  height: 80vh;
+  width: 80vh;
+  overflow-y: scroll;
+  margin-top: 10vh;
+  z-index: 1;
+}
+
+app:nth-child(even) {
+  margin-left: 0;
+}

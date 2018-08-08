@@ -1,0 +1,10 @@
+logo {
+  background-size: cover;
+  border-radius: 50%;
+  cursor: pointer;
+  display: block;
+  height: 100%;
+  position: absolute;
+  transition: all 0.4s linear;
+  width: 100%;
+}

@@ -2,9 +2,9 @@
   const randomRadius = () => Math.random() * 0.08 + 0.08;
   const randomPosition = radius => Math.random() * (0.9 - 2 * radius) + 0.05;
 
-  const BubblesService = class {
+  const LogosService = class {
 
-    static createBubble(id, x, y) {
+    static createLogo(id, x, y) {
       const radius = randomRadius();
       return {
         highlighted: false,
@@ -15,23 +15,23 @@
       };
     }
 
-    static createBubbles(count) {
+    static createLogos(count) {
       return new Array(count)
         .fill(null)
-        .map((item, index) => this.createBubble(index));
+        .map((item, index) => this.createLogo(index));
     }
 
-    static moveBubbles(bubbles) {
+    static moveLogos(logos) {
       const positions = {};
-      bubbles.forEach(bubble => {
-        positions[bubble.id] = {
-          x: randomPosition(bubble.radius),
-          y: randomPosition(bubble.radius),
+      logos.forEach(logo => {
+        positions[logo.id] = {
+          x: randomPosition(logo.radius),
+          y: randomPosition(logo.radius),
         };
       });
       return positions;
     }
   };
 
-  module.exports = BubblesService;
+  module.exports = LogosService;
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Opera Toolkit demo (debug)</title>
+  <base href = "/" />
+  <link rel="stylesheet" href="styles/page.css" />
+  <script src="/src/core/loader.js"></script>
+  <script src="/src/debug.js"></script>
+</head>
+<body>
+  <div class="background"></div>
+  <apps>
+    <app id="left"></app>
+    <app id="right"></app>
+  </apps>
+  <script>
+    (async () => {
+      loader.prefix('core', '//src/');
+      await loadToolkit();
+      opr.Toolkit.configure({
+        debug: true,
+        level: 'debug',
+      });
+      await opr.Toolkit.ready();
+      opr.Toolkit.render('src/demo', document.querySelector('#left'));
+      opr.Toolkit.render('src/demo', document.querySelector('#right'));
+    })();
+  </script>
+</body>
+</html>

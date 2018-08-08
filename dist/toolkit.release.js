@@ -3555,6 +3555,8 @@ limitations under the License.
         const bundle = this.getBundleName(symbol);
         if (bundle) {
           await loader.require(`${this.settings.bundles.rootPath}/${bundle}`);
+        } else {
+          await loader.foreload(symbol);
         }
       }
     }

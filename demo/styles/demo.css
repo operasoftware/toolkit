@@ -1,11 +1,13 @@
-bubbles {
+main {
   background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
   display: block;
   height: 100%;
   position: relative;
   width: 100%;
 }
 
-bubbles > * {
+section {
+  border-radius: 50%;
   position: absolute;
 }

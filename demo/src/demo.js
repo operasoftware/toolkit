@@ -2,26 +2,26 @@
   let reducer;
   let service;
 
-  const Bubble = loader.symbol('bubbles/bubble-component');
+  const Bubble = loader.symbol('demo/logo');
 
-  class BubblesApp extends opr.Toolkit.Root {
+  class Demo extends opr.Toolkit.Root {
 
     static async init() {
-      reducer = await loader.require('bubbles/bubbles-reducer');
-      service = await loader.require('bubbles/bubbles-service');
+      reducer = await loader.require('demo/reducer');
+      service = await loader.require('demo/service');
     }
 
     static get displayName() {
-      return 'Bubbles';
+      return 'Demo';
     }
 
     static get elementName() {
-      return 'bubbles-demo';
+      return 'pretty-useless-demo';
     }
 
     static get styles() {
       return [
-        'bubbles.css',
+        'styles/demo.css',
       ];
     }
 
@@ -32,18 +32,18 @@
     async getInitialState() {
       const count = 1;
       return {
-        bubbles: service.createBubbles(count),
+        logos: service.createLogos(count),
         config: {count},
       };
     }
 
     onBackgroundClick(event) {
-      let id = this.props.bubbles.length ?
-          Math.max(...this.props.bubbles.map(bubble => bubble.id)) + 1 :
+      let id = this.props.logos.length ?
+          Math.max(...this.props.logos.map(logo => logo.id)) + 1 :
           0;
       const x = event.offsetX / event.target.offsetWidth;
       const y = event.offsetY / event.target.offsetHeight;
-      this.dispatch(reducer.commands.create(service.createBubble(id, x, y)));
+      this.dispatch(reducer.commands.create(service.createLogo(id, x, y)));
     }
 
     onDoubleClick(event) {
@@ -53,12 +53,12 @@
 
     render() {
       return [
-        'bubbles',
+        'main',
         {
           onClick: this.onBackgroundClick,
-          onDoubleClick: this.onDoubleClick,
+          // onDoubleClick: this.onDoubleClick,
         },
-        ...this.props.bubbles.map(
+        ...this.props.logos.map(
             props =>
                 ['section',
                  {
@@ -77,5 +77,5 @@
     }
   };
 
-  module.exports = BubblesApp;
+  module.exports = Demo;
 }
