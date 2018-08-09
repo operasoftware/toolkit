@@ -225,10 +225,11 @@ limitations under the License.
           utils.createCommandsDispatcher(this.reducer, this.dispatch);
       this.settings = settings;
       this.origin = origin;
-      this.plugins = new Map();
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
+
+      this.uninstallPlugins = null;
     }
 
     get ref() {
@@ -251,9 +252,8 @@ limitations under the License.
 
     async init(container) {
       this.container = container;
-      this.renderer = new opr.Toolkit.Renderer(this, this.settings);
-      this.plugins = new opr.Toolkit.Plugins(this);
-      await this.plugins.installAll(this.settings.plugins);
+      this.renderer = new opr.Toolkit.Renderer(this);
+      this.uninstallPlugins = await opr.Toolkit.Plugins.install(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
@@ -366,6 +366,7 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
+      root.uninstallPlugins();
       root.ref = null;
       this.$root = null;
     }

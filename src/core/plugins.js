@@ -15,32 +15,74 @@ limitations under the License.
 */
 
 {
+  /* String key to Plugin map. */
+  const plugins = new Map();
+
+  class Plugin {
+
+    constructor(manifest) {
+      opr.Toolkit.assert(
+          typeof manifest.name === 'string', 'Plugin name is missing!');
+      const sandbox = this.createSandbox(manifest.permissions);
+      Object.assign(this, manifest);
+      if (typeof manifest.register === 'function') {
+        this.register = () => manifest.register(sandbox);
+      }
+      if (typeof manifest.install === 'function') {
+        this.install = async root => {
+          const uninstall = await manifest.install(root);
+          opr.Toolkit.assert(
+              typeof uninstall === 'function',
+              'The plugin installation must return the uninstall function!');
+          return uninstall;
+        }
+      }
+    }
+
+    createSandbox(permissions = []) {
+      const sandbox = {};
+      for (const permission of permissions) {
+        switch (permission) {
+          case 'register-method':
+            sandbox.registerMethod = name =>
+                opr.Toolkit.Sandbox.registerPluginMethod(name);
+        }
+      }
+      return sandbox;
+    }
+  }
+
   class Plugins {
 
-    constructor(root) {
-      this.root = root;
-      this.installed = new Map();
-    }
-
-    async installAll(plugins = []) {
-      for (const plugin of plugins) {
-        await this.install(plugin);
+    /*
+     * Registers the plugins globally.
+     */
+    static async register(manifests) {
+      for (const manifest of manifests) {
+        if (plugins.has(manifest.name)) {
+          throw new Error(`Plugin '${manifest.name}' is already registered!`);
+        }
+        const plugin = new Plugin(manifest);
+        if (plugin.register) {
+          await plugin.register();
+        }
+        plugins.set(plugin.name, plugin);
       }
     }
 
-    async install(plugin) {
-      if (this.installed.get(plugin.id)) {
-        console.warn(`Plugin "${id}" is already installed!`);
-        return;
+    /*
+     * Installs the plugins onto the root component.
+     * Returns the uninstall function.
+     */
+    static async install(root) {
+      const uninstalls = [];
+      for (const plugin of plugins.values()) {
+        if (plugin.install) {
+          const uninstall = await plugin.install(root);
+          uninstalls.push(uninstall);
+        }
       }
-      const uninstall = await plugin.install({
-        container: this.root.container,
-        root: this.root,
-      });
-      this.installed.set(plugin.id, {
-        ref: plugin,
-        uninstall,
-      });
+      return () => uninstalls.forEach(uninstall => uninstall());
     }
   }
 

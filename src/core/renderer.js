@@ -17,8 +17,7 @@ limitations under the License.
 {
   class Renderer {
 
-    constructor(root, settings) {
-      this.settings = settings;
+    constructor(root) {
       this.root = root;
     }
 
@@ -34,7 +33,7 @@ limitations under the License.
     }
 
     updateDOM(command, prevState, nextState) {
-      if (this.debug) {
+      if (opr.Toolkit.settings.level === 'debug') {
         /* eslint-disable no-console */
         console.group('');
         console.log(
@@ -79,10 +78,6 @@ limitations under the License.
       }
 
       return patches;
-    }
-
-    get debug() {
-      return this.settings.level === 'debug';
     }
   }
 
