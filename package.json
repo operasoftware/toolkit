@@ -36,21 +36,21 @@
   "homepage": "https://github.com/operasoftware/toolkit#readme",
   "devDependencies": {
     "assert": "^1.4.1",
-    "babel-cli": "^6.23.0",
+    "babel-cli": "^6.26.0",
     "babel-istanbul": "^0.12.1",
-    "babel-plugin-transform-class-properties": "^6.19.0",
-    "babel-polyfill": "^6.20.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-stage-0": "^6.16.0",
-    "babel-register": "^6.18.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-stage-0": "^6.24.1",
+    "babel-register": "^6.26.0",
     "dom-test": "^0.2.7",
-    "express": "^4.16.2",
-    "mocha": "4.0.1",
+    "express": "^4.16.3",
+    "mocha": "^5.2.0",
     "npm-watch": "^0.3.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",
     "sinon": "^1.17.7",
-    "tap": "^10.7.3"
+    "tap": "^12.0.1"
   },
   "watch": {
     "update-opera": {
