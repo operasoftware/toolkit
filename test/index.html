@@ -1,0 +1,69 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Opera Toolkit Tests</title>
+  <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="mocha"></div>
+  <script src="https://cdn.rawgit.com/jquery/jquery/2.1.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+  <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+
+  <script src="setup/assert.js"></script>
+  <script src="setup/sinon.js"></script>
+  <script src="setup/mocha-module-loader.js"></script>
+  <script src="/src/debug.js"></script>
+  <script>
+    (async () => {
+      loader.prefix('core', '../src/')
+      loader.prefix('test', '../')
+      await loadToolkit();
+      mocha.setup('bdd');
+
+      global.suppressConsoleErrors = () => {
+
+        let consoleError;
+        beforeEach(() => {
+          consoleError = console.error;
+          console.error = () => {};
+        });
+
+        afterEach(() => {
+          console.error = consoleError;
+        });
+      };
+
+      opr.Toolkit.configure({
+         plugins: [],
+         debug: true,
+      });
+
+      window.utils = await loader.require('config/utils');
+
+      await loader.require('diff-calculate.test');
+      await loader.require('diff-deep-equal.test');
+      await loader.require('attach-dom.test');
+      await loader.require('lifecycle.test');
+      await loader.require('nodes.test');
+      await loader.require('patch-component.test');
+      await loader.require('patch-element.test');
+      await loader.require('reconciler.test');
+      await loader.require('renderer.test');
+      await loader.require('sandbox.test');
+      await loader.require('template-describe.test');
+      await loader.require('template-get-item-type.test');
+      await loader.require('template-get-value.test');
+      await loader.require('template-validate.test');
+      await loader.require('toolkit.test');
+      await loader.require('utils.test');
+      await loader.require('virtual-dom.test');
+      await loader.require('virtual-dom-create-component.test');
+      await loader.require('virtual-dom-create-element.test');
+      await loader.require('virtual-element.test');
+      // mocha.checkLeaks();
+      mocha.run();
+    })();
+  </script>
+</body>
+</html>
