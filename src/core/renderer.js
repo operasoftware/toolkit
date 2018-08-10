@@ -36,18 +36,19 @@ limitations under the License.
     updateDOM(command, prevState, nextState) {
       if (this.debug) {
         /* eslint-disable no-console */
-        console.time('=> Render time');
-        const patches = this.update(prevState, nextState);
+        console.group('');
         console.log(
             'Command:', command.type,
             `for "${this.root.constructor.displayName}"`);
+        const patches = this.update(prevState, nextState);
+        console.time('=> Render time');
         if (patches.length) {
           console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', patches);
         } else {
           console.log('%c=> No update', 'color: #07a707');
         }
         console.timeEnd('=> Render time');
-        console.log(''.padStart(48, '-'));
+        console.groupEnd();
         /* eslint-enable no-console */
       } else {
         this.update(prevState, nextState);
