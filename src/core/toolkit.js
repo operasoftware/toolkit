@@ -26,6 +26,7 @@ limitations under the License.
       this.readyPromise = new Promise(resolve => {
         initialize = resolve;
       });
+      this.assert = console.assert;
     }
 
     async ready() {
@@ -34,7 +35,6 @@ limitations under the License.
 
     async configure(options) {
       const settings = {};
-      settings.plugins = options.plugins || [];
       settings.level =
           LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
@@ -51,33 +51,12 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      this.registerPlugins();
+      await opr.Toolkit.Plugins.register(options.plugins);
       initialize();
     }
 
-    registerPlugins() {
-      const context = {
-        registerComponentMethod: name =>
-            opr.Toolkit.Sandbox.registerPluginMethod(name),
-      };
-      for (const plugin of this.settings.plugins) {
-        if (typeof plugin.register === 'function') {
-          plugin.register(context);
-        }
-      }
-    }
-
     isDebug() {
-      return Boolean(this.settings) && this.settings.debug;
-    }
-
-    assert(condition, ...messages) {
-      if (this.isDebug()) {
-        console.assert(condition, ...messages);
-      }
-      if (!condition) {
-        throw new Error(messages.join(' '));
-      }
+      return Boolean(this.settings && this.settings.debug);
     }
 
     warn(...messages) {

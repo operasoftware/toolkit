@@ -46,6 +46,12 @@ global.HTMLElement = class {};
 
   const toolkit = new Toolkit();
 
+  toolkit.assert = (condition, message) => {
+    if (!condition) {
+      throw new Error(message);
+    }
+  };
+
   global.opr = {
     Toolkit: toolkit,
   };

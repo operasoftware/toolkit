@@ -103,7 +103,7 @@ limitations under the License.
     static normalizeProps(ComponentClass, props = {}) {
       const defaultProps = ComponentClass.defaultProps;
       if (defaultProps) {
-        const result = Object.assign({}, props);
+        const result = {...props};
         const keys = Object.keys(defaultProps);
         for (const key of keys) {
           if (props[key] === undefined) {

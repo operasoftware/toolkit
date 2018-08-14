@@ -701,10 +701,11 @@ limitations under the License.
           utils.createCommandsDispatcher(this.reducer, this.dispatch);
       this.settings = settings;
       this.origin = origin;
-      this.plugins = new Map();
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
+
+      this.uninstallPlugins = null;
     }
 
     get ref() {
@@ -727,9 +728,8 @@ limitations under the License.
 
     async init(container) {
       this.container = container;
-      this.renderer = new opr.Toolkit.Renderer(this, this.settings);
-      this.plugins = new opr.Toolkit.Plugins(this);
-      await this.plugins.installAll(this.settings.plugins);
+      this.renderer = new opr.Toolkit.Renderer(this);
+      this.uninstallPlugins = await opr.Toolkit.Plugins.install(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
@@ -842,6 +842,7 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
+      root.uninstallPlugins();
       root.ref = null;
       this.$root = null;
     }
@@ -2181,32 +2182,74 @@ limitations under the License.
 }
 
 {
+  /* String key to Plugin map. */
+  const plugins = new Map();
+
+  class Plugin {
+
+    constructor(manifest) {
+      opr.Toolkit.assert(
+          typeof manifest.name === 'string', 'Plugin name is missing!');
+      const sandbox = this.createSandbox(manifest.permissions);
+      Object.assign(this, manifest);
+      if (typeof manifest.register === 'function') {
+        this.register = () => manifest.register(sandbox);
+      }
+      if (typeof manifest.install === 'function') {
+        this.install = async root => {
+          const uninstall = await manifest.install(root);
+          opr.Toolkit.assert(
+              typeof uninstall === 'function',
+              'The plugin installation must return the uninstall function!');
+          return uninstall;
+        }
+      }
+    }
+
+    createSandbox(permissions = []) {
+      const sandbox = {};
+      for (const permission of permissions) {
+        switch (permission) {
+          case 'register-method':
+            sandbox.registerMethod = name =>
+                opr.Toolkit.Sandbox.registerPluginMethod(name);
+        }
+      }
+      return sandbox;
+    }
+  }
+
   class Plugins {
 
-    constructor(root) {
-      this.root = root;
-      this.installed = new Map();
-    }
-
-    async installAll(plugins = []) {
-      for (const plugin of plugins) {
-        await this.install(plugin);
+    /*
+     * Registers the plugins globally.
+     */
+    static async register(manifests) {
+      for (const manifest of manifests) {
+        if (plugins.has(manifest.name)) {
+          throw new Error(`Plugin '${manifest.name}' is already registered!`);
+        }
+        const plugin = new Plugin(manifest);
+        if (plugin.register) {
+          await plugin.register();
+        }
+        plugins.set(plugin.name, plugin);
       }
     }
 
-    async install(plugin) {
-      if (this.installed.get(plugin.id)) {
-        console.warn(`Plugin "${id}" is already installed!`);
-        return;
+    /*
+     * Installs the plugins onto the root component.
+     * Returns the uninstall function.
+     */
+    static async install(root) {
+      const uninstalls = [];
+      for (const plugin of plugins.values()) {
+        if (plugin.install) {
+          const uninstall = await plugin.install(root);
+          uninstalls.push(uninstall);
+        }
       }
-      const uninstall = await plugin.install({
-        container: this.root.container,
-        root: this.root,
-      });
-      this.installed.set(plugin.id, {
-        ref: plugin,
-        uninstall,
-      });
+      return () => uninstalls.forEach(uninstall => uninstall());
     }
   }
 
@@ -2374,8 +2417,7 @@ limitations under the License.
 {
   class Renderer {
 
-    constructor(root, settings) {
-      this.settings = settings;
+    constructor(root) {
       this.root = root;
     }
 
@@ -2391,7 +2433,7 @@ limitations under the License.
     }
 
     updateDOM(command, prevState, nextState) {
-      if (this.debug) {
+      if (opr.Toolkit.settings.level === 'debug') {
         /* eslint-disable no-console */
         console.group('');
         console.log(
@@ -2436,10 +2478,6 @@ limitations under the License.
       }
 
       return patches;
-    }
-
-    get debug() {
-      return this.settings.level === 'debug';
     }
   }
 
@@ -3212,7 +3250,7 @@ limitations under the License.
     static normalizeProps(ComponentClass, props = {}) {
       const defaultProps = ComponentClass.defaultProps;
       if (defaultProps) {
-        const result = Object.assign({}, props);
+        const result = {...props};
         const keys = Object.keys(defaultProps);
         for (const key of keys) {
           if (props[key] === undefined) {
@@ -3477,6 +3515,7 @@ limitations under the License.
       this.readyPromise = new Promise(resolve => {
         initialize = resolve;
       });
+      this.assert = console.assert;
     }
 
     async ready() {
@@ -3485,7 +3524,6 @@ limitations under the License.
 
     async configure(options) {
       const settings = {};
-      settings.plugins = options.plugins || [];
       settings.level =
           LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
@@ -3502,33 +3540,12 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      this.registerPlugins();
+      await opr.Toolkit.Plugins.register(options.plugins);
       initialize();
     }
 
-    registerPlugins() {
-      const context = {
-        registerComponentMethod: name =>
-            opr.Toolkit.Sandbox.registerPluginMethod(name),
-      };
-      for (const plugin of this.settings.plugins) {
-        if (typeof plugin.register === 'function') {
-          plugin.register(context);
-        }
-      }
-    }
-
     isDebug() {
-      return Boolean(this.settings) && this.settings.debug;
-    }
-
-    assert(condition, ...messages) {
-      if (this.isDebug()) {
-        console.assert(condition, ...messages);
-      }
-      if (!condition) {
-        throw new Error(messages.join(' '));
-      }
+      return Boolean(this.settings && this.settings.debug);
     }
 
     warn(...messages) {
