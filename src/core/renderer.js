@@ -21,37 +21,41 @@ limitations under the License.
       this.root = root;
     }
 
-    static render(component) {
-
+    /*
+     * Calls the component render method and transforms the returned template
+     * into the normalized description of the rendered node.
+     */
+    render(component) {
       const template = component.render.call(component.sandbox);
-
       opr.Toolkit.assert(
           template !== undefined,
           'Invalid undefined template returned when rendering:', component);
-
       return opr.Toolkit.Template.describe(template);
     }
 
     updateDOM(command, prevState, nextState) {
-      if (opr.Toolkit.settings.level === 'debug') {
-        /* eslint-disable no-console */
-        console.group('');
-        console.log(
-            'Command:', command.type,
-            `for "${this.root.constructor.displayName}"`);
-        const patches = this.update(prevState, nextState);
-        console.time('=> Render time');
-        if (patches.length) {
-          console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', patches);
-        } else {
-          console.log('%c=> No update', 'color: #07a707');
-        }
-        console.timeEnd('=> Render time');
-        console.groupEnd();
-        /* eslint-enable no-console */
-      } else {
-        this.update(prevState, nextState);
-      }
+      const update = {
+        command,
+        root: this.root,
+        state: {
+          from: prevState,
+          to: nextState,
+        },
+      };
+      this.onBeforeUpdate(update);
+      const patches = this.update(prevState, nextState);
+      this.onUpdate({
+        ...update,
+        patches,
+      });
+    }
+
+    onBeforeUpdate(update) {
+      this.root.plugins.notify('before-update', update);
+    }
+
+    onUpdate(update) {
+      this.root.plugins.notify('update', update);
     }
 
     update(prevState, nextState) {

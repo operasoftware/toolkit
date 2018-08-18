@@ -41,7 +41,7 @@ limitations under the License.
     }
 
     rootPatches(prevState, nextState, initial) {
-      const description = opr.Toolkit.Renderer.render(this.root);
+      const description = this.root.renderer.render(this.root);
       if (initial) {
         this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
       }
@@ -75,7 +75,7 @@ limitations under the License.
       component.children = children;
 
       this.updateComponent(
-          component, prevProps, opr.Toolkit.Renderer.render(component));
+          component, prevProps, this.root.renderer.render(component));
     }
 
     /**

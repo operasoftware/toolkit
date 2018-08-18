@@ -41,7 +41,7 @@ limitations under the License.
         component.constructor.register();
         return component;
       }
-      const childDescription = opr.Toolkit.Renderer.render(component);
+      const childDescription = root.renderer.render(component);
       component.description = childDescription;
       if (childDescription) {
         const child =

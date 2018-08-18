@@ -211,72 +211,6 @@ limitations under the License.
       return 'root';
     }
 
-    constructor(id, props, settings, origin = null) {
-      super(id, props, /*= children */ null, /*= parentNode */ null);
-      const {utils} = opr.Toolkit;
-      this.state = null;
-      this.reducer = utils.combineReducers(...this.getReducers());
-      this.dispatch = command => {
-        const prevState = this.state;
-        const nextState = this.reducer(prevState, command);
-        this.renderer.updateDOM(command, prevState, nextState);
-      };
-      this.commands =
-          utils.createCommandsDispatcher(this.reducer, this.dispatch);
-      this.settings = settings;
-      this.origin = origin;
-      this.ready = new Promise(resolve => {
-        this.markAsReady = resolve;
-      });
-
-      this.uninstallPlugins = null;
-    }
-
-    get ref() {
-      return this[CUSTOM_ELEMENT] || super.renderedNode;
-    }
-
-    set ref(ref) {
-      this[CUSTOM_ELEMENT] = ref;
-    }
-
-    attachDOM() {
-      const customElementName = this.constructor.elementName;
-      if (customElementName) {
-        const ElementClass = this.constructor.register();
-        this.ref = new ElementClass(this);
-      } else {
-        super.attachDOM();
-      }
-    }
-
-    async init(container) {
-      this.container = container;
-      this.renderer = new opr.Toolkit.Renderer(this);
-      this.uninstallPlugins = await opr.Toolkit.Plugins.install(this);
-      const state = await this.getInitialState.call(this.sandbox, this.props);
-      this.commands.init(state);
-      this.markAsReady();
-    }
-
-    async mount(container) {
-      this.attachDOM();
-      const elementName = this.constructor.elementName;
-      if (elementName) {
-        container.appendChild(this.ref);
-      } else {
-        await this.init(container);
-      }
-    }
-
-    set container(container) {
-      this[CONTAINER] = container;
-    }
-
-    get container() {
-      return this[CONTAINER];
-    }
-
     static get displayName() {
       return this.name;
     }
@@ -295,12 +229,91 @@ limitations under the License.
       return [];
     }
 
+    constructor(id, props, settings, origin = null) {
+      super(id, props, /*= children */ null, /*= parentNode */ null);
+      const {utils} = opr.Toolkit;
+      this.state = null;
+      this.reducer = utils.combineReducers(...this.getReducers());
+      this.renderer = new opr.Toolkit.Renderer(this);
+      this.dispatch = command => {
+        const prevState = this.state;
+        const nextState = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, nextState);
+      };
+      this.commands =
+          utils.createCommandsDispatcher(this.reducer, this.dispatch);
+      this.settings = settings;
+      this.origin = origin;
+      this.ready = new Promise(resolve => {
+        this.markAsReady = resolve;
+      });
+    }
+
+    async init(container) {
+      this.container = container;
+      this.plugins = await this.createPlugins();
+      const state = await this.getInitialState.call(this.sandbox, this.props);
+      this.commands.init(state);
+      this.markAsReady();
+    }
+
+    async createPlugins() {
+      const plugins = new opr.Toolkit.Plugins(this);
+      const inheritedPlugins =
+          this.origin ? this.origin.plugins : opr.Toolkit.settings.plugins;
+      for (const plugin of inheritedPlugins) {
+        await plugins.install(plugin);
+      }
+      return plugins;
+    }
+
+    async mount(container) {
+      this.attachDOM();
+      const elementName = this.constructor.elementName;
+      if (elementName) {
+        container.appendChild(this.ref);
+      } else {
+        await this.init(container);
+      }
+    }
+
+    attachDOM() {
+      const customElementName = this.constructor.elementName;
+      if (customElementName) {
+        const ElementClass = this.constructor.register();
+        this.ref = new ElementClass(this);
+      } else {
+        super.attachDOM();
+      }
+    }
+
+    get ref() {
+      return this[CUSTOM_ELEMENT] || super.renderedNode;
+    }
+
+    set ref(ref) {
+      this[CUSTOM_ELEMENT] = ref;
+    }
+
+    set container(container) {
+      this[CONTAINER] = container;
+    }
+
+    get container() {
+      return this[CONTAINER];
+    }
+
     getReducers() {
       return [];
     }
 
     async getInitialState(props = {}) {
       return props;
+    }
+
+    destroy() {
+      super.destroy();
+      this.origin = null;
     }
 
     get nodeType() {
@@ -366,7 +379,7 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
-      root.uninstallPlugins();
+      root.plugins.uninstall();
       root.ref = null;
       this.$root = null;
     }

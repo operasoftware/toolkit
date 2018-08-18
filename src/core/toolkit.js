@@ -44,6 +44,12 @@ limitations under the License.
         mapping: bundleOptions.mapping || [],
         preloaded: bundleOptions.preloaded || [],
       };
+      settings.plugins = new opr.Toolkit.Plugins(null);
+      if (Array.isArray(options.plugins)) {
+        for (const manifest of options.plugins) {
+          await settings.plugins.plugIn(manifest);
+        }
+      }
       Object.freeze(settings);
       this.settings = settings;
       if (!settings.debug) {
@@ -51,7 +57,6 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      await opr.Toolkit.Plugins.register(options.plugins);
       initialize();
     }
 
