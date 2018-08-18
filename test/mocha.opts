@@ -5,4 +5,4 @@
 --reporter spec
 --compilers js:babel-register
 --no-deprecation
-./test/**/*.test.js
+./test/**/*.spec.js
