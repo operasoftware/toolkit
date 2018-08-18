@@ -687,72 +687,6 @@ limitations under the License.
       return 'root';
     }
 
-    constructor(id, props, settings, origin = null) {
-      super(id, props, /*= children */ null, /*= parentNode */ null);
-      const {utils} = opr.Toolkit;
-      this.state = null;
-      this.reducer = utils.combineReducers(...this.getReducers());
-      this.dispatch = command => {
-        const prevState = this.state;
-        const nextState = this.reducer(prevState, command);
-        this.renderer.updateDOM(command, prevState, nextState);
-      };
-      this.commands =
-          utils.createCommandsDispatcher(this.reducer, this.dispatch);
-      this.settings = settings;
-      this.origin = origin;
-      this.ready = new Promise(resolve => {
-        this.markAsReady = resolve;
-      });
-
-      this.uninstallPlugins = null;
-    }
-
-    get ref() {
-      return this[CUSTOM_ELEMENT] || super.renderedNode;
-    }
-
-    set ref(ref) {
-      this[CUSTOM_ELEMENT] = ref;
-    }
-
-    attachDOM() {
-      const customElementName = this.constructor.elementName;
-      if (customElementName) {
-        const ElementClass = this.constructor.register();
-        this.ref = new ElementClass(this);
-      } else {
-        super.attachDOM();
-      }
-    }
-
-    async init(container) {
-      this.container = container;
-      this.renderer = new opr.Toolkit.Renderer(this);
-      this.uninstallPlugins = await opr.Toolkit.Plugins.install(this);
-      const state = await this.getInitialState.call(this.sandbox, this.props);
-      this.commands.init(state);
-      this.markAsReady();
-    }
-
-    async mount(container) {
-      this.attachDOM();
-      const elementName = this.constructor.elementName;
-      if (elementName) {
-        container.appendChild(this.ref);
-      } else {
-        await this.init(container);
-      }
-    }
-
-    set container(container) {
-      this[CONTAINER] = container;
-    }
-
-    get container() {
-      return this[CONTAINER];
-    }
-
     static get displayName() {
       return this.name;
     }
@@ -771,12 +705,91 @@ limitations under the License.
       return [];
     }
 
+    constructor(id, props, settings, origin = null) {
+      super(id, props, /*= children */ null, /*= parentNode */ null);
+      const {utils} = opr.Toolkit;
+      this.state = null;
+      this.reducer = utils.combineReducers(...this.getReducers());
+      this.renderer = new opr.Toolkit.Renderer(this);
+      this.dispatch = command => {
+        const prevState = this.state;
+        const nextState = this.reducer(prevState, command);
+        this.renderer.updateDOM(command, prevState, nextState);
+      };
+      this.commands =
+          utils.createCommandsDispatcher(this.reducer, this.dispatch);
+      this.settings = settings;
+      this.origin = origin;
+      this.ready = new Promise(resolve => {
+        this.markAsReady = resolve;
+      });
+    }
+
+    async init(container) {
+      this.container = container;
+      this.plugins = await this.createPlugins();
+      const state = await this.getInitialState.call(this.sandbox, this.props);
+      this.commands.init(state);
+      this.markAsReady();
+    }
+
+    async createPlugins() {
+      const plugins = new opr.Toolkit.Plugins(this);
+      const inheritedPlugins =
+          this.origin ? this.origin.plugins : opr.Toolkit.settings.plugins;
+      for (const plugin of inheritedPlugins) {
+        await plugins.install(plugin);
+      }
+      return plugins;
+    }
+
+    async mount(container) {
+      this.attachDOM();
+      const elementName = this.constructor.elementName;
+      if (elementName) {
+        container.appendChild(this.ref);
+      } else {
+        await this.init(container);
+      }
+    }
+
+    attachDOM() {
+      const customElementName = this.constructor.elementName;
+      if (customElementName) {
+        const ElementClass = this.constructor.register();
+        this.ref = new ElementClass(this);
+      } else {
+        super.attachDOM();
+      }
+    }
+
+    get ref() {
+      return this[CUSTOM_ELEMENT] || super.renderedNode;
+    }
+
+    set ref(ref) {
+      this[CUSTOM_ELEMENT] = ref;
+    }
+
+    set container(container) {
+      this[CONTAINER] = container;
+    }
+
+    get container() {
+      return this[CONTAINER];
+    }
+
     getReducers() {
       return [];
     }
 
     async getInitialState(props = {}) {
       return props;
+    }
+
+    destroy() {
+      super.destroy();
+      this.origin = null;
     }
 
     get nodeType() {
@@ -842,7 +855,7 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
-      root.uninstallPlugins();
+      root.plugins.uninstall();
       root.ref = null;
       this.$root = null;
     }
@@ -1095,7 +1108,7 @@ limitations under the License.
     }
 
     rootPatches(prevState, nextState, initial) {
-      const description = opr.Toolkit.Renderer.render(this.root);
+      const description = this.root.renderer.render(this.root);
       if (initial) {
         this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
       }
@@ -1129,7 +1142,7 @@ limitations under the License.
       component.children = children;
 
       this.updateComponent(
-          component, prevProps, opr.Toolkit.Renderer.render(component));
+          component, prevProps, this.root.renderer.render(component));
     }
 
     /**
@@ -2182,16 +2195,31 @@ limitations under the License.
 }
 
 {
-  /* String key to Plugin map. */
-  const plugins = new Map();
+  const Permission = {
+    LISTEN_FOR_UPDATES: 'listen-for-updates',
+    REGISTER_METHOD: 'register-method',
+  };
 
   class Plugin {
 
     constructor(manifest) {
       opr.Toolkit.assert(
-          typeof manifest.name === 'string', 'Plugin name is missing!');
-      const sandbox = this.createSandbox(manifest.permissions);
+          typeof manifest.name === 'string' && manifest.name.length,
+          'Plugin name must be a non-empty string!');
+
       Object.assign(this, manifest);
+
+      if (this.permissions === undefined) {
+        this.permissions = [];
+      } else {
+        opr.Toolkit.assert(
+            Array.isArray(this.permissions),
+            'Plugin permissions must be an array');
+        this.permissions = this.permissions.filter(
+            permission => Object.values(Permission).includes(permission));
+      }
+
+      const sandbox = this.createSandbox();
       if (typeof manifest.register === 'function') {
         this.register = () => manifest.register(sandbox);
       }
@@ -2201,16 +2229,20 @@ limitations under the License.
           opr.Toolkit.assert(
               typeof uninstall === 'function',
               'The plugin installation must return the uninstall function!');
-          return uninstall;
+          this.uninstall = uninstall;
         }
       }
     }
 
-    createSandbox(permissions = []) {
+    isListener() {
+      return this.permissions.includes(Permission.LISTEN_FOR_UPDATES);
+    }
+
+    createSandbox() {
       const sandbox = {};
-      for (const permission of permissions) {
+      for (const permission of this.permissions) {
         switch (permission) {
-          case 'register-method':
+          case Permission.REGISTER_METHOD:
             sandbox.registerMethod = name =>
                 opr.Toolkit.Sandbox.registerPluginMethod(name);
         }
@@ -2219,37 +2251,98 @@ limitations under the License.
     }
   }
 
+  class Registry {
+
+    constructor() {
+      this.plugins = [];
+      this.cache = {
+        listeners: [],
+      };
+      this[Symbol.iterator] = () => this.plugins[Symbol.iterator]();
+    }
+
+    add(plugin) {
+      opr.Toolkit.assert(
+          !this.isRegistered(plugin.name),
+          `Plugin '${plugin.name}' is already registered!`);
+      this.plugins.push(plugin);
+      this.updateCache();
+    }
+
+    isRegistered(name) {
+      return Boolean(this.plugins.find(plugin => plugin.name === name));
+    }
+
+    updateCache() {
+      this.cache.listeners = this.plugins.filter(plugin => plugin.isListener());
+    }
+
+    clear() {
+      this.plugins.length = 0;
+      this.cache.listeners.length = 0;
+    }
+  }
+
   class Plugins {
 
-    /*
-     * Registers the plugins globally.
-     */
-    static async register(manifests) {
-      for (const manifest of manifests) {
-        if (plugins.has(manifest.name)) {
-          throw new Error(`Plugin '${manifest.name}' is already registered!`);
-        }
-        const plugin = new Plugin(manifest);
-        if (plugin.register) {
-          await plugin.register();
-        }
-        plugins.set(plugin.name, plugin);
+    constructor(root) {
+      this.root = root;
+      this.registry = new Registry();
+      this[Symbol.iterator] = () => this.registry[Symbol.iterator]();
+    }
+
+    async inherit(origin) {
+      for (const plugin of origin.plugins) {
+        await this.install(plugin);
       }
     }
 
     /*
-     * Installs the plugins onto the root component.
-     * Returns the uninstall function.
+     * Creates a Plugin from the manifest object and installs it.
      */
-    static async install(root) {
-      const uninstalls = [];
-      for (const plugin of plugins.values()) {
-        if (plugin.install) {
-          const uninstall = await plugin.install(root);
-          uninstalls.push(uninstall);
+    async plugIn(manifest) {
+      const plugin = new Plugin(manifest);
+      if (plugin.register) {
+        await plugin.register();
+      }
+      return this.install(plugin);
+    }
+
+    /*
+     * Adds the plugin to the registry and invokes plugin's
+     * install method if it is present.
+     */
+    async install(plugin) {
+      this.registry.add(plugin);
+      if (this.root && plugin.install) {
+        await plugin.install(this.root);
+      }
+    }
+
+    uninstall() {
+      for (const plugin of this.registry) {
+        if (plugin.uninstall) {
+          plugin.uninstall();
         }
       }
-      return () => uninstalls.forEach(uninstall => uninstall());
+      this.registry.clear();
+    }
+
+    notify(action, event) {
+      switch (action) {
+        case 'before-update':
+          for (const listener of this.registry.cache.listeners) {
+            listener.onBeforeUpdate(event);
+          }
+          return;
+        case 'update':
+          for (const listener of this.registry.cache.listeners) {
+            listener.onUpdate(event);
+          }
+          return;
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
     }
   }
 
@@ -2421,37 +2514,41 @@ limitations under the License.
       this.root = root;
     }
 
-    static render(component) {
-
+    /*
+     * Calls the component render method and transforms the returned template
+     * into the normalized description of the rendered node.
+     */
+    render(component) {
       const template = component.render.call(component.sandbox);
-
       opr.Toolkit.assert(
           template !== undefined,
           'Invalid undefined template returned when rendering:', component);
-
       return opr.Toolkit.Template.describe(template);
     }
 
     updateDOM(command, prevState, nextState) {
-      if (opr.Toolkit.settings.level === 'debug') {
-        /* eslint-disable no-console */
-        console.group('');
-        console.log(
-            'Command:', command.type,
-            `for "${this.root.constructor.displayName}"`);
-        const patches = this.update(prevState, nextState);
-        console.time('=> Render time');
-        if (patches.length) {
-          console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', patches);
-        } else {
-          console.log('%c=> No update', 'color: #07a707');
-        }
-        console.timeEnd('=> Render time');
-        console.groupEnd();
-        /* eslint-enable no-console */
-      } else {
-        this.update(prevState, nextState);
-      }
+      const update = {
+        command,
+        root: this.root,
+        state: {
+          from: prevState,
+          to: nextState,
+        },
+      };
+      this.onBeforeUpdate(update);
+      const patches = this.update(prevState, nextState);
+      this.onUpdate({
+        ...update,
+        patches,
+      });
+    }
+
+    onBeforeUpdate(update) {
+      this.root.plugins.notify('before-update', update);
+    }
+
+    onUpdate(update) {
+      this.root.plugins.notify('update', update);
     }
 
     update(prevState, nextState) {
@@ -3188,7 +3285,7 @@ limitations under the License.
         component.constructor.register();
         return component;
       }
-      const childDescription = opr.Toolkit.Renderer.render(component);
+      const childDescription = root.renderer.render(component);
       component.description = childDescription;
       if (childDescription) {
         const child =
@@ -3533,6 +3630,12 @@ limitations under the License.
         mapping: bundleOptions.mapping || [],
         preloaded: bundleOptions.preloaded || [],
       };
+      settings.plugins = new opr.Toolkit.Plugins(null);
+      if (Array.isArray(options.plugins)) {
+        for (const manifest of options.plugins) {
+          await settings.plugins.plugIn(manifest);
+        }
+      }
       Object.freeze(settings);
       this.settings = settings;
       if (!settings.debug) {
@@ -3540,7 +3643,6 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      await opr.Toolkit.Plugins.register(options.plugins);
       initialize();
     }
 

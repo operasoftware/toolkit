@@ -1,13 +1,13 @@
 describe('Virtual DOM', () => {
 
-  const {Renderer,VirtualDOM} = opr.Toolkit;
+  const {Renderer, VirtualDOM} = opr.Toolkit;
 
   const container = document.createElement('container');
   const root = new opr.Toolkit.Root({}, container, {});
 
   const render = (symbol, props) => {
     const component = VirtualDOM.createComponent(symbol, props, [], root, root);
-    const description = Renderer.render(component, props);
+    const description = root.renderer.render(component, props);
     const child = VirtualDOM.createFromDescription(description, root, root);
     if (child) {
       component.appendChild(child);

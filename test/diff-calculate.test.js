@@ -660,7 +660,7 @@ describe('Diff => calculate patches', () => {
 
         it('throws an error for non-unique keys', () => {
 
-            // given
+          // given
           const template = ['section', ...getChildren('p', 'div', 'span', 'p')];
           const nextTemplate = ['section', ...getChildren('div', 'span', 'p')];
 
