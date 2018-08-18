@@ -16,10 +16,14 @@
   <script>
     (async () => {
       loader.prefix('core', '//src/');
+      loader.prefix('plugins', '//src/');
       await loadToolkit();
+
+      const logger = await loader.require('plugins/logger');
+
       opr.Toolkit.configure({
         debug: true,
-        level: 'debug',
+        plugins: [logger],
       });
       await opr.Toolkit.ready();
       opr.Toolkit.render('src/demo', document.querySelector('#left'));
