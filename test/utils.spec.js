@@ -1,5 +1,13 @@
 describe('Utils', () => {
 
+  beforeEach(() => {
+    sinon.stub(console, 'error');
+  });
+
+  afterEach(() => {
+    console.error.restore();
+  });
+
   const {
     throttle,
     lowerDash,
