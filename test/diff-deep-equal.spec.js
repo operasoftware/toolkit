@@ -1,6 +1,6 @@
-const Diff = opr.Toolkit.Diff;
-
 describe('Diff => deep equal', () => {
+
+  const Diff = opr.Toolkit.Diff;
 
   describe('not equal', () => {
     const notEqual = [

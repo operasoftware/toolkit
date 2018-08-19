@@ -1,8 +1,6 @@
 describe('Patch element => apply', () => {
 
-  const Patch = opr.Toolkit.Patch;
-  const Document = opr.Toolkit.Document;
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {Patch, Document, VirtualDOM} = opr.Toolkit;
 
   const createElement = name => new opr.Toolkit.VirtualElement({element: name});
 

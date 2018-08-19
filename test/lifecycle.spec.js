@@ -1,11 +1,6 @@
 describe('Lifecycle', () => {
 
-  const {
-    Lifecycle,
-    Patch,
-    Template,
-    VirtualDOM,
-  } = opr.Toolkit;
+  const {Lifecycle, Patch, Template, VirtualDOM} = opr.Toolkit;
 
   let container;
   let stub = sinon.spy();

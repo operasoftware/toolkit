@@ -15,28 +15,20 @@ limitations under the License.
 */
 
 {
-  const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
-
-  let initialize;
+  const INIT = Symbol('init');
 
   class Toolkit {
 
     constructor() {
       this.settings = null;
-      this.readyPromise = new Promise(resolve => {
-        initialize = resolve;
+      this.ready = new Promise(resolve => {
+        this[INIT] = resolve;
       });
       this.assert = console.assert;
     }
 
-    async ready() {
-      await this.readyPromise;
-    }
-
     async configure(options) {
       const settings = {};
-      settings.level =
-          LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
       const bundleOptions = options.bundles || {};
       settings.bundles = {
@@ -57,7 +49,7 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      initialize();
+      this[INIT](true);
     }
 
     isDebug() {
@@ -121,7 +113,7 @@ limitations under the License.
     }
 
     async render(component, container, props = {}) {
-      await this.ready();
+      await this.ready;
       const RootClass = await this.getRootClass(component, props);
       const root = new RootClass(null, props, this.settings);
       root.mount(container);

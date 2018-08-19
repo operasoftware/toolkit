@@ -113,14 +113,16 @@ limitations under the License.
     }
 
     removeChild(child) {
-      console.assert(this.child === child);
+      opr.Toolkit.assert(
+          this.child === child, 'Specified node is not a child of this node');
       this.child.parentNode = null;
       this.child = null;
       this.comment = this.createComment();
     }
 
     replaceChild(child, node) {
-      console.assert(this.child === child);
+      opr.Toolkit.assert(
+          this.child === child, 'Specified node is not a child of this node');
       this.child.parentNode = null;
       this.child = node;
       this.child.parentNode = this;
@@ -487,7 +489,9 @@ limitations under the License.
     }
 
     moveChild(child, from, to) {
-      console.assert(this.children[from] === child);
+      opr.Toolkit.assert(
+          this.children[from] === child,
+          'Specified node is not a child of this element');
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
       if (child.ref.isComponentElement) {
@@ -499,7 +503,8 @@ limitations under the License.
 
     replaceChild(child, node) {
       const index = this.children.indexOf(child);
-      console.assert(index >= 0);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified node is not a child of this element');
       this.children.splice(index, 1, node);
       child.parentNode = null;
       node.parentNode = this;
@@ -509,7 +514,7 @@ limitations under the License.
     removeChild(child) {
       const index = this.children.indexOf(child);
       opr.Toolkit.assert(
-          index >= 0, 'Specified element:', child, 'is not a child of:', this);
+          index >= 0, 'Specified node is not a child of this element');
       this.children.splice(index, 1);
       child.parentNode = null;
       this.ref.removeChild(child.ref);

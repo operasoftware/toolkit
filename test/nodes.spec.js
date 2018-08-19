@@ -1,10 +1,6 @@
 describe('Nodes', () => {
 
-  const {
-    VirtualDOM,
-    VirtualElement,
-    VirtualNode,
-  } = opr.Toolkit;
+  const {VirtualDOM, VirtualElement, VirtualNode} = opr.Toolkit;
 
   const Component = Symbol.for('Component');
 
