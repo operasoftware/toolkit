@@ -74,7 +74,7 @@ describe('Diff => calculate patches', () => {
   };
 
   beforeEach(() => {
-    sinon.stub(VirtualDOM, 'getComponentClass', getComponentClass);
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(getComponentClass);
   });
 
   afterEach(() => {

@@ -28,7 +28,7 @@ describe('Patch component => apply', () => {
 
   beforeEach(() => {
     container = document.createElement('app');
-    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
       if (typeof symbol === 'string') {
         symbol = Symbol.for(symbol);
       }

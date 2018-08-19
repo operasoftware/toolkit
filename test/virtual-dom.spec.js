@@ -244,7 +244,8 @@ describe('Virtual DOM', () => {
     const root = new opr.Toolkit.Root();
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', () => SomeComponent);
+      sinon.stub(VirtualDOM, 'getComponentClass')
+          .callsFake(() => SomeComponent);
     });
 
     afterEach(() => {

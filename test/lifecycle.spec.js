@@ -141,8 +141,8 @@ describe('Lifecycle', () => {
 
   beforeEach(() => {
     container = document.createElement('app');
-    stub.reset();
-    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+    stub.resetHistory();
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
       if (typeof symbol === 'string') {
         symbol = Symbol.for(symbol);
       }
