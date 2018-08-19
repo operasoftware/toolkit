@@ -36,8 +36,8 @@ limitations under the License.
         opr.Toolkit.assert(
             component.constructor.elementName,
             `Root component "${
-                               component.constructor.displayName
-                             }" does not define custom element name!`);
+                component.constructor
+                    .displayName}" does not define custom element name!`);
         component.constructor.register();
         return component;
       }
@@ -76,7 +76,7 @@ limitations under the License.
         const component =
             this.createComponentInstance(symbol, props, children, parent, root);
         if (!component.isRoot()) {
-          console.assert(
+          opr.Toolkit.assert(
               root,
               'Root instance not passed for construction of a component ');
           component.commands = root && root.commands || {};

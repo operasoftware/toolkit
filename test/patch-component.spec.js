@@ -1,8 +1,6 @@
 describe('Patch component => apply', () => {
 
-  const Patch = opr.Toolkit.Patch;
-  const Document = opr.Toolkit.Document;
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {Patch, Document, VirtualDOM} = opr.Toolkit;
 
   let container;
 
@@ -28,7 +26,7 @@ describe('Patch component => apply', () => {
 
   beforeEach(() => {
     container = document.createElement('app');
-    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
       if (typeof symbol === 'string') {
         symbol = Symbol.for(symbol);
       }

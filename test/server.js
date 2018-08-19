@@ -12,6 +12,6 @@ app.use('/src', express.static('src'));
 
 const server = app.listen(app.get('port'), () => {
   console.log('---------------------------------------------------');
-  console.log(` Running Mocha web tests at: http://localhost:${PORT}`);
+  console.log(` Running test server at: http://localhost:${PORT}`);
   console.log('---------------------------------------------------');
 });

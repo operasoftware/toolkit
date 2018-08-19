@@ -7,7 +7,7 @@ describe('Template => validate', () => {
   });
 
   afterEach(() => {
-    sinon.restore(console);
+    console.error.restore();
   });
 
   it('accepts null as a template', () => {

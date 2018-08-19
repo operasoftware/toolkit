@@ -1,10 +1,6 @@
 describe('Nodes', () => {
 
-  const {
-    VirtualDOM,
-    VirtualElement,
-    VirtualNode,
-  } = opr.Toolkit;
+  const {VirtualDOM, VirtualElement, VirtualNode} = opr.Toolkit;
 
   const Component = Symbol.for('Component');
 
@@ -35,7 +31,7 @@ describe('Nodes', () => {
   const createElement = name => new VirtualElement({element: name});
 
   beforeEach(() => {
-    sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
       if (typeof symbol === 'string') {
         symbol = Symbol.for(symbol);
       }

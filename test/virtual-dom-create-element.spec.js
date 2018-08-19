@@ -1,10 +1,6 @@
 describe('Virtual DOM => create element', () => {
 
-  const {
-    VirtualElement,
-    VirtualDOM,
-    Template,
-  } = opr.Toolkit;
+  const {VirtualElement, VirtualDOM, Template} = opr.Toolkit;
 
   const createElement = details =>
       VirtualDOM.createFromDescription(Template.normalize(details), null, null);

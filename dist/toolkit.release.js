@@ -589,14 +589,16 @@ limitations under the License.
     }
 
     removeChild(child) {
-      console.assert(this.child === child);
+      opr.Toolkit.assert(
+          this.child === child, 'Specified node is not a child of this node');
       this.child.parentNode = null;
       this.child = null;
       this.comment = this.createComment();
     }
 
     replaceChild(child, node) {
-      console.assert(this.child === child);
+      opr.Toolkit.assert(
+          this.child === child, 'Specified node is not a child of this node');
       this.child.parentNode = null;
       this.child = node;
       this.child.parentNode = this;
@@ -963,7 +965,9 @@ limitations under the License.
     }
 
     moveChild(child, from, to) {
-      console.assert(this.children[from] === child);
+      opr.Toolkit.assert(
+          this.children[from] === child,
+          'Specified node is not a child of this element');
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
       if (child.ref.isComponentElement) {
@@ -975,7 +979,8 @@ limitations under the License.
 
     replaceChild(child, node) {
       const index = this.children.indexOf(child);
-      console.assert(index >= 0);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified node is not a child of this element');
       this.children.splice(index, 1, node);
       child.parentNode = null;
       node.parentNode = this;
@@ -985,7 +990,7 @@ limitations under the License.
     removeChild(child) {
       const index = this.children.indexOf(child);
       opr.Toolkit.assert(
-          index >= 0, 'Specified element:', child, 'is not a child of:', this);
+          index >= 0, 'Specified node is not a child of this element');
       this.children.splice(index, 1);
       child.parentNode = null;
       this.ref.removeChild(child.ref);
@@ -3280,8 +3285,8 @@ limitations under the License.
         opr.Toolkit.assert(
             component.constructor.elementName,
             `Root component "${
-                               component.constructor.displayName
-                             }" does not define custom element name!`);
+                component.constructor
+                    .displayName}" does not define custom element name!`);
         component.constructor.register();
         return component;
       }
@@ -3320,7 +3325,7 @@ limitations under the License.
         const component =
             this.createComponentInstance(symbol, props, children, parent, root);
         if (!component.isRoot()) {
-          console.assert(
+          opr.Toolkit.assert(
               root,
               'Root instance not passed for construction of a component ');
           component.commands = root && root.commands || {};
@@ -3601,28 +3606,20 @@ limitations under the License.
 }
 
 {
-  const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
-
-  let initialize;
+  const INIT = Symbol('init');
 
   class Toolkit {
 
     constructor() {
       this.settings = null;
-      this.readyPromise = new Promise(resolve => {
-        initialize = resolve;
+      this.ready = new Promise(resolve => {
+        this[INIT] = resolve;
       });
       this.assert = console.assert;
     }
 
-    async ready() {
-      await this.readyPromise;
-    }
-
     async configure(options) {
       const settings = {};
-      settings.level =
-          LOG_LEVELS.includes(options.level) ? options.level : 'info';
       settings.debug = options.debug || false;
       const bundleOptions = options.bundles || {};
       settings.bundles = {
@@ -3643,7 +3640,7 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      initialize();
+      this[INIT](true);
     }
 
     isDebug() {
@@ -3707,7 +3704,7 @@ limitations under the License.
     }
 
     async render(component, container, props = {}) {
-      await this.ready();
+      await this.ready;
       const RootClass = await this.getRootClass(component, props);
       const root = new RootClass(null, props, this.settings);
       root.mount(container);

@@ -1,8 +1,6 @@
 describe('Patch element => apply', () => {
 
-  const Patch = opr.Toolkit.Patch;
-  const Document = opr.Toolkit.Document;
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
+  const {Patch, Document, VirtualDOM} = opr.Toolkit;
 
   const createElement = name => new opr.Toolkit.VirtualElement({element: name});
 
@@ -457,7 +455,7 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
         switch (symbol) {
           case 'Component':
           case Component:
@@ -593,7 +591,8 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', symbol => ComponentClass);
+      sinon.stub(VirtualDOM, 'getComponentClass')
+          .callsFake(symbol => ComponentClass);
     });
 
     afterEach(() => {
@@ -704,7 +703,7 @@ describe('Patch element => apply', () => {
     };
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', symbol => {
+      sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
         switch (symbol) {
           case 'Component':
           case Component:

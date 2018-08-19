@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "start": "node test/server.js",
+    "test:server": "node test/server.js",
     "demo": "node demo/server.js",
     "travis": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha --report lcovonly && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "coverage": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha",
@@ -49,7 +49,7 @@
     "npm-watch": "^0.3.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",
-    "sinon": "^1.17.7",
+    "sinon": "^6.1.5",
     "tap": "^12.0.1"
   },
   "watch": {

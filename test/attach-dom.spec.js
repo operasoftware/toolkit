@@ -1,11 +1,6 @@
 describe('Virtual Element => Attach DOM', () => {
 
-  const {
-    Template,
-    VirtualDOM,
-    VirtualElement,
-    VirtualNode,
-  } = opr.Toolkit;
+  const {Template, VirtualDOM, VirtualElement, VirtualNode} = opr.Toolkit;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
@@ -355,7 +350,7 @@ describe('Virtual Element => Attach DOM', () => {
   describe('=> create element', () => {
 
     beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass', getComponentClass);
+      sinon.stub(VirtualDOM, 'getComponentClass').callsFake(getComponentClass);
     });
 
     afterEach(() => {

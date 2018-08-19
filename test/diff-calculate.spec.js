@@ -1,11 +1,6 @@
 describe('Diff => calculate patches', () => {
 
-  const VirtualNode = opr.Toolkit.VirtualNode;
-  const VirtualDOM = opr.Toolkit.VirtualDOM;
-  const Diff = opr.Toolkit.Diff;
-  const Patch = opr.Toolkit.Patch;
-
-  const Template = opr.Toolkit.Template;
+  const {VirtualNode, VirtualDOM, Diff, Patch, Template} = opr.Toolkit;
 
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
@@ -74,7 +69,7 @@ describe('Diff => calculate patches', () => {
   };
 
   beforeEach(() => {
-    sinon.stub(VirtualDOM, 'getComponentClass', getComponentClass);
+    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(getComponentClass);
   });
 
   afterEach(() => {
