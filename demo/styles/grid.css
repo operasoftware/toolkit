@@ -1,0 +1,40 @@
+:root, :host {
+  background-color: black;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  font: menu;
+  font-size: 12pt;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.background {
+  background: url('/images/background.jpeg');
+  background-size: cover;
+  background-attachment: fixed;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+.grid {
+  display: flex;
+  width: 1000px;
+  height: auto;
+  position: relative;
+}
+
+.tile {
+  position: static;
+  background: rgba(0, 0, 0, 0.666);
+}

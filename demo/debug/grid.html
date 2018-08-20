@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grid demo (debug)</title>
+  <base href = "/" />
+  <link rel="stylesheet" href="styles/grid.css" />
+  <script src="/src/core/loader.js"></script>
+  <script src="/src/debug.js"></script>
+</head>
+<body>
+  <div class="background"></div>
+  <script>
+    (async () => {
+      loader.prefix('core', '//src/');
+      loader.prefix('plugins', '//src/');
+      await loadToolkit();
+
+      opr.Toolkit.configure({
+        debug: true,
+      });
+      await opr.Toolkit.ready;
+      opr.Toolkit.render('src/grid/', document.body);
+    })();
+  </script>
+</body>
+</html>
