@@ -39,7 +39,7 @@ limitations under the License.
       settings.plugins = new opr.Toolkit.Plugins(null);
       if (Array.isArray(options.plugins)) {
         for (const manifest of options.plugins) {
-          await settings.plugins.plugIn(manifest);
+          await settings.plugins.install(manifest);
         }
       }
       Object.freeze(settings);

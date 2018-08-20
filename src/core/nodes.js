@@ -381,7 +381,7 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
-      root.plugins.uninstall();
+      root.plugins.destroy();
       root.ref = null;
       this.$root = null;
     }
