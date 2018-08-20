@@ -39,6 +39,12 @@
          debug: true,
       });
 
+      opr.Toolkit.assert = (condition, message) => {
+        if (!condition) {
+          throw new Error(message);
+        }
+      };
+
       window.utils = await loader.require('config/utils');
 
       await loader.require('diff-calculate.spec');
