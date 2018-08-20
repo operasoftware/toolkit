@@ -30,12 +30,12 @@ limitations under the License.
     async configure(options) {
       const settings = {};
       settings.debug = options.debug || false;
-      const bundleOptions = options.bundles || {};
-      settings.bundles = {
-        rootPath: bundleOptions.rootPath || '',
-        mapping: bundleOptions.mapping || [],
-        preloaded: bundleOptions.preloaded || [],
-      };
+      // const bundleOptions = options.bundles || {};
+      // settings.bundles = {
+      //   rootPath: bundleOptions.rootPath || '',
+      //   mapping: bundleOptions.mapping || [],
+      //   preloaded: bundleOptions.preloaded || [],
+      // };
       settings.plugins = new opr.Toolkit.Plugins(null);
       if (Array.isArray(options.plugins)) {
         for (const manifest of options.plugins) {
@@ -44,11 +44,11 @@ limitations under the License.
       }
       Object.freeze(settings);
       this.settings = settings;
-      if (!settings.debug) {
-        for (const module of settings.bundles.preloaded) {
-          await this.preload(module);
-        }
-      }
+      // if (!settings.debug) {
+      //   for (const module of settings.bundles.preloaded) {
+      //     await this.preload(module);
+      //   }
+      // }
       this[INIT](true);
     }
 
@@ -78,6 +78,7 @@ limitations under the License.
       if (this.settings.debug) {
         await loader.foreload(symbol);
       } else {
+        // TODO: move to a plugin
         const bundle = this.getBundleName(symbol);
         if (bundle) {
           await loader.require(`${this.settings.bundles.rootPath}/${bundle}`);
