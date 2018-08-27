@@ -1,4 +1,3 @@
-require('babel-polyfill');
 require('dom-test');
 
 global.assert = require('assert');
