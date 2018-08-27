@@ -15,7 +15,6 @@ describe('Utils', () => {
     getEventName,
     addDataPrefix,
     createUUID,
-    createCommandsDispatcher,
     isSupportedAttribute,
   } = opr.Toolkit.utils;
 
@@ -241,33 +240,6 @@ describe('Utils', () => {
       assert.deepEqual(state, {
         value: 6,
       });
-    });
-  });
-
-  describe('create commands dispatcher', () => {
-
-    it('creates a dispatcher', () => {
-
-      // given
-      const dispatch = sinon.spy();
-      const reducer = () => {};
-      reducer.commands = {
-        someCommand: (key, value) => ({
-          key,
-          value,
-        }),
-      };
-      const commands = createCommandsDispatcher(reducer, dispatch);
-
-      // when
-      commands.someCommand(commands.someCommand('foo', 'bar'));
-
-      // then
-      assert(dispatch.called);
-      assert(dispatch.calledWith({
-        key: 'foo',
-        value: 'bar',
-      }));
     });
   });
 

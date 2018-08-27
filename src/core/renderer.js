@@ -83,6 +83,10 @@ limitations under the License.
 
       return patches;
     }
+
+    destroy() {
+      this.root = null;
+    }
   }
 
   module.exports = Renderer;

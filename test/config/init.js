@@ -3,8 +3,6 @@ require('dom-test');
 global.assert = require('assert');
 global.sinon = require('sinon');
 
-global.HTMLElement = class {};
-
 {
   const registry = {};
 

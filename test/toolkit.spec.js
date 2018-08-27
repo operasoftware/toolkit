@@ -1,6 +1,6 @@
 describe('Toolkit', () => {
 
-  it('should call lifecycle methods in proper order', async () => {
+  it('calls lifecycle methods in proper order', async () => {
 
     // given
     const ParentSymbol = Symbol.for('my/parent');
@@ -70,4 +70,43 @@ describe('Toolkit', () => {
     assert.equal(lifecycle[5], 'App attached');
   });
 
+  it('tracks rendered root components', async () => {
+
+    // given
+    class MainRoot extends opr.Toolkit.Root {
+      render() {
+        return ['main'];
+      }
+    }
+    class ShadowRoot extends opr.Toolkit.Root {
+      static get elementName() {
+        return 'some-root';
+      }
+      render() {
+        return ['section'];
+      }
+    }
+
+    // given
+    const toolkit = await opr.Toolkit.create();
+
+    // when
+    const mainRoot = await toolkit.render(MainRoot, document.body);
+    const shadowRoot = await toolkit.render(ShadowRoot, document.body);
+
+    // then
+    assert.equal(toolkit.tracked.length, 2);
+
+    // when
+    shadowRoot.ref.remove();
+
+    // then
+    assert.equal(toolkit.tracked.length, 1);
+
+    // when
+    mainRoot.destroy();
+
+    // then
+    assert.equal(toolkit.tracked.length, 0);
+  });
 });

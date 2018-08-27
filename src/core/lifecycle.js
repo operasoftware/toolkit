@@ -99,9 +99,7 @@ limitations under the License.
     }
 
     static onComponentDestroyed(component) {
-      for (const cleanUpTask of component.cleanUpTasks) {
-        cleanUpTask();
-      }
+      component.destroy();
       if (component.hasOwnMethod('onDestroyed')) {
         component.onDestroyed.call(component.sandbox);
       }

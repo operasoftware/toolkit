@@ -23,11 +23,13 @@ limitations under the License.
   class Plugin {
 
     constructor(manifest) {
+
       opr.Toolkit.assert(
           typeof manifest.name === 'string' && manifest.name.length,
           'Plugin name must be a non-empty string!');
 
       Object.assign(this, manifest);
+      this.origin = manifest;
 
       if (this.permissions === undefined) {
         this.permissions = [];
@@ -212,6 +214,8 @@ limitations under the License.
       }
     }
   }
+
+  Plugins.Plugin = Plugin;
 
   module.exports = Plugins;
 }

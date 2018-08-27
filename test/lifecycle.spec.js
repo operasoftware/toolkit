@@ -960,19 +960,19 @@ describe('Lifecycle', () => {
 
     it('on node attached', () => {
       assert.throws(
-          () => {Lifecycle.onNodeAttached(unsupportedNode)},
+          () => Lifecycle.onNodeAttached(unsupportedNode),
           'Unsupported node type: invalid');
     });
 
     it('on node destroyed', () => {
       assert.throws(
-          () => {Lifecycle.onNodeDestroyed(unsupportedNode)},
+          () => Lifecycle.onNodeDestroyed(unsupportedNode),
           'Unsupported node type: invalid');
     });
 
     it('on node detached', () => {
       assert.throws(
-          () => {Lifecycle.onNodeDetached(unsupportedNode)},
+          () => Lifecycle.onNodeDetached(unsupportedNode),
           'Unsupported node type: invalid');
     });
   });

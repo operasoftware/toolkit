@@ -20,6 +20,7 @@ limitations under the License.
   class Toolkit {
 
     constructor() {
+      this.roots = new Set();
       this.settings = null;
       this.ready = new Promise(resolve => {
         this[INIT] = resolve;
@@ -36,12 +37,6 @@ limitations under the License.
         mapping: bundleOptions.mapping || [],
         preloaded: bundleOptions.preloaded || [],
       };
-      settings.plugins = new opr.Toolkit.Plugins(null);
-      if (Array.isArray(options.plugins)) {
-        for (const manifest of options.plugins) {
-          await settings.plugins.install(manifest);
-        }
-      }
       Object.freeze(settings);
       this.settings = settings;
       if (!settings.debug) {
@@ -49,7 +44,32 @@ limitations under the License.
           await this.preload(module);
         }
       }
+      this.plugins = await this.createPlugins(options.plugins);
       this[INIT](true);
+    }
+
+    async createPlugins(manifests = []) {
+      const plugins = new opr.Toolkit.Plugins(null);
+      for (const manifest of manifests) {
+        await plugins.install(manifest);
+      }
+      return plugins;
+    }
+
+    track(root) {
+      this.roots.add(root);
+    }
+
+    stopTracking(root) {
+      this.roots.delete(root);
+    }
+
+    get tracked() {
+      const tracked = [];
+      for (const root of this.roots) {
+        tracked.push(root, ...root.tracked);
+      }
+      return tracked;
     }
 
     isDebug() {
@@ -115,10 +135,17 @@ limitations under the License.
     async render(component, container, props = {}) {
       await this.ready;
       const RootClass = await this.getRootClass(component, props);
-      const root = new RootClass(null, props, this.settings);
+      const root = new RootClass(null, props, this);
+      this.track(root);
       root.mount(container);
       await root.ready;
       return root;
+    }
+
+    async create(options = {}) {
+      const toolkit = new Toolkit();
+      await toolkit.configure(options);
+      return toolkit;
     }
 
     noop() {
