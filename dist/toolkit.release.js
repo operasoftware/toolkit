@@ -3702,7 +3702,7 @@ limitations under the License.
 
     getBundleName(root) {
       if (typeof root === 'symbol') {
-        root = String(this.symbol).slice(7, -1);
+        root = String(root).slice(7, -1);
       }
       const bundle =
           this.settings.bundles.mapping.find(entry => entry.root === root);
