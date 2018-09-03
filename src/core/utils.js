@@ -76,16 +76,6 @@ limitations under the License.
     return reducer;
   };
 
-  const createCommandsDispatcher = (reducer, dispatch) => {
-    const dispatcher = {};
-    for (const key of Object.keys(reducer.commands)) {
-      dispatcher[key] = (...args) => {
-        dispatch(reducer.commands[key](...args));
-      };
-    }
-    return dispatcher;
-  };
-
   const throttle = (fn, wait = 200, delayFirstEvent = false) => {
 
     let lastTimestamp = 0;
@@ -227,7 +217,6 @@ limitations under the License.
     throttle,
     debounce,
     combineReducers,
-    createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
     getAttributeName,

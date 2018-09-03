@@ -832,5 +832,33 @@ describe('Nodes', () => {
         assert.throws(() => parent.removeChild(node));
       });
     });
+
+    describe('create commands dispatcher', () => {
+
+      it('creates a dispatcher', () => {
+
+        // given
+        const root = new opr.Toolkit.Root();
+        root.dispatch = sinon.spy();
+        root.reducer = () => {};
+        root.reducer.commands = {
+          someCommand: (key, value) => ({
+            key,
+            value,
+          }),
+        };
+        const commands = root.createCommandsDispatcher();
+
+        // when
+        commands.someCommand(commands.someCommand('foo', 'bar'));
+
+        // then
+        assert(root.dispatch.called);
+        assert(root.dispatch.calledWith({
+          key: 'foo',
+          value: 'bar',
+        }));
+      });
+    });
   });
 })

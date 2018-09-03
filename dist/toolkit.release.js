@@ -630,6 +630,12 @@ limitations under the License.
       return undefined;
     }
 
+    destroy() {
+      for (const cleanUpTask of this.cleanUpTasks) {
+        cleanUpTask();
+      }
+    }
+
     broadcast(name, data) {
       this.container.dispatchEvent(new CustomEvent(name, {
         detail: data,
@@ -707,48 +713,106 @@ limitations under the License.
       return [];
     }
 
-    constructor(id, props, settings, origin = null) {
+    constructor(id, props, origin = null) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
-      const {utils} = opr.Toolkit;
-      this.state = null;
-      this.reducer = utils.combineReducers(...this.getReducers());
+      this.origin = origin;
+      this.subroots = new Set();
       this.renderer = new opr.Toolkit.Renderer(this);
+      this.state = null;
+      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
       this.dispatch = command => {
         const prevState = this.state;
         const nextState = this.reducer(prevState, command);
         this.renderer.updateDOM(command, prevState, nextState);
       };
-      this.commands =
-          utils.createCommandsDispatcher(this.reducer, this.dispatch);
-      this.settings = settings;
-      this.origin = origin;
+      this.commands = this.createCommandsDispatcher();
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
     }
 
+    track(root) {
+      this.subroots.add(root);
+    }
+
+    stopTracking(root) {
+      this.subroots.delete(root);
+    }
+
+    get tracked() {
+      const tracked = [];
+      for (const root of this.subroots) {
+        tracked.push(root, ...root.tracked);
+      }
+      return tracked;
+    }
+
+    createCommandsDispatcher() {
+      const dispatcher = {};
+      for (const key of Object.keys(this.reducer.commands)) {
+        dispatcher[key] = (...args) => {
+          if (this.dispatch) {
+            this.dispatch(this.reducer.commands[key](...args));
+          }
+        };
+      }
+      return dispatcher;
+    }
+
     async init(container) {
       this.container = container;
       this.plugins = await this.createPlugins();
+      this.origin.track(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
     }
 
-    async createPlugins() {
+    async createPlugins(toolkit) {
       const plugins = new opr.Toolkit.Plugins(this);
-      const inheritedPlugins =
-          this.origin ? this.origin.plugins : opr.Toolkit.settings.plugins;
-      for (const plugin of inheritedPlugins) {
+      for (const plugin of this.origin.plugins) {
         await plugins.install(plugin);
       }
       return plugins;
     }
 
+    addPluginsAPI(element) {
+      const {
+        Plugin,
+      } = opr.Toolkit.Plugins;
+      element.install = (plugin, cascade = true) => {
+        const installTo = root => {
+          if (plugin instanceof Plugin) {
+            root.plugins.use(plugin);
+          } else {
+            root.plugins.install(plugin);
+          }
+          if (cascade) {
+            for (const subroot of root.subroots) {
+              installTo(subroot);
+            }
+          }
+        };
+        installTo(this);
+      };
+      element.uninstall = (plugin, cascade = true) => {
+        const name = typeof plugin === 'string' ? plugin : plugin.name;
+        const uninstallFrom = root => {
+          root.plugins.uninstall(name);
+          if (cascade) {
+            for (const subroot of root.subroots) {
+              uninstallFrom(subroot);
+            }
+          }
+        };
+        uninstallFrom(this);
+      };
+    }
+
     async mount(container) {
       this.attachDOM();
-      const elementName = this.constructor.elementName;
-      if (elementName) {
+      if (this.constructor.elementName) {
+        // triggers this.init() from element's connected callback
         container.appendChild(this.ref);
       } else {
         await this.init(container);
@@ -756,13 +820,18 @@ limitations under the License.
     }
 
     attachDOM() {
-      const customElementName = this.constructor.elementName;
-      if (customElementName) {
-        const ElementClass = this.constructor.register();
-        this.ref = new ElementClass(this);
+      if (this.constructor.elementName) {
+        this.ref = this.createCustomElement();
       } else {
         super.attachDOM();
       }
+    }
+
+    createCustomElement(toolkit) {
+      const ElementClass = this.constructor.register();
+      const customElement = new ElementClass(this, this.toolkit);
+      this.addPluginsAPI(customElement);
+      return customElement;
     }
 
     get ref() {
@@ -781,6 +850,13 @@ limitations under the License.
       return this[CONTAINER];
     }
 
+    get toolkit() {
+      if (this.origin.constructor.name === 'Toolkit') {
+        return this.origin;
+      }
+      return this.origin.toolkit;
+    }
+
     getReducers() {
       return [];
     }
@@ -791,6 +867,13 @@ limitations under the License.
 
     destroy() {
       super.destroy();
+      this.origin.stopTracking(this);
+      this.renderer.destroy();
+      this.renderer = null;
+      this.plugins.destroy();
+      this.plugins = null;
+      this.reducer = null;
+      this.dispatch = null;
       this.origin = null;
     }
 
@@ -805,6 +888,7 @@ limitations under the License.
   class ComponentElement extends HTMLElement {
 
     constructor(root) {
+
       super();
 
       this.$root = root;
@@ -857,7 +941,6 @@ limitations under the License.
       const root = this.$root;
       Lifecycle.onComponentDestroyed(root);
       Lifecycle.onComponentDetached(root);
-      root.plugins.uninstall();
       root.ref = null;
       this.$root = null;
     }
@@ -1615,9 +1698,7 @@ limitations under the License.
     }
 
     static onComponentDestroyed(component) {
-      for (const cleanUpTask of component.cleanUpTasks) {
-        cleanUpTask();
-      }
+      component.destroy();
       if (component.hasOwnMethod('onDestroyed')) {
         component.onDestroyed.call(component.sandbox);
       }
@@ -2208,11 +2289,13 @@ limitations under the License.
   class Plugin {
 
     constructor(manifest) {
+
       opr.Toolkit.assert(
           typeof manifest.name === 'string' && manifest.name.length,
           'Plugin name must be a non-empty string!');
 
       Object.assign(this, manifest);
+      this.origin = manifest;
 
       if (this.permissions === undefined) {
         this.permissions = [];
@@ -2234,7 +2317,7 @@ limitations under the License.
           opr.Toolkit.assert(
               typeof uninstall === 'function',
               'The plugin installation must return the uninstall function!');
-          this.uninstall = uninstall;
+          return uninstall;
         }
       }
     }
@@ -2259,31 +2342,67 @@ limitations under the License.
   class Registry {
 
     constructor() {
-      this.plugins = [];
+      this.plugins = new Map();
+      this.uninstalls = new Map();
       this.cache = {
         listeners: [],
       };
-      this[Symbol.iterator] = () => this.plugins[Symbol.iterator]();
+      this[Symbol.iterator] = () => this.plugins.values()[Symbol.iterator]();
     }
 
-    add(plugin) {
+    /*
+     * Adds the plugin to the registry
+     */
+    add(plugin, uninstall = null) {
       opr.Toolkit.assert(
           !this.isRegistered(plugin.name),
           `Plugin '${plugin.name}' is already registered!`);
-      this.plugins.push(plugin);
+      this.plugins.set(plugin.name, plugin);
+      if (uninstall) {
+        this.uninstalls.set(plugin.name, uninstall);
+      }
       this.updateCache();
     }
 
+    /*
+     * Removes plugin from the registry with the specified name.
+     * Returns the uninstall function if present.
+     */
+    remove(name) {
+      const plugin = this.plugins.get(name);
+      opr.Toolkit.assert(
+          plugin, `No plugin found with the specified name: "${name}"`);
+      this.plugins.delete(name);
+      this.updateCache();
+      const uninstall = this.uninstalls.get(name);
+      if (uninstall) {
+        this.uninstalls.delete(name);
+        return uninstall;
+      }
+      return null;
+    }
+
+    /*
+     * Checks if plugin with specified name exists in the registry.
+     */
     isRegistered(name) {
-      return Boolean(this.plugins.find(plugin => plugin.name === name));
+      return this.plugins.has(name);
     }
 
+    /*
+     * Updates the cache.
+     */
     updateCache() {
-      this.cache.listeners = this.plugins.filter(plugin => plugin.isListener());
+      this.cache.listeners =
+          [...this.plugins.values()].filter(plugin => plugin.isListener());
     }
 
+    /*
+     * Clears the registry and the cache.
+     */
     clear() {
-      this.plugins.length = 0;
+      this.plugins.clear();
+      this.uninstalls.clear();
       this.cache.listeners.length = 0;
     }
   }
@@ -2296,43 +2415,54 @@ limitations under the License.
       this[Symbol.iterator] = () => this.registry[Symbol.iterator]();
     }
 
-    async inherit(origin) {
-      for (const plugin of origin.plugins) {
-        await this.install(plugin);
-      }
-    }
-
     /*
-     * Creates a Plugin from the manifest object and installs it.
+     * Creates a Plugin instance from the manifest object and registers it.
      */
-    async plugIn(manifest) {
+    async install(manifest) {
       const plugin = new Plugin(manifest);
       if (plugin.register) {
         await plugin.register();
       }
-      return this.install(plugin);
+      return this.use(plugin);
     }
 
     /*
      * Adds the plugin to the registry and invokes plugin's
      * install method if it is present.
      */
-    async install(plugin) {
-      this.registry.add(plugin);
+    async use(plugin) {
       if (this.root && plugin.install) {
-        await plugin.install(this.root);
+        const uninstall = await plugin.install(this.root);
+        this.registry.add(plugin, uninstall);
+      } else {
+        this.registry.add(plugin);
       }
     }
 
-    uninstall() {
+    /*
+     * Removes the plugin from the registry and invokes it's uninstall method
+     * if present.
+     */
+    async uninstall(name) {
+      const uninstall = this.registry.remove(name);
+      if (uninstall) {
+        await uninstall();
+      }
+    }
+
+    /*
+     * Uninstalls all the plugins from the registry.
+     */
+    async destroy() {
       for (const plugin of this.registry) {
-        if (plugin.uninstall) {
-          plugin.uninstall();
-        }
+        await this.uninstall(plugin.name);
       }
-      this.registry.clear();
+      this.root = null;
     }
 
+    /*
+     * Invokes listener methods on registered listener plugins.
+     */
     notify(action, event) {
       switch (action) {
         case 'before-update':
@@ -2350,6 +2480,8 @@ limitations under the License.
       }
     }
   }
+
+  Plugins.Plugin = Plugin;
 
   loader.define('core/plugins', Plugins);
 }
@@ -2580,6 +2712,10 @@ limitations under the License.
       }
 
       return patches;
+    }
+
+    destroy() {
+      this.root = null;
     }
   }
 
@@ -3285,8 +3421,8 @@ limitations under the License.
         opr.Toolkit.assert(
             component.constructor.elementName,
             `Root component "${
-                component.constructor
-                    .displayName}" does not define custom element name!`);
+                               component.constructor.displayName
+                             }" does not define custom element name!`);
         component.constructor.register();
         return component;
       }
@@ -3341,8 +3477,7 @@ limitations under the License.
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
-        const instance = new ComponentClass(
-            symbol, normalizedProps, parent.rootNode.renderer.settings, root);
+        const instance = new ComponentClass(symbol, normalizedProps, root);
         instance.attachDOM();
         return instance;
       }
@@ -3438,16 +3573,6 @@ limitations under the License.
     });
     reducer.commands = commands;
     return reducer;
-  };
-
-  const createCommandsDispatcher = (reducer, dispatch) => {
-    const dispatcher = {};
-    for (const key of Object.keys(reducer.commands)) {
-      dispatcher[key] = (...args) => {
-        dispatch(reducer.commands[key](...args));
-      };
-    }
-    return dispatcher;
   };
 
   const throttle = (fn, wait = 200, delayFirstEvent = false) => {
@@ -3591,7 +3716,6 @@ limitations under the License.
     throttle,
     debounce,
     combineReducers,
-    createCommandsDispatcher,
     addDataPrefix,
     lowerDash,
     getAttributeName,
@@ -3611,6 +3735,7 @@ limitations under the License.
   class Toolkit {
 
     constructor() {
+      this.roots = new Set();
       this.settings = null;
       this.ready = new Promise(resolve => {
         this[INIT] = resolve;
@@ -3627,12 +3752,6 @@ limitations under the License.
         mapping: bundleOptions.mapping || [],
         preloaded: bundleOptions.preloaded || [],
       };
-      settings.plugins = new opr.Toolkit.Plugins(null);
-      if (Array.isArray(options.plugins)) {
-        for (const manifest of options.plugins) {
-          await settings.plugins.plugIn(manifest);
-        }
-      }
       Object.freeze(settings);
       this.settings = settings;
       if (!settings.debug) {
@@ -3640,7 +3759,32 @@ limitations under the License.
           await this.preload(module);
         }
       }
+      this.plugins = await this.createPlugins(options.plugins);
       this[INIT](true);
+    }
+
+    async createPlugins(manifests = []) {
+      const plugins = new opr.Toolkit.Plugins(null);
+      for (const manifest of manifests) {
+        await plugins.install(manifest);
+      }
+      return plugins;
+    }
+
+    track(root) {
+      this.roots.add(root);
+    }
+
+    stopTracking(root) {
+      this.roots.delete(root);
+    }
+
+    get tracked() {
+      const tracked = [];
+      for (const root of this.roots) {
+        tracked.push(root, ...root.tracked);
+      }
+      return tracked;
     }
 
     isDebug() {
@@ -3655,7 +3799,7 @@ limitations under the License.
 
     getBundleName(root) {
       if (typeof root === 'symbol') {
-        root = String(this.symbol).slice(7, -1);
+        root = String(root).slice(7, -1);
       }
       const bundle =
           this.settings.bundles.mapping.find(entry => entry.root === root);
@@ -3706,10 +3850,17 @@ limitations under the License.
     async render(component, container, props = {}) {
       await this.ready;
       const RootClass = await this.getRootClass(component, props);
-      const root = new RootClass(null, props, this.settings);
+      const root = new RootClass(null, props, this);
+      this.track(root);
       root.mount(container);
       await root.ready;
       return root;
+    }
+
+    async create(options = {}) {
+      const toolkit = new Toolkit();
+      await toolkit.configure(options);
+      return toolkit;
     }
 
     noop() {

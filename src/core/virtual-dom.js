@@ -36,8 +36,8 @@ limitations under the License.
         opr.Toolkit.assert(
             component.constructor.elementName,
             `Root component "${
-                component.constructor
-                    .displayName}" does not define custom element name!`);
+                               component.constructor.displayName
+                             }" does not define custom element name!`);
         component.constructor.register();
         return component;
       }
@@ -92,8 +92,7 @@ limitations under the License.
       const ComponentClass = this.getComponentClass(symbol);
       const normalizedProps = this.normalizeProps(ComponentClass, props);
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
-        const instance = new ComponentClass(
-            symbol, normalizedProps, parent.rootNode.renderer.settings, root);
+        const instance = new ComponentClass(symbol, normalizedProps, root);
         instance.attachDOM();
         return instance;
       }

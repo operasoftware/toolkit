@@ -37,10 +37,4 @@ window.loadToolkit = async () => {
 
   window.opr = window.opr || {};
   window.opr.Toolkit = new Toolkit();
-
-  opr.Toolkit.assert = (condition, message) => {
-    if (!condition) {
-      throw new Error(message);
-    }
-  };
 };

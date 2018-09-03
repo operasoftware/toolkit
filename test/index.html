@@ -39,6 +39,12 @@
          debug: true,
       });
 
+      opr.Toolkit.assert = (condition, message) => {
+        if (!condition) {
+          throw new Error(message);
+        }
+      };
+
       window.utils = await loader.require('config/utils');
 
       await loader.require('diff-calculate.spec');
@@ -48,6 +54,7 @@
       await loader.require('nodes.spec');
       await loader.require('patch-component.spec');
       await loader.require('patch-element.spec');
+      await loader.require('plugins.spec');
       await loader.require('reconciler.spec');
       await loader.require('renderer.spec');
       await loader.require('sandbox.spec');
@@ -61,7 +68,7 @@
       await loader.require('virtual-dom-create-component.spec');
       await loader.require('virtual-dom-create-element.spec');
       await loader.require('virtual-element.spec');
-      // mocha.checkLeaks();
+      mocha.checkLeaks();
       mocha.run();
     })();
   </script>

@@ -1,5 +1,5 @@
 {
-  const RENDER_TIME = 'Render time:';
+  const RENDER_TIME = 'Render time';
   const title = update => `==> ${update.root.constructor.displayName} <==`;
 
   const Logger = {

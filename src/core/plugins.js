@@ -23,11 +23,13 @@ limitations under the License.
   class Plugin {
 
     constructor(manifest) {
+
       opr.Toolkit.assert(
           typeof manifest.name === 'string' && manifest.name.length,
           'Plugin name must be a non-empty string!');
 
       Object.assign(this, manifest);
+      this.origin = manifest;
 
       if (this.permissions === undefined) {
         this.permissions = [];
@@ -49,7 +51,7 @@ limitations under the License.
           opr.Toolkit.assert(
               typeof uninstall === 'function',
               'The plugin installation must return the uninstall function!');
-          this.uninstall = uninstall;
+          return uninstall;
         }
       }
     }
@@ -74,31 +76,67 @@ limitations under the License.
   class Registry {
 
     constructor() {
-      this.plugins = [];
+      this.plugins = new Map();
+      this.uninstalls = new Map();
       this.cache = {
         listeners: [],
       };
-      this[Symbol.iterator] = () => this.plugins[Symbol.iterator]();
+      this[Symbol.iterator] = () => this.plugins.values()[Symbol.iterator]();
     }
 
-    add(plugin) {
+    /*
+     * Adds the plugin to the registry
+     */
+    add(plugin, uninstall = null) {
       opr.Toolkit.assert(
           !this.isRegistered(plugin.name),
           `Plugin '${plugin.name}' is already registered!`);
-      this.plugins.push(plugin);
+      this.plugins.set(plugin.name, plugin);
+      if (uninstall) {
+        this.uninstalls.set(plugin.name, uninstall);
+      }
       this.updateCache();
     }
 
+    /*
+     * Removes plugin from the registry with the specified name.
+     * Returns the uninstall function if present.
+     */
+    remove(name) {
+      const plugin = this.plugins.get(name);
+      opr.Toolkit.assert(
+          plugin, `No plugin found with the specified name: "${name}"`);
+      this.plugins.delete(name);
+      this.updateCache();
+      const uninstall = this.uninstalls.get(name);
+      if (uninstall) {
+        this.uninstalls.delete(name);
+        return uninstall;
+      }
+      return null;
+    }
+
+    /*
+     * Checks if plugin with specified name exists in the registry.
+     */
     isRegistered(name) {
-      return Boolean(this.plugins.find(plugin => plugin.name === name));
+      return this.plugins.has(name);
     }
 
+    /*
+     * Updates the cache.
+     */
     updateCache() {
-      this.cache.listeners = this.plugins.filter(plugin => plugin.isListener());
+      this.cache.listeners =
+          [...this.plugins.values()].filter(plugin => plugin.isListener());
     }
 
+    /*
+     * Clears the registry and the cache.
+     */
     clear() {
-      this.plugins.length = 0;
+      this.plugins.clear();
+      this.uninstalls.clear();
       this.cache.listeners.length = 0;
     }
   }
@@ -111,43 +149,54 @@ limitations under the License.
       this[Symbol.iterator] = () => this.registry[Symbol.iterator]();
     }
 
-    async inherit(origin) {
-      for (const plugin of origin.plugins) {
-        await this.install(plugin);
-      }
-    }
-
     /*
-     * Creates a Plugin from the manifest object and installs it.
+     * Creates a Plugin instance from the manifest object and registers it.
      */
-    async plugIn(manifest) {
+    async install(manifest) {
       const plugin = new Plugin(manifest);
       if (plugin.register) {
         await plugin.register();
       }
-      return this.install(plugin);
+      return this.use(plugin);
     }
 
     /*
      * Adds the plugin to the registry and invokes plugin's
      * install method if it is present.
      */
-    async install(plugin) {
-      this.registry.add(plugin);
+    async use(plugin) {
       if (this.root && plugin.install) {
-        await plugin.install(this.root);
+        const uninstall = await plugin.install(this.root);
+        this.registry.add(plugin, uninstall);
+      } else {
+        this.registry.add(plugin);
       }
     }
 
-    uninstall() {
+    /*
+     * Removes the plugin from the registry and invokes it's uninstall method
+     * if present.
+     */
+    async uninstall(name) {
+      const uninstall = this.registry.remove(name);
+      if (uninstall) {
+        await uninstall();
+      }
+    }
+
+    /*
+     * Uninstalls all the plugins from the registry.
+     */
+    async destroy() {
       for (const plugin of this.registry) {
-        if (plugin.uninstall) {
-          plugin.uninstall();
-        }
+        await this.uninstall(plugin.name);
       }
-      this.registry.clear();
+      this.root = null;
     }
 
+    /*
+     * Invokes listener methods on registered listener plugins.
+     */
     notify(action, event) {
       switch (action) {
         case 'before-update':
@@ -165,6 +214,8 @@ limitations under the License.
       }
     }
   }
+
+  Plugins.Plugin = Plugin;
 
   module.exports = Plugins;
 }
