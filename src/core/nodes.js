@@ -240,6 +240,7 @@ limitations under the License.
     constructor(id, props, origin = null) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
       this.origin = origin;
+      this.plugins = this.createPlugins();
       this.subroots = new Set();
       this.renderer = new opr.Toolkit.Renderer(this);
       this.state = null;
@@ -285,17 +286,17 @@ limitations under the License.
 
     async init(container) {
       this.container = container;
-      this.plugins = await this.createPlugins();
+      await this.plugins.installAll();
       this.origin.track(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
     }
 
-    async createPlugins(toolkit) {
+    createPlugins(toolkit) {
       const plugins = new opr.Toolkit.Plugins(this);
       for (const plugin of this.origin.plugins) {
-        await plugins.install(plugin);
+        plugins.register(plugin);
       }
       return plugins;
     }
@@ -358,6 +359,25 @@ limitations under the License.
       return customElement;
     }
 
+    getStylesheets() {
+      const stylesheets = [];
+      const stylesheetProviders =
+          [...this.plugins].filter(plugin => plugin.isStylesheetProvider());
+      for (const plugin of stylesheetProviders) {
+        if (typeof plugin.getStylesheets !== 'function') {
+          throw new Error(
+              `Plugin '${
+                         plugin.name
+                       }' must provide the getStylesheets() method!`);
+        }
+        stylesheets.push(...plugin.getStylesheets());
+      }
+      if (Array.isArray(this.constructor.styles)) {
+        stylesheets.push(...this.constructor.styles);
+      }
+      return stylesheets;
+    }
+
     get ref() {
       return this[CUSTOM_ELEMENT] || super.renderedNode;
     }
@@ -375,10 +395,7 @@ limitations under the License.
     }
 
     get toolkit() {
-      if (this.origin.constructor.name === 'Toolkit') {
-        return this.origin;
-      }
-      return this.origin.toolkit;
+      return this.origin.toolkit || this.origin;
     }
 
     getReducers() {
@@ -423,16 +440,17 @@ limitations under the License.
       });
       const slot = document.createElement('slot');
 
-      const styles = root.constructor.styles;
+      const stylesheets = root.getStylesheets();
 
-      if (styles && styles.length) {
+      if (stylesheets && stylesheets.length) {
 
         const style = document.createElement('style');
-        style.textContent = cssImports(styles);
+        style.textContent = cssImports(stylesheets);
 
         style.onload = () => root.init(slot);
         style.onerror = () => {
-          throw new Error(`Error loading styles: ${styles.join(', ')}`);
+          throw new Error(
+              `Error loading stylesheets: ${stylesheets.join(', ')}`);
         };
         shadow.appendChild(style);
         shadow.appendChild(slot);

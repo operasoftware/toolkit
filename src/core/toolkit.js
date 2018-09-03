@@ -44,14 +44,14 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      this.plugins = await this.createPlugins(options.plugins);
+      this.plugins = this.createPlugins(options.plugins);
       this[INIT](true);
     }
 
-    async createPlugins(manifests = []) {
+    createPlugins(manifests = []) {
       const plugins = new opr.Toolkit.Plugins(null);
       for (const manifest of manifests) {
-        await plugins.install(manifest);
+        plugins.register(manifest);
       }
       return plugins;
     }

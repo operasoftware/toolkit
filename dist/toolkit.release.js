@@ -716,6 +716,7 @@ limitations under the License.
     constructor(id, props, origin = null) {
       super(id, props, /*= children */ null, /*= parentNode */ null);
       this.origin = origin;
+      this.plugins = this.createPlugins();
       this.subroots = new Set();
       this.renderer = new opr.Toolkit.Renderer(this);
       this.state = null;
@@ -761,17 +762,17 @@ limitations under the License.
 
     async init(container) {
       this.container = container;
-      this.plugins = await this.createPlugins();
+      await this.plugins.installAll();
       this.origin.track(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
       this.commands.init(state);
       this.markAsReady();
     }
 
-    async createPlugins(toolkit) {
+    createPlugins(toolkit) {
       const plugins = new opr.Toolkit.Plugins(this);
       for (const plugin of this.origin.plugins) {
-        await plugins.install(plugin);
+        plugins.register(plugin);
       }
       return plugins;
     }
@@ -834,6 +835,25 @@ limitations under the License.
       return customElement;
     }
 
+    getStylesheets() {
+      const stylesheets = [];
+      const stylesheetProviders =
+          [...this.plugins].filter(plugin => plugin.isStylesheetProvider());
+      for (const plugin of stylesheetProviders) {
+        if (typeof plugin.getStylesheets !== 'function') {
+          throw new Error(
+              `Plugin '${
+                         plugin.name
+                       }' must provide the getStylesheets() method!`);
+        }
+        stylesheets.push(...plugin.getStylesheets());
+      }
+      if (Array.isArray(this.constructor.styles)) {
+        stylesheets.push(...this.constructor.styles);
+      }
+      return stylesheets;
+    }
+
     get ref() {
       return this[CUSTOM_ELEMENT] || super.renderedNode;
     }
@@ -851,10 +871,7 @@ limitations under the License.
     }
 
     get toolkit() {
-      if (this.origin.constructor.name === 'Toolkit') {
-        return this.origin;
-      }
-      return this.origin.toolkit;
+      return this.origin.toolkit || this.origin;
     }
 
     getReducers() {
@@ -899,16 +916,17 @@ limitations under the License.
       });
       const slot = document.createElement('slot');
 
-      const styles = root.constructor.styles;
+      const stylesheets = root.getStylesheets();
 
-      if (styles && styles.length) {
+      if (stylesheets && stylesheets.length) {
 
         const style = document.createElement('style');
-        style.textContent = cssImports(styles);
+        style.textContent = cssImports(stylesheets);
 
         style.onload = () => root.init(slot);
         style.onerror = () => {
-          throw new Error(`Error loading styles: ${styles.join(', ')}`);
+          throw new Error(
+              `Error loading stylesheets: ${stylesheets.join(', ')}`);
         };
         shadow.appendChild(style);
         shadow.appendChild(slot);
@@ -2284,6 +2302,7 @@ limitations under the License.
   const Permission = {
     LISTEN_FOR_UPDATES: 'listen-for-updates',
     REGISTER_METHOD: 'register-method',
+    INJECT_STYLESHEETS: 'inject-stylesheets',
   };
 
   class Plugin {
@@ -2326,6 +2345,10 @@ limitations under the License.
       return this.permissions.includes(Permission.LISTEN_FOR_UPDATES);
     }
 
+    isStylesheetProvider() {
+      return this.permissions.includes(Permission.INJECT_STYLESHEETS);
+    }
+
     createSandbox() {
       const sandbox = {};
       for (const permission of this.permissions) {
@@ -2343,7 +2366,6 @@ limitations under the License.
 
     constructor() {
       this.plugins = new Map();
-      this.uninstalls = new Map();
       this.cache = {
         listeners: [],
       };
@@ -2353,14 +2375,11 @@ limitations under the License.
     /*
      * Adds the plugin to the registry
      */
-    add(plugin, uninstall = null) {
+    add(plugin) {
       opr.Toolkit.assert(
           !this.isRegistered(plugin.name),
           `Plugin '${plugin.name}' is already registered!`);
       this.plugins.set(plugin.name, plugin);
-      if (uninstall) {
-        this.uninstalls.set(plugin.name, uninstall);
-      }
       this.updateCache();
     }
 
@@ -2393,8 +2412,8 @@ limitations under the License.
      * Updates the cache.
      */
     updateCache() {
-      this.cache.listeners =
-          [...this.plugins.values()].filter(plugin => plugin.isListener());
+      const plugins = [...this.plugins.values()];
+      this.cache.listeners = plugins.filter(plugin => plugin.isListener());
     }
 
     /*
@@ -2412,30 +2431,33 @@ limitations under the License.
     constructor(root) {
       this.root = root;
       this.registry = new Registry();
+      this.uninstalls = new Map();
       this[Symbol.iterator] = () => this.registry[Symbol.iterator]();
     }
 
     /*
      * Creates a Plugin instance from the manifest object and registers it.
      */
-    async install(manifest) {
-      const plugin = new Plugin(manifest);
-      if (plugin.register) {
-        await plugin.register();
+    register(plugin) {
+      if (!(plugin instanceof Plugin)) {
+        plugin = new Plugin(plugin);
       }
-      return this.use(plugin);
+      if (plugin.register) {
+        plugin.register();
+      }
+      this.registry.add(plugin);
     }
 
-    /*
-     * Adds the plugin to the registry and invokes plugin's
-     * install method if it is present.
-     */
-    async use(plugin) {
+    async installAll() {
+      for (const plugin of this.registry) {
+        await this.install(plugin);
+      }
+    }
+
+    async install(plugin) {
       if (this.root && plugin.install) {
         const uninstall = await plugin.install(this.root);
-        this.registry.add(plugin, uninstall);
-      } else {
-        this.registry.add(plugin);
+        this.uninstalls.set(plugin.name, uninstall);
       }
     }
 
@@ -2444,7 +2466,7 @@ limitations under the License.
      * if present.
      */
     async uninstall(name) {
-      const uninstall = this.registry.remove(name);
+      const uninstall = this.uninstalls.get(name);
       if (uninstall) {
         await uninstall();
       }
@@ -3759,14 +3781,14 @@ limitations under the License.
           await this.preload(module);
         }
       }
-      this.plugins = await this.createPlugins(options.plugins);
+      this.plugins = this.createPlugins(options.plugins);
       this[INIT](true);
     }
 
-    async createPlugins(manifests = []) {
+    createPlugins(manifests = []) {
       const plugins = new opr.Toolkit.Plugins(null);
       for (const manifest of manifests) {
-        await plugins.install(manifest);
+        plugins.register(manifest);
       }
       return plugins;
     }
