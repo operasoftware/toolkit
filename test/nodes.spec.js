@@ -4,8 +4,14 @@ describe('Nodes', () => {
 
   const Component = Symbol.for('Component');
 
-  const App = class extends opr.Toolkit.Root {};
-  const ComponentClass = class extends opr.Toolkit.Component {
+  class SomeRoot extends opr.Toolkit.Root {
+    constructor() {
+      super(null, {}, opr.Toolkit);
+      this.container = document.createElement('main');
+    }
+  };
+
+  class ComponentClass extends opr.Toolkit.Component {
 
     render() {
       return this.children[0] || null;
@@ -46,9 +52,7 @@ describe('Nodes', () => {
     VirtualDOM.getComponentClass.restore();
   });
 
-  const root = new opr.Toolkit.Root({}, document.createElement('section'), {
-    plugins: [],
-  });
+  const root = new SomeRoot();
   const component = new opr.Toolkit.Component({}, [], null);
   const element = createElement('section');
   const comment = new opr.Toolkit.Comment('Dummy', null);
@@ -350,7 +354,7 @@ describe('Nodes', () => {
         const container = document.createElement('container');
         container.dispatchEvent = dispatchEvent;
 
-        const root = new opr.Toolkit.Root(null, {}, {});
+        const root = new SomeRoot();
         root.container = container;
         const element = createElement('section');
         root.appendChild(element);
@@ -683,7 +687,7 @@ describe('Nodes', () => {
 
     const container = document.createElement('body');
     const settings = {plugins: []};
-    const component = new opr.Toolkit.Root({}, settings);
+    const component = new SomeRoot();
     component.container = container;
 
     describe('get initial state', () => {
@@ -838,7 +842,7 @@ describe('Nodes', () => {
       it('creates a dispatcher', () => {
 
         // given
-        const root = new opr.Toolkit.Root();
+        const root = new SomeRoot();
         root.dispatch = sinon.spy();
         root.reducer = () => {};
         root.reducer.commands = {

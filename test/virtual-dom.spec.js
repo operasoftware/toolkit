@@ -241,7 +241,13 @@ describe('Virtual DOM', () => {
       }
     }
 
-    const root = new opr.Toolkit.Root();
+    class SomeRoot extends opr.Toolkit.Root {
+      constructor() {
+        super(null, {}, opr.Toolkit);
+      }
+    }
+
+    const root = new SomeRoot();
 
     beforeEach(() => {
       sinon.stub(VirtualDOM, 'getComponentClass')

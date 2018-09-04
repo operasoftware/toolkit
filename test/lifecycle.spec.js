@@ -8,7 +8,7 @@ describe('Lifecycle', () => {
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
 
-  const AbstractComponent = class extends opr.Toolkit.Component {
+  class AbstractComponent extends opr.Toolkit.Component {
     onCreated() {
       stub('onCreated', this);
     }
@@ -29,9 +29,9 @@ describe('Lifecycle', () => {
     }
   };
 
-  const App = class extends opr.Toolkit.Root {
+  class App extends opr.Toolkit.Root {
     constructor() {
-      super(container);
+      super(null, {}, opr.Toolkit);
     }
     onCreated() {
       stub('onCreated', this);
@@ -52,29 +52,33 @@ describe('Lifecycle', () => {
       stub('onDetached', this);
     }
   };
+
+  class SomeRoot extends opr.Toolkit.Root {
+    constructor() {
+      super(null, {}, opr.Toolkit);
+    }
+  }
 
   const createApp = template => {
-    const RootClass = class extends opr.Toolkit.Root {
+    class RootClass extends opr.Toolkit.Root {
       render() {
         return template;
       }
-    };
-    const app = new RootClass();
-    app.renderer = {
-      container: document.createElement('section'),
-    };
+    }
+    const root = new RootClass(null, {}, opr.Toolkit);
+    root.container = document.createElement('section');
 
     let node = null;
     if (template) {
       node = utils.createFromTemplate(template);
       if (node.isElement()) {
-        Patch.addElement(node, app).apply();
+        Patch.addElement(node, root).apply();
       }
       if (node.isComponent()) {
-        Patch.addComponent(node, app).apply();
+        Patch.addComponent(node, root).apply();
       }
     }
-    return [app, node];
+    return [root, node];
   };
 
   const ComponentClass = class extends AbstractComponent {
@@ -180,7 +184,7 @@ describe('Lifecycle', () => {
       it('adding component', () => {
 
         // given
-        const app = new opr.Toolkit.Root();
+        const app = new SomeRoot();
         const component = utils.createFromTemplate([Component]);
         const patches = [Patch.addComponent(component, app)];
 

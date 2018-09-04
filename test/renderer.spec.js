@@ -2,10 +2,15 @@ describe('Renderer', () => {
 
   const Renderer = opr.Toolkit.Renderer;
 
+  class SomeRoot extends opr.Toolkit.Root {
+    constructor() {
+      super(null, {}, opr.Toolkit);
+    }
+  }
+
   const createRenderer = () => {
-    const root = new opr.Toolkit.Root();
-    const settings = {};
-    return new opr.Toolkit.Renderer(root, settings);
+    const root = new SomeRoot();
+    return new opr.Toolkit.Renderer(root);
   };
 
   it('returns empty list of patches for equal states', () => {

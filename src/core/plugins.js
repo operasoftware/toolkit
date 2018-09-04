@@ -18,6 +18,7 @@ limitations under the License.
   const Permission = {
     LISTEN_FOR_UPDATES: 'listen-for-updates',
     REGISTER_METHOD: 'register-method',
+    INJECT_STYLESHEETS: 'inject-stylesheets',
   };
 
   class Plugin {
@@ -60,6 +61,10 @@ limitations under the License.
       return this.permissions.includes(Permission.LISTEN_FOR_UPDATES);
     }
 
+    isStylesheetProvider() {
+      return this.permissions.includes(Permission.INJECT_STYLESHEETS);
+    }
+
     createSandbox() {
       const sandbox = {};
       for (const permission of this.permissions) {
@@ -77,7 +82,6 @@ limitations under the License.
 
     constructor() {
       this.plugins = new Map();
-      this.uninstalls = new Map();
       this.cache = {
         listeners: [],
       };
@@ -87,14 +91,11 @@ limitations under the License.
     /*
      * Adds the plugin to the registry
      */
-    add(plugin, uninstall = null) {
+    add(plugin) {
       opr.Toolkit.assert(
           !this.isRegistered(plugin.name),
           `Plugin '${plugin.name}' is already registered!`);
       this.plugins.set(plugin.name, plugin);
-      if (uninstall) {
-        this.uninstalls.set(plugin.name, uninstall);
-      }
       this.updateCache();
     }
 
@@ -127,8 +128,8 @@ limitations under the License.
      * Updates the cache.
      */
     updateCache() {
-      this.cache.listeners =
-          [...this.plugins.values()].filter(plugin => plugin.isListener());
+      const plugins = [...this.plugins.values()];
+      this.cache.listeners = plugins.filter(plugin => plugin.isListener());
     }
 
     /*
@@ -146,30 +147,33 @@ limitations under the License.
     constructor(root) {
       this.root = root;
       this.registry = new Registry();
+      this.uninstalls = new Map();
       this[Symbol.iterator] = () => this.registry[Symbol.iterator]();
     }
 
     /*
      * Creates a Plugin instance from the manifest object and registers it.
      */
-    async install(manifest) {
-      const plugin = new Plugin(manifest);
-      if (plugin.register) {
-        await plugin.register();
+    register(plugin) {
+      if (!(plugin instanceof Plugin)) {
+        plugin = new Plugin(plugin);
       }
-      return this.use(plugin);
+      if (plugin.register) {
+        plugin.register();
+      }
+      this.registry.add(plugin);
     }
 
-    /*
-     * Adds the plugin to the registry and invokes plugin's
-     * install method if it is present.
-     */
-    async use(plugin) {
+    async installAll() {
+      for (const plugin of this.registry) {
+        await this.install(plugin);
+      }
+    }
+
+    async install(plugin) {
       if (this.root && plugin.install) {
         const uninstall = await plugin.install(this.root);
-        this.registry.add(plugin, uninstall);
-      } else {
-        this.registry.add(plugin);
+        this.uninstalls.set(plugin.name, uninstall);
       }
     }
 
@@ -178,7 +182,7 @@ limitations under the License.
      * if present.
      */
     async uninstall(name) {
-      const uninstall = this.registry.remove(name);
+      const uninstall = this.uninstalls.get(name);
       if (uninstall) {
         await uninstall();
       }

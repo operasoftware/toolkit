@@ -2,6 +2,12 @@ describe('Sandbox', () => {
 
   const Sandbox = opr.Toolkit.Sandbox;
 
+  class SomeRoot extends opr.Toolkit.Root {
+    constructor() {
+      super(null, {}, opr.Toolkit);
+    }
+  }
+
   describe('create sandbox', () => {
 
     it('returns a sandbox containing own methods', () => {
@@ -91,7 +97,7 @@ describe('Sandbox', () => {
     it('allows to get root state as props', () => {
 
       // given
-      const root = new opr.Toolkit.Root();
+      const root = new SomeRoot();
       root.state = {
         foo: 'bar',
       };
@@ -122,7 +128,7 @@ describe('Sandbox', () => {
 
       // given
       const dispatch = () => {};
-      const component = new opr.Toolkit.Root();
+      const component = new SomeRoot();
       component.dispatch = dispatch;
 
       // when

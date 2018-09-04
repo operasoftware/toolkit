@@ -1,9 +1,16 @@
 describe('Virtual DOM', () => {
 
   const {Renderer, VirtualDOM} = opr.Toolkit;
-
   const container = document.createElement('container');
-  const root = new opr.Toolkit.Root({}, container, {});
+
+  class SomeRoot extends opr.Toolkit.Root {
+    constructor() {
+      super(null, {}, opr.Toolkit);
+      this.container = container;
+    }
+  }
+
+  const root = new SomeRoot();
 
   const render = (symbol, props) => {
     const component = VirtualDOM.createComponent(symbol, props, [], root, root);

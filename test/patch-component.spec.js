@@ -7,12 +7,12 @@ describe('Patch component => apply', () => {
   const Component = Symbol.for('Component');
   const Subcomponent = Symbol.for('Subcomponent');
 
-  const App = class extends opr.Toolkit.Root {
+  class SomeRoot extends opr.Toolkit.Root {
     constructor() {
-      super(null, {}, {});
+      super(null, {}, opr.Toolkit);
       this.container = container;
     }
-  };
+  }
   const ComponentClass = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
@@ -46,7 +46,7 @@ describe('Patch component => apply', () => {
   });
 
   const createApp = template => {
-    const app = new App();
+    const app = new SomeRoot();
     Patch.initRootComponent(app).apply();
     let node = null;
     if (template) {
@@ -64,7 +64,7 @@ describe('Patch component => apply', () => {
   it('creates root component', () => {
 
     // given
-    const component = new App();
+    const component = new SomeRoot();
 
     // when
     Patch.initRootComponent(component).apply();
@@ -133,7 +133,7 @@ describe('Patch component => apply', () => {
       assert(app.comment);
       assert(app.comment.isComment());
       assert.equal(app.placeholder, app.comment);
-      assert(app.placeholder.text.includes('App'));
+      assert(app.placeholder.text.includes(SomeRoot.name));
 
       assert.equal(container.firstChild, app.comment.ref);
 
@@ -536,7 +536,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('App'));
+      assert(app.placeholder.text.includes(SomeRoot.name));
 
       assert.equal(app.child, null);
 
@@ -635,7 +635,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('App'));
+      assert(app.placeholder.text.includes(SomeRoot.name));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
@@ -664,7 +664,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('App'));
+      assert(app.placeholder.text.includes(SomeRoot.name));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
