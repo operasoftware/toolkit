@@ -71,10 +71,10 @@ limitations under the License.
           template => this.createFromTemplate(template, parent, root));
     }
 
-    static createComponent(symbol, props = {}, children = [], parent, root) {
+    static createComponent(key, props = {}, children = [], parent, root) {
       try {
         const component =
-            this.createComponentInstance(symbol, props, children, parent, root);
+            this.createComponentInstance(key, props, children, parent, root);
         if (!component.isRoot()) {
           opr.Toolkit.assert(
               root,
@@ -83,7 +83,7 @@ limitations under the License.
         }
         return component;
       } catch (e) {
-        console.error('Error creating Component Tree:', symbol);
+        console.error('Error creating Component Tree:', key);
         throw e;
       }
     }

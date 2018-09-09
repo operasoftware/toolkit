@@ -31,19 +31,8 @@ limitations under the License.
     async configure(options) {
       const settings = {};
       settings.debug = options.debug || false;
-      const bundleOptions = options.bundles || {};
-      settings.bundles = {
-        rootPath: bundleOptions.rootPath || '',
-        mapping: bundleOptions.mapping || [],
-        preloaded: bundleOptions.preloaded || [],
-      };
       Object.freeze(settings);
       this.settings = settings;
-      if (!settings.debug) {
-        for (const module of settings.bundles.preloaded) {
-          await this.preload(module);
-        }
-      }
       this.plugins = this.createPlugins(options.plugins);
       this[INIT](true);
     }
@@ -82,37 +71,12 @@ limitations under the License.
       }
     }
 
-    getBundleName(root) {
-      if (typeof root === 'symbol') {
-        root = String(root).slice(7, -1);
-      }
-      const bundle =
-          this.settings.bundles.mapping.find(entry => entry.root === root);
-      if (bundle) {
-        return bundle.name;
-      }
-      return null;
-    }
-
-    async preload(symbol) {
-      if (this.settings.debug) {
-        await loader.foreload(symbol);
-      } else {
-        const bundle = this.getBundleName(symbol);
-        if (bundle) {
-          await loader.require(`${this.settings.bundles.rootPath}/${bundle}`);
-        } else {
-          await loader.foreload(symbol);
-        }
-      }
-    }
-
     async getRootClass(component, props) {
       const type = typeof component;
       switch (type) {
         case 'string':
         case 'symbol':
-          await this.preload(component);
+          await loader.preload(component);
           const module = loader.get(component);
           this.assert(
               module.prototype instanceof opr.Toolkit.Root,
