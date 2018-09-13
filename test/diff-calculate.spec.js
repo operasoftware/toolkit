@@ -1,15 +1,20 @@
 describe('Diff => calculate patches', () => {
 
-  const {VirtualNode, VirtualDOM, Diff, Patch, Template} = opr.Toolkit;
+  const {
+    Diff,
+    Patch,
+    Template,
+    VirtualNode,
+    VirtualDOM,
+  } = opr.Toolkit;
 
-  const Component = Symbol.for('Component');
-  const Subcomponent = Symbol.for('Subcomponent');
-  const OtherComponent = Symbol.for('OtherComponent');
+  class Root extends opr.Toolkit.Root {
+    render() {
+      return null;
+    }
+  }
 
-  const ComponentWithoutKey = Symbol.for('ComponentWithoutKey');
-  const ComponentWithKey = Symbol.for('ComponentWithKey');
-
-  class ComponentClass extends opr.Toolkit.Component {
+  class Component extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
@@ -17,83 +22,35 @@ describe('Diff => calculate patches', () => {
     }
   };
 
-  class SubcomponentClass extends opr.Toolkit.Component {
+  class Subcomponent extends opr.Toolkit.Component {
     render() {
       return null;
     }
   };
 
-  class OtherComponentClass extends opr.Toolkit.Component {
+  class OtherComponent extends opr.Toolkit.Component {
     render() {
       return null;
     }
   };
-
-  class ComponentWithoutKeyClass extends opr.Toolkit.Component {
-    render() {
-      return [
-        'span',
-      ];
-    }
-  }
-
-  class ComponentWithKeyClass extends opr.Toolkit.Component {
-
-    getKey() {
-      return this.props.name;
-    }
-
-    render() {
-      return [
-        'span',
-      ];
-    }
-  }
-
-  const getComponentClass = symbol => {
-    if (typeof symbol === 'string') {
-      symbol = Symbol.for(symbol);
-    }
-    switch (symbol) {
-      case Component:
-        return ComponentClass;
-      case Subcomponent:
-        return SubcomponentClass;
-      case OtherComponent:
-        return OtherComponentClass;
-      case ComponentWithoutKey:
-        return ComponentWithoutKeyClass;
-      case ComponentWithKey:
-        return ComponentWithKeyClass;
-    }
-  };
-
-  beforeEach(() => {
-    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(getComponentClass);
-  });
-
-  afterEach(() => {
-    VirtualDOM.getComponentClass.restore();
-  });
 
   const calculatePatches = (node, description) => {
-    const root = utils.createRoot();
-    const diff = new Diff(root);
-    if (node.isElement()) {
-      diff.elementPatches(node, description);
-    }
-    if (node.isComponent()) {
-      diff.componentPatches(node, description);
-    }
+    const diff = new Diff(node.rootNode);
+    diff.childPatches(node, description);
     return diff.patches;
   };
 
   describe('=> on an Element', () => {
 
-    const createTrees = (currentTemplate, nextTemplate) => {
+    const renderNodeAndDescription = (currentTemplate, nextTemplate) => {
+      const root = VirtualDOM.createRoot(Root);
+      const node = VirtualDOM.createFromDescription(
+          Template.describe(currentTemplate), root);
+      root.appendChild(node);
+      const description = Template.describe(nextTemplate);
       return [
-        utils.createFromTemplate(currentTemplate),
-        utils.createDescription(nextTemplate),
+        node,
+        description,
       ];
     };
 
@@ -111,8 +68,9 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
-      const patches = calculatePatches(element, description);
+      const [element, nextElement] =
+          renderNodeAndDescription(template, nextTemplate);
+      const patches = calculatePatches(element, nextElement);
 
       // then
       assert.equal(patches.length, 1);
@@ -139,7 +97,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -165,7 +124,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -192,7 +152,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -223,7 +184,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -247,7 +209,8 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = ['div'];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -260,10 +223,15 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = ['input', {}];
-      const nextTemplate = ['input', {style: {width: [100, 'px']}}];
+      const nextTemplate = ['input', {
+        style: {
+          width: [100, 'px'],
+        },
+      }];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -294,7 +262,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -318,7 +287,8 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = ['div'];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -344,7 +314,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -368,7 +339,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 1);
@@ -386,7 +358,8 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = ['span', {onClick: listener}];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -417,7 +390,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -446,7 +420,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -460,58 +435,56 @@ describe('Diff => calculate patches', () => {
     it('sets property', () => {
 
       // given
-      const properties = {
-        a: 'some-value',
-      };
-
       const template = [
-        'span',
+        'video',
       ];
       const nextTemplate = [
-        'span',
+        'video',
         {
-          properties,
+          properties: {
+            muted: true,
+          },
         },
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.SET_PROPERTY);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].key, 'a');
-      assert.equal(patches[0].value, 'some-value');
+      assert.equal(patches[0].key, 'muted');
+      assert.equal(patches[0].value, true);
     });
 
     it('deletes property', () => {
 
       // given
-      const properties = {
-        a: 'some-value',
-      };
-
       const template = [
-        'span',
+        'video',
         {
-          properties,
+          properties: {
+            muted: true,
+          },
         },
       ];
       const nextTemplate = [
-        'span',
+        'video',
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.DELETE_PROPERTY);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].key, 'a');
+      assert.equal(patches[0].key, 'muted');
     });
 
     it('replaces property', () => {
@@ -521,7 +494,7 @@ describe('Diff => calculate patches', () => {
         'span',
         {
           properties: {
-            a: 'xxx',
+            muted: true,
           },
         },
       ];
@@ -529,21 +502,22 @@ describe('Diff => calculate patches', () => {
         'span',
         {
           properties: {
-            a: 'yyy',
+            muted: false,
           },
         },
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
       assert.equal(patches.length, 1);
       assert.equal(patches[0].type, Patch.Type.SET_PROPERTY);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].key, 'a');
-      assert.equal(patches[0].value, 'yyy');
+      assert.equal(patches[0].key, 'muted');
+      assert.equal(patches[0].value, false);
     });
 
     it('adds, removes and replaces properties', () => {
@@ -569,7 +543,8 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [element, description] = createTrees(template, nextTemplate);
+      const [element, description] =
+          renderNodeAndDescription(template, nextTemplate);
       const patches = calculatePatches(element, description);
 
       // then
@@ -597,7 +572,7 @@ describe('Diff => calculate patches', () => {
         if (typeof id === 'function') {
           assert.equal(patch.node.constructor, id);
         } else if (typeof id === 'string') {
-          assert.equal(patch.node.name, id);
+          assert.equal(patch.node.description.name, id);
         }
         assert.equal(patch.at, at);
       };
@@ -607,7 +582,7 @@ describe('Diff => calculate patches', () => {
         if (typeof id === 'function') {
           assert.equal(patch.node.constructor, id);
         } else if (typeof id === 'string') {
-          assert.equal(patch.node.name, id);
+          assert.equal(patch.node.description.name, id);
         }
         assert.equal(patch.from, from);
         assert.equal(patch.to, to);
@@ -618,7 +593,7 @@ describe('Diff => calculate patches', () => {
         if (typeof id === 'function') {
           assert.equal(patch.node.constructor, id);
         } else if (typeof id === 'string') {
-          assert.equal(patch.node.name, id);
+          assert.equal(patch.node.description.name, id);
         }
         assert.equal(patch.at, at);
       };
@@ -628,18 +603,18 @@ describe('Diff => calculate patches', () => {
         if (typeof removed === 'function') {
           assert.equal(patch.child.constructor, removed);
         } else if (typeof removed === 'string') {
-          assert.equal(patch.child.name, removed);
+          assert.equal(patch.child.description.name, removed);
         }
         if (typeof inserted === 'function') {
           assert.equal(patch.node.constructor, inserted);
         } else if (typeof inserted === 'string') {
-          assert.equal(patch.node.name, inserted);
+          assert.equal(patch.node.description.name, inserted);
         }
       };
 
       const assertUpdateComponent = (patch, id, props) => {
         assert.equal(patch.type, Patch.Type.UPDATE_COMPONENT);
-        assert.equal(patch.props, props);
+        assert.deepEqual(patch.props, props);
       };
 
       const createChildren = ({keys}) => ({
@@ -660,7 +635,8 @@ describe('Diff => calculate patches', () => {
           const nextTemplate = ['section', ...getChildren('div', 'span', 'p')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           assert.throws(() => calculatePatches(element, description), Error);
         });
 
@@ -671,7 +647,8 @@ describe('Diff => calculate patches', () => {
           const nextTemplate = ['section', ...getChildren('X', 'div', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -686,7 +663,8 @@ describe('Diff => calculate patches', () => {
           const nextTemplate = ['section', ...getChildren('div', 'span', 'X')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -703,7 +681,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'X', 'p', 'div', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -720,7 +699,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'p', 'div', 'X', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -737,7 +717,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('X', 'section', 'p', 'div', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -754,7 +735,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'p', 'div', 'span', 'X')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -771,7 +753,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'Y', 'div', 'X', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -793,7 +776,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -812,7 +796,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'p', 'div', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -829,7 +814,8 @@ describe('Diff => calculate patches', () => {
               ['section', ...getChildren('section', 'Y', 'p', 'div', 'span')];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -849,7 +835,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -879,7 +866,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -900,7 +888,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -921,7 +910,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -945,7 +935,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -967,7 +958,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -991,7 +983,8 @@ describe('Diff => calculate patches', () => {
             ];
 
             // when
-            const [element, description] = createTrees(template, nextTemplate);
+            const [element, description] =
+                renderNodeAndDescription(template, nextTemplate);
             const patches = calculatePatches(element, description);
 
             // then
@@ -1009,12 +1002,13 @@ describe('Diff => calculate patches', () => {
             const nextTemplate = ['section', ...getChildren('div', Component)];
 
             // when
-            const [element, description] = createTrees(template, nextTemplate);
+            const [element, description] =
+                renderNodeAndDescription(template, nextTemplate);
             const patches = calculatePatches(element, description);
 
             // then
             assert.equal(patches.length, 1);
-            assertReplaceChildNode(patches[0], 'span', ComponentClass);
+            assertReplaceChildNode(patches[0], 'span', Component);
           });
         });
 
@@ -1033,12 +1027,13 @@ describe('Diff => calculate patches', () => {
             ];
 
             // when
-            const [element, description] = createTrees(template, nextTemplate);
+            const [element, description] =
+                renderNodeAndDescription(template, nextTemplate);
             const patches = calculatePatches(element, description);
 
             // then
             assert.equal(patches.length, 1);
-            assertReplaceChildNode(patches[0], ComponentClass, 'a');
+            assertReplaceChildNode(patches[0], Component, 'a');
           });
 
           it('with a component', () => {
@@ -1054,13 +1049,14 @@ describe('Diff => calculate patches', () => {
             ];
 
             // when
-            const [element, description] = createTrees(template, nextTemplate);
+            const [element, description] =
+                renderNodeAndDescription(template, nextTemplate);
             const patches = calculatePatches(element, description);
 
             // then
             assert.equal(patches.length, 1);
             assertReplaceChildNode(
-                patches[0], ComponentClass, SubcomponentClass);
+                patches[0], Component, Subcomponent);
           });
         });
       });
@@ -1082,7 +1078,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, template);
+          const [element, description] =
+              renderNodeAndDescription(template, template);
           const patches = calculatePatches(element, description);
 
           // then
@@ -1115,12 +1112,13 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
           assert.equal(patches.length, 1);
-          assertUpdateComponent(patches[0], SubcomponentClass, nextProps);
+          assertUpdateComponent(patches[0], Subcomponent, nextProps);
         });
 
         it('adds an attribute', () => {
@@ -1138,7 +1136,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -1165,7 +1164,8 @@ describe('Diff => calculate patches', () => {
           ];
 
           // when
-          const [element, description] = createTrees(template, nextTemplate);
+          const [element, description] =
+              renderNodeAndDescription(template, nextTemplate);
           const patches = calculatePatches(element, description);
 
           // then
@@ -1191,7 +1191,8 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [element, description] = createTrees(template, nextTemplate);
+        const [element, description] =
+            renderNodeAndDescription(template, nextTemplate);
         const patches = calculatePatches(element, description);
 
         assert.equal(patches.length, 1);
@@ -1212,7 +1213,8 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [element, description] = createTrees(template, nextTemplate);
+        const [element, description] =
+            renderNodeAndDescription(template, nextTemplate);
         const patches = calculatePatches(element, description);
 
         assert.equal(patches.length, 1);
@@ -1235,7 +1237,8 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [element, description] = createTrees(template, nextTemplate);
+        const [element, description] =
+            renderNodeAndDescription(template, nextTemplate);
         const patches = calculatePatches(element, description);
 
         assert.equal(patches.length, 2);
@@ -1264,7 +1267,8 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [element, description] = createTrees(template, nextTemplate);
+        const [element, description] =
+            renderNodeAndDescription(template, nextTemplate);
         const patches = calculatePatches(element, description);
 
         assert.equal(patches.length, 1);
@@ -1286,7 +1290,8 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [element, description] = createTrees(template, nextTemplate);
+        const [element, description] =
+            renderNodeAndDescription(template, nextTemplate);
         const patches = calculatePatches(element, description);
 
         assert.equal(patches.length, 2);
@@ -1303,17 +1308,24 @@ describe('Diff => calculate patches', () => {
 
   describe('=> on a Component', () => {
 
-    const createComponents = (props, children, nextProps, nextChildren) => {
-      return [
-        utils.createFromTemplate([Component, props, ...children]),
-        utils.createDescription([Component, nextProps, ...nextChildren]),
-      ];
-    };
+    const renderComponentAndDescription =
+        (props, children, nextProps, nextChildren) => {
+          const root = VirtualDOM.createRoot(Root);
+          const component = VirtualDOM.createFromDescription(
+              Template.describe([Component, props, ...children]), root);
+          root.appendChild(component);
+          const description =
+              Template.describe([Component, nextProps, ...nextChildren]);
+          return [
+            component,
+            description,
+          ];
+        };
 
     const assertComponentUpdate = (patch, component, props) => {
       assert.equal(patch.type, Patch.Type.UPDATE_COMPONENT);
       assert.equal(patch.target, component);
-      assert.equal(patch.target.props, props);
+      assert.deepEqual(patch.target.description.props || {}, props);
     };
 
     it('adds an element', () => {
@@ -1332,7 +1344,7 @@ describe('Diff => calculate patches', () => {
       ];
 
       // when
-      const [component, description] = createComponents(
+      const [component, description] = renderComponentAndDescription(
           props,
           children,
           nextProps,
@@ -1350,7 +1362,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].element.isElement());
-      assert.equal(patches[1].element.name, 'div');
+      assert.equal(patches[1].element.description.name, 'div');
     });
 
     it('removes an element', () => {
@@ -1369,7 +1381,7 @@ describe('Diff => calculate patches', () => {
       const nextChildren = [];
 
       // when
-      const [component, description] = createComponents(
+      const [component, description] = renderComponentAndDescription(
           props,
           children,
           nextProps,
@@ -1387,7 +1399,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].element.isElement());
-      assert.equal(patches[1].element.name, 'div');
+      assert.equal(patches[1].element.description.name, 'div');
     });
 
     it('adds a component', () => {
@@ -1396,11 +1408,17 @@ describe('Diff => calculate patches', () => {
       const props = {};
       const children = [];
 
-      const nextProps = {child: true};
-      const nextChildren = [[Subcomponent]];
+      const nextProps = {
+        child: true,
+      };
+      const nextChildren = [
+        [
+          Subcomponent,
+        ],
+      ];
 
       // when
-      const [component, description] = createComponents(
+      const [component, description] = renderComponentAndDescription(
           props,
           children,
           nextProps,
@@ -1418,7 +1436,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].component.isComponent());
-      assert.equal(patches[1].component.constructor, SubcomponentClass);
+      assert.equal(patches[1].component.constructor, Subcomponent);
     });
 
     it('removes a component', () => {
@@ -1431,7 +1449,7 @@ describe('Diff => calculate patches', () => {
       const nextChildren = [];
 
       // when
-      const [component, description] = createComponents(
+      const [component, description] = renderComponentAndDescription(
           props,
           children,
           nextProps,
@@ -1449,7 +1467,7 @@ describe('Diff => calculate patches', () => {
       assert(patches[1].parent.isComponent());
       assert.equal(patches[1].parent, component);
       assert(patches[1].component.isComponent());
-      assert.equal(patches[1].component.constructor, SubcomponentClass);
+      assert.equal(patches[1].component.constructor, Subcomponent);
     });
 
     describe('replaces a child element', () => {
@@ -1476,7 +1494,7 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [component, description] = createComponents(
+        const [component, description] = renderComponentAndDescription(
             props,
             children,
             nextProps,
@@ -1496,9 +1514,9 @@ describe('Diff => calculate patches', () => {
         assert(patches[1].parent.isComponent());
         assert.equal(patches[1].parent, component);
         assert(patches[1].child.isElement());
-        assert.equal(patches[1].child.name, 'div');
+        assert.equal(patches[1].child.description.name, 'div');
         assert(patches[1].node.isElement());
-        assert.equal(patches[1].node.name, 'span');
+        assert.equal(patches[1].node.description.name, 'span');
       });
 
       it('with a component', () => {
@@ -1523,7 +1541,7 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [component, description] = createComponents(
+        const [component, description] = renderComponentAndDescription(
             props,
             children,
             nextProps,
@@ -1543,9 +1561,9 @@ describe('Diff => calculate patches', () => {
         assert(patches[1].parent.isComponent());
         assert.equal(patches[1].parent, component);
         assert(patches[1].child.isElement());
-        assert.equal(patches[1].child.name, 'div');
+        assert.equal(patches[1].child.description.name, 'div');
         assert(patches[1].node.isComponent());
-        assert.equal(patches[1].node.constructor, SubcomponentClass);
+        assert.equal(patches[1].node.constructor, Subcomponent);
       });
 
     });
@@ -1572,7 +1590,7 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [component, description] = createComponents(
+        const [component, description] = renderComponentAndDescription(
             props,
             children,
             nextProps,
@@ -1592,9 +1610,9 @@ describe('Diff => calculate patches', () => {
         assert(patches[1].parent.isComponent());
         assert.equal(patches[1].parent, component);
         assert(patches[1].child.isComponent());
-        assert.equal(patches[1].child.constructor, SubcomponentClass);
+        assert.equal(patches[1].child.constructor, Subcomponent);
         assert(patches[1].node.isElement());
-        assert.equal(patches[1].node.name, 'div');
+        assert.equal(patches[1].node.description.name, 'div');
       });
 
       it('with a component', () => {
@@ -1619,7 +1637,7 @@ describe('Diff => calculate patches', () => {
         ];
 
         // when
-        const [component, description] = createComponents(
+        const [component, description] = renderComponentAndDescription(
             props,
             children,
             nextProps,
@@ -1639,9 +1657,9 @@ describe('Diff => calculate patches', () => {
         assert(patches[1].parent.isComponent());
         assert.equal(patches[1].parent, component);
         assert(patches[1].child.isComponent());
-        assert.equal(patches[1].child.constructor, SubcomponentClass);
+        assert.equal(patches[1].child.constructor, Subcomponent);
         assert(patches[1].node.isComponent());
-        assert.equal(patches[1].node.constructor, OtherComponentClass);
+        assert.equal(patches[1].node.constructor, OtherComponent);
       });
     });
   });

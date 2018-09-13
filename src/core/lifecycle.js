@@ -36,8 +36,10 @@ limitations under the License.
     }
 
     static onElementCreated(element) {
-      for (const child of element.children) {
-        this.onNodeCreated(child);
+      if (element.children) {
+        for (const child of element.children) {
+          this.onNodeCreated(child);
+        }
       }
     }
 
@@ -66,8 +68,10 @@ limitations under the License.
     }
 
     static onElementAttached(element) {
-      for (const child of element.children) {
-        this.onNodeAttached(child);
+      if (element.children) {
+        for (const child of element.children) {
+          this.onNodeAttached(child);
+        }
       }
     }
 
@@ -109,8 +113,10 @@ limitations under the License.
     }
 
     static onElementDestroyed(element) {
-      for (const child of element.children) {
-        this.onNodeDestroyed(child);
+      if (element.children) {
+        for (const child of element.children) {
+          this.onNodeDestroyed(child);
+        }
       }
     }
 
@@ -133,8 +139,10 @@ limitations under the License.
     }
 
     static onElementDetached(element) {
-      for (const child of element.children) {
-        this.onNodeDetached(child);
+      if (element.children) {
+        for (const child of element.children) {
+          this.onNodeDetached(child);
+        }
       }
     }
 

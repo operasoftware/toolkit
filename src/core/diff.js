@@ -17,103 +17,191 @@ limitations under the License.
 {
   class Diff {
 
+    /*
+     * Creates a new instance bound to a root component
+     * with an empty list of patches.
+     */
     constructor(root) {
       this.root = root;
       this.patches = [];
     }
 
+    /*
+     * Adds the patch to the underlying list.
+     */
     addPatch(patch) {
       return this.patches.push(patch);
     }
 
-    updateComponent(component, prevProps, description) {
-      if (!Diff.deepEqual(component.description, description) ||
-          !Diff.deepEqual(component.props, prevProps)) {
-        if ((component.hasOwnMethod('onPropsReceived') ||
-             component.hasOwnMethod('onUpdated')) &&
-            !Diff.deepEqual(prevProps, component.props)) {
-          this.addPatch(
-              opr.Toolkit.Patch.updateComponent(component, prevProps));
+    /*
+     * Applies all the patches onto the bound root node.
+     */
+    apply() {
+      if (this.patches.length) {
+        opr.Toolkit.Lifecycle.beforeUpdate(this.patches);
+        for (const patch of this.patches) {
+          patch.apply();
         }
-        this.componentChildPatches(component.child, description, component);
-        component.description = description;
+        opr.Toolkit.Lifecycle.afterUpdate(this.patches);
       }
     }
 
-    rootPatches(prevState, nextState, initial) {
-      const description = this.root.renderer.render(this.root);
-      if (initial) {
+    /*
+     * Calculates and returns all patches needed for transformation
+     * of the rendered DOM fragment from one state to another.
+     */
+    rootPatches(currentState, nextState) {
+
+      if (Diff.deepEqual(currentState, nextState)) {
+        return [];
+      }
+
+      const description = opr.Toolkit.Template.describe([
+        this.root.constructor,
+        nextState,
+      ]);
+      if (!currentState) {
         this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
       }
-      this.updateComponent(this.root, prevState, description);
+      this.componentPatches(this.root, description);
+      this.root.state = nextState;
       return this.patches;
     }
 
     /**
-     * Calculates patches for conversion of a component to match the given
-     * description.
+     * Renders the descendants with normalized props and children passed
+     * from the parent component.
+     *
+     * Calculates the patches needed for transformation of a component
+     * to match the given description.
      */
     componentPatches(component, description) {
 
-      const {
-        props = {},
-        children = [],
-      } = description;
+      if (Diff.deepEqual(component.description, description)) {
+        // TODO(aswitalski): do this properly!
+        if (component.isRoot()) {
+          if (component.state !== null) {
+            return;
+          }
+        } else {
+          return;
+        }
+      }
 
-      const ComponentClass =
-          opr.Toolkit.VirtualDOM.getComponentClass(description.component);
+      if (component.hasOwnMethod('onPropsReceived') ||
+          component.hasOwnMethod('onUpdated')) {
+        this.addPatch(
+            opr.Toolkit.Patch.updateComponent(component, description));
+      }
 
-      opr.Toolkit.assert(
-          ComponentClass,
-          `Module not found for path: ${String(description.component)}`);
-      opr.Toolkit.assert(component.constructor === ComponentClass);
-
-      const prevProps = component.props;
-
-      component.props =
-          opr.Toolkit.VirtualDOM.normalizeProps(component.constructor, props);
-      component.children = children;
-
-      this.updateComponent(
-          component, prevProps, this.root.renderer.render(component));
+      const childDescription = opr.Toolkit.Renderer.render(
+          component, description.props, description.childrenAsTemplates, true);
+      this.componentChildPatches(
+          component.child, childDescription, /*= parent */ component);
+      component.description = description;
     }
 
-    /**
-     * Calculates patches for conversion of an element to match the given
+    componentChildPatches(child, description, parent) {
+
+      const {
+        Diff,
+        Patch,
+        VirtualDOM,
+      } = opr.Toolkit;
+
+      if (!child && !description) {
+        return;
+      }
+
+      // insert
+      if (!child && description) {
+        const node =
+            VirtualDOM.createFromDescription(description, parent);
+        if (node.isElement()) {
+          this.addPatch(Patch.addElement(node, parent));
+          return;
+        }
+        this.addPatch(Patch.addComponent(node, parent));
+        return;
+      }
+
+      // remove
+      if (child && !description) {
+        if (child.isElement()) {
+          this.addPatch(Patch.removeElement(child, parent));
+          return;
+        }
+        this.addPatch(Patch.removeComponent(child, parent));
+        return;
+      }
+
+      // update
+      if (child.description.isCompatible(description)) {
+        if (Diff.deepEqual(child.description, description)) {
+          return;
+        }
+        this.childPatches(child, description, parent);
+        return;
+      }
+
+      // replace
+      const node =
+          VirtualDOM.createFromDescription(description, parent, this.root);
+      this.addPatch(Patch.replaceChild(child, node, parent));
+    }
+
+    /*
+     * Calculates patches for transformation of specified child node
+     * to match given description.
+     */
+    childPatches(child, description) {
+      if (child.isComponent()) {
+        if (child.isRoot()) {
+          // TODO: support Root updates
+        }
+        return this.componentPatches(child, description);
+      }
+      if (child.isElement()) {
+        return this.elementPatches(child, description);
+      }
+      throw new Error('Unsupported node type:', child.nodeType);
+    }
+
+    /*
+     * Calculates patches for transformation of an element to match given
      * description.
      */
     elementPatches(element, description, parent) {
 
-      const {
-        props = {},
-        children,
-        text,
-      } = description;
+      if (Diff.deepEqual(element.description, description)) {
+        return;
+      }
 
-      const {
-        attrs,
-        dataset,
-        style,
-        className,
-        listeners,
-        properties,
-      } = props;
+      const isDefined = value => value !== undefined && value !== null;
 
-      this.attributePatches(element.attrs, attrs, element);
-      this.datasetPatches(element.dataset, dataset, element);
-      this.stylePatches(element.style, style, element);
-      this.classNamePatches(element.className, className, element);
-      this.listenerPatches(element.listeners, listeners, element);
-      this.propertiesPatches(element.properties, properties, element);
+      this.attributePatches(
+          element.description.attrs, description.attrs, element);
+      this.datasetPatches(
+          element.description.dataset, description.dataset, element);
+      this.stylePatches(element.description.style, description.style, element);
+      this.classNamePatches(
+          element.description.class, description.class, element);
+      this.listenerPatches(
+          element.description.listeners, description.listeners, element);
+      this.propertiesPatches(
+          element.description.properties, description.properties, element);
       // TODO: handle text as a child
-      if (element.text !== null && text === null) {
+      if (isDefined(element.description.text) && !isDefined(description.text)) {
         this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
       }
-      if (element.children.length || children) {
-        this.elementChildrenPatches(element.children, children, element);
+      if (element.children || description.children) {
+        this.elementChildrenPatches(
+            element.children, description.children, element);
       }
-      if (text !== null && element.text !== text) {
-        this.addPatch(opr.Toolkit.Patch.setTextContent(element, text));
+      if (isDefined(description.text) &&
+          description.text !== element.description.text) {
+        this.addPatch(
+            opr.Toolkit.Patch.setTextContent(element, description.text));
       }
 
       element.description = description;
@@ -241,33 +329,37 @@ limitations under the License.
       }
     }
 
-    elementChildrenPatches(current = [], templates = [], parent) {
-      const {Patch, Reconciler, VirtualDOM} = opr.Toolkit;
+    elementChildrenPatches(sourceNodes = [], targetDescriptions = [], parent) {
+
+      const {
+        Patch,
+        Reconciler,
+        VirtualDOM,
+      } = opr.Toolkit;
       const Move = Reconciler.Move;
 
       const created = [];
       const createdNodesMap = new Map();
 
-      const createNode = (template, key) => {
-        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
+      const createNode = (description, key) => {
+        const node = VirtualDOM.createFromDescription(description, parent, this.root);
         created.push(node);
         createdNodesMap.set(key, node);
         return node;
       };
 
-      const from = current.map((node, index) => node.key || index);
-      const to = templates.map(
-          (template, index) => template[1] && template[1].key || index);
+      const from = sourceNodes.map((node, index) => node.description.key || index);
+      const to = targetDescriptions.map((description, index) => description.key || index);
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
-          return current[from.indexOf(key)];
+          return sourceNodes[from.indexOf(key)];
         }
         if (isMove) {
           return createdNodesMap.get(key);
         }
         const index = to.indexOf(key);
-        return createNode(templates[index], key);
+        return createNode(targetDescriptions[index], key);
       };
 
       if (opr.Toolkit.isDebug()) {
@@ -283,13 +375,14 @@ limitations under the License.
         assertUniqueKeys(to);
       }
 
-      const nodeFavoredToMove =
-          current.find(node => node.props && node.props.beingDragged);
+      const nodeFavoredToMove = sourceNodes.find(
+          node =>
+              node.description.props && node.description.props.beingDragged);
 
       const moves = Reconciler.calculateMoves(
           from, to, nodeFavoredToMove && nodeFavoredToMove.key);
 
-      const children = [...current];
+      const children = [...sourceNodes];
       for (const move of moves) {
         const node = getNode(move.item, move.name === Move.Name.MOVE);
         switch (move.name) {
@@ -312,92 +405,28 @@ limitations under the License.
         const child = children[i];
         if (!created.includes(child)) {
           const index = from.indexOf(child.key || i);
-          let sourceTemplate = null;
-          if (index >= 0) {
-            sourceTemplate = parent.description.children[index];
-          }
-          this.elementChildPatches(
-              child, sourceTemplate, templates[i], parent, i);
+          let targetDescription = targetDescriptions[i];
+          this.elementChildPatches(child, targetDescription, parent, i);
         }
       }
     }
 
-    elementChildPatches(child, sourceTemplate, template, parent, index) {
-      const {Patch, VirtualDOM, Template} = opr.Toolkit;
-
-      const areCompatible = (currentTemplate, nextTemplate) => {
-        return currentTemplate && currentTemplate[0] === nextTemplate[0];
-      };
-
-      if (areCompatible(sourceTemplate, template)) {
-        if (opr.Toolkit.Diff.deepEqual(sourceTemplate, template)) {
+    elementChildPatches(child, description, parent) {
+      if (child.description.isCompatible(description)) {
+        if (opr.Toolkit.Diff.deepEqual(child.description, description)) {
           return;
         }
-        const description = Template.describe(template);
-        if (child.isElement()) {
-          this.elementPatches(child, description, parent);
-          child.description = description;
-        } else if (!child.isRoot()) {
-          this.componentPatches(child, description);
-          child.description = description;
-        }
+        this.childPatches(child, description, parent);
       } else {
-        const node = VirtualDOM.createFromTemplate(template, parent, this.root);
-        this.addPatch(Patch.replaceChildNode(child, node, parent));
+        const node = opr.Toolkit.VirtualDOM.createFromDescription(
+            description, parent, this.root);
+        this.addPatch(opr.Toolkit.Patch.replaceChildNode(child, node, parent));
       }
     }
 
-    componentChildPatches(child, description, parent) {
-      const {Diff, Patch, VirtualDOM} = opr.Toolkit;
-
-      if (!child && !description) {
-        return;
-      }
-
-      // insert
-      if (!child && description) {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
-        if (node.isElement()) {
-          return this.addPatch(Patch.addElement(node, parent));
-        }
-        return this.addPatch(Patch.addComponent(node, parent));
-      }
-
-      // remove
-      if (child && !description) {
-        if (child.isElement()) {
-          return this.addPatch(Patch.removeElement(child, parent));
-        }
-        return this.addPatch(Patch.removeComponent(child, parent));
-      }
-
-      const areCompatible = (node, description) => {
-        if (node.isElement()) {
-          return node.name === description.element;
-        }
-        return node.id === description.component;
-      };
-
-      // update
-      if (areCompatible(child, description)) {
-        if (child.isElement()) {
-          if (Diff.deepEqual(child.description, description)) {
-            return;
-          }
-          return this.elementPatches(child, description, parent);
-        }
-        if (!child.isRoot()) {
-          return this.componentPatches(child, description);
-        }
-      }
-
-      // replace
-      const node =
-          VirtualDOM.createFromDescription(description, parent, this.root);
-      this.addPatch(Patch.replaceChild(child, node, parent));
-    }
-
+    /*
+     * Returns a normalized type of given item.
+     */
     static getType(item) {
       const type = typeof item;
       if (type !== 'object') {

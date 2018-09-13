@@ -17,7 +17,7 @@ limitations under the License.
 {
   class VirtualNode {
 
-    constructor(key, parentNode) {
+    constructor(key, parentNode = null) {
       this.key = key;
       this.parentNode = parentNode;
     }
@@ -44,7 +44,7 @@ limitations under the License.
       if (this.parentNode) {
         return this.parentNode.rootNode;
       }
-      return this;
+      throw new Error('Inconsistent virtual DOM tree detected!');
     }
 
     isRoot() {
@@ -74,18 +74,19 @@ limitations under the License.
       return 'component';
     }
 
-    constructor(id, props = {}, children = [], parentNode) {
-      super(props.key, parentNode);
-      this.id = id;
-      this.props = props;
-      this.children = children;
+    constructor(description, parentNode, attachDOM = true) {
+      super(description.key, parentNode);
+      this.description = description;
+
       this.sandbox = opr.Toolkit.Sandbox.create(this);
-      if (this.key === undefined && this.getKey) {
-        this.key = this.getKey.call(this.sandbox);
-      }
-      this.child = null;
+
       this.comment = this.createComment();
+      this.child = null;
+
       this.cleanUpTasks = [];
+      if (attachDOM) {
+        this.attachDOM();
+      }
     }
 
     createComment() {
@@ -157,6 +158,10 @@ limitations under the License.
       return undefined;
     }
 
+    get commands() {
+      return this.rootNode.commands;
+    }
+
     destroy() {
       for (const cleanUpTask of this.cleanUpTasks) {
         cleanUpTask();
@@ -215,6 +220,7 @@ limitations under the License.
 
   const CONTAINER = Symbol('container');
   const CUSTOM_ELEMENT = Symbol('custom-element');
+  const COMMANDS = Symbol('commands');
 
   class Root extends Component {
 
@@ -226,23 +232,17 @@ limitations under the License.
       return this.name;
     }
 
-    static register() {
-      let ElementClass = customElements.get(this.elementName);
-      if (!ElementClass) {
-        ElementClass = class extends ComponentElement {};
-        customElements.define(this.elementName, ElementClass);
-        this.prototype.elementClass = ElementClass;
-      }
-      return ElementClass;
-    }
-
     static get styles() {
       return [];
     }
 
-    constructor(id, props, origin = null) {
-      super(id, props, /*= children */ null, /*= parentNode */ null);
-      this.origin = origin;
+    constructor(description, props, originator = null) {
+      super(description, /*= parentNode */ null, false);
+      this.props = props;
+      if (originator === null) {
+        throw new Error('No originator specified for rendered root component');
+      }
+      this.originator = originator;
       this.plugins = this.createPlugins();
       this.subroots = new Set();
       this.renderer = new opr.Toolkit.Renderer(this);
@@ -257,6 +257,15 @@ limitations under the License.
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
+      this.attachDOM();
+    }
+
+    set commands(commands) {
+      this[COMMANDS] = commands;
+    }
+
+    get commands() {
+      return this[COMMANDS];
     }
 
     track(root) {
@@ -290,15 +299,18 @@ limitations under the License.
     async init(container) {
       this.container = container;
       await this.plugins.installAll();
-      this.origin.track(this);
+      this.originator.track(this);
       const state = await this.getInitialState.call(this.sandbox, this.props);
+      if (state.constructor !== Object) {
+        throw new Error('Initial state must be a plain object!');
+      }
       this.commands.init(state);
       this.markAsReady();
     }
 
     createPlugins(toolkit) {
       const plugins = new opr.Toolkit.Plugins(this);
-      for (const plugin of this.origin.plugins) {
+      for (const plugin of this.originator.plugins) {
         plugins.register(plugin);
       }
       return plugins;
@@ -356,7 +368,16 @@ limitations under the License.
     }
 
     createCustomElement(toolkit) {
-      const ElementClass = this.constructor.register();
+      const defineCustomElementClass = RootClass => {
+        let ElementClass = customElements.get(RootClass.elementName);
+        if (!ElementClass) {
+          ElementClass = class RootElement extends ComponentElement {};
+          customElements.define(RootClass.elementName, ElementClass);
+          RootClass.prototype.elementClass = ElementClass;
+        }
+        return ElementClass;
+      };
+      const ElementClass = defineCustomElementClass(this.constructor);
       const customElement = new ElementClass(this, this.toolkit);
       this.addPluginsAPI(customElement);
       return customElement;
@@ -398,7 +419,7 @@ limitations under the License.
     }
 
     get toolkit() {
-      return this.origin.toolkit || this.origin;
+      return this.originator.toolkit || this.originator;
     }
 
     getReducers() {
@@ -409,16 +430,23 @@ limitations under the License.
       return props;
     }
 
+    async getUpdatedState(props = {}, currentState = {}) {
+      return {
+        ...state,
+        ...props,
+      };
+    }
+
     destroy() {
       super.destroy();
-      this.origin.stopTracking(this);
+      this.originator.stopTracking(this);
       this.renderer.destroy();
       this.renderer = null;
       this.plugins.destroy();
       this.plugins = null;
       this.reducer = null;
       this.dispatch = null;
-      this.origin = null;
+      this.originator = null;
     }
 
     get nodeType() {
@@ -499,95 +527,103 @@ limitations under the License.
 
     constructor(description, parentNode) {
       super(description.key || null, parentNode);
-
-      const {
-        element,
-        props = {},
-        text = null,
-      } = description;
       this.description = description;
-
-      opr.Toolkit.assert(element, 'Element name is mandatory');
-      this.name = element;
-      const {
-        listeners = {},
-        attrs = {},
-        dataset = {},
-        className = '',
-        style = {},
-        properties = {},
-      } = props;
-      this.listeners = listeners;
-      this.attrs = attrs;
-      this.dataset = dataset;
-      this.style = style;
-      this.className = className;
-      this.properties = properties;
-      this.text = text;
-      this.children = [];
+      if (description.children) {
+        this.children = description.children.map(
+            childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
+                childDescription, this));
+      }
       this.attachDOM();
     }
 
     setAttribute(name, value) {
-      this.attrs[name] = value;
+      this.description.attrs = this.description.attrs || {};
+      this.description.attrs[name] = value;
       this.ref.setAttribute(opr.Toolkit.utils.getAttributeName(name), value);
     }
 
     removeAttribute(name) {
-      delete this.attrs[name];
+      delete this.description.attrs[name];
+      if (!Object.keys(this.description.attrs).length) {
+        delete this.description.attrs;
+      }
       this.ref.removeAttribute(opr.Toolkit.utils.getAttributeName(name));
     }
 
     setDataAttribute(name, value) {
-      this.dataset[name] = String(value);
+      this.description.dataset = this.description.dataset || {};
+      this.description.dataset[name] = String(value);
       this.ref.dataset[name] = value;
     }
 
     removeDataAttribute(name) {
-      delete this.dataset[name];
+      delete this.description.dataset[name];
+      if (!Object.keys(this.description.dataset).length) {
+        delete this.description.dataset;
+      }
       delete this.ref.dataset[name];
     }
 
     setClassName(className = '') {
-      this.className = className;
+      this.description.class = className;
       this.ref.className = className;
     }
 
     setStyleProperty(prop, value) {
-      this.style[prop] = String(value);
+      this.description.style = this.description.style || {};
+      this.description.style[prop] = String(value);
       this.ref.style[prop] = String(value);
     }
 
     removeStyleProperty(prop) {
-      delete this.style[prop];
+      delete this.description.style[prop];
+      if (!Object.keys(this.description.style).length) {
+        delete this.description.style;
+      }
       this.ref.style[prop] = null;
     }
 
     addListener(name, listener) {
-      this.listeners[name] = listener;
+      this.description.listeners = this.description.listeners || {};
+      this.description.listeners[name] = listener;
       const event = opr.Toolkit.utils.getEventName(name);
       this.ref.addEventListener(event, listener);
     }
 
     removeListener(name, listener) {
-      delete this.listeners[name];
+      delete this.description.listeners[name];
+      if (!Object.keys(this.description.listeners).length) {
+        delete this.description.listeners;
+      }
       const event = opr.Toolkit.utils.getEventName(name);
       this.ref.removeEventListener(event, listener);
     }
 
     setProperty(key, value) {
-      this.properties[key] = value;
+      this.description.properties = this.description.properties || {};
+      this.description.properties[key] = value;
       this.ref[key] = value;
     }
 
     deleteProperty(key, value) {
-      delete this.properties[key];
+      delete this.description.properties[key];
+      if (!Object.keys(this.description.properties).length) {
+        delete this.description.properties;
+      }
       delete this.ref[key];
     }
 
-    insertChild(child, index = this.children.length) {
+    insertChild(child, index) {
+      if (!this.children) {
+        this.description.children = [];
+        this.children = [];
+      }
+      if (index === undefined) {
+        index = this.children.length;
+      }
       const nextChild = this.children[index];
       this.children.splice(index, 0, child);
+      this.description.children.splice(index, 0, child.description);
       this.ref.insertBefore(child.ref, nextChild && nextChild.ref);
       child.parentNode = this;
     }
@@ -625,12 +661,12 @@ limitations under the License.
     }
 
     setTextContent(text) {
-      this.text = text;
+      this.description.text = text;
       this.ref.textContent = text;
     }
 
     removeTextContent() {
-      this.text = null;
+      this.description.text = null;
       this.ref.textContent = '';
     }
 
@@ -643,31 +679,13 @@ limitations under the License.
     }
 
     attachDOM() {
-      const element = document.createElement(this.name);
-      if (this.text) {
-        element.textContent = this.text;
+      this.ref = opr.Toolkit.Renderer.createElement(this.description);
+      if (this.children) {
+        for (const child of this.children) {
+          child.attachDOM();
+          this.ref.appendChild(child.ref);
+        }
       }
-      Object.entries(this.listeners).forEach(([name, listener]) => {
-        const event = opr.Toolkit.utils.getEventName(name);
-        element.addEventListener(event, listener);
-      });
-      Object.entries(this.attrs).forEach(([attr, value]) => {
-        const name = opr.Toolkit.utils.getAttributeName(attr);
-        element.setAttribute(name, value);
-      });
-      Object.entries(this.dataset).forEach(([attr, value]) => {
-        element.dataset[attr] = value;
-      });
-      if (this.className) {
-        element.className = this.className;
-      }
-      Object.entries(this.style).forEach(([prop, value]) => {
-        element.style[prop] = value;
-      });
-      Object.entries(this.properties).forEach(([prop, value]) => {
-        element[prop] = value;
-      });
-      this.ref = element;
     }
 
     detachDOM() {

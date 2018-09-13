@@ -1,165 +1,325 @@
 describe('Virtual DOM => create element', () => {
 
-  const {VirtualElement, VirtualDOM, Template} = opr.Toolkit;
+  const {
+    VirtualElement,
+    VirtualDOM,
+    Template,
+  } = opr.Toolkit;
 
-  const createElement = details =>
-      VirtualDOM.createFromDescription(Template.normalize(details), null, null);
+  describe('=> create from template', () => {
+
+    it('supports nested markup', () => {
+
+      // given
+      const template = [
+        'div',
+        [
+          'span',
+          [
+            'a',
+            {
+              href: 'http://www.example.com',
+            },
+            'Text',
+          ],
+        ],
+      ];
+
+      // when
+      const div = createFromTemplate(template);
+
+      // then
+      assert(div.isElement())
+      assert.equal(div.description.name, 'div');
+      assert.equal(div.description.children.length, 1);
+      assert.equal(div.children.length, 1);
+
+      const span = div.children[0];
+      assert(span.isElement());
+      assert.equal(span.description.name, 'span');
+      assert.equal(span.description.children.length, 1);
+      assert.equal(span.children.length, 1);
+
+      const link = span.children[0];
+      assert(link.isElement());
+      assert.equal(link.description.name, 'a');
+      assert.equal(link.description.text, 'Text');
+    });
+  });
 
   it('creates an empty element', () => {
 
     // given
-    const description = {
-      element: 'span',
-    };
+    const description = Template.describe(['span']);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'span');
+    assert.equal(element.description.name, 'span');
+
+    assert.equal(element.description.children, undefined);
+    assert.equal(element.children, undefined);
+
+    assert.equal(element.text, undefined);
+  });
+
+  it('creates an empty with key', () => {
+
+    // given
+    const key = 'unique';
+    const description = Template.describe(['span', {
+      key,
+    }]);
+
+    // when
+    const element = VirtualDOM.createFromDescription(description);
+
+    // then
+    assert(element instanceof VirtualElement);
+    assert.equal(element.description.name, 'span');
+
+    assert.equal(element.description.key, key);
+    assert.equal(element.key, key);
   });
 
   it('creates an empty element with attributes and listeners', () => {
 
     // given
     const onChange = () => {};
-    const description = {
-      element: 'input',
-      props: {
-        type: 'text',
-        tabIndex: 1,
-        autoFocus: true,
-        onChange,
-      },
+    const props = {
+      type: 'text',
+      tabIndex: 1,
+      autoFocus: true,
+      onChange,
     };
+    const description = Template.describe([
+      'input',
+      props,
+    ]);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'input');
-    assert.deepEqual(element.attrs, {
+    assert.equal(element.description.name, 'input');
+    assert.deepEqual(element.description.attrs, {
       type: 'text',
       tabIndex: '1',
-      autoFocus: 'true',
+      autoFocus: '',
     });
-    assert.deepEqual(element.listeners, {
+    assert.deepEqual(element.description.listeners, {
       onChange,
     });
-    assert.equal(element.text, null);
-    assert.deepEqual(element.children, []);
+    assert(element.text === undefined);
+    assert(element.description.children === undefined);
+    assert(element.children === undefined);
   });
 
   it('creates a text element', () => {
 
     // given
-    const description = {
-      element: 'div',
-      text: 'Text',
-    };
+    const description = Template.describe([
+      'div',
+      'Text',
+    ]);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'div');
-    assert.deepEqual(element.attrs, {});
-    assert.deepEqual(element.listeners, {});
-    assert.equal(element.text, 'Text');
-    assert.deepEqual(element.children, []);
+    assert.equal(element.description.name, 'div');
+    assert(element.description.attrs === undefined);
+    assert(element.description.listeners === undefined);
+    assert.equal(element.description.text, 'Text');
+    assert(element.children === undefined);
+  });
+
+  it('creates element with attributes', () => {
+
+    // given
+    const description = Template.describe([
+      'input',
+      {
+        value: 'value',
+        id: 'some-id',
+        unknown: true,
+      },
+    ]);
+
+    // when
+    const element = VirtualDOM.createFromDescription(description);
+
+    // then
+    assert(element);
+    assert(element.isElement());
+    assert.equal(element.description.name, 'input');
+    assert.deepEqual(element.description.attrs, {
+      value: 'value',
+      id: 'some-id',
+    });
+    assert(element.ref);
+  });
+
+  it('creates element with data attributes', () => {
+
+    // given
+    const description = Template.describe([
+      'input',
+      {
+        dataset: {
+          custom: true,
+          another: 17,
+        },
+      },
+    ]);
+
+    // when
+    const element = VirtualDOM.createFromDescription(description);
+
+    // then
+    assert(element);
+    assert(element.isElement());
+    assert.equal(element.description.name, 'input');
+    assert.deepEqual(element.description.dataset, {
+      custom: '',
+      another: '17',
+    });
+    assert.equal(element.key, undefined);
+    assert(element.ref);
+  });
+
+  it('creates element with class names', () => {
+
+    // given
+    const description = Template.describe([
+      'div',
+      {
+        class: [
+          'foo',
+          {
+            bar: true,
+          },
+          [
+            [
+              [
+                'nested',
+              ],
+            ],
+            [
+              [() => {}],
+            ],
+          ],
+        ],
+      },
+    ]);
+
+    // when
+    const element = VirtualDOM.createFromDescription(description);
+
+    // then
+    assert(element);
+    assert(element.isElement());
+    assert.equal(element.description.name, 'div');
+    assert.equal(element.description.class, 'foo bar nested');
+    assert.equal(element.key, undefined);
+    assert(element.ref);
   });
 
   it('creates a text element with attributes and listeners', () => {
 
     // given
     const onClickListener = () => {};
-    const description = {
-      element: 'a',
-      props: {
-        href: 'http://www.example.com/',
-        target: '_blank',
-        title: 'Example',
-        onClick: onClickListener,
-      },
-      text: 'Example',
+    const props = {
+      href: 'http://www.example.com/',
+      target: '_blank',
+      title: 'Example',
+      onClick: onClickListener,
     };
+    const description = Template.describe([
+      'a',
+      props,
+      'Example',
+    ]);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'a');
-    assert.deepEqual(element.attrs, {
+    assert.equal(element.description.name, 'a');
+    assert.deepEqual(element.description.attrs, {
       'href': 'http://www.example.com/',
       'target': '_blank',
       'title': 'Example',
     });
-    assert.deepEqual(element.listeners, {
+    assert.deepEqual(element.description.listeners, {
       onClick: onClickListener,
     });
-    assert.equal(element.text, 'Example');
-    assert.deepEqual(element.children, []);
+    assert.equal(element.description.text, 'Example');
+    assert(element.children === undefined);
   });
 
   it('ignores null and undefined attribute values', () => {
 
     // given
-    const description = {
-      element: 'a',
-      props: {
-        href: null,
-        target: undefined,
-        title: 'Test',
-      },
-      text: 'Text',
+    const props = {
+      href: null,
+      target: undefined,
+      title: 'Test',
     };
+    const description = Template.describe([
+      'a',
+      props,
+      'Text',
+    ]);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'a');
-    assert.deepEqual(element.attrs, {
+    assert.equal(element.description.name, 'a');
+    assert.deepEqual(element.description.attrs, {
       'title': 'Test',
     });
-    assert.equal(element.text, 'Text');
-    assert.deepEqual(element.children, []);
+    assert.equal(element.description.text, 'Text');
+    assert(element.children === undefined);
   });
 
   it('ignores listeners not being functions', () => {
 
     // given
     const onClick = () => {};
-    const description = {
-      element: 'a',
-      props: {
-        onClick: onClick,
-        onChange: 1,
-        onSubmit: false,
-        onCopy: 'copy',
-        onPaste: null,
-        onCut: undefined,
-      },
-      text: 'Link',
+    const props = {
+      onClick,
+      onChange: 1,
+      onSubmit: false,
+      onCopy: 'copy',
+      onPaste: null,
+      onCut: undefined,
     };
+    const description = Template.describe([
+      'a',
+      props,
+      'Link',
+    ]);
 
     // when
-    const element = createElement(description);
+    const element = VirtualDOM.createFromDescription(description);
 
     // then
     assert(element instanceof VirtualElement);
-    assert.equal(element.name, 'a');
-    assert.deepEqual(element.attrs, {});
-    assert.deepEqual(element.listeners, {
+    assert.equal(element.description.name, 'a');
+    assert(element.description.attrs === undefined);
+    assert.deepEqual(element.description.listeners, {
       onClick,
     });
-    assert.equal(element.text, 'Link');
-    assert.deepEqual(element.children, []);
+    assert.equal(element.description.text, 'Link');
+    assert(element.children === undefined);
   });
 
   describe('supports adding attributes', () => {
@@ -167,21 +327,22 @@ describe('Virtual DOM => create element', () => {
     it('adds string attributes', () => {
 
       // given
-      const description = {
-        element: 'div',
-        props: {
-          title: 'Title',
-          value: 'Value',
-        },
+      const props = {
+        title: 'Title',
+        value: 'Value',
       };
+      const description = Template.describe([
+        'div',
+        props,
+      ]);
 
       // when
-      const element = createElement(description);
+      const element = VirtualDOM.createFromDescription(description);
 
       // then
       assert(element instanceof VirtualElement);
-      assert.equal(element.name, 'div');
-      assert.deepEqual(element.attrs, {
+      assert.equal(element.description.name, 'div');
+      assert.deepEqual(element.description.attrs, {
         title: 'Title',
         value: 'Value',
       });
@@ -190,21 +351,22 @@ describe('Virtual DOM => create element', () => {
     it('adds number attributes', () => {
 
       // given
-      const description = {
-        element: 'span',
-        props: {
-          height: 0,
-          width: 200,
-        },
+      const props = {
+        height: 0,
+        width: 200,
       };
+      const description = Template.describe([
+        'span',
+        props,
+      ]);
 
       // when
-      const element = createElement(description);
+      const element = VirtualDOM.createFromDescription(description);
 
       // then
       assert(element instanceof VirtualElement);
-      assert.equal(element.name, 'span');
-      assert.deepEqual(element.attrs, {
+      assert.equal(element.description.name, 'span');
+      assert.deepEqual(element.description.attrs, {
         height: '0',
         width: '200',
       });
@@ -213,54 +375,60 @@ describe('Virtual DOM => create element', () => {
     it('adds boolean attributes', () => {
 
       // given
-      const description = {
-        element: 'input',
-        props: {
-          checked: true,
-          selected: true,
-        },
+      const props = {
+        checked: 'true',
+        selected: true,
       };
+      const description = Template.describe([
+        'input',
+        props,
+      ]);
 
       // when
-      const element = createElement(description);
+      const element = VirtualDOM.createFromDescription(description);
 
       // then
       assert(element instanceof VirtualElement);
-      assert.equal(element.name, 'input');
-      assert.deepEqual(element.attrs, {
+      assert.equal(element.description.name, 'input');
+      assert.deepEqual(element.description.attrs, {
         checked: 'true',
-        selected: 'true',
+        selected: '',
       });
     });
 
     it('ignores null, undefined and function values', () => {
 
       // given
-      const description = {
-        element: 'section',
-        props: {
-          title: undefined,
-          type: null,
-          value: () => {},
-        },
+      const props = {
+        title: undefined,
+        type: null,
+        value: () => {},
       };
+      const description = Template.describe([
+        'section',
+        props,
+      ]);
 
       // when
-      const element = createElement(description);
+      const element = VirtualDOM.createFromDescription(description);
 
       // then
       assert(element instanceof VirtualElement);
-      assert.equal(element.name, 'section');
-      assert.deepEqual(element.attrs, {});
+      assert.equal(element.description.name, 'section');
+      assert(element.attrs === undefined);
     });
 
     describe('add "class" attribute', () => {
 
-      const createElementWithClasses =
-          (element, classNames) => {
-            const description = {element, props: {class: classNames}};
-            return createElement(description);
-          }
+      const createElementWithClasses = (element, classNames) => {
+        const description = Template.describe([
+          element,
+          {
+            class: classNames,
+          },
+        ]);
+        return VirtualDOM.createFromDescription(description);
+      };
 
       it('supports strings', () => {
 
@@ -272,8 +440,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.className, 'foo bar');
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.class, 'foo bar');
       });
 
       it('supports arrays', () => {
@@ -286,8 +454,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.className, 'foo bar');
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.class, 'foo bar');
       });
 
       it('supports objects', () => {
@@ -305,8 +473,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.className, 'foo bar');
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.class, 'foo bar');
       });
 
       it('supports nesting', () => {
@@ -327,8 +495,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.className, 'foo bar');
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.class, 'foo bar');
       });
 
       it('keeps redundant classes', () => {
@@ -341,23 +509,22 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.className, 'foo bar bar');
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.class, 'foo bar bar');
       });
     });
 
     describe('add "style" attribute', () => {
 
-      const createElementWithStyle =
-          (element, style) => {
-            const description = {
-              element,
-              props: {
-                style,
-              },
-            };
-            return createElement(description);
-          }
+      const createElementWithStyle = (element, style) => {
+        const description = Template.describe([
+          element,
+          {
+            style,
+          },
+        ]);
+        return VirtualDOM.createFromDescription(description);
+      };
 
       it('supports plain values', () => {
 
@@ -373,8 +540,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.style, style);
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.style, style);
       });
 
       it('supports array values', () => {
@@ -390,8 +557,8 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'div');
-        assert.deepEqual(element.style, {
+        assert.equal(element.description.name, 'div');
+        assert.deepEqual(element.description.style, {
           height: '10em',
           width: '100px',
         });
@@ -411,24 +578,23 @@ describe('Virtual DOM => create element', () => {
 
         // then
         assert(element instanceof VirtualElement);
-        assert.equal(element.name, 'section');
-        assert.deepEqual(element.style, {});
+        assert.equal(element.description.name, 'section');
+        assert(element.style === undefined);
       });
 
       describe('add "filter"', () => {
 
-        const createElementWithFilter =
-            (element, filter) => {
-              const description = {
-                element,
-                props: {
-                  style: {
-                    filter,
-                  },
-                }
-              };
-              return createElement(description);
+        const createElementWithFilter = (element, filter) => {
+          const description = Template.describe([
+            element,
+            {
+              style: {
+                filter,
+              },
             }
+          ]);
+          return VirtualDOM.createFromDescription(description);
+        };
 
         it('supports known filters', () => {
 
@@ -445,25 +611,24 @@ describe('Virtual DOM => create element', () => {
 
           // then
           assert(element instanceof VirtualElement);
-          assert.equal(element.name, 'section');
-          assert.equal(element.style.filter, 'blur(5px) saturate(2)');
+          assert.equal(element.description.name, 'section');
+          assert.equal(element.description.style.filter, 'blur(5px) saturate(2)');
         });
       });
 
       describe('add "transform"', () => {
 
-        const createElementWithTransform =
-            (element, transform) => {
-              const description = {
-                element,
-                props: {
-                  style: {
-                    transform,
-                  },
-                }
-              };
-              return createElement(description);
+        const createElementWithTransform = (element, transform) => {
+          const description = Template.describe([
+            element,
+            {
+              style: {
+                transform,
+              },
             }
+          ]);
+          return VirtualDOM.createFromDescription(description);
+        };
 
         it('supports known transforms', () => {
 
@@ -480,9 +645,9 @@ describe('Virtual DOM => create element', () => {
 
           // then
           assert(element instanceof VirtualElement);
-          assert.equal(element.name, 'section');
+          assert.equal(element.description.name, 'section');
           assert.equal(
-              element.style.transform,
+              element.description.style.transform,
               'translate3d(0, 0, 0) scale(2) rotate(90deg)');
         });
       });

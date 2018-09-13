@@ -49,6 +49,7 @@ const Loader = loadExternalModule('lazy-module-loader/loader');
 const Consts = normalizeModule('core/consts');
 const Nodes = normalizeModule('core/nodes');
 
+const Description = normalizeModule('core/description');
 const Diff = normalizeModule('core/diff');
 const Lifecycle = normalizeModule('core/lifecycle');
 const Patch = normalizeModule('core/patch');
@@ -65,10 +66,10 @@ const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 let release = merge(
-                    Loader, Consts, Nodes, Diff, Lifecycle, Patch,
+                    Loader, Consts, Nodes, Diff, Lifecycle, Patch, Description,
                     Plugins, Reconciler, Renderer, Sandbox, Service, Template,
-                    VirtualDOM, utils, Toolkit, Release)
-                    .replace(/\n\n\n/g, '\n\n');
+                    VirtualDOM, utils, Toolkit, Release
+              ).replace(/\n\n\n/g, '\n\n');
 
 while (release.includes(copyrightHeader)) {
   release = release.replace(copyrightHeader, '');

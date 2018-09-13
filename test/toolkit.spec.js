@@ -3,9 +3,6 @@ describe('Toolkit', () => {
   it('calls lifecycle methods in proper order', async () => {
 
     // given
-    const ParentSymbol = Symbol.for('my/parent');
-    const ChildSymbol = Symbol.for('my/child');
-
     const lifecycle = [];
 
     class App extends opr.Toolkit.Root {
@@ -16,10 +13,9 @@ describe('Toolkit', () => {
         lifecycle.push('App attached');
       }
       render() {
-        return [ParentSymbol];
+        return [Parent];
       }
     };
-    loader.define('my/app', App);
 
     class Parent extends opr.Toolkit.Component {
       onCreated() {
@@ -29,10 +25,9 @@ describe('Toolkit', () => {
         lifecycle.push('Parent attached');
       }
       render() {
-        return [ChildSymbol];
+        return [Child];
       }
     };
-    loader.define('my/parent', Parent);
 
     class Child extends opr.Toolkit.Component {
       onCreated() {
@@ -45,10 +40,8 @@ describe('Toolkit', () => {
         return ['div'];
       }
     };
-    loader.define('my/child', Child);
 
     const settings = {
-      bundles: [],
       plugins: [],
     };
 
@@ -58,7 +51,7 @@ describe('Toolkit', () => {
 
     opr.Toolkit.configure(settings);
 
-    await opr.Toolkit.render('my/app', container);
+    await opr.Toolkit.render(App, container);
 
     assert.equal(lifecycle.length, 6);
 

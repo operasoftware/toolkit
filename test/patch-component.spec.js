@@ -1,77 +1,60 @@
 describe('Patch component => apply', () => {
 
-  const {Patch, Document, VirtualDOM} = opr.Toolkit;
+  const {
+    Document,
+    Patch,
+    Template,
+    VirtualDOM,
+  } = opr.Toolkit;
 
   let container;
 
-  const Component = Symbol.for('Component');
-  const Subcomponent = Symbol.for('Subcomponent');
-
-  class SomeRoot extends opr.Toolkit.Root {
-    constructor() {
-      super(null, {}, opr.Toolkit);
-      this.container = container;
+  class Root extends opr.Toolkit.Root {
+    render() {
+      return this.children[0] || null;
     }
   }
-  const ComponentClass = class extends opr.Toolkit.Component {
+  const Component = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends opr.Toolkit.Component {
+  const Subcomponent = class extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
 
-  beforeEach(() => {
-    container = document.createElement('app');
-    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
-      if (typeof symbol === 'string') {
-        symbol = Symbol.for(symbol);
-      }
-      switch (symbol) {
-        case Component:
-          return ComponentClass;
-        case Subcomponent:
-          return SubcomponentClass;
-        default:
-          throw new Error('Unknown definition: ' + symbol);
-      }
-    });
-  });
-
-  afterEach(() => {
-    VirtualDOM.getComponentClass.restore();
-  });
-
-  const createApp = template => {
-    const app = new SomeRoot();
-    Patch.initRootComponent(app).apply();
+  const createRootWith = template => {
+    const root = VirtualDOM.createRoot(Root);
+    container = document.createElement('main');
+    root.container = container;
+    Patch.initRootComponent(root).apply();
     let node = null;
     if (template) {
-      node = utils.createFromTemplate(template);
+      node = createFromTemplate(template);
       if (node.isElement()) {
-        Patch.addElement(node, app).apply();
+        Patch.addElement(node, root).apply();
       }
       if (node.isComponent()) {
-        Patch.addComponent(node, app).apply();
+        Patch.addComponent(node, root).apply();
       }
     }
-    return [app, node];
+    return [root, node];
   };
 
   it('creates root component', () => {
 
     // given
-    const component = new SomeRoot();
+    const root = VirtualDOM.createRoot(Root);
+    const container = document.createElement('section');
+    root.container = container;
 
     // when
-    Patch.initRootComponent(component).apply();
+    Patch.initRootComponent(root).apply();
 
     // then
-    assert.deepEqual(component.props, {});
-    assert.equal(component.ref.nodeType, Node.COMMENT_NODE);
+    assert.equal(root.ref.nodeType, Node.COMMENT_NODE);
   });
 
   it('updates component', () => {
@@ -80,11 +63,20 @@ describe('Patch component => apply', () => {
     const props = {
       foo: 'bar',
     };
-    const component = new ComponentClass();
-    component.props = props;
+    const component = createFromTemplate([
+      Component,
+      props,
+    ]);
 
     // when
-    const patch = Patch.updateComponent(component, props);
+    const description = Template.describe([
+      Component,
+      {
+        foo: 'foo',
+      },
+    ]);
+      
+    const patch = Patch.updateComponent(component, description);
     patch.apply();
 
     // then
@@ -96,27 +88,27 @@ describe('Patch component => apply', () => {
     it('adds empty component to a root', () => {
 
       // given
-      const [app] = createApp();
+      const [root] = createRootWith(null);
 
-      const component = utils.createFromTemplate([Component]);
+      const component = createFromTemplate([Component]);
 
       // when
-      Patch.addComponent(component, app).apply();
+      Patch.addComponent(component, root).apply();
 
       // then
-      assert.equal(app.container, container);
-      assert.equal(app.child, component);
+      assert.equal(root.container, container);
+      assert.equal(root.child, component);
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
-      assert(component.placeholder.text.includes('ComponentClass'));
+      assert(component.placeholder.text.includes('Component'));
       assert.equal(component.placeholder, component.comment);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert(comment.textContent.includes('ComponentClass'));
+      assert(comment.textContent.includes('Component'));
 
       assert(container.hasChildNodes());
       assert.equal(container.firstChild, comment);
@@ -125,34 +117,34 @@ describe('Patch component => apply', () => {
     it('adds empty component to emptied root', () => {
 
       // given
-      const [app, subcomponent] = createApp([Subcomponent]);
-      Patch.removeComponent(subcomponent, app).apply();
-      const component = utils.createFromTemplate([Component]);
+      const [root, subcomponent] = createRootWith([Subcomponent]);
+      Patch.removeComponent(subcomponent, root).apply();
+      const component = createFromTemplate([Component]);
 
       // then
-      assert(app.comment);
-      assert(app.comment.isComment());
-      assert.equal(app.placeholder, app.comment);
-      assert(app.placeholder.text.includes(SomeRoot.name));
+      assert(root.comment);
+      assert(root.comment.isComment());
+      assert.equal(root.placeholder, root.comment);
+      assert(root.placeholder.text.includes(Root.name));
 
-      assert.equal(container.firstChild, app.comment.ref);
+      assert.equal(container.firstChild, root.comment.ref);
 
       // when
-      Patch.addComponent(component, app).apply();
+      Patch.addComponent(component, root).apply();
 
       // then
-      assert.equal(app.container, container);
-      assert.equal(app.child, component);
+      assert.equal(root.container, container);
+      assert.equal(root.child, component);
       assert(component.placeholder);
       assert(component.placeholder.isComment());
-      assert(component.placeholder.text.includes('ComponentClass'));
+      assert(component.placeholder.text.includes('Component'));
       assert.equal(component.placeholder, component.comment);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert(comment.textContent.includes('ComponentClass'));
+      assert(comment.textContent.includes('Component'));
       assert.equal(comment.parentNode, container);
 
       assert(container.hasChildNodes());
@@ -162,7 +154,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a component', () => {
 
       // given
-      const [app, divElement] = createApp([
+      const [root, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -188,9 +180,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
-      assert(placeholder.textContent.includes('ComponentClass'));
+      assert(placeholder.textContent.includes('Component'));
 
-      const subcomponent = utils.createFromTemplate([Subcomponent]);
+      const subcomponent = createFromTemplate([Subcomponent]);
 
       // when
       Patch.addComponent(subcomponent, component).apply();
@@ -205,14 +197,14 @@ describe('Patch component => apply', () => {
       assert.equal(component.placeholder, subcomponent.placeholder);
       assert.equal(component.placeholder, subcomponent.comment);
 
-      assert(component.placeholder.text.includes('SubcomponentClass'));
+      assert(component.placeholder.text.includes('Subcomponent'));
       assert.equal(component.comment, null);
 
       const comment = component.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert(comment.textContent.includes('SubcomponentClass'));
+      assert(comment.textContent.includes('Subcomponent'));
       assert.equal(comment.parentNode, divElement.ref);
 
       assert.equal(divElement.ref.childNodes[1], comment);
@@ -221,7 +213,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a subcomponent', () => {
 
       // given
-      const [app, divElement] = createApp([
+      const [root, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -247,9 +239,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = parentComponent.placeholder.ref;
       assert(placeholder);
-      assert(placeholder.textContent.includes('SubcomponentClass'));
+      assert(placeholder.textContent.includes('Subcomponent'));
 
-      const component = utils.createFromTemplate([Component]);
+      const component = createFromTemplate([Component]);
 
       // when
       Patch.addComponent(component, parentComponent).apply();
@@ -264,14 +256,14 @@ describe('Patch component => apply', () => {
       assert.equal(parentComponent.placeholder, component.placeholder);
       assert.equal(parentComponent.placeholder, component.comment);
 
-      assert(parentComponent.placeholder.text.includes('ComponentClass'));
+      assert(parentComponent.placeholder.text.includes('Component'));
       assert.equal(parentComponent.comment, null);
 
       const comment = parentComponent.placeholder.ref;
 
       assert(comment);
       assert(comment instanceof Comment);
-      assert(comment.textContent.includes('ComponentClass'));
+      assert(comment.textContent.includes('Component'));
       assert.equal(comment.parentNode, divElement.ref);
 
       assert.equal(divElement.ref.childNodes[1], comment);
@@ -280,8 +272,8 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a root', () => {
 
       // given
-      const [app] = createApp();
-      const component = utils.createFromTemplate([
+      const [root] = createRootWith();
+      const component = createFromTemplate([
         Component,
         [
           'span',
@@ -289,14 +281,14 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addComponent(component, app).apply();
+      Patch.addComponent(component, root).apply();
 
       // then
-      assert.equal(app.container, container);
-      assert.equal(app.child, component);
+      assert.equal(root.container, container);
+      assert.equal(root.child, component);
       assert(component.child);
       assert(component.child.isElement());
-      assert.equal(component.child.name, 'span');
+      assert.equal(component.child.description.name, 'span'); // Mr. Minimum
       assert(component.child.ref);
       assert.equal(component.child.ref.tagName, 'SPAN');
 
@@ -306,7 +298,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a component', () => {
 
       // given
-      const [app, divElement] = createApp([
+      const [app, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -331,9 +323,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = component.placeholder.ref;
       assert(placeholder);
-      assert(placeholder.textContent.includes('ComponentClass'));
+      assert(placeholder.textContent.includes('Component'));
 
-      const subcomponent = utils.createFromTemplate([
+      const subcomponent = createFromTemplate([
         Subcomponent,
         [
           'a',
@@ -350,7 +342,7 @@ describe('Patch component => apply', () => {
       assert.equal(component.placeholder, null);
 
       assert.equal(component.childElement, subcomponent.child);
-      assert.equal(subcomponent.child.name, 'a');
+      assert.equal(subcomponent.child.description.name, 'a');
       assert.equal(subcomponent.child.parentElement, divElement);
 
       assert.equal(component.childElement.ref.tagName, 'A');
@@ -361,7 +353,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a subcomponent', () => {
 
       // given
-      const [app, divElement] = createApp([
+      const [app, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -387,9 +379,9 @@ describe('Patch component => apply', () => {
 
       const placeholder = parentComponent.placeholder.ref;
       assert(placeholder);
-      assert(placeholder.textContent.includes('SubcomponentClass'));
+      assert(placeholder.textContent.includes('Subcomponent'));
 
-      const component = utils.createFromTemplate([
+      const component = createFromTemplate([
         Component,
         [
           'p',
@@ -406,7 +398,7 @@ describe('Patch component => apply', () => {
       assert.equal(parentComponent.placeholder, null);
 
       assert.equal(parentComponent.childElement, component.child);
-      assert.equal(component.child.name, 'p');
+      assert.equal(component.child.description.name, 'p');
       assert.equal(component.child.parentElement, divElement);
 
       assert.equal(parentComponent.childElement.ref.tagName, 'P');
@@ -420,8 +412,8 @@ describe('Patch component => apply', () => {
     it('adds element to the root ', () => {
 
       // given
-      const [app] = createApp();
-      const element = utils.createFromTemplate([
+      const [app] = createRootWith();
+      const element = createFromTemplate([
         'div',
         [
           'span',
@@ -444,7 +436,7 @@ describe('Patch component => apply', () => {
     it('adds element to a component ', () => {
 
       // given
-      const [app, component] = createApp([Component]);
+      const [app, component] = createRootWith([Component]);
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
@@ -452,9 +444,9 @@ describe('Patch component => apply', () => {
       assert.equal(component.placeholder.ref.parentNode, container);
 
       assert(component.placeholder.ref);
-      assert(component.placeholder.ref.textContent.includes('ComponentClass'));
+      assert(component.placeholder.ref.textContent.includes('Component'));
 
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           'span',
@@ -476,7 +468,7 @@ describe('Patch component => apply', () => {
     it('adds element to a subcomponent', () => {
 
       // given
-      const [app, component] = createApp([Component, [Subcomponent]]);
+      const [app, component] = createRootWith([Component, [Subcomponent]]);
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
@@ -489,9 +481,9 @@ describe('Patch component => apply', () => {
 
       assert(component.placeholder.ref);
       assert(
-          component.placeholder.ref.textContent.includes('SubcomponentClass'));
+          component.placeholder.ref.textContent.includes('Subcomponent'));
 
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           'span',
@@ -519,7 +511,7 @@ describe('Patch component => apply', () => {
     it('removes element from root', () => {
 
       // given
-      const [app, element] = createApp([
+      const [app, element] = createRootWith([
         'div',
       ]);
 
@@ -536,7 +528,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes(SomeRoot.name));
+      assert(app.placeholder.text.includes(Root.name));
 
       assert.equal(app.child, null);
 
@@ -549,7 +541,7 @@ describe('Patch component => apply', () => {
     it('removes element from component', () => {
 
       // given
-      const [app, component] = createApp([
+      const [app, component] = createRootWith([
         Component,
         [
           'div',
@@ -569,7 +561,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('ComponentClass'));
+      assert(app.placeholder.text.includes('Component'));
 
       assert.equal(component.child, null);
 
@@ -582,7 +574,7 @@ describe('Patch component => apply', () => {
     it('removes element from subcomponent', () => {
 
       // given
-      const [app, component] = createApp([
+      const [app, component] = createRootWith([
         Component,
         [
           Subcomponent,
@@ -606,7 +598,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('SubcomponentClass'));
+      assert(app.placeholder.text.includes('Subcomponent'));
 
       assert.equal(subcomponent.child, null);
 
@@ -622,12 +614,12 @@ describe('Patch component => apply', () => {
     it('removes empty component from root', () => {
 
       // given
-      const [app, component] = createApp([Component]);
+      const [app, component] = createRootWith([Component]);
 
       // then
       assert.equal(component.container, container);
       assert.equal(container.firstChild, app.placeholder.ref);
-      assert(app.placeholder.text.includes('ComponentClass'));
+      assert(app.placeholder.text.includes('Component'));
 
       // when
       Patch.removeComponent(component, app).apply();
@@ -635,7 +627,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes(SomeRoot.name));
+      assert(app.placeholder.text.includes(Root.name));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
@@ -646,7 +638,7 @@ describe('Patch component => apply', () => {
     it('removes component with child element from root', () => {
 
       // given
-      const [app, component] = createApp([
+      const [app, component] = createRootWith([
         Component,
         [
           'div',
@@ -664,7 +656,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes(SomeRoot.name));
+      assert(app.placeholder.text.includes(Root.name));
 
       assert.equal(app.child, null);
       assert.equal(component.parentNode, null);
@@ -675,13 +667,13 @@ describe('Patch component => apply', () => {
     it('removes empty component from parent component', () => {
 
       // given
-      const [app, component] = createApp([Component, [Subcomponent]]);
+      const [app, component] = createRootWith([Component, [Subcomponent]]);
       const subcomponent = component.child;
 
       // then
       assert.equal(component.container, container);
       assert.equal(container.firstChild, app.placeholder.ref);
-      assert(app.placeholder.text.includes('SubcomponentClass'));
+      assert(app.placeholder.text.includes('Subcomponent'));
 
       // when
       Patch.removeComponent(subcomponent, component).apply();
@@ -689,7 +681,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('ComponentClass'));
+      assert(app.placeholder.text.includes('Component'));
 
       assert.equal(component.child, null);
       assert.equal(subcomponent.parentNode, null);
@@ -700,7 +692,7 @@ describe('Patch component => apply', () => {
     it('removes component with child element from component', () => {
 
       // given
-      const [app, component] = createApp([
+      const [app, component] = createRootWith([
         Component,
         [
           Subcomponent,
@@ -722,7 +714,7 @@ describe('Patch component => apply', () => {
       // then
       assert(app.placeholder);
       assert(app.placeholder.isComment());
-      assert(app.placeholder.text.includes('ComponentClass'));
+      assert(app.placeholder.text.includes('Component'));
 
       assert.equal(component.child, null);
       assert.equal(subcomponent.parentNode, null);
@@ -736,14 +728,14 @@ describe('Patch component => apply', () => {
     it('replaces element with component', () => {
 
       // given
-      const component = utils.createFromTemplate([
+      const component = createFromTemplate([
         Component,
         [
           'p',
         ],
       ]);
 
-      const subcomponent = utils.createFromTemplate([
+      const subcomponent = createFromTemplate([
         Subcomponent,
       ]);
 
@@ -752,20 +744,20 @@ describe('Patch component => apply', () => {
 
       // then
       assert.equal(component.child, subcomponent);
-      assert(component.child.ref.textContent.includes('SubcomponentClass'));
+      assert(component.child.ref.textContent.includes('Subcomponent'));
     });
 
     it('replaces element with element', () => {
 
       // given
-      const component = utils.createFromTemplate([
+      const component = createFromTemplate([
         Component,
         [
           'p',
         ],
       ]);
 
-      const span = utils.createFromTemplate([
+      const span = createFromTemplate([
         'span',
       ]);
 
@@ -780,14 +772,14 @@ describe('Patch component => apply', () => {
     it('replaces component with component', () => {
 
       // given
-      const component = utils.createFromTemplate([
+      const component = createFromTemplate([
         Component,
         [
           Component,
         ],
       ]);
 
-      const subcomponent = utils.createFromTemplate([
+      const subcomponent = createFromTemplate([
         Subcomponent,
       ]);
 
@@ -796,20 +788,20 @@ describe('Patch component => apply', () => {
 
       // then
       assert.equal(component.child, subcomponent);
-      assert(component.child.ref.textContent.includes('SubcomponentClass'));
+      assert(component.child.ref.textContent.includes('Subcomponent'));
     });
 
     it('replaces component with element', () => {
 
       // given
-      const component = utils.createFromTemplate([
+      const component = createFromTemplate([
         Component,
         [
           Component,
         ],
       ]);
 
-      const div = utils.createFromTemplate([
+      const div = createFromTemplate([
         'div',
       ]);
 

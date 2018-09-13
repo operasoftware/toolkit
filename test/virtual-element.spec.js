@@ -1,8 +1,6 @@
 describe('Virtual Element => amend', () => {
 
-  const VirtualElement = opr.Toolkit.VirtualElement;
-
-  const createElement = name => new VirtualElement({element: name});
+  const createElement = name => createFromTemplate([name]);
 
   describe('set class name', () => {
 
@@ -15,7 +13,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('class');
 
       // then
-      assert.equal(div.className, 'class');
+      assert.equal(div.description.class, 'class');
     });
 
     it('replaces class', () => {
@@ -28,7 +26,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('another-class');
 
       // then
-      assert.equal(div.className, 'another-class');
+      assert.equal(div.description.class, 'another-class');
     });
 
     it('removes class', () => {
@@ -41,7 +39,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('');
 
       // then
-      assert.equal(div.className, '');
+      assert.equal(div.description.class, '');
     });
   });
 });

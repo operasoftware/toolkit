@@ -17,6 +17,9 @@ limitations under the License.
 {
   const INIT = Symbol('init');
 
+  /* Function to Component mapping. */
+  const pureComponentClassRegistry = new Map();
+
   class Toolkit {
 
     constructor() {
@@ -43,6 +46,59 @@ limitations under the License.
         plugins.register(manifest);
       }
       return plugins;
+    }
+
+    /*
+     * Returns resolved Component class.
+     */
+    resolveComponentClass(component, type) {
+      switch (type) {
+        case 'component':
+          return component;
+        case 'function':
+          return this.resolvePureComponentClass(component);
+        case 'symbol':
+          return this.resolveLoadedClass(String(component).slice(7, -1));
+        default:
+          throw new Error(`Unsupported component type: ${type}`);
+      }
+    }
+
+    /*
+     * Returns a PureComponent class rendering the template
+     * provided by the specified function.
+     */
+    resolvePureComponentClass(fn) {
+      let ComponentClass = pureComponentClassRegistry.get(fn);
+      if (ComponentClass) {
+        return ComponentClass;
+      }
+      ComponentClass = class PureComponent extends opr.Toolkit.Component {
+        render() {
+          fn.bind(this)(this.props);
+        }
+      };
+      ComponentClass.renderer = fn;
+      pureComponentClassRegistry.set(fn, ComponentClass);
+      return ComponentClass;
+    }
+
+    /*
+     * Returns a component class resolved by module loader
+     * with the specified id.
+     */
+    resolveLoadedClass(id) {
+      const ComponentClass = loader.get(id);
+      if (!ComponentClass) {
+        throw new Error(`Error resolving component class for '${id}'`);
+      }
+      if (!(ComponentClass.prototype instanceof opr.Toolkit.Component)) {
+        console.error('Module:', ComponentClass,
+                      'is not a component extending opr.Toolkit.Component!');
+        throw new Error(
+            `Module defined with id "${id}" is not a component class.`);
+      }
+      return ComponentClass;
     }
 
     track(root) {
@@ -74,8 +130,9 @@ limitations under the License.
     async getRootClass(component, props) {
       const type = typeof component;
       switch (type) {
-        case 'string':
         case 'symbol':
+          throw new Error('Unexpected symbol!');
+        case 'string':
           await loader.preload(component);
           const module = loader.get(component);
           this.assert(
@@ -96,12 +153,29 @@ limitations under the License.
       }
     }
 
+    async createRoot(component, props = {}) {
+      if (typeof component === 'string') {
+        const RootClass = await loader.preload(component);
+        if (RootClass.prototype instanceof opr.Toolkit.Root) {
+          return opr.Toolkit.VirtualDOM.createRoot(RootClass, props, this);
+        } else {
+          console.error(
+              'Specified class is not a root component: ', ComponentClass);
+          throw new Error('Invalid root class!');
+        }
+      }
+      const description = opr.Toolkit.Template.describe([
+        component,
+      ]);
+      return opr.Toolkit.VirtualDOM.createRoot(
+          description.component, props, this);
+    }
+
     async render(component, container, props = {}) {
       await this.ready;
-      const RootClass = await this.getRootClass(component, props);
-      const root = new RootClass(null, props, this);
+      const root = await this.createRoot(component, props);
       this.track(root);
-      root.mount(container);
+      await root.mount(container);
       await root.ready;
       return root;
     }
@@ -110,9 +184,6 @@ limitations under the License.
       const toolkit = new Toolkit();
       await toolkit.configure(options);
       return toolkit;
-    }
-
-    noop() {
     }
   }
 
