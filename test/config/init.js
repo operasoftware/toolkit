@@ -18,7 +18,7 @@ global.sinon = require('sinon');
       registry[id] = module;
     }
 
-    static async foreload(id) {
+    static async preload(id) {
     }
   };
 

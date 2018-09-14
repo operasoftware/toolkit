@@ -3,6 +3,7 @@ const fs = require('fs');
 const loadFile = path => fs.readFileSync(path, 'utf8');
 const loadJSON = path => JSON.parse(loadFile(path));
 const loadModule = path => loadFile(`./src/${path}.js`);
+const loadExternalModule = path => loadFile(`./node_modules/${path}.js`);
 
 const convertModuleExportsToDefine = (script, path) => {
   const moduleExportsRegExp = /module\.exports\ \=\ (.+?);/;
@@ -43,7 +44,7 @@ const merge = (...contents) => contents.join('\n\n');
 
 const package = loadJSON('./package.json');
 
-const ModuleLoader = loadModule('core/loader');
+const Loader = loadExternalModule('lazy-module-loader/loader');
 
 const Consts = normalizeModule('core/consts');
 const Nodes = normalizeModule('core/nodes');
@@ -64,7 +65,7 @@ const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 let release = merge(
-                    ModuleLoader, Consts, Nodes, Diff, Lifecycle, Patch,
+                    Loader, Consts, Nodes, Diff, Lifecycle, Patch,
                     Plugins, Reconciler, Renderer, Sandbox, Service, Template,
                     VirtualDOM, utils, Toolkit, Release)
                     .replace(/\n\n\n/g, '\n\n');

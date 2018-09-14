@@ -17,185 +17,241 @@ limitations under the License.
 {
   const isBrowser = 'object' === typeof window;
 
-  /** Path => module mapping. */
-  const registry = new Map();
+  if (isBrowser) {
+    window.global = window;
+  }
 
-  /** Path => module dependency symbols mapping */
-  const dependencySymbols = new Map();
+  class Module {
 
-  const prefixes = new Map();
-
-  const concatenatePaths = (...paths) =>
-      paths.map(path => path.replace(/(^\/)/g, ''))
-          .join('/')
-          .replace(/\/+/g, '/')
-          .replace(/\:\//g, '://');
-
-  const getResourcePath = path => {
-    const getRealPath = path => {
-      if (path.endsWith('.css')) {
-        return path;
-      }
-      if (path.endsWith('/')) {
-        return `${path}main.js`;
-      }
-      return `${path}.js`;
-    };
-    for (let [name, prefix] of prefixes) {
-      if (path.startsWith(name)) {
-        return getRealPath(concatenatePaths(prefix, path));
-      }
+    constructor(key) {
+      this.key = key;
+      this.ref = null;
+      this.dependencies = [];
     }
-    return getRealPath(path);
-  };
 
-  const appendScriptToHead = async path => {
-    return new Promise((resolve, reject) => {
-      module.exports = null;
-      const script = document.createElement('script');
-      const resourcePath = getResourcePath(path);
-      script.src = resourcePath;
-      script.onload = () => {
-        registry.set(path, module.exports);
-        resolve(module.exports);
+    get modules() {
+      const modules = new Set();
+      const collect = module => {
+        for (const dependency of module.dependencies) {
+          const target = dependency.target;
+          if (!modules.has(target)) {
+            modules.add(target);
+            collect(target);
+          }
+        }
       };
-      script.onerror = error => {
-        console.error(`Error loading module "${path}" from "${resourcePath}"!`);
-        reject(error);
-      };
-      document.head.appendChild(script);
-    });
-  };
-
-  const requireUncached = path => {
-    const resourcePath = getResourcePath(path);
-    decache(resourcePath);
-    return require(resourcePath);
-  };
-
-  const loadModule = async path => {
-    if (isBrowser) {
-      return appendScriptToHead(path);
-    }
-    return requireUncached(path);
-  };
-
-  const getPath = path =>
-      typeof path === 'symbol' ? String(path).slice(7, -1) : path;
-
-  let context = null;
-
-  let readyPromise = Promise.resolve();
-
-  const ModuleLoader = class {
-
-    static prefix(name, prefix) {
-      prefixes.set(name, prefix);
-      return this;
-    };
-
-    static symbol(path, ctx = context) {
-      const symbol = Symbol.for(path);
-      let moduleSymbols = dependencySymbols.get(ctx);
-      if (!moduleSymbols) {
-        moduleSymbols = [];
-        dependencySymbols.set(ctx, moduleSymbols);
-      }
-      moduleSymbols.push(symbol);
-      return symbol;
+      collect(this);
+      return modules;
     }
 
-    static define(path, module) {
-      if (!registry.get(path)) {
-        registry.set(path, module);
+    get isPreloaded() {
+      if (!this.ref) {
+        return false;
       }
+      return [...this.modules].every(module => module.ref);
+    }
+  }
+
+  class Dependency {
+
+    constructor(source, target, isRequired = false) {
+      this.description = `${source.key} => ${target.key}`;
+      this.source = source;
+      this.target = target;
+      this.isRequired = isRequired;
+    }
+  }
+
+  class Context {
+
+    constructor() {
+      this.stack = [];
     }
 
-    static get(path) {
-      if ('symbol' === typeof path) {
-        path = getPath(path);
+    save(module) {
+      this.stack.push(module);
+    }
+
+    restore(module) {
+      console.assert(this.stack.pop() === module, 'Invalid context detected');
+    }
+
+    get module() {
+      return this.stack[this.stack.length - 1] || null;
+    }
+
+    registerDependencyTo(target, required = false) {
+      if (this.module) {
+        const dependency = new Dependency(this.module, target, required);
+        this.module.dependencies.push(dependency);
       }
-      const module = registry.get(path);
+    }
+  }
+
+  class Loader {
+
+    constructor() {
+      this.ready = Promise.resolve(true);
+      this.context = new Context();
+      this.registry = new Map();
+      this.modulePromises = new Map();
+    }
+
+    symbol(key) {
+      let module = this.registry.get(key);
+      if (!module) {
+        module = new Module(key);
+        this.registry.set(key, module)
+      }
+      this.context.registerDependencyTo(module, false);
+      return Symbol.for(key);
+    }
+
+    async require(key) {
+      let module = this.registry.get(key);
       if (module) {
-        return module;
+        if (module.ref) {
+          return module.ref;
+        }
+        if (module.isPending) {
+          return this.modulePromise(key);
+        }
+      } else {
+        module = new Module(key);
+        this.registry.set(key, module);
       }
-      throw new Error(`No module found for path '${path}'`);
+      this.context.registerDependencyTo(module, true);
+      this.context.save(module);
+      module.ref = await this.load(module);
+      if (typeof module.ref.init === 'function') {
+        await module.ref.init();
+      }
+      this.context.restore(module);
+      return module.ref;
     }
 
-    static async require(path) {
-      return this.resolve(path, loadModule);
+    get(key) {
+      const module = this.registry.get(key);
+      return module ? module.ref : null;
     }
 
-    static async resolve(path, loader = loadModule) {
-      path = getPath(path);
-      let module = registry.get(path);
-      if (module) {
-        return module;
+    define(key, exported) {
+      const module = this.registry.get(key) || new Module(key);
+      console.assert(!this.ref, 'Module already resolved for:', key);
+      module.ref = exported;
+      this.registry.set(key, module);
+      this.modulePromise(key).resolve(exported);
+      return module;
+    }
+
+    async load(module) {
+      const key = module.key;
+      const path = this.getPath(key);
+      try {
+        module.isPending = true;
+        const exported =
+            isBrowser ? await this.loadInBrowser(path) : this.loadInNode(path);
+        delete module.isPending;
+        this.modulePromise(key).resolve(exported);
+        return exported;
+      } catch (error) {
+        this.report({
+          key,
+          error,
+        });
       }
-      context = path;
-      module = await loader(path);
-      if (module.init) {
-        const result = module.init();
-        if (result instanceof Promise) {
-          await result;
+    }
+
+    async preload(key) {
+      const exported = await this.require(key);
+      const module = this.registry.get(key);
+      for (const dependency of module.dependencies) {
+        if (!dependency.target.ref) {
+          await this.preload(dependency.target.key);
         }
       }
-      registry.set(path, module);
-      return module;
+      return exported;
     }
 
-    static async foreload(id) {
+    getPath(key) {
+      if (key.endsWith('/')) {
+        return `${key}main.js`;
+      }
+      if (/^(.*)\.([a-z0-9]{1,4})$/.test(key)) {
+        return key;
+      }
+      return `${key}.js`;
+    }
 
-      let done;
-      const currentReadyPromise = readyPromise;
-      readyPromise = new Promise(resolve => {
-        done = resolve;
+    loadInBrowser(path) {
+      const createLoadPromise = () => new Promise((resolve, reject) => {
+        window.module = {
+          exports: null,
+        };
+        const script = document.createElement('script');
+        script.src = path;
+        script.onload = () => {
+          const exported = module.exports;
+          module.exports = null;
+          resolve(exported);
+        };
+        script.onerror = error => {
+          reject(error);
+        };
+        document.head.appendChild(script);
       });
-      await currentReadyPromise;
-
-      const module = await this.preload(id);
-      done();
-      return module;
+      return this.ready = this.ready.then(createLoadPromise);
     }
 
-    static async preload(id) {
+    loadInNode(path) {
+      decache(path);
+      return require(path);
+    }
 
-      const path = getPath(id);
-      let module = registry.get(path);
-      if (module) {
-        return module;
+    modulePromise(key, create = true) {
+      let modulePromise = this.modulePromises.get(key);
+      if (modulePromise) {
+        return modulePromise;
       }
-      module = await this.require(path);
-      const symbols = dependencySymbols.get(path) || [];
-      for (let symbol of symbols) {
-        await this.preload(symbol);
+      if (!create) {
+        return null;
       }
-      return module;
+      let promiseResolve, promiseReject;
+      modulePromise = new Promise((resolve, reject) => {
+        promiseResolve = resolve;
+        promiseReject = reject;
+      });
+      modulePromise.resolve = promiseResolve;
+      modulePromise.reject = promiseReject;
+      this.modulePromises.set(key, modulePromise);
+      return modulePromise;
     }
 
-    static getPath(id) {
-      return getResourcePath(id);
+    report(message) {
+      console.error('Error loading module:', message.key);
+      throw message.error;
     }
 
-    static get $debug() {
-      return {
-        getSymbols: path => dependencySymbols.get(path) || [],
-        getModules: () => Array.from(registry.entries()),
-        reset: () => {
-          readyPromise = Promise.resolve();
-          registry.clear();
-          dependencySymbols.clear();
+    use(plugin) {
+      global.loader = new Proxy(loader, {
+        get(target, prop) {
+          if (prop === 'next') {
+            return target;
+          }
+          if (plugin.hasOwnProperty(prop)) {
+            const value = plugin[prop];
+            if (typeof value === 'function') {
+              return value.bind(global.loader);
+            }
+            return value;
+          }
+          return target[prop];
         },
-      };
+      });
     }
-  };
-
-  if (isBrowser) {
-    window.loader = ModuleLoader;
-    window.module = {};
-  } else {
-    global.loader = ModuleLoader;
   }
+
+  global.loader = new Loader();
 }
 
 {
@@ -3478,10 +3534,10 @@ limitations under the License.
           template => this.createFromTemplate(template, parent, root));
     }
 
-    static createComponent(symbol, props = {}, children = [], parent, root) {
+    static createComponent(key, props = {}, children = [], parent, root) {
       try {
         const component =
-            this.createComponentInstance(symbol, props, children, parent, root);
+            this.createComponentInstance(key, props, children, parent, root);
         if (!component.isRoot()) {
           opr.Toolkit.assert(
               root,
@@ -3490,7 +3546,7 @@ limitations under the License.
         }
         return component;
       } catch (e) {
-        console.error('Error creating Component Tree:', symbol);
+        console.error('Error creating Component Tree:', key);
         throw e;
       }
     }
@@ -3768,19 +3824,8 @@ limitations under the License.
     async configure(options) {
       const settings = {};
       settings.debug = options.debug || false;
-      const bundleOptions = options.bundles || {};
-      settings.bundles = {
-        rootPath: bundleOptions.rootPath || '',
-        mapping: bundleOptions.mapping || [],
-        preloaded: bundleOptions.preloaded || [],
-      };
       Object.freeze(settings);
       this.settings = settings;
-      if (!settings.debug) {
-        for (const module of settings.bundles.preloaded) {
-          await this.preload(module);
-        }
-      }
       this.plugins = this.createPlugins(options.plugins);
       this[INIT](true);
     }
@@ -3819,37 +3864,12 @@ limitations under the License.
       }
     }
 
-    getBundleName(root) {
-      if (typeof root === 'symbol') {
-        root = String(root).slice(7, -1);
-      }
-      const bundle =
-          this.settings.bundles.mapping.find(entry => entry.root === root);
-      if (bundle) {
-        return bundle.name;
-      }
-      return null;
-    }
-
-    async preload(symbol) {
-      if (this.settings.debug) {
-        await loader.foreload(symbol);
-      } else {
-        const bundle = this.getBundleName(symbol);
-        if (bundle) {
-          await loader.require(`${this.settings.bundles.rootPath}/${bundle}`);
-        } else {
-          await loader.foreload(symbol);
-        }
-      }
-    }
-
     async getRootClass(component, props) {
       const type = typeof component;
       switch (type) {
         case 'string':
         case 'symbol':
-          await this.preload(component);
+          await loader.preload(component);
           const module = loader.get(component);
           this.assert(
               module.prototype instanceof opr.Toolkit.Root,

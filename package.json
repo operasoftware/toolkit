@@ -25,10 +25,14 @@
   "keywords": [
     "opera",
     "web ui",
-    "toolkit"
+    "toolkit",
+    "native",
+    "javascript",
+    "framework",
+    "virtual dom"
   ],
   "author": "Aleksander Świtalski",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/operasoftware/toolkit/issues"
   },
@@ -37,6 +41,7 @@
     "assert": "^1.4.1",
     "dom-test": "^0.3.0",
     "express": "^4.16.3",
+    "lazy-module-loader": "^0.5.0",
     "mocha": "^5.2.0",
     "npm-watch": "^0.3.0",
     "nyc": "^13.0.1",
