@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-window.loadToolkit = async () => {
+window.loadToolkit = async configureLoader => {
+
+  if (configureLoader) {
+    configureLoader();
+  }
 
   const Toolkit = await loader.require('core/toolkit');
 

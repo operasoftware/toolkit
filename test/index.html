@@ -2,23 +2,31 @@
 <head>
   <meta charset="utf-8">
   <title>Opera Toolkit Tests</title>
-  <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+  <link href="web/mocha.css" rel="stylesheet" />
 </head>
 <body>
   <div id="mocha"></div>
-  <script src="https://cdn.rawgit.com/jquery/jquery/2.1.4/dist/jquery.min.js"></script>
-  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
-  <script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
-
-  <script src="setup/assert.js"></script>
-  <script src="setup/sinon.js"></script>
-  <script src="setup/mocha-module-loader.js"></script>
+  <script src="loader/loader.js"></script>
+  <script src="web/mocha.js"></script>
+  <script src="web/assert.js"></script>
+  <script src="web/sinon.js"></script>
   <script src="/src/debug.js"></script>
   <script>
     (async () => {
-      loader.prefix('core', '../src/')
-      loader.prefix('test', '../')
-      await loadToolkit();
+
+      await loadToolkit(() => {
+        loader.use({
+          getPath(key) {
+            if (key.startsWith('core')) {
+              return `../src/${this.next.getPath(key)}`;
+            }
+            if (key.endsWith('spec')) {
+              return `${key}.js`;
+            }
+            return this.next.getPath(key);
+          },
+        });
+      });
       mocha.setup('bdd');
 
       global.suppressConsoleErrors = () => {
@@ -46,28 +54,29 @@
       };
 
       window.utils = await loader.require('config/utils');
+      const loadTest = key => loader.load({key});
 
-      await loader.require('diff-calculate.spec');
-      await loader.require('diff-deep-equal.spec');
-      await loader.require('attach-dom.spec');
-      await loader.require('lifecycle.spec');
-      await loader.require('nodes.spec');
-      await loader.require('patch-component.spec');
-      await loader.require('patch-element.spec');
-      await loader.require('plugins.spec');
-      await loader.require('reconciler.spec');
-      await loader.require('renderer.spec');
-      await loader.require('sandbox.spec');
-      await loader.require('template-describe.spec');
-      await loader.require('template-get-item-type.spec');
-      await loader.require('template-get-value.spec');
-      await loader.require('template-validate.spec');
-      await loader.require('toolkit.spec');
-      await loader.require('utils.spec');
-      await loader.require('virtual-dom.spec');
-      await loader.require('virtual-dom-create-component.spec');
-      await loader.require('virtual-dom-create-element.spec');
-      await loader.require('virtual-element.spec');
+      await loadTest('diff-calculate.spec');
+      await loadTest('diff-deep-equal.spec');
+      await loadTest('attach-dom.spec');
+      await loadTest('lifecycle.spec');
+      await loadTest('nodes.spec');
+      await loadTest('patch-component.spec');
+      await loadTest('patch-element.spec');
+      await loadTest('plugins.spec');
+      await loadTest('reconciler.spec');
+      await loadTest('renderer.spec');
+      await loadTest('sandbox.spec');
+      await loadTest('template-describe.spec');
+      await loadTest('template-get-item-type.spec');
+      await loadTest('template-get-value.spec');
+      await loadTest('template-validate.spec');
+      await loadTest('toolkit.spec');
+      await loadTest('utils.spec');
+      await loadTest('virtual-dom.spec');
+      await loadTest('virtual-dom-create-component.spec');
+      await loadTest('virtual-dom-create-element.spec');
+      await loadTest('virtual-element.spec');
       mocha.checkLeaks();
       mocha.run();
     })();

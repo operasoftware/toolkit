@@ -4,22 +4,17 @@ global.assert = require('assert');
 global.sinon = require('sinon');
 
 {
-  const registry = {};
+  const registry = new Map();
 
-  const getKey = id => typeof id === 'symbol' ? String(id).slice(7, -1) : id;
-
-  global.loader = class MochaModuleLoader {
-
-    static get(id) {
-      return registry[getKey(id)];
-    }
-
-    static define(id, module) {
-      registry[id] = module;
-    }
-
-    static async preload(id) {
-    }
+  global.loader = {
+    get(key) {
+      return registry.get(key);
+    },
+    define(key, module) {
+      registry.set(key, module);
+    },
+    async preload(key) {
+    },
   };
 
   const Toolkit = require('../../src/core/toolkit.js');
@@ -78,11 +73,5 @@ global.sinon = require('sinon');
     afterEach(() => {
       console.error = consoleError;
     });
-  };
-
-  global.MutationObserver = class {
-
-    observe() {
-    }
   };
 }
