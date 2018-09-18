@@ -4,8 +4,8 @@
   <title>Opera Toolkit demo (debug)</title>
   <base href = "/" />
   <link rel="stylesheet" href="styles/page.css" />
-  <script src="/src/core/loader.js"></script>
-  <script src="/src/debug.js"></script>
+  <script src="loader/loader.js"></script>
+  <script src="src/debug.js"></script>
 </head>
 <body>
   <div class="background"></div>
@@ -15,9 +15,16 @@
   </apps>
   <script>
     (async () => {
-      loader.prefix('core', '//src/');
-      loader.prefix('plugins', '//src/');
-      await loadToolkit();
+      await loadToolkit(() => {
+        loader.use({
+          getPath(key) {
+            if (key.startsWith('core') || key.startsWith('plugins')) {
+              return `/src/${this.next.getPath(key)}`;
+            }
+            return this.next.getPath(key);
+          },
+        });
+      });
 
       const logger = await loader.require('plugins/logger');
 
@@ -26,8 +33,8 @@
         plugins: [logger],
       });
       await opr.Toolkit.ready;
-      opr.Toolkit.render('src/demo', document.querySelector('#left'));
-      opr.Toolkit.render('src/demo', document.querySelector('#right'));
+      await opr.Toolkit.render('src/demo', document.querySelector('#left'));
+      await opr.Toolkit.render('src/demo', document.querySelector('#right'));
     })();
   </script>
 </body>
