@@ -75,7 +75,11 @@ while (release.includes(copyrightHeader)) {
 }
 release = `${copyrightHeader}${release}`;
 
-const targetPath = `./dist/toolkit-${package.version}.js`;
+const targetDir = './dist';
+if (!fs.existsSync(targetDir)) {
+ fs.mkdirSync(targetDir);
+}
+const targetPath = `${targetDir}/toolkit-${package.version}.js`;
 fs.writeFileSync(targetPath, release, 'utf8');
 
 const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
