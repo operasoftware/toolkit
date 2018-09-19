@@ -75,7 +75,8 @@ while (release.includes(copyrightHeader)) {
 }
 release = `${copyrightHeader}${release}`;
 
-fs.writeFileSync('./dist/toolkit.release.js', release, 'utf8');
+const targetPath = `./dist/toolkit-${package.version}.js`;
+fs.writeFileSync(targetPath, release, 'utf8');
 
 const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
 
@@ -86,6 +87,7 @@ console.log();
 console.log('-------------------------------------------------------');
 console.log(' Finished bundling release version of Opera Toolkit');
 console.log('-------------------------------------------------------');
+console.log(` => Target file: ${targetPath}`);
 console.log(` => Version: ${package.version}`);
 console.log(` => Lines: ${lines}`);
 console.log(` => Size: ${size} bytes`);
