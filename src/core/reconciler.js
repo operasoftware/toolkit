@@ -61,8 +61,7 @@ limitations under the License.
       return a.key > b.key ? 1 : -1;
     }
 
-    static calculateMoves(source, target) {
-
+    static calculateMoves(source, target, favoredToMove = null) {
       const moves = [];
 
       const createItem = function(key, index) {
@@ -148,17 +147,16 @@ limitations under the License.
       };
 
       const defaultMoves = calculateIndexChanges([...result], target);
-      if (defaultMoves.length > 1) {
+      if (defaultMoves.length > 1 ||
+          favoredToMove && defaultMoves.length === 1 &&
+              defaultMoves[0].item !== favoredToMove) {
         const alternativeMoves =
             calculateIndexChanges([...result], target, /*= reversed*/ true);
-        if (alternativeMoves.length < defaultMoves.length) {
+        if (alternativeMoves.length <= defaultMoves.length) {
           moves.push(...alternativeMoves);
           moves.result = alternativeMoves.result;
-        } else {
-          moves.push(...defaultMoves);
-          moves.result = defaultMoves.result;
+          return moves;
         }
-        return moves;
       }
       moves.push(...defaultMoves);
       moves.result = defaultMoves.result;
