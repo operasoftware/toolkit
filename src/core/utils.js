@@ -131,7 +131,7 @@ limitations under the License.
     };
   };
 
-  const addDataPrefix = attr => 'data' + attr[0].toUpperCase() + attr.slice(1);
+  const addDataPrefix = attr => `data${attr[0].toUpperCase()}${attr.slice(1)}`;
 
   const lowerDash = name => {
     if (name.startsWith('aria')) {

@@ -46,6 +46,7 @@ limitations under the License.
     // form events
     'onChange',
     'onInput',
+    'onInvalid',
     'onSubmit',
     // clipboard events
     'onCopy',
@@ -99,8 +100,10 @@ limitations under the License.
     'onAnimationIteration',
     // transition events
     'onTransitionEnd',
-    // search events
+    // search event
     'onSearch',
+    // toogle event
+    'onToggle',
   ];
 
   const SUPPORTED_ATTRIBUTES = [
@@ -288,10 +291,26 @@ limitations under the License.
   ];
 
   const SUPPORTED_TRANSFORMS = [
-    'matrix',      'matrix3d',   'translate', 'translate3d', 'translateX',
-    'translateY',  'translateZ', 'scale',     'scale3d',     'scaleX',
-    'scaleY',      'scaleZ',     'rotate',    'rotate3d',    'rotateX',
-    'rotateY',     'rotateZ',    'skew',      'skewX',       'skewY',
+    'matrix',
+    'matrix3d',
+    'translate',
+    'translate3d',
+    'translateX',
+    'translateY',
+    'translateZ',
+    'scale',
+    'scale3d',
+    'scaleX',
+    'scaleY',
+    'scaleZ',
+    'rotate',
+    'rotate3d',
+    'rotateX',
+    'rotateY',
+    'rotateZ',
+    'skew',
+    'skewX',
+    'skewY',
     'perspective',
   ];
 
