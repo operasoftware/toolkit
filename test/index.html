@@ -16,14 +16,11 @@
 
       await loadToolkit(() => {
         loader.use({
-          getPath(key) {
-            if (key.startsWith('core')) {
-              return `../src/${this.next.getPath(key)}`;
-            }
+          path(key) {
             if (key.endsWith('spec')) {
               return `${key}.js`;
             }
-            return this.next.getPath(key);
+            return this.next.path(key);
           },
         });
       });
@@ -54,7 +51,18 @@
       };
 
       window.utils = await loader.require('config/utils');
-      const loadTest = key => loader.load({key});
+
+      const loadTest = async name => new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `${name}.js`;
+        script.onload = () => {
+          resolve('done');
+        };
+        script.onerror = error => {
+          reject(error);
+        };
+        document.head.appendChild(script);
+      });
 
       await loadTest('diff-calculate.spec');
       await loadTest('diff-deep-equal.spec');
