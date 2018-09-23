@@ -424,7 +424,7 @@ limitations under the License.
   }
 
   const cssImports = paths =>
-      paths.map(loader.getPath).map(path => `@import url(${path});`).join('\n');
+      paths.map(loader.path).map(path => `@import url(${path});`).join('\n');
 
   class ComponentElement extends HTMLElement {
 
