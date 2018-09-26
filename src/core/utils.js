@@ -199,7 +199,7 @@ limitations under the License.
   };
 
   const isSpecialProperty =
-      prop => ['key', 'class', 'style', 'dataset', 'metadata'].includes(prop);
+      prop => ['key', 'class', 'style', 'dataset', 'properties'].includes(prop);
 
   const isSupportedAttribute = attr => isSpecialProperty(attr) ||
       opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||

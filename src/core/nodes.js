@@ -512,14 +512,14 @@ limitations under the License.
         dataset = {},
         className = '',
         style = {},
-        metadata = {},
+        properties = {},
       } = props;
       this.listeners = listeners;
       this.attrs = attrs;
       this.dataset = dataset;
       this.style = style;
       this.className = className;
-      this.metadata = metadata;
+      this.properties = properties;
       this.text = text;
       this.children = [];
       this.attachDOM();
@@ -572,13 +572,13 @@ limitations under the License.
       this.ref.removeEventListener(event, listener);
     }
 
-    setMetadata(key, value) {
-      this.metadata[key] = value;
+    setProperty(key, value) {
+      this.properties[key] = value;
       this.ref[key] = value;
     }
 
-    removeMetadata(key, value) {
-      delete this.metadata[key];
+    deleteProperty(key, value) {
+      delete this.properties[key];
       delete this.ref[key];
     }
 
@@ -661,7 +661,7 @@ limitations under the License.
       Object.entries(this.style).forEach(([prop, value]) => {
         element.style[prop] = value;
       });
-      Object.entries(this.metadata).forEach(([prop, value]) => {
+      Object.entries(this.properties).forEach(([prop, value]) => {
         element[prop] = value;
       });
       this.ref = element;

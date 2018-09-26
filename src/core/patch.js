@@ -152,22 +152,16 @@ limitations under the License.
     },
   };
 
-  const ADD_METADATA = {
-    type: Symbol('add-metadata'),
+  const SET_PROPERTY = {
+    type: Symbol('set-property'),
     apply: function() {
-      this.target.setMetadata(this.key, this.value);
+      this.target.setProperty(this.key, this.value);
     },
   };
-  const REPLACE_METADATA = {
-    type: Symbol('replace-metadata'),
+  const DELETE_PROPERTY = {
+    type: Symbol('delete-property'),
     apply: function() {
-      this.target.setMetadata(this.key, this.value);
-    },
-  };
-  const REMOVE_METADATA = {
-    type: Symbol('remove-metadata'),
-    apply: function() {
-      this.target.removeMetadata(this.key);
+      this.target.deleteProperty(this.key);
     },
   };
 
@@ -230,9 +224,8 @@ limitations under the License.
     ADD_LISTENER,
     REPLACE_LISTENER,
     REMOVE_LISTENER,
-    ADD_METADATA,
-    REPLACE_METADATA,
-    REMOVE_METADATA,
+    SET_PROPERTY,
+    DELETE_PROPERTY,
     INSERT_CHILD_NODE,
     MOVE_CHILD_NODE,
     REPLACE_CHILD_NODE,
@@ -246,6 +239,7 @@ limitations under the License.
   }, {});
 
   class Patch {
+
     constructor(def) {
       this.type = def.type;
       this.apply = def.apply || opr.Toolkit.noop;
@@ -402,24 +396,16 @@ limitations under the License.
       return patch;
     }
 
-    static addMetadata(key, value, target) {
-      const patch = new Patch(ADD_METADATA);
+    static setProperty(key, value, target) {
+      const patch = new Patch(SET_PROPERTY);
       patch.key = key;
       patch.value = value;
       patch.target = target;
       return patch;
     }
 
-    static replaceMetadata(key, value, target) {
-      const patch = new Patch(REPLACE_METADATA);
-      patch.key = key;
-      patch.value = value;
-      patch.target = target;
-      return patch;
-    }
-
-    static removeMetadata(key, target) {
-      const patch = new Patch(REMOVE_METADATA);
+    static deleteProperty(key, target) {
+      const patch = new Patch(DELETE_PROPERTY);
       patch.key = key;
       patch.target = target;
       return patch;

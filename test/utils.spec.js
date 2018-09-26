@@ -326,24 +326,24 @@ describe('Utils', () => {
       assert(isSupportedAttribute('tabIndex'));
     });
 
-    it('returns true for key attribute', () => {
+    it('returns true for "key" attribute', () => {
       assert.equal(isSupportedAttribute('key'), true);
     });
 
-    it('returns true for class attribute', () => {
+    it('returns true for "class" attribute', () => {
       assert.equal(isSupportedAttribute('class'), true);
     });
 
-    it('returns true for style attribute', () => {
+    it('returns true for "style" attribute', () => {
       assert.equal(isSupportedAttribute('style'), true);
     });
 
-    it('returns true for dataset attribute', () => {
+    it('returns true for "dataset" attribute', () => {
       assert.equal(isSupportedAttribute('dataset'), true);
     });
 
-    it('returns true for metadata attribute', () => {
-      assert.equal(isSupportedAttribute('metadata'), true);
+    it('returns true for "properties" attribute', () => {
+      assert.equal(isSupportedAttribute('properties'), true);
     });
 
     it('returns false for invalid attribute', () => {
