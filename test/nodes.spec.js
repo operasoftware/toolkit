@@ -331,6 +331,27 @@ describe('Nodes', () => {
     });
   });
 
+  describe('get root node', () => {
+
+    it('returns closest root node for a component', () => {
+
+      const container = document.createElement('container');
+
+      // when
+      const app = createApp(container, [
+        'div',
+        [
+          Component,
+        ],
+      ]);
+      const component = app.child.children[0];
+
+      // then
+      assert(component.isComponent());
+      assert.equal(component.rootNode, app);
+    });
+  });
+
   describe('Component', () => {
 
     describe('render', () => {

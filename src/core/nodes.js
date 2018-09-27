@@ -38,6 +38,9 @@ limitations under the License.
     }
 
     get rootNode() {
+      if (this.isRoot()) {
+        return this;
+      }
       if (this.parentNode) {
         return this.parentNode.rootNode;
       }
