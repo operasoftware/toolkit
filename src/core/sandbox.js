@@ -91,7 +91,7 @@ limitations under the License.
             return autobound[property] =
                        createBoundListener(target[property], target, receiver);
           }
-          return undefined;
+          return target[property];
         },
         set: (target, property, value) => true,
       });
