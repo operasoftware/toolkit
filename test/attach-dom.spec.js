@@ -251,36 +251,36 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(element.ref.style.color, '');
     });
 
-    it('sets metadata', () => {
+    it('sets property', () => {
 
       // given
       const element = createElement('div');
 
       // when
-      element.setMetadata('key', 'value');
+      element.setProperty('key', 'value');
 
       // then
-      assert.equal(element.metadata.key, 'value');
+      assert.equal(element.properties.key, 'value');
       assert.equal(element.ref.key, 'value');
     });
 
-    it('removes metadata', () => {
+    it('deletes property', () => {
 
       // given
       const element = createElement('div', {
-        metadata: {
+        properties: {
           key: 'some-key',
         },
       });
 
-      assert.equal(element.metadata.key, 'some-key');
+      assert.equal(element.properties.key, 'some-key');
       assert.equal(element.ref.key, 'some-key');
 
       // when
-      element.removeMetadata('key');
+      element.deleteProperty('key');
 
       // then
-      assert.equal(element.metadata.key, undefined);
+      assert.equal(element.properties.key, undefined);
       assert.equal(element.ref.key, undefined);
     });
   });
@@ -505,13 +505,13 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(subcompoennt.child, null);
     });
 
-    it('creates metadata', () => {
+    it('creates properties', () => {
 
       // when
       const element = utils.createFromTemplate([
         'video',
         {
-          metadata: {
+          properties: {
             muted: true,
           },
         },

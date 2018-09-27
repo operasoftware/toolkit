@@ -361,53 +361,65 @@ describe('Patch element => apply', () => {
     !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, []);
   });
 
-  it('adds metadata', () => {
+  it('sets property', () => {
 
     // given
     const element = utils.createFromTemplate(['div']);
 
-    assert.equal(element.metadata.customAttribute, undefined);
+    assert.equal(element.properties.customAttribute, undefined);
     assert.equal(element.ref.customAttribute, undefined);
 
     // when
-    Patch.addMetadata('customAttribute', 'customValue', element).apply();
+    Patch.setProperty('customAttribute', 'customValue', element).apply();
 
     // then
-    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
   });
 
-  it('removes metadata', () => {
+  it('deletes property', () => {
 
     // given
-    const element = utils.createFromTemplate(
-        ['div', {metadata: {customAttribute: 'customValue'}}]);
+    const element = utils.createFromTemplate([
+      'div',
+      {
+        properties: {
+          customAttribute: 'customValue',
+        },
+      },
+    ]);
 
-    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
 
     // when
-    Patch.removeMetadata('customAttribute', element).apply();
+    Patch.deleteProperty('customAttribute', element).apply();
 
     // then
-    assert.equal(element.metadata.customAttribute, undefined);
+    assert.equal(element.properties.customAttribute, undefined);
     assert.equal(element.ref.customAttribute, undefined);
   });
 
-  it('replaces metadata', () => {
+  it('replaces property', () => {
 
     // given
-    const element = utils.createFromTemplate(
-        ['div', {metadata: {customAttribute: 'customValue'}}]);
+    const element = utils.createFromTemplate([
+      'div',
+      {
+        properties: {
+          customAttribute: 'customValue',
+        },
+      },
+    ]);
 
-    assert.equal(element.metadata.customAttribute, 'customValue');
+    assert.equal(element.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
 
     // when
-    Patch.replaceMetadata('customAttribute', 'anotherValue', element).apply();
+    Patch.setProperty('customAttribute', 'anotherValue', element).apply();
 
     // then
-    assert.equal(element.metadata.customAttribute, 'anotherValue');
+    assert.equal(element.properties.customAttribute, 'anotherValue');
     assert.equal(element.ref.customAttribute, 'anotherValue');
   });
 

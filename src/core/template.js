@@ -73,7 +73,7 @@ limitations under the License.
    *    - dataset (an object representing data attributes)
    *    - classNames (an array of sorted class names)
    *    - style (an object for style property to string value mapping)
-   *    - metadata (an object for properties set directly on DOM element)
+   *    - properties (an object for properties set directly on DOM element)
    *
    * Non-enumerable properties:
    * - template: a reference to the source template.
@@ -185,14 +185,14 @@ limitations under the License.
           }
         }
 
-        // metadata
-        if (props.metadata) {
-          const metadata = {};
-          for (const key of Object.keys(props.metadata)) {
-            metadata[key] = props.metadata[key];
+        // properties
+        if (props.properties) {
+          const properties = {};
+          for (const key of Object.keys(props.properties)) {
+            properties[key] = props.properties[key];
           }
-          if (Object.keys(metadata).length) {
-            normalized.metadata = metadata;
+          if (Object.keys(properties).length) {
+            normalized.properties = properties;
           }
         }
 

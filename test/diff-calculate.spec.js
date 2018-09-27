@@ -457,10 +457,10 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches[0].listener, listener);
     });
 
-    it('adds metadata', () => {
+    it('sets property', () => {
 
       // given
-      const metadata = {
+      const properties = {
         a: 'some-value',
       };
 
@@ -470,7 +470,7 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = [
         'span',
         {
-          metadata,
+          properties,
         },
       ];
 
@@ -480,23 +480,23 @@ describe('Diff => calculate patches', () => {
 
       // then
       assert.equal(patches.length, 1);
-      assert.equal(patches[0].type, Patch.Type.ADD_METADATA);
+      assert.equal(patches[0].type, Patch.Type.SET_PROPERTY);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].key, 'a');
       assert.equal(patches[0].value, 'some-value');
     });
 
-    it('removes metadata', () => {
+    it('deletes property', () => {
 
       // given
-      const metadata = {
+      const properties = {
         a: 'some-value',
       };
 
       const template = [
         'span',
         {
-          metadata,
+          properties,
         },
       ];
       const nextTemplate = [
@@ -509,18 +509,18 @@ describe('Diff => calculate patches', () => {
 
       // then
       assert.equal(patches.length, 1);
-      assert.equal(patches[0].type, Patch.Type.REMOVE_METADATA);
+      assert.equal(patches[0].type, Patch.Type.DELETE_PROPERTY);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].key, 'a');
     });
 
-    it('replaces metadata', () => {
+    it('replaces property', () => {
 
       // given
       const template = [
         'span',
         {
-          metadata: {
+          properties: {
             a: 'xxx',
           },
         },
@@ -528,7 +528,7 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = [
         'span',
         {
-          metadata: {
+          properties: {
             a: 'yyy',
           },
         },
@@ -540,19 +540,19 @@ describe('Diff => calculate patches', () => {
 
       // then
       assert.equal(patches.length, 1);
-      assert.equal(patches[0].type, Patch.Type.REPLACE_METADATA);
+      assert.equal(patches[0].type, Patch.Type.SET_PROPERTY);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].key, 'a');
       assert.equal(patches[0].value, 'yyy');
     });
 
-    it('adds, removes and replaces metadata', () => {
+    it('adds, removes and replaces properties', () => {
 
       // given
       const template = [
         'span',
         {
-          metadata: {
+          properties: {
             a: 'xxx',
             c: 'before',
           },
@@ -561,7 +561,7 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = [
         'span',
         {
-          metadata: {
+          properties: {
             b: 'yyy',
             c: 'after',
           },
@@ -575,16 +575,16 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 3);
 
-      assert.equal(patches[0].type, Patch.Type.ADD_METADATA);
+      assert.equal(patches[0].type, Patch.Type.SET_PROPERTY);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].key, 'b');
       assert.equal(patches[0].value, 'yyy');
 
-      assert.equal(patches[1].type, Patch.Type.REMOVE_METADATA);
+      assert.equal(patches[1].type, Patch.Type.DELETE_PROPERTY);
       assert(patches[1].target.isElement());
       assert.equal(patches[1].key, 'a');
 
-      assert.equal(patches[2].type, Patch.Type.REPLACE_METADATA);
+      assert.equal(patches[2].type, Patch.Type.SET_PROPERTY);
       assert(patches[2].target.isElement());
       assert.equal(patches[2].key, 'c');
       assert.equal(patches[2].value, 'after');

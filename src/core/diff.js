@@ -96,7 +96,7 @@ limitations under the License.
         style,
         className,
         listeners,
-        metadata,
+        properties,
       } = props;
 
       this.attributePatches(element.attrs, attrs, element);
@@ -104,7 +104,7 @@ limitations under the License.
       this.stylePatches(element.style, style, element);
       this.classNamePatches(element.className, className, element);
       this.listenerPatches(element.listeners, listeners, element);
-      this.metadataPatches(element.metadata, metadata, element);
+      this.propertiesPatches(element.properties, properties, element);
       // TODO: handle text as a child
       if (element.text !== null && text === null) {
         this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
@@ -146,7 +146,7 @@ limitations under the License.
       }
     }
 
-    metadataPatches(current = {}, next = {}, target = null) {
+    propertiesPatches(current = {}, next = {}, target = null) {
       const Patch = opr.Toolkit.Patch;
 
       const keys = Object.keys(current);
@@ -159,13 +159,13 @@ limitations under the License.
               !Diff.deepEqual(current[key], next[key]));
 
       for (let key of added) {
-        this.addPatch(Patch.addMetadata(key, next[key], target));
+        this.addPatch(Patch.setProperty(key, next[key], target));
       }
       for (let key of removed) {
-        this.addPatch(Patch.removeMetadata(key, target));
+        this.addPatch(Patch.deleteProperty(key, target));
       }
       for (let key of changed) {
-        this.addPatch(Patch.replaceMetadata(key, next[key], target));
+        this.addPatch(Patch.setProperty(key, next[key], target));
       }
     }
 
