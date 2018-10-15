@@ -26,6 +26,7 @@ window.loadToolkit = async configureLoader => {
   const nodes = await loader.require('core/nodes');
 
   Object.assign(Toolkit.prototype, consts, nodes, {
+    Description: await loader.require('core/description'),
     Diff: await loader.require('core/diff'),
     Lifecycle: await loader.require('core/lifecycle'),
     Patch: await loader.require('core/patch'),
@@ -37,6 +38,7 @@ window.loadToolkit = async configureLoader => {
     Template: await loader.require('core/template'),
     VirtualDOM: await loader.require('core/virtual-dom'),
     utils: await loader.require('core/utils'),
+    noop: () => {},
   });
 
   window.opr = window.opr || {};

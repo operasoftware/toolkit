@@ -1,58 +1,52 @@
 describe('Nodes', () => {
 
-  const {VirtualDOM, VirtualElement, VirtualNode} = opr.Toolkit;
+  const {
+    VirtualDOM,
+    VirtualElement,
+    VirtualNode,
+    Template,
+  } = opr.Toolkit;
 
-  const Component = Symbol.for('Component');
-
-  class SomeRoot extends opr.Toolkit.Root {
-    constructor() {
-      super(null, {}, opr.Toolkit);
-      this.container = document.createElement('main');
+  class Root extends opr.Toolkit.Root {
+    render() {
+      return null;
     }
-  };
+  }
 
-  class ComponentClass extends opr.Toolkit.Component {
-
+  class Component extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
 
-  const createApp = (container, template) => {
-    class RootClass extends opr.Toolkit.Root {
+  const createRoot = (container, template = null) => {
+    class Root extends opr.Toolkit.Root {
       render() {
         return template;
       }
     }
-    const app = new RootClass(null, {}, {plugins: []});
-    app.container = container;
+    const root = VirtualDOM.createRoot(Root);
+    root.container = container;
 
-    const node = utils.createFromTemplate(template);
+    const node = VirtualDOM.createFromDescription(Template.describe(template));
     if (node) {
-      app.appendChild(node);
+      root.appendChild(node);
     }
-    return app;
+    return root;
   };
 
-  const createElement = name => new VirtualElement({element: name});
-
-  beforeEach(() => {
-    sinon.stub(VirtualDOM, 'getComponentClass').callsFake(symbol => {
-      if (typeof symbol === 'string') {
-        symbol = Symbol.for(symbol);
+  const createComponent = (template = null) => {
+    class Component extends opr.Toolkit.Component {
+      render() {
+        return template;
       }
-      switch (symbol) {
-        case Component:
-          return ComponentClass;
-      }
-    });
-  });
+    }
+    return createFromTemplate([Component]);
+  };
 
-  afterEach(() => {
-    VirtualDOM.getComponentClass.restore();
-  });
+  const root = VirtualDOM.createRoot(Root);
+  const createElement = name => VirtualDOM.createFromDescription(Template.describe([name]));
 
-  const root = new SomeRoot();
   const component = new opr.Toolkit.Component({}, [], null);
   const element = createElement('section');
   const comment = new opr.Toolkit.Comment('Dummy', null);
@@ -163,7 +157,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const root = createApp(container, null);
+      const root = createRoot(container, null);
 
       // then
       assert.equal(root.parentElement, null);
@@ -176,7 +170,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           Component,
@@ -197,7 +191,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           Component,
@@ -223,7 +217,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           'span',
@@ -241,7 +235,12 @@ describe('Nodes', () => {
     it('returns null for detached element', () => {
 
       // given
-      const component = new opr.Toolkit.Component();
+      class Component extends opr.Toolkit.Component {
+        render() {
+          return null;
+        }
+      }
+      const component = createFromTemplate([Component]);
 
       // then
       assert.equal(component.parentElement, null);
@@ -256,7 +255,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, null);
+      const app = createRoot(container, null);
 
       // then
       assert.equal(app.container, container);
@@ -268,7 +267,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
       ]);
       const element = app.child;
@@ -284,7 +283,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [Component]);
+      const app = createRoot(container, [Component]);
       const component = app.child;
 
       // then
@@ -298,7 +297,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           'span',
@@ -317,7 +316,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           Component,
@@ -338,7 +337,7 @@ describe('Nodes', () => {
       const container = document.createElement('container');
 
       // when
-      const app = createApp(container, [
+      const app = createRoot(container, [
         'div',
         [
           Component,
@@ -375,11 +374,11 @@ describe('Nodes', () => {
         const container = document.createElement('container');
         container.dispatchEvent = dispatchEvent;
 
-        const root = new SomeRoot();
+        const root = opr.Toolkit.VirtualDOM.createRoot(Root);
         root.container = container;
         const element = createElement('section');
         root.appendChild(element);
-        const component = new opr.Toolkit.Component({}, [], null);
+        const component = createComponent();
         element.insertChild(component);
         const eventName = 'event-name';
         const data = {view: 'speeddial'};
@@ -405,7 +404,13 @@ describe('Nodes', () => {
             return disconnect;
           }
         };
-        const component = new opr.Toolkit.Component();
+
+        class Component extends opr.Toolkit.Component {
+          render() {
+            return null;
+          }
+        }
+        const component = createFromTemplate([Component]);
 
         // when
         component.connectTo(Service);
@@ -427,7 +432,7 @@ describe('Nodes', () => {
             return () => {};
           }
         };
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         let expectedListeners;
 
         // when
@@ -443,7 +448,7 @@ describe('Nodes', () => {
       it('returns DOM element for component with child element', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         const element = createElement('span');
         const span = document.createElement('span');
         element.ref = span;
@@ -456,7 +461,7 @@ describe('Nodes', () => {
       it('returns DOM text node for empty component', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         const text = document.createTextNode('Component');
         component.comment.ref = text;
 
@@ -470,8 +475,8 @@ describe('Nodes', () => {
       it('removes the comment', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
-        const subcomponent = new opr.Toolkit.Component();
+        const component = createComponent();
+        const subcomponent = createComponent();
 
         // when
         component.appendChild(subcomponent);
@@ -488,8 +493,8 @@ describe('Nodes', () => {
         it('between component and subcomponent', () => {
 
           // given
-          const component = new opr.Toolkit.Component();
-          const subcomponent = new opr.Toolkit.Component();
+          const component = createComponent();
+          const subcomponent = createComponent();
 
           // when
           component.appendChild(subcomponent);
@@ -502,7 +507,7 @@ describe('Nodes', () => {
         it('between component and element', () => {
 
           // given
-          const component = new opr.Toolkit.Component();
+          const component = createComponent();
           const element = createElement('span');
 
           // when
@@ -520,8 +525,8 @@ describe('Nodes', () => {
       it('removes the parent-child relation', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
-        const subcomponent = new opr.Toolkit.Component();
+        const component = createComponent();
+        const subcomponent = createComponent();
         component.appendChild(subcomponent);
 
         // when
@@ -534,8 +539,8 @@ describe('Nodes', () => {
 
       it('creates the comment', () => {
         // given
-        const component = new opr.Toolkit.Component();
-        const subcomponent = new opr.Toolkit.Component();
+        const component = createComponent();
+        const subcomponent = createComponent();
         component.appendChild(subcomponent);
 
         // when
@@ -556,7 +561,7 @@ describe('Nodes', () => {
         const container = document.createElement('container');
 
         // when
-        const app = createApp(container, [
+        const app = createRoot(container, [
           'div',
         ]);
         const element = app.child;
@@ -572,7 +577,7 @@ describe('Nodes', () => {
         const container = document.createElement('container');
 
         // when
-        const app = createApp(container, [
+        const app = createRoot(container, [
           Component,
           [
             'div',
@@ -593,7 +598,7 @@ describe('Nodes', () => {
         const container = document.createElement('container');
 
         // when
-        const app = createApp(container, [
+        const app = createRoot(container, [
           Component,
           [
             Component,
@@ -617,7 +622,7 @@ describe('Nodes', () => {
       it('returns null for empty component', () => {
 
         // when
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
 
         // then
         assert.equal(component.childElement, null);
@@ -626,7 +631,7 @@ describe('Nodes', () => {
       it('returns null for component with comment node', () => {
 
         // when
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         component.appendChild(new opr.Toolkit.Comment());
 
         // then
@@ -639,7 +644,7 @@ describe('Nodes', () => {
       it('returns a comment for a new component', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
 
         // then
         assert(component.placeholder);
@@ -650,7 +655,7 @@ describe('Nodes', () => {
       it('returns null for a component with a child element', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         const element = createElement('span');
 
         // when
@@ -664,8 +669,8 @@ describe('Nodes', () => {
          () => {
 
            // given
-           const component = new opr.Toolkit.Component();
-           const subcomponent = new opr.Toolkit.Component();
+           const component = createComponent();
+           const subcomponent = createComponent();
 
            // when
            component.appendChild(subcomponent);
@@ -679,8 +684,8 @@ describe('Nodes', () => {
       it('returns a comment for a component with no child', () => {
 
         // given
-        const component = new opr.Toolkit.Component();
-        const subcomponent = new opr.Toolkit.Component();
+        const component = createComponent();
+        const subcomponent = createComponent();
         const element = createElement('span');
 
         // when
@@ -707,21 +712,20 @@ describe('Nodes', () => {
   describe('Root', () => {
 
     const container = document.createElement('body');
-    const settings = {plugins: []};
-    const component = new SomeRoot();
-    component.container = container;
+    const root = VirtualDOM.createRoot(Root);
+    root.container = container;
 
     describe('get initial state', () => {
 
       it('by default returns an empty object', async () => {
-        assert.deepEqual(await component.getInitialState(), {});
+        assert.deepEqual(await root.getInitialState(), {});
       });
     });
 
     describe('get reducers', () => {
 
       it('by default returns an empty array', () => {
-        assert.deepEqual(component.getReducers(), []);
+        assert.deepEqual(root.getReducers(), []);
       });
     });
   });
@@ -748,7 +752,7 @@ describe('Nodes', () => {
 
         // given
         const element = createElement('section');
-        const child = new opr.Toolkit.Component();
+        const child = createComponent();
 
         // when
         element.insertChild(child);
@@ -762,9 +766,9 @@ describe('Nodes', () => {
 
         // given
         const element = createElement('section');
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         element.insertChild(component);
-        const child = new opr.Toolkit.Component();
+        const child = createComponent();
 
         // when
         element.insertChild(child, 0);
@@ -778,7 +782,7 @@ describe('Nodes', () => {
 
         // given
         const element = createElement('section');
-        const firstComponent = new opr.Toolkit.Component();
+        const firstComponent = createComponent();
         element.insertChild(firstComponent);
         const div = createElement('div');
         element.insertChild(div);
@@ -796,7 +800,7 @@ describe('Nodes', () => {
 
         // given
         const element = createElement('section');
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         element.insertChild(component);
         const child = createElement('div');
 
@@ -816,7 +820,7 @@ describe('Nodes', () => {
 
         // given
         const parent = createElement('section');
-        const component = new opr.Toolkit.Component();
+        const component = createComponent();
         parent.insertChild(component);
         const div = createElement('div');
         parent.insertChild(div);
@@ -837,7 +841,7 @@ describe('Nodes', () => {
 
         // given
         const parent = createElement('section');
-        const child = new opr.Toolkit.Component();
+        const child = createComponent();
         parent.insertChild(child);
 
         // when
@@ -851,7 +855,7 @@ describe('Nodes', () => {
       it('ignores node not being child', () => {
 
         const parent = createElement('section');
-        const node = new opr.Toolkit.Component();
+        const node = createComponent();
 
         // when
         assert.throws(() => parent.removeChild(node));
@@ -863,7 +867,7 @@ describe('Nodes', () => {
       it('creates a dispatcher', () => {
 
         // given
-        const root = new SomeRoot();
+        const root = createRoot();
         root.dispatch = sinon.spy();
         root.reducer = () => {};
         root.reducer.commands = {

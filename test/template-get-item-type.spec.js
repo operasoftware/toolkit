@@ -1,77 +1,55 @@
 describe('Template => get item type', () => {
 
-  const Template = opr.Toolkit.Template;
+  const {
+    Template,
+    VirtualDOM,
+  } = opr.Toolkit;
   const ItemType = Template.ItemType;
 
   it('returns "string" for a string', () => {
-
-    // when
-    const type = Template.getItemType('string');
-
-    // then
-    assert.equal(type, ItemType.STRING);
+    assert.equal(Template.getItemType('foo'), 'string');
   });
 
   it('returns "number" for a number', () => {
-
-    // when
-    const type = Template.getItemType(13);
-
-    // then
-    assert.equal(type, ItemType.NUMBER);
+    assert.equal(Template.getItemType(666), 'number');
   });
 
   it('returns "boolean" for a boolean', () => {
-
-    // when
-    const type = Template.getItemType(true);
-
-    // then
-    assert.equal(type, ItemType.BOOLEAN);
+    assert.equal(Template.getItemType(false), 'boolean');
+    assert.equal(Template.getItemType(true), 'boolean');
   });
 
-  it('returns "component" for a symbol', () => {
-
-    // when
-    const type = Template.getItemType(Symbol.for('component'));
-
-    // then
-    assert.equal(type, ItemType.COMPONENT);
+  it('returns "symbol" for a symbol', () => {
+    assert.equal(Template.getItemType(Symbol.for('some/path')), 'symbol');
   });
 
   it('returns "null" for null', () => {
-
-    // when
-    const type = Template.getItemType(null);
-
-    // then
-    assert.equal(type, ItemType.NULL);
+    assert.equal(Template.getItemType(null), 'null');
   });
 
   it('returns "undefined" for undefined', () => {
-
-    // when
-    const type = Template.getItemType(undefined);
-
-    // then
-    assert.equal(type, ItemType.UNDEFINED);
+    assert.equal(Template.getItemType(undefined), 'undefined');
   });
 
-  it('returns "element" for an array', () => {
-
-    // when
-    const type = Template.getItemType([]);
-
-    // then
-    assert.equal(type, ItemType.ELEMENT);
+  it('returns "node" for an array', () => {
+    assert.equal(Template.getItemType([]), 'node');
   });
 
   it('returns "props" for an object', () => {
+    assert.equal(Template.getItemType({}), 'props');
+  });
 
-    // when
-    const type = Template.getItemType({});
+  it('returns "function" for a function', () => {
+    assert.equal(Template.getItemType(props => null), 'function');
+  });
 
-    // then
-    assert.equal(type, ItemType.PROPS);
+  it('returns "unknown" for a component', () => {
+    class Component extends opr.Toolkit.Component {
+      render() {
+        return null;
+      }
+    }
+    const component = createFromTemplate([Component]);
+    assert.equal(Template.getItemType(component), 'unknown');
   });
 });

@@ -1,25 +1,27 @@
 describe('Virtual DOM', () => {
 
-  const {Renderer, VirtualDOM} = opr.Toolkit;
+  const {
+    Renderer,
+    VirtualDOM,
+    Template,
+  } = opr.Toolkit;
+
   const container = document.createElement('container');
 
   class SomeRoot extends opr.Toolkit.Root {
-    constructor() {
-      super(null, {}, opr.Toolkit);
-      this.container = container;
+    render() {
+      return null;
     }
   }
 
-  const root = new SomeRoot();
+  const root = VirtualDOM.createRoot(SomeRoot);
 
-  const render = (symbol, props) => {
-    const component = VirtualDOM.createComponent(symbol, props, [], root, root);
-    const description = root.renderer.render(component, props);
-    const child = VirtualDOM.createFromDescription(description, root, root);
-    if (child) {
-      component.appendChild(child);
-    }
-    return component;
+  const render = (ComponentClass, props = {}) => {
+    const description = Template.describe([
+      ComponentClass,
+      props,
+    ]);
+    return VirtualDOM.createFromDescription(description);
   };
 
   describe('=> render component', () => {
@@ -27,7 +29,7 @@ describe('Virtual DOM', () => {
     it('creates a leaf with a single element', () => {
 
       // given
-      class LeafElement extends opr.Toolkit.Component {
+      class LeafComponent extends opr.Toolkit.Component {
         render() {
           return [
             'a',
@@ -39,11 +41,9 @@ describe('Virtual DOM', () => {
         }
       };
 
-      loader.define('LeafElement', LeafElement);
-
       const label = 'Example';
       const url = 'http://www.example.com';
-      const component = render('LeafElement', {url, label});
+      const component = render(LeafComponent, {url, label});
 
       // then
       assert(component.isComponent());
@@ -52,15 +52,15 @@ describe('Virtual DOM', () => {
       assert(component.child.isElement());
       assert.equal(component.child.parentNode, component);
 
-      assert.equal(component.child.name, 'a');
-      assert.equal(component.child.text, label);
-      assert.equal(component.child.attrs.href, url);
+      assert.equal(component.child.description.name, 'a');
+      assert.equal(component.child.description.text, label);
+      assert.equal(component.child.description.attrs.href, url);
     });
 
     it('creates a leaf with nested elements', () => {
 
       // given
-      const NestedElements = class extends opr.Toolkit.Component {
+      class NestedElements extends opr.Toolkit.Component {
         render() {
           return [
             'div',
@@ -79,14 +79,18 @@ describe('Virtual DOM', () => {
             ],
           ];
         }
-      };
+      }
 
       loader.define('NestedElements', NestedElements);
 
       const label = 'Example';
       const url = 'http://www.example.com';
       const onClick = () => {};
-      const component = render('NestedElements', {url, label, onClick});
+      const component = render(NestedElements, {
+        url,
+        label,
+        onClick,
+      });
 
       // then
       const divElement = component.child;
@@ -99,7 +103,7 @@ describe('Virtual DOM', () => {
       assert(divElement.isElement());
       assert.equal(divElement.parentNode, component);
 
-      assert.equal(divElement.name, 'div');
+      assert.equal(divElement.description.name, 'div');
       assert(divElement.children);
       assert.equal(divElement.children.length, 1);
 
@@ -107,8 +111,8 @@ describe('Virtual DOM', () => {
       assert.equal(spanElement.parentNode, divElement);
       assert.equal(spanElement.parentElement, divElement);
 
-      assert.equal(spanElement.name, 'span');
-      assert.equal(spanElement.listeners.onClick, onClick);
+      assert.equal(spanElement.description.name, 'span');
+      assert.equal(spanElement.description.listeners.onClick, onClick);
       assert(spanElement.children);
       assert.equal(spanElement.children.length, 1);
 
@@ -116,28 +120,32 @@ describe('Virtual DOM', () => {
       assert.equal(linkElement.parentNode, spanElement);
       assert.equal(linkElement.parentElement, spanElement);
 
-      assert.equal(linkElement.name, 'a');
-      assert(linkElement.attrs.href, url);
-      assert(linkElement.text, label);
+      assert.equal(linkElement.description.name, 'a');
+      assert(linkElement.description.attrs.href, url);
+      assert(linkElement.description.text, label);
     });
 
     it('creates a branch with nested components', () => {
 
-      const ApplicationComponent = Symbol.for('application');
-      const ParentComponent = Symbol.for('parent');
-      const ChildComponent = Symbol.for('child');
-
       // given
-      const Application = class extends opr.Toolkit.Component {
-        render() {
-          return [ParentComponent, ['p', {class: 'passed-from-application'}]];
-        }
-      };
-
-      const Parent = class extends opr.Toolkit.Component {
+      class Application extends opr.Toolkit.Component {
         render() {
           return [
-            ChildComponent,
+            Parent,
+            [
+              'p',
+              {
+                class: 'passed-from-application',
+              },
+            ],
+          ];
+        }
+      }
+
+      class Parent extends opr.Toolkit.Component {
+        render() {
+          return [
+            Child,
             [
               'div',
               {
@@ -147,9 +155,9 @@ describe('Virtual DOM', () => {
             ],
           ];
         }
-      };
+      }
 
-      const Child = class extends opr.Toolkit.Component {
+      class Child extends opr.Toolkit.Component {
         render() {
           return [
             'span',
@@ -159,13 +167,9 @@ describe('Virtual DOM', () => {
             ...this.children,
           ];
         }
-      };
+      }
 
-      loader.define('application', Application);
-      loader.define('parent', Parent);
-      loader.define('child', Child);
-
-      const component = render('application');
+      const component = render(Application);
 
       // then
       assert(component.isComponent());

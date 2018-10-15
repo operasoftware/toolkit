@@ -10,6 +10,7 @@
   <script src="web/mocha.js"></script>
   <script src="web/assert.js"></script>
   <script src="web/sinon.js"></script>
+  <script src="config/global.js"></script>
   <script src="/src/debug.js"></script>
   <script>
     (async () => {
@@ -50,8 +51,6 @@
         }
       };
 
-      window.utils = await loader.require('config/utils');
-
       const loadTest = async name => new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = `${name}.js`;
@@ -64,6 +63,7 @@
         document.head.appendChild(script);
       });
 
+      await loadTest('description.spec');
       await loadTest('diff-calculate.spec');
       await loadTest('diff-deep-equal.spec');
       await loadTest('attach-dom.spec');
@@ -78,13 +78,13 @@
       await loadTest('template-describe.spec');
       await loadTest('template-get-item-type.spec');
       await loadTest('template-get-value.spec');
-      await loadTest('template-validate.spec');
+      await loadTest('template-normalize.spec');
       await loadTest('toolkit.spec');
       await loadTest('utils.spec');
-      await loadTest('virtual-dom.spec');
       await loadTest('virtual-dom-create-component.spec');
       await loadTest('virtual-dom-create-element.spec');
       await loadTest('virtual-element.spec');
+
       mocha.checkLeaks();
       mocha.run();
     })();

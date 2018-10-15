@@ -19,14 +19,11 @@ limitations under the License.
       typeof target[property] === 'function';
 
   const delegated = [
-    'children',
     'commands',
     'constructor',
     'container',
     'dispatch',
     'elementName',
-    'getKey',
-    'id',
     'preventDefault',
     'stopEvent',
   ];
@@ -52,14 +49,15 @@ limitations under the License.
     static create(component) {
       const blacklist =
           Object.getOwnPropertyNames(opr.Toolkit.Component.prototype);
+      const state = {};
       const autobound = {};
       return new Proxy(component, {
         get: (target, property, receiver) => {
           if (property === 'props') {
-            if (target.isRoot()) {
-              return target.state || target.props || {};
-            }
-            return target.props || {};
+            return state.props || target.state || {};
+          }
+          if (property === 'children') {
+            return state.children || [];
           }
           if (property === 'ref') {
             if (target.isRoot()) {
@@ -93,7 +91,17 @@ limitations under the License.
           }
           return target[property];
         },
-        set: (target, property, value) => true,
+        set: (target, property, value) => {
+          if (property === 'props') {
+            state.props = value;
+            return true;
+          }
+          if (property === 'children') {
+            state.children = value || [];
+            return true;
+          }
+          return false;
+        },
       });
     }
   }

@@ -1,6 +1,10 @@
 describe('Renderer', () => {
 
-  const Renderer = opr.Toolkit.Renderer;
+  const {
+    Renderer,
+    Template,
+    VirtualDOM,
+  } = opr.Toolkit;
 
   class SomeRoot extends opr.Toolkit.Root {
     constructor() {
@@ -8,9 +12,15 @@ describe('Renderer', () => {
     }
   }
 
+  class Root extends opr.Toolkit.Root {
+    render() {
+      return null;
+    }
+  }
+
   const createRenderer = () => {
-    const root = new SomeRoot();
-    return new opr.Toolkit.Renderer(root);
+    const root = VirtualDOM.createRoot(Root);
+    return root.renderer;
   };
 
   it('returns empty list of patches for equal states', () => {

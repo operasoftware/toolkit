@@ -21,6 +21,7 @@ limitations under the License.
   const nodes = loader.get('core/nodes');
 
   Object.assign(Toolkit.prototype, consts, nodes, {
+    Description: loader.get('core/description'),
     Diff: loader.get('core/diff'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
@@ -32,6 +33,7 @@ limitations under the License.
     Template: loader.get('core/template'),
     VirtualDOM: loader.get('core/virtual-dom'),
     utils: loader.get('core/utils'),
+    noop: () => {},
   });
 
   window.opr = window.opr || {};

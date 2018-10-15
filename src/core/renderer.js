@@ -23,14 +23,56 @@ limitations under the License.
 
     /*
      * Calls the component render method and transforms the returned template
-     * into the normalized description of the rendered node.
+     * into the normalised description of the rendered node.
      */
-    render(component) {
+    static render(component, props = {}, children = []) {
+      Object.assign(component.sandbox, {
+        props,
+        children,
+      });
       const template = component.render.call(component.sandbox);
-      opr.Toolkit.assert(
-          template !== undefined,
-          'Invalid undefined template returned when rendering:', component);
       return opr.Toolkit.Template.describe(template);
+    }
+
+    /*
+     * Creates a new DOM Element based on the specified description.
+     */
+    static createElement(description) {
+      const element = document.createElement(description.name);
+      if (description.text) {
+        element.textContent = description.text;
+      }
+      if (description.listeners) {
+        Object.entries(description.listeners).forEach(([name, listener]) => {
+          const event = opr.Toolkit.utils.getEventName(name);
+          element.addEventListener(event, listener);
+        });
+      }
+      if (description.attrs) {
+        Object.entries(description.attrs).forEach(([attr, value]) => {
+          const name = opr.Toolkit.utils.getAttributeName(attr);
+          element.setAttribute(name, value);
+        });
+      }
+      if (description.dataset) {
+        Object.entries(description.dataset).forEach(([attr, value]) => {
+          element.dataset[attr] = value;
+        });
+      }
+      if (description.class) {
+        element.className = description.class;
+      }
+      if (description.style) {
+        Object.entries(description.style).forEach(([prop, value]) => {
+          element.style[prop] = value;
+        });
+      }
+      if (description.properties) {
+        Object.entries(description.properties).forEach(([prop, value]) => {
+          element[prop] = value;
+        });
+      }
+      return element;
     }
 
     updateDOM(command, prevState, nextState) {
@@ -59,29 +101,10 @@ limitations under the License.
     }
 
     update(prevState, nextState) {
-
-      const {Diff, Lifecycle, VirtualDOM} = opr.Toolkit;
-
-      if (Diff.deepEqual(prevState, nextState)) {
-        return [];
-      }
-
-      this.root.state =
-          VirtualDOM.normalizeProps(this.root.constructor, nextState);
-
-      const diff = new Diff(this.root);
-      const initial = this.root.description === undefined;
-      const patches = diff.rootPatches(prevState, nextState, initial);
-
-      if (patches.length) {
-        Lifecycle.beforeUpdate(patches);
-        for (const patch of patches) {
-          patch.apply();
-        }
-        Lifecycle.afterUpdate(patches);
-      }
-
-      return patches;
+      const diff = new opr.Toolkit.Diff(this.root);
+      diff.rootPatches(prevState, nextState);
+      diff.apply();
+      return diff.patches;
     }
 
     destroy() {

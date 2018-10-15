@@ -6,7 +6,7 @@ describe('Template => get value', () => {
     [undefined, null],
     [null, null],
     ['', ''],
-    [[], null],
+    [[], ''],
     [{}, null],
     [5, '5'],
     ['inherit', 'inherit'],
@@ -16,7 +16,7 @@ describe('Template => get value', () => {
 
   resolved.forEach(([v1, v2, d1, d2]) => {
     it(`${d1 || JSON.stringify(v1)} === ${d2 || JSON.stringify(v2)}`, () => {
-      assert.equal(Template.getAttributeValue(v1), v2);
+      assert.equal(Template.getAttribute(v1), v2);
     });
   });
 
@@ -30,14 +30,15 @@ describe('Template => get value', () => {
       scale: '',
       perspective: () => {},
       unknown: 666,
-
     };
 
     // when
-    const value = Template.getStyleValue(transform, 'transform');
+    const value = Template.getStyle({transform}, 'transform');
 
     // then
-    assert.equal(value, 'translate(10px)');
+    assert.deepEqual(value, {
+      transform: 'translate(10px)',
+    });
   })
 
   it('resolves filter value', () => {
@@ -54,10 +55,12 @@ describe('Template => get value', () => {
     };
 
     // when
-    const value = Template.getStyleValue(filter, 'filter');
+    const value = Template.getStyle({filter}, 'filter');
 
     // then
-    assert.equal(value, 'contrast(10) blur(4px)');
+    assert.deepEqual(value, {
+      filter: 'contrast(10) blur(4px)',
+    });
   })
 
 });

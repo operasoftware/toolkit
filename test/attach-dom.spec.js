@@ -1,45 +1,37 @@
 describe('Virtual Element => Attach DOM', () => {
 
-  const {Template, VirtualDOM, VirtualElement, VirtualNode} = opr.Toolkit;
+  const {
+    Template,
+    VirtualDOM,
+    VirtualElement,
+    VirtualNode,
+  } = opr.Toolkit;
 
-  const Component = Symbol.for('Component');
-  const Subcomponent = Symbol.for('Subcomponent');
+  class Root extends opr.Toolkit.Root {
+    render() {
+      return null;
+    }
+  }
 
-  const ComponentClass = class extends opr.Toolkit.Component {
+  class Component extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
-  const SubcomponentClass = class extends opr.Toolkit.Component {
+  class Subcomponent extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
   };
 
-  const getComponentClass = symbol => {
-    if (typeof symbol === 'string') {
-      symbol = Symbol.for(symbol);
-    }
-    switch (symbol) {
-      case Component:
-        return ComponentClass;
-      case Subcomponent:
-        return SubcomponentClass;
-    }
+  const createElement = (name, props = {}, content = []) => {
+    const template = typeof content === 'string' ? [name, props, content] : [name, props, ...content];
+    const description = Template.describe(template);
+    const root = VirtualDOM.createRoot(Root);
+    const element = VirtualDOM.createFromDescription(description, root);
+    root.appendChild(element);
+    return element;
   };
-
-  const createElement =
-      (name, props = {}, content = []) => {
-        const details = {
-          type: 'element',
-          element: name,
-          children: Array.isArray(content) ? content : undefined,
-          text: typeof content === 'string' ? content : null,
-          props,
-        };
-        const description = Template.normalize(details);
-        return VirtualDOM.createFromDescription(description, null, null);
-      }
 
   describe('=> DOM operations', () => {
 
@@ -52,7 +44,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setTextContent('text content');
 
       // then
-      assert.equal(element.text, 'text content');
+      assert.equal(element.description.text, 'text content');
       assert.equal(element.ref.textContent, 'text content');
     });
 
@@ -66,7 +58,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.addListener('onClick', listener);
 
       // then
-      assert.equal(element.listeners.onClick, listener);
+      assert.equal(element.description.listeners.onClick, listener);
       !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
         click: [listener],
       });
@@ -80,7 +72,7 @@ describe('Virtual Element => Attach DOM', () => {
         onChange: listener,
       });
 
-      assert.equal(element.listeners.onChange, listener);
+      assert.equal(element.description.listeners.onChange, listener);
       !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
         change: [listener],
       });
@@ -89,7 +81,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeListener('onChange', listener);
 
       // then
-      assert.equal(element.listeners.onChange, undefined);
+      assert.equal(element.description.listeners, undefined);
       !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
         change: [],
       });
@@ -104,7 +96,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setAttribute('tabIndex', 10);
 
       // then
-      assert.equal(element.attrs.tabIndex, 10);
+      assert.equal(element.description.attrs.tabIndex, 10);
       assert.equal(element.ref.getAttribute('tabindex'), '10');
       assert.equal(element.ref.attributes.length, 1);
     });
@@ -118,7 +110,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setAttribute('acceptCharset', 'UTF8');
 
       // then
-      assert.equal(element.attrs.acceptCharset, 'UTF8');
+      assert.equal(element.description.attrs.acceptCharset, 'UTF8');
       assert.equal(element.ref.getAttribute('accept-charset'), 'UTF8');
       assert.equal(element.ref.attributes.length, 1);
     });
@@ -131,7 +123,7 @@ describe('Virtual Element => Attach DOM', () => {
         value,
       });
 
-      assert.equal(element.attrs.value, value);
+      assert.equal(element.description.attrs.value, value);
       assert.equal(element.ref.attributes.length, 1);
       assert.equal(element.ref.getAttribute('value'), value);
 
@@ -139,7 +131,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeAttribute('value');
 
       // then
-      assert.equal(element.attrs.value, undefined);
+      assert.equal(element.description.attrs, undefined);
       assert.equal(element.ref.attributes.length, 0);
       assert.equal(element.ref.getAttribute('value'), null);
     });
@@ -154,7 +146,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setDataAttribute('targetUrl', url);
 
       // then
-      assert.equal(element.dataset.targetUrl, url);
+      assert.equal(element.description.dataset.targetUrl, url);
       assert.equal(element.ref.dataset.targetUrl, url);
       assert.equal(element.ref.getAttribute('data-target-url'), url);
       assert.equal(element.ref.attributes.length, 1);
@@ -170,7 +162,7 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.dataset.someUrl, someUrl);
+      assert.equal(element.description.dataset.someUrl, someUrl);
       assert.equal(element.ref.dataset.someUrl, someUrl);
       assert.equal(element.ref.getAttribute('data-some-url'), someUrl);
       assert.equal(element.ref.attributes.length, 1);
@@ -179,7 +171,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeDataAttribute('someUrl');
 
       // then
-      assert.equal(element.dataset.someUrl, undefined);
+      assert.equal(element.description.dataset, undefined);
       assert.equal(element.ref.dataset.someUrl, null);
       assert.equal(element.ref.getAttribute('data-some-url'), undefined);
       assert.equal(element.ref.attributes.length, 0);
@@ -194,7 +186,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setClassName('some-name');
 
       // then
-      assert.deepEqual(element.className, 'some-name');
+      assert.equal(element.description.class, 'some-name');
       assert.deepEqual([...element.ref.classList], ['some-name']);
     });
 
@@ -205,14 +197,14 @@ describe('Virtual Element => Attach DOM', () => {
         class: ['to-be-removed'],
       });
 
-      assert.equal(element.className, 'to-be-removed');
+      assert.equal(element.description.class, 'to-be-removed');
       assert.deepEqual([...element.ref.classList], ['to-be-removed']);
 
       // when
       element.setClassName('');
 
       // then
-      assert.deepEqual(element.className, '');
+      assert.deepEqual(element.description.class, '');
       assert.deepEqual([...element.ref.classList], []);
     });
 
@@ -225,7 +217,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setStyleProperty('backgroundColor', 'red');
 
       // then
-      assert.equal(element.style.backgroundColor, 'red');
+      assert.equal(element.description.style.backgroundColor, 'red');
       assert.equal(element.ref.style.backgroundColor, 'red');
       assert.equal(element.ref.style['background-color'], 'red');
     });
@@ -240,14 +232,14 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.style.color, 'green');
+      assert.equal(element.description.style.color, 'green');
       assert.equal(element.ref.style.color, 'green');
 
       // when
       element.removeStyleProperty('color');
 
       // then
-      assert.equal(element.style.color, undefined);
+      assert.equal(element.description.style, undefined);
       assert.equal(element.ref.style.color, '');
     });
 
@@ -260,7 +252,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setProperty('key', 'value');
 
       // then
-      assert.equal(element.properties.key, 'value');
+      assert.equal(element.description.properties.key, 'value');
       assert.equal(element.ref.key, 'value');
     });
 
@@ -273,14 +265,14 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.properties.key, 'some-key');
+      assert.equal(element.description.properties.key, 'some-key');
       assert.equal(element.ref.key, 'some-key');
 
       // when
       element.deleteProperty('key');
 
       // then
-      assert.equal(element.properties.key, undefined);
+      assert.equal(element.description.properties, undefined);
       assert.equal(element.ref.key, undefined);
     });
   });
@@ -293,7 +285,7 @@ describe('Virtual Element => Attach DOM', () => {
       const element = createElement('span');
 
       // then
-      assert.equal(element.name, 'span')
+      assert.equal(element.description.name, 'span')
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert(!element.ref.textContent);
@@ -305,7 +297,7 @@ describe('Virtual Element => Attach DOM', () => {
       const element = createElement('span', {}, 'Text');
 
       // then
-      assert.equal(element.name, 'span')
+      assert.equal(element.description.name, 'span')
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert.equal(element.ref.textContent, 'Text');
@@ -349,13 +341,13 @@ describe('Virtual Element => Attach DOM', () => {
 
   describe('=> create element', () => {
 
-    beforeEach(() => {
-      sinon.stub(VirtualDOM, 'getComponentClass').callsFake(getComponentClass);
-    });
-
-    afterEach(() => {
-      VirtualDOM.getComponentClass.restore();
-    });
+    const createFromTemplate = template => {
+      const root = VirtualDOM.createRoot(Root);
+      const node =
+          VirtualDOM.createFromDescription(Template.describe(template), root);
+      root.appendChild(node);
+      return node;
+    };
 
     it('creates a single element', () => {
 
@@ -363,8 +355,8 @@ describe('Virtual Element => Attach DOM', () => {
       const element = createElement('div');
 
       // then
-      assert.equal(element.name, 'div');
-      assert.deepEqual(element.children, []);
+      assert.equal(element.description.name, 'div');
+      assert.equal(element.children, undefined);
       assert.equal(element.ref.tagName, 'DIV');
       assert.deepEqual(element.ref.children, []);
     });
@@ -372,7 +364,7 @@ describe('Virtual Element => Attach DOM', () => {
     it('creates two nested elements', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           'span',
@@ -380,17 +372,17 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'div');
+      assert.equal(element.description.name, 'div');
       assert.equal(element.ref.tagName, 'DIV');
 
-      assert.equal(element.children[0].name, 'span');
+      assert.equal(element.children[0].description.name, 'span');
       assert.equal(element.ref.children[0].tagName, 'SPAN');
     });
 
     it('creates three nested elements', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           'span',
@@ -401,24 +393,24 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'div');
+      assert.equal(element.description.name, 'div');
       assert.equal(element.ref.tagName, 'DIV');
 
       const span = element.children[0];
       assert.equal(element.ref.children[0], span.ref);
-      assert.equal(span.name, 'span');
+      assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
 
       const link = span.children[0];
       assert.equal(span.ref.children[0], link.ref);
-      assert.equal(link.name, 'a');
+      assert.equal(link.description.name, 'a');
       assert.equal(link.ref.tagName, 'A');
     });
 
     it('supports component present within the tree', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           Component,
@@ -429,21 +421,21 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'div');
+      assert.equal(element.description.name, 'div');
       assert.equal(element.ref.tagName, 'DIV');
 
       const component = element.children[0];
-      assert.equal(component.constructor, ComponentClass);
+      assert.equal(component.constructor, Component);
 
       const span = component.child;
-      assert.equal(span.name, 'span');
+      assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
     });
 
     it('supports nested components present within the tree', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           Component,
@@ -457,25 +449,25 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'div');
+      assert.equal(element.description.name, 'div');
       assert.equal(element.ref.tagName, 'DIV');
 
       const component = element.children[0];
-      assert.equal(component.constructor, ComponentClass);
+      assert.equal(component.constructor, Component);
       assert(component instanceof opr.Toolkit.Component);
 
       const subcomponent = component.child;
-      assert.equal(subcomponent.constructor, SubcomponentClass);
+      assert.equal(subcomponent.constructor, Subcomponent);
 
       const span = subcomponent.child;
-      assert.equal(span.name, 'span');
+      assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
     });
 
     it('supports component with no children', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'div',
         [
           Component,
@@ -489,26 +481,26 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'div');
+      assert.equal(element.description.name, 'div');
       assert.equal(element.ref.tagName, 'DIV');
 
       const component = element.children[0];
-      assert.equal(component.constructor, ComponentClass);
+      assert.equal(component.constructor, Component);
       assert(component.isComponent());
 
       const span = component.child;
-      assert.equal(span.name, 'span');
+      assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
 
       const subcompoennt = span.children[0];
-      assert.equal(subcompoennt.constructor, SubcomponentClass);
+      assert.equal(subcompoennt.constructor, Subcomponent);
       assert.equal(subcompoennt.child, null);
     });
 
     it('creates properties', () => {
 
       // when
-      const element = utils.createFromTemplate([
+      const element = createFromTemplate([
         'video',
         {
           properties: {
@@ -518,7 +510,7 @@ describe('Virtual Element => Attach DOM', () => {
       ]);
 
       // then
-      assert.equal(element.name, 'video');
+      assert.equal(element.description.name, 'video');
       assert.equal(element.ref.tagName, 'VIDEO');
 
       assert.equal(element.ref.muted, true);
@@ -529,19 +521,19 @@ describe('Virtual Element => Attach DOM', () => {
       it('for a component with no child', () => {
 
         // when
-        const component = utils.createFromTemplate([
+        const component = createFromTemplate([
           Component,
         ]);
 
         // then
         assert(component.placeholder);
-        assert(component.placeholder.text.includes('ComponentClass'));
+        assert(component.placeholder.text.includes('Component'));
       });
 
       it('for nested components with no child element', () => {
 
         // given
-        const component = utils.createFromTemplate([
+        const component = createFromTemplate([
           Component,
           [
             Component,
@@ -553,7 +545,7 @@ describe('Virtual Element => Attach DOM', () => {
 
         // then
         assert(component.placeholder);
-        assert(component.placeholder.text.includes('SubcomponentClass'));
+        assert(component.placeholder.text.includes('Subcomponent'));
       });
     });
   });

@@ -23,6 +23,7 @@ global.sinon = require('sinon');
   const nodes = require('../../src/core/nodes.js');
 
   Object.assign(Toolkit.prototype, consts, nodes, {
+    Description: require('../../src/core/description.js'),
     Diff: require('../../src/core/diff.js'),
     Lifecycle: require('../../src/core/lifecycle.js'),
     Patch: require('../../src/core/patch.js'),
@@ -34,6 +35,7 @@ global.sinon = require('sinon');
     Template: require('../../src/core/template.js'),
     VirtualDOM: require('../../src/core/virtual-dom.js'),
     utils: require('../../src/core/utils.js'),
+    noop: () => {},
   });
 
   const toolkit = new Toolkit();
@@ -51,8 +53,6 @@ global.sinon = require('sinon');
   toolkit.configure({
     debug: true,
   });
-
-  global.utils = require('./utils.js');
 
   global.CustomEvent = class {
 
@@ -75,3 +75,5 @@ global.sinon = require('sinon');
     });
   };
 }
+
+require('./global.js');

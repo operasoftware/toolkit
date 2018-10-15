@@ -23,14 +23,17 @@ limitations under the License.
   };
   const UPDATE_COMPONENT = {
     type: Symbol('update-component'),
+    apply: function() {
+    },
   };
 
   const ADD_ELEMENT = {
     type: Symbol('add-element'),
     apply: function() {
-      const ref = this.parent.placeholder.ref;
+      const comment = this.parent.placeholder;
       this.parent.appendChild(this.element);
-      ref.replaceWith(this.element.ref);
+      // this.element.attachDOM();
+      comment.ref.replaceWith(this.element.ref);
     },
   };
   const REMOVE_ELEMENT = {
@@ -45,9 +48,10 @@ limitations under the License.
   const ADD_COMPONENT = {
     type: Symbol('add-component'),
     apply: function() {
-      const ref = this.parent.placeholder.ref;
+      const placeholder = this.parent.placeholder.ref;
+      // this.component.attachDOM();
       this.parent.appendChild(this.component);
-      ref.replaceWith(this.component.ref);
+      placeholder.replaceWith(this.component.ref);
     },
   };
   const REMOVE_COMPONENT = {
@@ -63,6 +67,7 @@ limitations under the License.
     type: Symbol('replace-child'),
     apply: function() {
       const ref = this.child.ref;
+      // this.node.attachDOM();
       this.parent.replaceChild(this.child, this.node);
       ref.replaceWith(this.node.ref);
     },
@@ -168,6 +173,7 @@ limitations under the License.
   const INSERT_CHILD_NODE = {
     type: Symbol('insert-child-node'),
     apply: function() {
+      // this.node.attachDOM();
       this.parent.insertChild(this.node, this.at);
     },
   };
@@ -180,6 +186,7 @@ limitations under the License.
   const REPLACE_CHILD_NODE = {
     type: Symbol('replace-child-node'),
     apply: function() {
+      // this.node.attachDOM();
       this.parent.replaceChild(this.child, this.node);
     },
   };
@@ -251,11 +258,11 @@ limitations under the License.
       return patch;
     }
 
-    static updateComponent(target, prevProps) {
+    static updateComponent(target, description) {
       const patch = new Patch(UPDATE_COMPONENT);
       patch.target = target;
-      patch.prevProps = prevProps;
-      patch.props = target.sandbox.props;
+      patch.prevProps = target.description.props || {};
+      patch.props = description.props || {};
       return patch;
     }
 
