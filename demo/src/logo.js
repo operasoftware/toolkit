@@ -35,6 +35,9 @@
           style: {
             background: `url('/images/${this.props.channel}.svg')`,
           },
+          attrs: {
+            channel: this.props.channel,
+          },
           onClick: this.onClick,
         },
       ];

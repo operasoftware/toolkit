@@ -21,9 +21,10 @@ limitations under the License.
       this.root.container.appendChild(this.root.placeholder.ref);
     },
   };
-  const UPDATE_COMPONENT = {
-    type: Symbol('update-component'),
+  const UPDATE_NODE = {
+    type: Symbol('update-node'),
     apply: function() {
+      this.node.description = this.description;
     },
   };
 
@@ -76,19 +77,19 @@ limitations under the License.
   const ADD_ATTRIBUTE = {
     type: Symbol('add-attribute'),
     apply: function() {
-      this.target.setAttribute(this.name, this.value);
+      this.target.setAttribute(this.name, this.value, this.isCustom);
     },
   };
   const REPLACE_ATTRIBUTE = {
     type: Symbol('replace-attribute'),
     apply: function() {
-      this.target.setAttribute(this.name, this.value);
+      this.target.setAttribute(this.name, this.value, this.isCustom);
     },
   };
   const REMOVE_ATTRIBUTE = {
     type: Symbol('remove-attribute'),
     apply: function() {
-      this.target.removeAttribute(this.name);
+      this.target.removeAttribute(this.name, this.isCustom);
     },
   };
 
@@ -212,7 +213,7 @@ limitations under the License.
 
   const Types = {
     INIT_ROOT_COMPONENT,
-    UPDATE_COMPONENT,
+    UPDATE_NODE,
     ADD_ELEMENT,
     REMOVE_ELEMENT,
     ADD_COMPONENT,
@@ -258,11 +259,11 @@ limitations under the License.
       return patch;
     }
 
-    static updateComponent(target, description) {
-      const patch = new Patch(UPDATE_COMPONENT);
-      patch.target = target;
-      patch.prevProps = target.description.props || {};
-      patch.props = description.props || {};
+    static updateNode(node, description) {
+      const patch = new Patch(UPDATE_NODE);
+      patch.node = node;
+      patch.prevDescription = node.description;
+      patch.description = description;
       return patch;
     }
 
@@ -302,26 +303,29 @@ limitations under the License.
       return patch;
     }
 
-    static addAttribute(name, value, target) {
+    static addAttribute(name, value, target, isCustom) {
       const patch = new Patch(ADD_ATTRIBUTE);
       patch.name = name;
       patch.value = value;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 
-    static replaceAttribute(name, value, target) {
+    static replaceAttribute(name, value, target, isCustom) {
       const patch = new Patch(REPLACE_ATTRIBUTE);
       patch.name = name;
       patch.value = value;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 
-    static removeAttribute(name, target) {
+    static removeAttribute(name, target, isCustom) {
       const patch = new Patch(REMOVE_ATTRIBUTE);
       patch.name = name;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 

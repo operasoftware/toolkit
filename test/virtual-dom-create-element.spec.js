@@ -146,7 +146,6 @@ describe('Virtual DOM => create element', () => {
       {
         value: 'value',
         id: 'some-id',
-        unknown: true,
       },
     ]);
 
@@ -208,9 +207,6 @@ describe('Virtual DOM => create element', () => {
               [
                 'nested',
               ],
-            ],
-            [
-              [() => {}],
             ],
           ],
         ],
@@ -290,38 +286,6 @@ describe('Virtual DOM => create element', () => {
     assert(element.children === undefined);
   });
 
-  it('ignores listeners not being functions', () => {
-
-    // given
-    const onClick = () => {};
-    const props = {
-      onClick,
-      onChange: 1,
-      onSubmit: false,
-      onCopy: 'copy',
-      onPaste: null,
-      onCut: undefined,
-    };
-    const description = Template.describe([
-      'a',
-      props,
-      'Link',
-    ]);
-
-    // when
-    const element = VirtualDOM.createFromDescription(description);
-
-    // then
-    assert(element instanceof VirtualElement);
-    assert.equal(element.description.name, 'a');
-    assert(element.description.attrs === undefined);
-    assert.deepEqual(element.description.listeners, {
-      onClick,
-    });
-    assert.equal(element.description.text, 'Link');
-    assert(element.children === undefined);
-  });
-
   describe('supports adding attributes', () => {
 
     it('adds string attributes', () => {
@@ -396,13 +360,12 @@ describe('Virtual DOM => create element', () => {
       });
     });
 
-    it('ignores null, undefined and function values', () => {
+    it('ignores null and undefined values', () => {
 
       // given
       const props = {
         title: undefined,
         type: null,
-        value: () => {},
       };
       const description = Template.describe([
         'section',
@@ -564,12 +527,11 @@ describe('Virtual DOM => create element', () => {
         });
       });
 
-      it('ignores null, undefined and function values', () => {
+      it('ignores null and undefined values', () => {
 
         // given
         const style = {
           width: null,
-          height: () => {},
           size: undefined,
         };
 

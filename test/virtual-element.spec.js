@@ -13,7 +13,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('class');
 
       // then
-      assert.equal(div.description.class, 'class');
+      assert.equal(div.ref.className, 'class');
     });
 
     it('replaces class', () => {
@@ -26,7 +26,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('another-class');
 
       // then
-      assert.equal(div.description.class, 'another-class');
+      assert.equal(div.ref.className, 'another-class');
     });
 
     it('removes class', () => {
@@ -39,7 +39,7 @@ describe('Virtual Element => amend', () => {
       div.setClassName('');
 
       // then
-      assert.equal(div.description.class, '');
+      assert.equal(div.ref.className, '');
     });
   });
 });

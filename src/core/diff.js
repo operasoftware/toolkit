@@ -29,9 +29,7 @@ limitations under the License.
     /*
      * Adds the patch to the underlying list.
      */
-    addPatch(patch) {
-      return this.patches.push(patch);
-    }
+    addPatch(patch) { return this.patches.push(patch); }
 
     /*
      * Applies all the patches onto the bound root node.
@@ -88,17 +86,12 @@ limitations under the License.
         }
       }
 
-      if (component.hasOwnMethod('onPropsReceived') ||
-          component.hasOwnMethod('onUpdated')) {
-        this.addPatch(
-            opr.Toolkit.Patch.updateComponent(component, description));
-      }
-
       const childDescription = opr.Toolkit.Renderer.render(
           component, description.props, description.childrenAsTemplates, true);
-      this.componentChildPatches(
-          component.child, childDescription, /*= parent */ component);
-      component.description = description;
+      this.componentChildPatches(component.child, childDescription,
+                                 /*= parent */ component);
+
+      this.addPatch(opr.Toolkit.Patch.updateNode(component, description));
     }
 
     componentChildPatches(child, description, parent) {
@@ -115,8 +108,7 @@ limitations under the License.
 
       // insert
       if (!child && description) {
-        const node =
-            VirtualDOM.createFromDescription(description, parent);
+        const node = VirtualDOM.createFromDescription(description, parent);
         if (node.isElement()) {
           this.addPatch(Patch.addElement(node, parent));
           return;
@@ -171,7 +163,7 @@ limitations under the License.
      * Calculates patches for transformation of an element to match given
      * description.
      */
-    elementPatches(element, description, parent) {
+    elementPatches(element, description) {
 
       if (Diff.deepEqual(element.description, description)) {
         return;
@@ -179,24 +171,34 @@ limitations under the License.
 
       const isDefined = value => value !== undefined && value !== null;
 
-      this.attributePatches(
-          element.description.attrs, description.attrs, element);
-      this.datasetPatches(
-          element.description.dataset, description.dataset, element);
+      this.classNamePatches(element.description.class, description.class,
+                            element);
       this.stylePatches(element.description.style, description.style, element);
-      this.classNamePatches(
-          element.description.class, description.class, element);
-      this.listenerPatches(
-          element.description.listeners, description.listeners, element);
-      this.propertiesPatches(
-          element.description.properties, description.properties, element);
+      this.attributePatches(element.description.attrs, description.attrs,
+                            element);
+      this.listenerPatches(element.description.listeners, description.listeners,
+                           element);
+      this.datasetPatches(element.description.dataset, description.dataset,
+                          element);
+      this.propertiesPatches(element.description.properties,
+                             description.properties, element);
+
+      if (element.description.custom || description.custom) {
+        this.attributePatches(
+            element.description.custom && element.description.custom.attrs,
+            description.custom && description.custom.attrs, element, true);
+        this.listenerPatches(
+            element.description.custom && element.description.custom.listeners,
+            description.custom && description.custom.listeners, element, true);
+      }
+
       // TODO: handle text as a child
       if (isDefined(element.description.text) && !isDefined(description.text)) {
         this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
       }
       if (element.children || description.children) {
-        this.elementChildrenPatches(
-            element.children, description.children, element);
+        this.elementChildrenPatches(element.children, description.children,
+                                    element);
       }
       if (isDefined(description.text) &&
           description.text !== element.description.text) {
@@ -204,7 +206,58 @@ limitations under the License.
             opr.Toolkit.Patch.setTextContent(element, description.text));
       }
 
-      element.description = description;
+      this.addPatch(opr.Toolkit.Patch.updateNode(element, description));
+    }
+
+    classNamePatches(current = '', next = '', target) {
+      if (current !== next) {
+        this.addPatch(opr.Toolkit.Patch.setClassName(next, target));
+      }
+    }
+
+    stylePatches(current = {}, next = {}, target) {
+      const Patch = opr.Toolkit.Patch;
+
+      const props = Object.keys(current);
+      const nextProps = Object.keys(next);
+
+      const added = nextProps.filter(prop => !props.includes(prop));
+      const removed = props.filter(prop => !nextProps.includes(prop));
+      const changed = props.filter(prop => nextProps.includes(prop) &&
+                                           current[prop] !== next[prop]);
+
+      for (let prop of added) {
+        this.addPatch(Patch.addStyleProperty(prop, next[prop], target));
+      }
+      for (let prop of removed) {
+        this.addPatch(Patch.removeStyleProperty(prop, target));
+      }
+      for (let prop of changed) {
+        this.addPatch(Patch.replaceStyleProperty(prop, next[prop], target));
+      }
+    }
+
+    attributePatches(current = {}, next = {}, target = null, isCustom = false) {
+      const Patch = opr.Toolkit.Patch;
+
+      const attrs = Object.keys(current);
+      const nextAttrs = Object.keys(next);
+
+      const added = nextAttrs.filter(attr => !attrs.includes(attr));
+      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
+      const changed = attrs.filter(attr => nextAttrs.includes(attr) &&
+                                           current[attr] !== next[attr]);
+
+      for (let attr of added) {
+        this.addPatch(Patch.addAttribute(attr, next[attr], target, isCustom));
+      }
+      for (let attr of removed) {
+        this.addPatch(Patch.removeAttribute(attr, target, isCustom));
+      }
+      for (let attr of changed) {
+        this.addPatch(
+            Patch.replaceAttribute(attr, next[attr], target, isCustom));
+      }
     }
 
     listenerPatches(current = {}, next = {}, target = null) {
@@ -217,10 +270,10 @@ limitations under the License.
       const removed = listeners.filter(event => !nextListeners.includes(event));
       const changed = listeners.filter(
           event => nextListeners.includes(event) &&
-              current[event] !== next[event] &&
-              (current[event].source === undefined &&
-                   next[event].source === undefined ||
-               current[event].source !== next[event].source));
+                   current[event] !== next[event] &&
+                   (current[event].source === undefined &&
+                        next[event].source === undefined ||
+                    current[event].source !== next[event].source));
 
       for (let event of added) {
         this.addPatch(Patch.addListener(event, next[event], target));
@@ -234,57 +287,6 @@ limitations under the License.
       }
     }
 
-    propertiesPatches(current = {}, next = {}, target = null) {
-      const Patch = opr.Toolkit.Patch;
-
-      const keys = Object.keys(current);
-      const nextKeys = Object.keys(next);
-
-      const added = nextKeys.filter(key => !keys.includes(key));
-      const removed = keys.filter(key => !nextKeys.includes(key));
-      const changed = keys.filter(
-          key => nextKeys.includes(key) &&
-              !Diff.deepEqual(current[key], next[key]));
-
-      for (let key of added) {
-        this.addPatch(Patch.setProperty(key, next[key], target));
-      }
-      for (let key of removed) {
-        this.addPatch(Patch.deleteProperty(key, target));
-      }
-      for (let key of changed) {
-        this.addPatch(Patch.setProperty(key, next[key], target));
-      }
-    }
-
-    stylePatches(current = {}, next = {}, target) {
-      const Patch = opr.Toolkit.Patch;
-
-      const props = Object.keys(current);
-      const nextProps = Object.keys(next);
-
-      const added = nextProps.filter(prop => !props.includes(prop));
-      const removed = props.filter(prop => !nextProps.includes(prop));
-      const changed = props.filter(
-          prop => nextProps.includes(prop) && current[prop] !== next[prop]);
-
-      for (let prop of added) {
-        this.addPatch(Patch.addStyleProperty(prop, next[prop], target));
-      }
-      for (let prop of removed) {
-        this.addPatch(Patch.removeStyleProperty(prop, target));
-      }
-      for (let prop of changed) {
-        this.addPatch(Patch.replaceStyleProperty(prop, next[prop], target));
-      }
-    }
-
-    classNamePatches(current = '', next = '', target) {
-      if (current !== next) {
-        this.addPatch(opr.Toolkit.Patch.setClassName(next, target));
-      }
-    }
-
     datasetPatches(current = {}, next = {}, target) {
       const Patch = opr.Toolkit.Patch;
 
@@ -293,8 +295,8 @@ limitations under the License.
 
       const added = nextAttrs.filter(attr => !attrs.includes(attr));
       const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-      const changed = attrs.filter(
-          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+      const changed = attrs.filter(attr => nextAttrs.includes(attr) &&
+                                           current[attr] !== next[attr]);
 
       for (let attr of added) {
         this.addPatch(Patch.addDataAttribute(attr, next[attr], target));
@@ -307,25 +309,26 @@ limitations under the License.
       }
     }
 
-    attributePatches(current = {}, next = {}, target) {
+    propertiesPatches(current = {}, next = {}, target = null) {
       const Patch = opr.Toolkit.Patch;
 
-      const attrs = Object.keys(current);
-      const nextAttrs = Object.keys(next);
+      const keys = Object.keys(current);
+      const nextKeys = Object.keys(next);
 
-      const added = nextAttrs.filter(attr => !attrs.includes(attr));
-      const removed = attrs.filter(attr => !nextAttrs.includes(attr));
-      const changed = attrs.filter(
-          attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
+      const added = nextKeys.filter(key => !keys.includes(key));
+      const removed = keys.filter(key => !nextKeys.includes(key));
+      const changed =
+          keys.filter(key => nextKeys.includes(key) &&
+                             !Diff.deepEqual(current[key], next[key]));
 
-      for (let attr of added) {
-        this.addPatch(Patch.addAttribute(attr, next[attr], target));
+      for (let key of added) {
+        this.addPatch(Patch.setProperty(key, next[key], target));
       }
-      for (let attr of removed) {
-        this.addPatch(Patch.removeAttribute(attr, target));
+      for (let key of removed) {
+        this.addPatch(Patch.deleteProperty(key, target));
       }
-      for (let attr of changed) {
-        this.addPatch(Patch.replaceAttribute(attr, next[attr], target));
+      for (let key of changed) {
+        this.addPatch(Patch.setProperty(key, next[key], target));
       }
     }
 
@@ -351,8 +354,8 @@ limitations under the License.
 
       const from =
           sourceNodes.map((node, index) => node.description.key || index);
-      const to = targetDescriptions.map(
-          (description, index) => description.key || index);
+      const to = targetDescriptions.map((description, index) =>
+                                            description.key || index);
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
@@ -378,9 +381,9 @@ limitations under the License.
         assertUniqueKeys(to);
       }
 
-      const nodeFavoredToMove = sourceNodes.find(
-          node =>
-              node.description.props && node.description.props.beingDragged);
+      const nodeFavoredToMove =
+          sourceNodes.find(node => node.description.props &&
+                                   node.description.props.beingDragged);
 
       const moves = Reconciler.calculateMoves(
           from, to, nodeFavoredToMove && nodeFavoredToMove.key);
@@ -389,19 +392,18 @@ limitations under the License.
       for (const move of moves) {
         const node = getNode(move.item, move.name === Move.Name.MOVE);
         switch (move.name) {
-          case Move.Name.REMOVE:
-            this.addPatch(Patch.removeChildNode(node, move.at, parent));
-            Move.remove(node, move.at).make(children);
-            continue;
-          case Move.Name.INSERT:
-            this.addPatch(Patch.insertChildNode(node, move.at, parent));
-            Move.insert(node, move.at).make(children);
-            continue;
-          case Move.Name.MOVE:
-            this.addPatch(
-                Patch.moveChildNode(node, move.from, move.to, parent));
-            Move.move(node, move.from, move.to).make(children);
-            continue;
+        case Move.Name.REMOVE:
+          this.addPatch(Patch.removeChildNode(node, move.at, parent));
+          Move.remove(node, move.at).make(children);
+          continue;
+        case Move.Name.INSERT:
+          this.addPatch(Patch.insertChildNode(node, move.at, parent));
+          Move.insert(node, move.at).make(children);
+          continue;
+        case Move.Name.MOVE:
+          this.addPatch(Patch.moveChildNode(node, move.from, move.to, parent));
+          Move.move(node, move.from, move.to).make(children);
+          continue;
         }
       }
       for (let i = 0; i < children.length; i++) {

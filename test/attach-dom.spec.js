@@ -44,7 +44,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setTextContent('text content');
 
       // then
-      assert.equal(element.description.text, 'text content');
+      // assert.equal(element.description.text, 'text content');
       assert.equal(element.ref.textContent, 'text content');
     });
 
@@ -58,7 +58,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.addListener('onClick', listener);
 
       // then
-      assert.equal(element.description.listeners.onClick, listener);
+      // assert.equal(element.description.listeners.onClick, listener);
       typeof window !== 'object' &&
           assert.deepEqual(element.ref.eventListeners_, {
             click: [listener],
@@ -73,7 +73,7 @@ describe('Virtual Element => Attach DOM', () => {
         onChange: listener,
       });
 
-      assert.equal(element.description.listeners.onChange, listener);
+      // assert.equal(element.description.listeners.onChange, listener);
       typeof window !== 'object' &&
           assert.deepEqual(element.ref.eventListeners_, {
             change: [listener],
@@ -83,7 +83,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeListener('onChange', listener);
 
       // then
-      assert.equal(element.description.listeners, undefined);
+      // assert.equal(element.description.listeners, undefined);
       typeof window !== 'object' &&
           assert.deepEqual(element.ref.eventListeners_, {
             change: [],
@@ -99,7 +99,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setAttribute('tabIndex', 10);
 
       // then
-      assert.equal(element.description.attrs.tabIndex, 10);
+      // assert.equal(element.description.attrs.tabIndex, 10);
       assert.equal(element.ref.getAttribute('tabindex'), '10');
       assert.equal(element.ref.attributes.length, 1);
     });
@@ -113,7 +113,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setAttribute('acceptCharset', 'UTF8');
 
       // then
-      assert.equal(element.description.attrs.acceptCharset, 'UTF8');
+      // assert.equal(element.description.attrs.acceptCharset, 'UTF8');
       assert.equal(element.ref.getAttribute('accept-charset'), 'UTF8');
       assert.equal(element.ref.attributes.length, 1);
     });
@@ -126,7 +126,7 @@ describe('Virtual Element => Attach DOM', () => {
         value,
       });
 
-      assert.equal(element.description.attrs.value, value);
+      // assert.equal(element.description.attrs.value, value);
       assert.equal(element.ref.attributes.length, 1);
       assert.equal(element.ref.getAttribute('value'), value);
 
@@ -134,7 +134,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeAttribute('value');
 
       // then
-      assert.equal(element.description.attrs, undefined);
+      // assert.equal(element.description.attrs, undefined);
       assert.equal(element.ref.attributes.length, 0);
       assert.equal(element.ref.getAttribute('value'), null);
     });
@@ -149,7 +149,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setDataAttribute('targetUrl', url);
 
       // then
-      assert.equal(element.description.dataset.targetUrl, url);
+      // assert.equal(element.description.dataset.targetUrl, url);
       assert.equal(element.ref.dataset.targetUrl, url);
       assert.equal(element.ref.getAttribute('data-target-url'), url);
       assert.equal(element.ref.attributes.length, 1);
@@ -165,7 +165,7 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.description.dataset.someUrl, someUrl);
+      // assert.equal(element.description.dataset.someUrl, someUrl);
       assert.equal(element.ref.dataset.someUrl, someUrl);
       assert.equal(element.ref.getAttribute('data-some-url'), someUrl);
       assert.equal(element.ref.attributes.length, 1);
@@ -174,7 +174,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.removeDataAttribute('someUrl');
 
       // then
-      assert.equal(element.description.dataset, undefined);
+      // assert.equal(element.description.dataset, undefined);
       assert.equal(element.ref.dataset.someUrl, null);
       assert.equal(element.ref.getAttribute('data-some-url'), undefined);
       assert.equal(element.ref.attributes.length, 0);
@@ -189,7 +189,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setClassName('some-name');
 
       // then
-      assert.equal(element.description.class, 'some-name');
+      // assert.equal(element.description.class, 'some-name');
       assert.deepEqual([...element.ref.classList], ['some-name']);
     });
 
@@ -200,14 +200,14 @@ describe('Virtual Element => Attach DOM', () => {
         class: ['to-be-removed'],
       });
 
-      assert.equal(element.description.class, 'to-be-removed');
+      // assert.equal(element.description.class, 'to-be-removed');
       assert.deepEqual([...element.ref.classList], ['to-be-removed']);
 
       // when
       element.setClassName('');
 
       // then
-      assert.deepEqual(element.description.class, '');
+      // assert.deepEqual(element.description.class, '');
       assert.deepEqual([...element.ref.classList], []);
     });
 
@@ -220,7 +220,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setStyleProperty('backgroundColor', 'red');
 
       // then
-      assert.equal(element.description.style.backgroundColor, 'red');
+      // assert.equal(element.description.style.backgroundColor, 'red');
       assert.equal(element.ref.style.backgroundColor, 'red');
       assert.equal(element.ref.style['background-color'], 'red');
     });
@@ -235,14 +235,14 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.description.style.color, 'green');
+      // assert.equal(element.description.style.color, 'green');
       assert.equal(element.ref.style.color, 'green');
 
       // when
       element.removeStyleProperty('color');
 
       // then
-      assert.equal(element.description.style, undefined);
+      // assert.equal(element.description.style, undefined);
       assert.equal(element.ref.style.color, '');
     });
 
@@ -255,7 +255,7 @@ describe('Virtual Element => Attach DOM', () => {
       element.setProperty('key', 'value');
 
       // then
-      assert.equal(element.description.properties.key, 'value');
+      // assert.equal(element.description.properties.key, 'value');
       assert.equal(element.ref.key, 'value');
     });
 
@@ -268,14 +268,14 @@ describe('Virtual Element => Attach DOM', () => {
         },
       });
 
-      assert.equal(element.description.properties.key, 'some-key');
+      // assert.equal(element.description.properties.key, 'some-key');
       assert.equal(element.ref.key, 'some-key');
 
       // when
       element.deleteProperty('key');
 
       // then
-      assert.equal(element.description.properties, undefined);
+      // assert.equal(element.description.properties, undefined);
       assert.equal(element.ref.key, undefined);
     });
   });
@@ -288,7 +288,7 @@ describe('Virtual Element => Attach DOM', () => {
       const element = createElement('span');
 
       // then
-      assert.equal(element.description.name, 'span')
+      // assert.equal(element.description.name, 'span')
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert(!element.ref.textContent);
@@ -300,7 +300,7 @@ describe('Virtual Element => Attach DOM', () => {
       const element = createElement('span', {}, 'Text');
 
       // then
-      assert.equal(element.description.name, 'span')
+      // assert.equal(element.description.name, 'span')
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert.equal(element.ref.textContent, 'Text');
