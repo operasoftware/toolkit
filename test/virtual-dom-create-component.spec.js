@@ -1,20 +1,9 @@
 describe('Virtual DOM', () => {
 
   const {
-    Renderer,
     VirtualDOM,
     Template,
   } = opr.Toolkit;
-
-  const container = document.createElement('container');
-
-  class SomeRoot extends opr.Toolkit.Root {
-    render() {
-      return null;
-    }
-  }
-
-  const root = VirtualDOM.createRoot(SomeRoot);
 
   const render = (ComponentClass, props = {}) => {
     const description = Template.describe([
@@ -39,7 +28,7 @@ describe('Virtual DOM', () => {
             this.props.label,
           ];
         }
-      };
+      }
 
       const label = 'Example';
       const url = 'http://www.example.com';

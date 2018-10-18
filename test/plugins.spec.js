@@ -19,7 +19,7 @@ describe('Plugins', () => {
         render() {
           return ['main'];
         }
-      };
+      }
 
       // when
       await toolkit.render(SomeRoot, document.body);

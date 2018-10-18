@@ -4,7 +4,6 @@ describe('Diff => calculate patches', () => {
     Diff,
     Patch,
     Template,
-    VirtualNode,
     VirtualDOM,
   } = opr.Toolkit;
 
@@ -20,19 +19,19 @@ describe('Diff => calculate patches', () => {
     }
     onUpdated() {
     }
-  };
+  }
 
   class Subcomponent extends opr.Toolkit.Component {
     render() {
       return null;
     }
-  };
+  }
 
   class OtherComponent extends opr.Toolkit.Component {
     render() {
       return null;
     }
-  };
+  }
 
   const calculatePatches = (node, description) => {
     const diff = new Diff(node.rootNode);
@@ -618,15 +617,16 @@ describe('Diff => calculate patches', () => {
       };
 
       const createChildren = ({keys}) => ({
-        from: (...items) => items.map(
-            name => [name, {key: (keys === true ? name : undefined)}])
+        from: (...items) => items.map(name => [name, {
+                                        key: (keys === true ? name : undefined),
+                                      }]),
       });
 
       describe('=> with keys', () => {
 
-        const getChildren = (...items) => {
-          return createChildren({keys: true}).from(...items);
-        };
+        const getChildren = (...items) => createChildren({
+                                            keys: true,
+                                          }).from(...items);
 
         it('throws an error for non-unique keys', () => {
 
@@ -768,11 +768,11 @@ describe('Diff => calculate patches', () => {
           // given
           const template = [
             'section',
-            ...getChildren('section', 'Z', 'p', 'X', 'div', 'Y', 'span')
+            ...getChildren('section', 'Z', 'p', 'X', 'div', 'Y', 'span'),
           ];
           const nextTemplate = [
             'section',
-            ...getChildren('section', 'X', 'p', 'Y', 'div', 'Z', 'span')
+            ...getChildren('section', 'X', 'p', 'Y', 'div', 'Z', 'span'),
           ];
 
           // when
@@ -828,10 +828,12 @@ describe('Diff => calculate patches', () => {
 
           // given
           const template = [
-            'section', ...getChildren('X', 'section', 'p', 'div', 'Y', 'span')
+            'section',
+            ...getChildren('X', 'section', 'p', 'div', 'Y', 'span'),
           ];
           const nextTemplate = [
-            'section', ...getChildren('section', 'p', 'div', 'Z', 'span', 'X')
+            'section',
+            ...getChildren('section', 'p', 'div', 'Z', 'span', 'X'),
           ];
 
           // when

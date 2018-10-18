@@ -1,7 +1,6 @@
 describe('Patch component => apply', () => {
 
   const {
-    Document,
     Patch,
     Template,
     VirtualDOM,
@@ -75,7 +74,7 @@ describe('Patch component => apply', () => {
         foo: 'foo',
       },
     ]);
-      
+
     const patch = Patch.updateComponent(component, description);
     patch.apply();
 
@@ -154,7 +153,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a component', () => {
 
       // given
-      const [root, divElement] = createRootWith([
+      const [, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -213,7 +212,7 @@ describe('Patch component => apply', () => {
     it('adds empty component to a subcomponent', () => {
 
       // given
-      const [root, divElement] = createRootWith([
+      const [, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -298,7 +297,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a component', () => {
 
       // given
-      const [app, divElement] = createRootWith([
+      const [, divElement] = createRootWith([
         'div',
         [
           'span',
@@ -353,7 +352,7 @@ describe('Patch component => apply', () => {
     it('adds component with a child element to a subcomponent', () => {
 
       // given
-      const [app, divElement] = createRootWith([
+      const [, divElement] = createRootWith([
         'div',
         [
           'span',

@@ -2,8 +2,6 @@ describe('Nodes', () => {
 
   const {
     VirtualDOM,
-    VirtualElement,
-    VirtualNode,
     Template,
   } = opr.Toolkit;
 
@@ -17,7 +15,7 @@ describe('Nodes', () => {
     render() {
       return this.children[0] || null;
     }
-  };
+  }
 
   const createRoot = (container, template = null) => {
     class Root extends opr.Toolkit.Root {
@@ -33,7 +31,7 @@ describe('Nodes', () => {
       root.appendChild(node);
     }
     return root;
-  };
+  }
 
   const createComponent = (template = null) => {
     class Component extends opr.Toolkit.Component {
@@ -42,10 +40,11 @@ describe('Nodes', () => {
       }
     }
     return createFromTemplate([Component]);
-  };
+  }
 
   const root = VirtualDOM.createRoot(Root);
-  const createElement = name => VirtualDOM.createFromDescription(Template.describe([name]));
+  const createElement = name =>
+      VirtualDOM.createFromDescription(Template.describe([name]));
 
   const component = new opr.Toolkit.Component({}, [], null);
   const element = createElement('section');
@@ -665,21 +664,20 @@ describe('Nodes', () => {
         assert.equal(component.placeholder, null);
       });
 
-      it('returns a subcomponents comment for a component with a child component',
-         () => {
+      it('returns a subcomponents comment for a component with a child', () => {
 
-           // given
-           const component = createComponent();
-           const subcomponent = createComponent();
+        // given
+        const component = createComponent();
+        const subcomponent = createComponent();
 
-           // when
-           component.appendChild(subcomponent);
+        // when
+        component.appendChild(subcomponent);
 
-           // then
-           assert(component.placeholder);
-           assert(component.placeholder.isComment());
-           assert(component.placeholder, subcomponent.comment);
-         });
+        // then
+        assert(component.placeholder);
+        assert(component.placeholder.isComment());
+        assert(component.placeholder, subcomponent.comment);
+      });
 
       it('returns a comment for a component with no child', () => {
 

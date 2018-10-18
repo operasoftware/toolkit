@@ -297,7 +297,8 @@ limitations under the License.
             style[key] = string;
           }
         } else {
-          console.warn(`Unsupported style property, key: ${key}, value:`, value);
+          console.warn(
+              `Unsupported style property, key: ${key}, value:`, value);
         }
       }
       return isNotEmpty(style) ? style : null;
@@ -354,9 +355,8 @@ limitations under the License.
         return value.join('');
       } else if (['object', 'function', 'symbol'].includes(typeof value)) {
         return null;
-      } else {
-        return String(value);
       }
+      return String(value);
     }
   }
 

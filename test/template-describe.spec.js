@@ -18,7 +18,7 @@ describe('Template => describe', () => {
       class Component extends opr.Toolkit.Component {}
       const id = 'test/component';
       const symbol = Symbol.for(id);
-      const template = [ symbol ];
+      const template = [symbol];
 
       // when
       loader.define(id, Component);
@@ -37,9 +37,9 @@ describe('Template => describe', () => {
       const id = 'test/component-with-properties';
       const symbol = Symbol.for(id);
       const props = {
-        prop : 'prop',
+        prop: 'prop',
       };
-      const template = [ symbol, props ];
+      const template = [symbol, props];
 
       // when
       loader.define(id, ComponentWithProps);
@@ -58,10 +58,10 @@ describe('Template => describe', () => {
       const id = 'test/component-with-children';
       const symbol = Symbol.for(id);
       const children = [
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
       ];
-      const template = [ symbol, ...children ];
+      const template = [symbol, ...children];
 
       // when
       loader.define(id, ComponentWithChildren);
@@ -86,10 +86,10 @@ describe('Template => describe', () => {
       const children = [
         null,
         false,
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
       ];
-      const template = [ symbol, ...children ];
+      const template = [symbol, ...children];
 
       // when
       loader.define(id, ComponentWithChildren);
@@ -112,13 +112,13 @@ describe('Template => describe', () => {
       const id = 'test/component-with-props-and-children';
       const symbol = Symbol.for(id);
       const props = {
-        prop : 'prop',
+        prop: 'prop',
       };
       const children = [
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
       ];
-      const template = [ symbol, props, ...children ];
+      const template = [symbol, props, ...children];
 
       // when
       loader.define(id, ComponentWithPropsAndChildren);
@@ -141,16 +141,16 @@ describe('Template => describe', () => {
          const id = 'test/component-with-props-and-some-children';
          const symbol = Symbol.for(id);
          const props = {
-           prop : 'prop'
+           prop: 'prop',
          };
          const children = [
            false,
-           [ 'div' ],
+           ['div'],
            null,
-           [ 'span' ],
+           ['span'],
            null,
          ];
-         const template = [ symbol, props, ...children ];
+         const template = [symbol, props, ...children];
 
          // when
          loader.define(id, ComponentWithPropsAndChildren);
@@ -169,7 +169,7 @@ describe('Template => describe', () => {
 
       // given
       class Component extends opr.Toolkit.Component {}
-      const template = [ Component ];
+      const template = [Component];
 
       // when
       const description = Template.describe(template);
@@ -184,9 +184,9 @@ describe('Template => describe', () => {
       // given
       class Component extends opr.Toolkit.Component {}
       const props = {
-        foo : 'bar',
+        foo: 'bar',
       };
-      const template = [ Component, props ];
+      const template = [Component, props];
 
       // when
       const description = Template.describe(template);
@@ -228,7 +228,7 @@ describe('Template => describe', () => {
       // given
       class Component extends opr.Toolkit.Component {}
       const props = {
-        listener : () => null,
+        listener: () => null,
       };
       const template = [
         Component,
@@ -254,7 +254,7 @@ describe('Template => describe', () => {
 
       // given
       const renderFunction = props => ['section'];
-      const template = [ renderFunction ];
+      const template = [renderFunction];
 
       // when
       const description = Template.describe(template);
@@ -270,7 +270,7 @@ describe('Template => describe', () => {
     it('detects empty element', () => {
 
       // given
-      const template = [ 'div' ];
+      const template = ['div'];
 
       // when
       const description = Template.describe(template);
@@ -285,7 +285,7 @@ describe('Template => describe', () => {
     it('detects empty element when all children are null and false', () => {
 
       // given
-      const template = [ 'div', null, false, null ];
+      const template = ['div', null, false, null];
 
       // when
       const description = Template.describe(template);
@@ -326,7 +326,7 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const text = 'text';
-      const template = [ name, text ];
+      const template = [name, text];
 
       // when
       const description = Template.describe(template);
@@ -342,7 +342,7 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const number = 10;
-      const template = [ name, number ];
+      const template = [name, number];
 
       // when
       const description = Template.describe(template);
@@ -357,7 +357,7 @@ describe('Template => describe', () => {
 
       // given
       const name = 'span';
-      const template = [ name, true ];
+      const template = [name, true];
 
       // when
       const description = Template.describe(template);
@@ -373,8 +373,8 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const text = 'text';
-      const props = {name : 'name'};
-      const template = [ name, props, text ];
+      const props = {name: 'name'};
+      const template = [name, props, text];
 
       // when
       const description = Template.describe(template);
@@ -391,10 +391,10 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const children = [
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
       ];
-      const template = [ name, ...children ];
+      const template = [name, ...children];
 
       // when
       const description = Template.describe(template);
@@ -412,12 +412,12 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const children = [
-        [ 'div' ],
+        ['div'],
         null,
-        [ 'span' ],
+        ['span'],
         null,
       ];
-      const template = [ name, ...children ];
+      const template = [name, ...children];
 
       // when
       const description = Template.describe(template);
@@ -436,14 +436,14 @@ describe('Template => describe', () => {
       const name = 'div';
       const onClick = () => {};
       const props = {
-        tabIndex : 10,
+        tabIndex: 10,
         onClick,
       };
       const children = [
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
       ];
-      const template = [ name, props, ...children ];
+      const template = [name, props, ...children];
 
       // when
       const description = Template.describe(template);
@@ -452,7 +452,7 @@ describe('Template => describe', () => {
       assert.equal(description.type, 'element');
       assert.equal(description.name, 'div');
       assert.deepEqual(description.attrs, {
-        tabIndex : '10', 
+        tabIndex: '10',
       });
       assert.deepEqual(description.listeners, {
         onClick,
@@ -467,16 +467,16 @@ describe('Template => describe', () => {
       // given
       const name = 'div';
       const props = {
-        id : 'id',
+        id: 'id',
       };
       const children = [
         false,
         null,
-        [ 'div' ],
-        [ 'span' ],
+        ['div'],
+        ['span'],
         null,
       ];
-      const template = [ name, props, ...children ];
+      const template = [name, props, ...children];
 
       // when
       const description = Template.describe(template);
@@ -589,9 +589,6 @@ describe('Template => describe', () => {
     it('accepts two-level Element / Element nesting', () => {
 
       // given
-      const props = {
-        foo: 'bar',
-      };
       const template = [
         'main',
         false,
@@ -761,7 +758,7 @@ describe('Template => describe', () => {
       const template = [
         'div',
         {},
-        [ 'span', '1' ],
+        ['span', '1'],
         'Text',
       ];
 
@@ -797,7 +794,7 @@ describe('Template => describe', () => {
       // given
       class Component extends opr.Toolkit.Component {}
       const props = {
-        prop : 'prop',
+        prop: 'prop',
       };
       const template = [
         Component,
@@ -818,7 +815,7 @@ describe('Template => describe', () => {
 
       // given
       const object = {};
-      const template = [ object ];
+      const template = [object];
 
       // when
       assert.throws(() => Template.describe(template));
@@ -834,7 +831,7 @@ describe('Template => describe', () => {
 
       // given
       const number = 10;
-      const template = [ number ];
+      const template = [number];
 
       // when
       assert.throws(() => Template.describe(template));
@@ -849,7 +846,7 @@ describe('Template => describe', () => {
     it('rejects null as type', () => {
 
       // given
-      const template = [ null ];
+      const template = [null];
 
       // when
       assert.throws(() => Template.describe(template));
@@ -864,7 +861,7 @@ describe('Template => describe', () => {
     it('rejects boolean as type', () => {
 
       // given
-      const template = [ true ];
+      const template = [true];
 
       // when
       assert.throws(() => Template.describe(template));
@@ -879,7 +876,7 @@ describe('Template => describe', () => {
     it('rejects undefined as type', () => {
 
       // given
-      const template = [ undefined ];
+      const template = [undefined];
 
       // when
       assert.throws(() => Template.describe(template));
@@ -895,7 +892,7 @@ describe('Template => describe', () => {
 
       // given
       const fn = props => null;
-      const template = [ 'span', fn ];
+      const template = ['span', fn];
 
       // when
       assert.throws(() => Template.describe(template));

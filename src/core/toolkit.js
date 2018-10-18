@@ -127,42 +127,15 @@ limitations under the License.
       }
     }
 
-    async getRootClass(component, props) {
-      const type = typeof component;
-      switch (type) {
-        case 'symbol':
-          throw new Error('Unexpected symbol!');
-        case 'string':
-          await loader.preload(component);
-          const module = loader.get(component);
-          this.assert(
-              module.prototype instanceof opr.Toolkit.Root,
-              'Module has to be an instance of opr.Toolkit.Root');
-          return module;
-        case 'function':
-          if (component.prototype instanceof opr.Toolkit.Root) {
-            return component;
-          }
-          return class Anonymous extends opr.Toolkit.Root {
-            render() {
-              return component(this.props);
-            }
-          };
-        default:
-          throw new Error(`Invalid component type: ${type}`);
-      }
-    }
-
     async createRoot(component, props = {}) {
       if (typeof component === 'string') {
         const RootClass = await loader.preload(component);
         if (RootClass.prototype instanceof opr.Toolkit.Root) {
           return opr.Toolkit.VirtualDOM.createRoot(RootClass, props, this);
-        } else {
-          console.error(
-              'Specified class is not a root component: ', ComponentClass);
-          throw new Error('Invalid root class!');
         }
+        console.error(
+            'Specified class is not a root component: ', ComponentClass);
+        throw new Error('Invalid root class!');
       }
       const description = opr.Toolkit.Template.describe([
         component,

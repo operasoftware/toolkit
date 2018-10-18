@@ -1,9 +1,7 @@
 describe('Patch element => apply', () => {
 
   const {
-    Document,
     Patch,
-    VirtualDOM,
   } = opr.Toolkit;
 
   const createElement = name => createFromTemplate([name]);
@@ -38,7 +36,7 @@ describe('Patch element => apply', () => {
         name: 'name',
         noValidate: false,
         minLength: '50px',
-      }
+      },
     ]);
 
     assert.deepEqual(element.description.attrs, {
@@ -73,7 +71,7 @@ describe('Patch element => apply', () => {
         name: 'name',
         noValidate: 'false',
         minLength: '50px',
-      }
+      },
     ]);
 
     assert.deepEqual(element.description.attrs, {
@@ -221,7 +219,7 @@ describe('Patch element => apply', () => {
         style: {
           textDecoration: 'underline',
         },
-      }
+      },
     ]);
 
     assert.equal(element.description.style.textDecoration, 'underline');
@@ -420,7 +418,8 @@ describe('Patch element => apply', () => {
     Patch.setProperty('customAttribute', 'anotherValue', element).apply();
 
     // then
-    assert.equal(element.description.properties.customAttribute, 'anotherValue');
+    assert.equal(
+        element.description.properties.customAttribute, 'anotherValue');
     assert.equal(element.ref.customAttribute, 'anotherValue');
   });
 

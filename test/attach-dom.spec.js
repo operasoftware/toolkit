@@ -3,8 +3,6 @@ describe('Virtual Element => Attach DOM', () => {
   const {
     Template,
     VirtualDOM,
-    VirtualElement,
-    VirtualNode,
   } = opr.Toolkit;
 
   class Root extends opr.Toolkit.Root {
@@ -17,15 +15,17 @@ describe('Virtual Element => Attach DOM', () => {
     render() {
       return this.children[0] || null;
     }
-  };
+  }
+
   class Subcomponent extends opr.Toolkit.Component {
     render() {
       return this.children[0] || null;
     }
-  };
+  }
 
   const createElement = (name, props = {}, content = []) => {
-    const template = typeof content === 'string' ? [name, props, content] : [name, props, ...content];
+    const template = typeof content === 'string' ? [name, props, content] :
+                                                   [name, props, ...content];
     const description = Template.describe(template);
     const root = VirtualDOM.createRoot(Root);
     const element = VirtualDOM.createFromDescription(description, root);
@@ -59,9 +59,10 @@ describe('Virtual Element => Attach DOM', () => {
 
       // then
       assert.equal(element.description.listeners.onClick, listener);
-      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
-        click: [listener],
-      });
+      typeof window !== 'object' &&
+          assert.deepEqual(element.ref.eventListeners_, {
+            click: [listener],
+          });
     });
 
     it('removes an event listener', () => {
@@ -73,18 +74,20 @@ describe('Virtual Element => Attach DOM', () => {
       });
 
       assert.equal(element.description.listeners.onChange, listener);
-      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
-        change: [listener],
-      });
+      typeof window !== 'object' &&
+          assert.deepEqual(element.ref.eventListeners_, {
+            change: [listener],
+          });
 
       // when
       element.removeListener('onChange', listener);
 
       // then
       assert.equal(element.description.listeners, undefined);
-      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
-        change: [],
-      });
+      typeof window !== 'object' &&
+          assert.deepEqual(element.ref.eventListeners_, {
+            change: [],
+          });
     });
 
     it('sets a lowercase attribute', () => {
@@ -332,10 +335,11 @@ describe('Virtual Element => Attach DOM', () => {
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert.equal(element.ref.textContent, 'Text');
-      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
-        click: [onClick],
-        change: [onChange],
-      });
+      typeof window !== 'object' &&
+          assert.deepEqual(element.ref.eventListeners_, {
+            click: [onClick],
+            change: [onChange],
+          });
     });
   });
 

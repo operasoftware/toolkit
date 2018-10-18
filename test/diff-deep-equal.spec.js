@@ -9,8 +9,12 @@ describe('Diff => deep equal', () => {
       [false, 'false'],
       [true, 'true'],
       [
-        parseInt, parseInt.bind(this), '[Function: parseInt]',
-        '[Function: parseInt(bound)]'
+        parseInt,
+        /* eslint-disable no-invalid-this */
+        parseInt.bind(this),
+        /* eslint-enable no-invalid-this */
+        '[Function: parseInt]',
+        '[Function: parseInt(bound)]',
       ],
       [{}, []],
       [{a: 5}, {a: '5'}],
@@ -39,8 +43,10 @@ describe('Diff => deep equal', () => {
       [parseInt, parseInt, '[Function: parseInt]', '[Function: parseInt]'],
       [String, String, 'String', 'String'],
       [
-        Symbol.for('test'), Symbol.for('test'), `Symbol.for('test')`,
-        `Symbol.for('test')`
+        Symbol.for('test'),
+        Symbol.for('test'),
+        'Symbol.for(\'test\')',
+        'Symbol.for(\'test\')',
       ],
       [[], []],
       [{}, {}],

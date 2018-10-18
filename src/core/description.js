@@ -36,6 +36,7 @@ limitations under the License.
       if (this.children) {
         return this.children.map(child => child.asTemplate);
       }
+      return undefined;
     }
 
     isCompatible(desc) {
@@ -121,9 +122,9 @@ limitations under the License.
   class ElementDescription extends Description {
 
     constructor({type, name, text, children, details}) {
-      
+
       super(opr.Toolkit.VirtualElement.NodeType, details && details.key);
-      
+
       this.type = type;
       this.name = name;
       if (children) {

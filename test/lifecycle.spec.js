@@ -3,7 +3,6 @@ describe('Lifecycle', () => {
   const {
     Lifecycle,
     Patch,
-    Template,
     VirtualDOM,
   } = opr.Toolkit;
 
@@ -31,7 +30,7 @@ describe('Lifecycle', () => {
     onDetached() {
       spy('onDetached', this);
     }
-  };
+  }
 
   class Component extends opr.Toolkit.Component {
     render() {
@@ -55,9 +54,9 @@ describe('Lifecycle', () => {
     onDetached() {
       spy('onDetached', this);
     }
-  };
+  }
 
-  class Subcomponent extends Component {    
+  class Subcomponent extends Component {
     hasOwnMethod(method) {
       return [
         'onCreated',
@@ -394,7 +393,7 @@ describe('Lifecycle', () => {
                 Subcomponent,
               ],
             ],
-          ]
+          ],
         ]);
         const patches = [
           Patch.addElement(element, root),
@@ -490,7 +489,7 @@ describe('Lifecycle', () => {
             [
               Subcomponent,
             ],
-          ]
+          ],
         ]);
         const patches = [
           Patch.insertChildNode(span, 0, div),
@@ -993,7 +992,7 @@ describe('Lifecycle', () => {
 
     it('on node created', () => {
       assert.throws(
-          () => {Lifecycle.onNodeCreated(unsupportedNode)},
+          () => Lifecycle.onNodeCreated(unsupportedNode),
           'Unsupported node type: invalid');
     });
 

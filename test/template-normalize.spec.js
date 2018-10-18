@@ -4,13 +4,12 @@ describe('Template => normalize props', () => {
     Template,
   } = opr.Toolkit;
 
-  const createComponentClass = defaultProps => {
-    return class Component extends opr.Toolkit.Component {
-      static get defaultProps() {
-        return defaultProps;
-      }
-    }
-  };
+  const createComponentClass = defaultProps =>
+      (class Component extends opr.Toolkit.Component {
+        static get defaultProps() {
+          return defaultProps;
+        }
+      });
 
   it('returns original props when no default defined', () => {
 

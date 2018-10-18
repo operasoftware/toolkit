@@ -134,7 +134,7 @@ describe('Utils', () => {
     doubleReducer.commands = {
       double: value => ({
         type: DOUBLE,
-      })
+      }),
     };
 
     const tripleReducer = (state, command) => {
@@ -314,7 +314,7 @@ describe('Utils', () => {
 
     it('creates valid UUID', () => {
       const uuid = createUUID();
-      assert.equal(/........\-....\-....\-............/.test(uuid), true);
+      assert.equal(/........-....-....-............/.test(uuid), true);
     });
   })
 

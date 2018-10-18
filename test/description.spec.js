@@ -99,7 +99,6 @@ describe('Description', () => {
   describe('as template', () => {
 
     class Component extends opr.Toolkit.Component {}
-    class OtherComponent extends opr.Toolkit.Component {}
 
     it('returns template of Component', () => {
 
@@ -251,7 +250,7 @@ describe('Description', () => {
         'section',
         [
           Component,
-        ]
+        ],
       ]);
     });
 

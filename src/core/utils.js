@@ -85,6 +85,7 @@ limitations under the License.
     let params;
 
     return function throttled(...args) {
+      /* eslint-disable no-invalid-this */
       if (!taskId) {
         const timestamp = Date.now();
         const elapsed = timestamp - lastTimestamp;
@@ -107,6 +108,7 @@ limitations under the License.
       }
       context = this;
       params = args;
+      /* eslint-enable no-invalid-this */
     };
   };
 
@@ -118,6 +120,7 @@ limitations under the License.
     let params;
 
     return function debounced(...args) {
+      /* eslint-disable no-invalid-this */
       if (taskId) {
         clearTimeout(taskId);
       }
@@ -128,6 +131,7 @@ limitations under the License.
 
       context = this;
       params = args;
+      /* eslint-enable no-invalid-this */
     };
   };
 
@@ -205,11 +209,15 @@ limitations under the License.
       opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
 
   const postRender = fn => {
+
     // since Chromium 64 there are some problems with animations not being
     // triggered correctly, this hack solves the problem across all OS-es
+
+    /* eslint-disable prefer-arrow-callback */
     requestAnimationFrame(function() {
       requestAnimationFrame(fn);
     });
+    /* eslint-enable prefer-arrow-callback */
   };
 
   const Utils = {

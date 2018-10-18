@@ -591,7 +591,7 @@ describe('Virtual DOM => create element', () => {
               style: {
                 filter,
               },
-            }
+            },
           ]);
           return VirtualDOM.createFromDescription(description);
         };
@@ -612,7 +612,8 @@ describe('Virtual DOM => create element', () => {
           // then
           assert(element instanceof VirtualElement);
           assert.equal(element.description.name, 'section');
-          assert.equal(element.description.style.filter, 'blur(5px) saturate(2)');
+          assert.equal(
+              element.description.style.filter, 'blur(5px) saturate(2)');
         });
       });
 
@@ -625,7 +626,7 @@ describe('Virtual DOM => create element', () => {
               style: {
                 transform,
               },
-            }
+            },
           ]);
           return VirtualDOM.createFromDescription(description);
         };

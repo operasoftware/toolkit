@@ -342,14 +342,17 @@ limitations under the License.
       const createdNodesMap = new Map();
 
       const createNode = (description, key) => {
-        const node = VirtualDOM.createFromDescription(description, parent, this.root);
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
         created.push(node);
         createdNodesMap.set(key, node);
         return node;
       };
 
-      const from = sourceNodes.map((node, index) => node.description.key || index);
-      const to = targetDescriptions.map((description, index) => description.key || index);
+      const from =
+          sourceNodes.map((node, index) => node.description.key || index);
+      const to = targetDescriptions.map(
+          (description, index) => description.key || index);
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
@@ -404,9 +407,8 @@ limitations under the License.
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (!created.includes(child)) {
-          const index = from.indexOf(child.key || i);
-          let targetDescription = targetDescriptions[i];
-          this.elementChildPatches(child, targetDescription, parent, i);
+          const targetDescription = targetDescriptions[i];
+          this.elementChildPatches(child, targetDescription, parent);
         }
       }
     }

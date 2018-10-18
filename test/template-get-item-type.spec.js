@@ -2,9 +2,7 @@ describe('Template => get item type', () => {
 
   const {
     Template,
-    VirtualDOM,
   } = opr.Toolkit;
-  const ItemType = Template.ItemType;
 
   it('returns "string" for a string', () => {
     assert.equal(Template.getItemType('foo'), 'string');

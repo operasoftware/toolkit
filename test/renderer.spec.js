@@ -1,16 +1,8 @@
 describe('Renderer', () => {
 
   const {
-    Renderer,
-    Template,
     VirtualDOM,
   } = opr.Toolkit;
-
-  class SomeRoot extends opr.Toolkit.Root {
-    constructor() {
-      super(null, {}, opr.Toolkit);
-    }
-  }
 
   class Root extends opr.Toolkit.Root {
     render() {
@@ -32,7 +24,7 @@ describe('Renderer', () => {
     const renderer = createRenderer();
 
     // when
-    const patches = renderer.update(prev, next);
+    renderer.update(prev, next);
 
     // then
     assert.deepEqual(prev, next);

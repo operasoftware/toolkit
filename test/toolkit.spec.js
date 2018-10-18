@@ -15,7 +15,7 @@ describe('Toolkit', () => {
       render() {
         return [Parent];
       }
-    };
+    }
 
     class Parent extends opr.Toolkit.Component {
       onCreated() {
@@ -27,7 +27,7 @@ describe('Toolkit', () => {
       render() {
         return [Child];
       }
-    };
+    }
 
     class Child extends opr.Toolkit.Component {
       onCreated() {
@@ -39,7 +39,7 @@ describe('Toolkit', () => {
       render() {
         return ['div'];
       }
-    };
+    }
 
     const settings = {
       plugins: [],

@@ -2,12 +2,6 @@ describe('Sandbox', () => {
 
   const Sandbox = opr.Toolkit.Sandbox;
 
-  class Root extends opr.Toolkit.Root {
-    render() {
-      return null;
-    }
-  }
-
   class Component extends opr.Toolkit.Component {
     render() {
       return null;
@@ -61,7 +55,7 @@ describe('Sandbox', () => {
         c() {
           return 'c';
         }
-      };
+      }
       const component = createFromTemplate([SomeComponent]);
 
       // when
