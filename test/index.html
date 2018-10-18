@@ -21,13 +21,13 @@
             if (key.endsWith('spec')) {
               return `${key}.js`;
             }
-            return this.next.path(key);
+            return super.path(key);
           },
         });
       });
       mocha.setup('bdd');
 
-      global.suppressConsoleErrors = () => {
+      window.suppressConsoleErrors = () => {
 
         let consoleError;
         beforeEach(() => {

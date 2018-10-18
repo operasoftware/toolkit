@@ -1,9 +1,12 @@
-global.createFromTemplate = (template, root) =>
-    opr.Toolkit.VirtualDOM.createFromDescription(
-        opr.Toolkit.Template.describe(template), root
-    );
+const isBrowser = typeof window === 'object';
 
-global.createRoot = (template = null, container) => {
+const $global = isBrowser ? window : global;
+
+$global.createFromTemplate = (template, root) =>
+    opr.Toolkit.VirtualDOM.createFromDescription(
+        opr.Toolkit.Template.describe(template), root);
+
+$global.createRoot = (template = null, container) => {
   const {
     Template,
     VirtualDOM,
@@ -22,7 +25,7 @@ global.createRoot = (template = null, container) => {
   return root;
 };
 
-global.createComponent = (template = null) => {
+$global.createComponent = (template = null) => {
   class Component extends opr.Toolkit.Component {
     render() {
       return template;

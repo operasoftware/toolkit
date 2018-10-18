@@ -311,7 +311,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.description.listeners.onClick, onClick);
-    !(global.window) &&
+    typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
   });
 
@@ -329,7 +329,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.description.listeners.onClick, doSomething);
-    !(global.window) &&
+    typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
 
     // when
@@ -338,7 +338,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.description.listeners.onClick, doSomethingElse);
-    !(global.window) &&
+    typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
   });
 
@@ -350,7 +350,7 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.description.listeners.onClick, onClick);
-    !(global.window) &&
+    typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
 
     // when
@@ -358,7 +358,8 @@ describe('Patch element => apply', () => {
 
     // then
     assert.equal(element.description.listeners, undefined);
-    !(global.window) && assert.deepEqual(element.ref.eventListeners_.click, []);
+    typeof window !== 'object' &&
+        assert.deepEqual(element.ref.eventListeners_.click, []);
   });
 
   it('sets property', () => {

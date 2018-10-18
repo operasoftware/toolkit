@@ -59,7 +59,7 @@ describe('Virtual Element => Attach DOM', () => {
 
       // then
       assert.equal(element.description.listeners.onClick, listener);
-      !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
+      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
         click: [listener],
       });
     });
@@ -73,7 +73,7 @@ describe('Virtual Element => Attach DOM', () => {
       });
 
       assert.equal(element.description.listeners.onChange, listener);
-      !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
+      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
         change: [listener],
       });
 
@@ -82,7 +82,7 @@ describe('Virtual Element => Attach DOM', () => {
 
       // then
       assert.equal(element.description.listeners, undefined);
-      !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
+      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
         change: [],
       });
     });
@@ -332,7 +332,7 @@ describe('Virtual Element => Attach DOM', () => {
       assert(element.ref instanceof Element);
       assert.equal(element.ref.tagName, 'SPAN')
       assert.equal(element.ref.textContent, 'Text');
-      !(global.window) && assert.deepEqual(element.ref.eventListeners_, {
+      typeof window !== 'object' && assert.deepEqual(element.ref.eventListeners_, {
         click: [onClick],
         change: [onChange],
       });
