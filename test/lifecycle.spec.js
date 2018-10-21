@@ -531,7 +531,7 @@ describe('Lifecycle', () => {
       ]);
 
       const patches = [
-        Patch.updateComponent(component, description),
+        Patch.updateNode(component, description),
       ];
 
       // when
@@ -568,7 +568,7 @@ describe('Lifecycle', () => {
         updatedProps,
       ]);
       const patches = [
-        Patch.updateComponent(component, description),
+        Patch.updateNode(component, description),
       ];
 
       // when

@@ -84,19 +84,31 @@ limitations under the License.
       }
     }
 
+    static onNodeReceivedDescription(node, description) {
+      if (node.isComponent()) {
+        this.onComponentReceivedProps(node, description.props);
+      }
+    }
+
+    static onNodeUpdated(node, prevDescription) {
+      if (node.isComponent()) {
+        this.onComponentUpdated(node, prevDescription.props);
+      }
+    }
+
     static onRootAttached(root) {
       if (root.hasOwnMethod('onAttached')) {
         root.onAttached.call(root.sandbox);
       }
     }
 
-    static onComponentReceivedProps(component, nextProps) {
+    static onComponentReceivedProps(component, nextProps = {}) {
       if (component.hasOwnMethod('onPropsReceived')) {
         component.onPropsReceived.call(component.sandbox, nextProps);
       }
     }
 
-    static onComponentUpdated(component, prevProps) {
+    static onComponentUpdated(component, prevProps = {}) {
       if (component.hasOwnMethod('onUpdated')) {
         component.onUpdated.call(component.sandbox, prevProps);
       }
@@ -176,8 +188,8 @@ limitations under the License.
           this.onNodeDestroyed(patch.child);
           this.onNodeCreated(patch.node);
           return;
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentReceivedProps(patch.target, patch.props);
+        case Type.UPDATE_NODE:
+          return this.onNodeReceivedDescription(patch.node, patch.description);
       }
     }
 
@@ -208,8 +220,8 @@ limitations under the License.
           this.onNodeDetached(patch.child);
           this.onNodeAttached(patch.node);
           return;
-        case Type.UPDATE_COMPONENT:
-          return this.onComponentUpdated(patch.target, patch.prevProps);
+        case Type.UPDATE_NODE:
+          return this.onNodeUpdated(patch.node, patch.prevDescription);
       }
     }
 

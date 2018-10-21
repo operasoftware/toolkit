@@ -66,8 +66,10 @@ limitations under the License.
    */
   class ComponentDescription extends Description {
 
-    constructor({key, component, children, props}) {
-      super(opr.Toolkit.Component.NodeType, key);
+    constructor({component, children, props}) {
+
+      super(opr.Toolkit.Component.NodeType, props && props.key);
+
       this.component = component;
       if (children) {
         this.children = children;
@@ -121,20 +123,19 @@ limitations under the License.
    */
   class ElementDescription extends Description {
 
-    constructor({type, name, text, children, details}) {
+    constructor({name, text, children, props}) {
 
-      super(opr.Toolkit.VirtualElement.NodeType, details && details.key);
+      super(opr.Toolkit.VirtualElement.NodeType, props && props.key);
 
-      this.type = type;
       this.name = name;
-      if (children) {
-        this.children = children;
-      }
       if (text) {
         this.text = text;
       }
-      if (details) {
-        Object.assign(this, details);
+      if (children) {
+        this.children = children;
+      }
+      if (props) {
+        Object.assign(this, props);
       }
 
       Object.defineProperty(this, 'asTemplate', {
@@ -142,33 +143,33 @@ limitations under the License.
         configurable: false,
         get: () => {
           const template = [this.name];
-          if (details) {
-            const toProps = () => {
-              const props = {};
-              if (details.key) {
-                props.key = details.key;
+          if (props) {
+            const flatten = () => {
+              const object = {};
+              if (props.key) {
+                object.key = props.key;
               }
-              if (details.class) {
-                props.class = details.class;
+              if (props.class) {
+                object.class = props.class;
               }
-              if (details.style) {
-                props.style = details.style;
+              if (props.style) {
+                object.style = props.style;
               }
-              if (details.attrs) {
-                Object.assign(props, details.attrs);
+              if (props.attrs) {
+                Object.assign(object, props.attrs);
               }
-              if (details.dataset) {
-                props.dataset = details.dataset;
+              if (props.dataset) {
+                object.dataset = props.dataset;
               }
-              if (details.listeners) {
-                Object.assign(props, details.listeners);
+              if (props.listeners) {
+                Object.assign(object, props.listeners);
               }
-              if (details.properties) {
-                props.properties = details.properties;
+              if (props.properties) {
+                object.properties = props.properties;
               }
-              return props;
+              return object;
             };
-            template.push(toProps(details));
+            template.push(flatten(props));
           }
           if (this.children) {
             template.push(...this.children.map(child => child.asTemplate));

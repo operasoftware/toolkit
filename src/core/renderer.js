@@ -42,35 +42,49 @@ limitations under the License.
       if (description.text) {
         element.textContent = description.text;
       }
-      if (description.listeners) {
-        Object.entries(description.listeners).forEach(([name, listener]) => {
-          const event = opr.Toolkit.utils.getEventName(name);
-          element.addEventListener(event, listener);
-        });
-      }
-      if (description.attrs) {
-        Object.entries(description.attrs).forEach(([attr, value]) => {
-          const name = opr.Toolkit.utils.getAttributeName(attr);
-          element.setAttribute(name, value);
-        });
-      }
-      if (description.dataset) {
-        Object.entries(description.dataset).forEach(([attr, value]) => {
-          element.dataset[attr] = value;
-        });
-      }
       if (description.class) {
         element.className = description.class;
       }
       if (description.style) {
-        Object.entries(description.style).forEach(([prop, value]) => {
+        for (const [prop, value] of Object.entries(description.style)) {
           element.style[prop] = value;
-        });
+        }
+      }
+      if (description.listeners) {
+        for (const [name, listener] of Object.entries(description.listeners)) {
+          const event = opr.Toolkit.utils.getEventName(name);
+          element.addEventListener(event, listener);
+        }
+      }
+      if (description.attrs) {
+        for (const [attr, value] of Object.entries(description.attrs)) {
+          const name = opr.Toolkit.utils.getAttributeName(attr);
+          element.setAttribute(name, value);
+        }
+      }
+      if (description.dataset) {
+        for (const [attr, value] of Object.entries(description.dataset)) {
+          element.dataset[attr] = value;
+        }
       }
       if (description.properties) {
-        Object.entries(description.properties).forEach(([prop, value]) => {
+        for (const [prop, value] of Object.entries(description.properties)) {
           element[prop] = value;
-        });
+        }
+      }
+      if (description.custom) {
+        if (description.custom.attrs) {
+          const customAttributes = Object.entries(description.custom.attrs);
+          for (const [name, value] of customAttributes) {
+            element.setAttribute(name, value);
+          }
+        }
+        if (description.custom.listeners) {
+          const customListeners = Object.entries(description.custom.listeners);
+          for (const [event, listener] of customListeners) {
+            element.addEventListener(event, listener);
+          }
+        }
       }
       return element;
     }

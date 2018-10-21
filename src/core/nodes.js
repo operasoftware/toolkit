@@ -536,86 +536,56 @@ limitations under the License.
       this.attachDOM();
     }
 
-    setAttribute(name, value) {
-      this.description.attrs = this.description.attrs || {};
-      this.description.attrs[name] = value;
-      this.ref.setAttribute(opr.Toolkit.utils.getAttributeName(name), value);
+    setAttribute(name, value, isCustom) {
+      const attr = isCustom ? name : opr.Toolkit.utils.getAttributeName(name);
+      this.ref.setAttribute(attr, value);
     }
 
-    removeAttribute(name) {
-      delete this.description.attrs[name];
-      if (!Object.keys(this.description.attrs).length) {
-        delete this.description.attrs;
-      }
-      this.ref.removeAttribute(opr.Toolkit.utils.getAttributeName(name));
+    removeAttribute(name, isCustom) {
+      const attr = isCustom ? name : opr.Toolkit.utils.getAttributeName(name);
+      this.ref.removeAttribute(attr);
     }
 
     setDataAttribute(name, value) {
-      this.description.dataset = this.description.dataset || {};
-      this.description.dataset[name] = String(value);
       this.ref.dataset[name] = value;
     }
 
     removeDataAttribute(name) {
-      delete this.description.dataset[name];
-      if (!Object.keys(this.description.dataset).length) {
-        delete this.description.dataset;
-      }
       delete this.ref.dataset[name];
     }
 
     setClassName(className = '') {
-      this.description.class = className;
       this.ref.className = className;
     }
 
     setStyleProperty(prop, value) {
-      this.description.style = this.description.style || {};
-      this.description.style[prop] = String(value);
       this.ref.style[prop] = String(value);
     }
 
     removeStyleProperty(prop) {
-      delete this.description.style[prop];
-      if (!Object.keys(this.description.style).length) {
-        delete this.description.style;
-      }
       this.ref.style[prop] = null;
     }
 
     addListener(name, listener) {
-      this.description.listeners = this.description.listeners || {};
-      this.description.listeners[name] = listener;
       const event = opr.Toolkit.utils.getEventName(name);
       this.ref.addEventListener(event, listener);
     }
 
     removeListener(name, listener) {
-      delete this.description.listeners[name];
-      if (!Object.keys(this.description.listeners).length) {
-        delete this.description.listeners;
-      }
       const event = opr.Toolkit.utils.getEventName(name);
       this.ref.removeEventListener(event, listener);
     }
 
     setProperty(key, value) {
-      this.description.properties = this.description.properties || {};
-      this.description.properties[key] = value;
       this.ref[key] = value;
     }
 
     deleteProperty(key, value) {
-      delete this.description.properties[key];
-      if (!Object.keys(this.description.properties).length) {
-        delete this.description.properties;
-      }
       delete this.ref[key];
     }
 
     insertChild(child, index) {
       if (!this.children) {
-        this.description.children = [];
         this.children = [];
       }
       if (index === undefined) {
@@ -623,7 +593,6 @@ limitations under the License.
       }
       const nextChild = this.children[index];
       this.children.splice(index, 0, child);
-      this.description.children.splice(index, 0, child.description);
       this.ref.insertBefore(child.ref, nextChild && nextChild.ref);
       child.parentNode = this;
     }
@@ -661,12 +630,10 @@ limitations under the License.
     }
 
     setTextContent(text) {
-      this.description.text = text;
       this.ref.textContent = text;
     }
 
     removeTextContent() {
-      this.description.text = null;
       this.ref.textContent = '';
     }
 

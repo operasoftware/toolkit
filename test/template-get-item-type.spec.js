@@ -41,7 +41,12 @@ describe('Template => get item type', () => {
     assert.equal(Template.getItemType(props => null), 'function');
   });
 
-  it('returns "unknown" for a component', () => {
+  it('returns "component" for a component class', () => {
+    class Component extends opr.Toolkit.Component {}
+    assert.equal(Template.getItemType(Component), 'component');
+  });
+
+  it('returns "unknown" for a component instance', () => {
     class Component extends opr.Toolkit.Component {
       render() {
         return null;

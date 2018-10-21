@@ -386,6 +386,49 @@ describe('Template => describe', () => {
       assert.equal(description.text, 'text');
     });
 
+    it('detects element with custom attributes', () => {
+
+      // given
+      const name = 'section';
+      const props = {
+        attrs: {
+          custom: true,
+        },
+      };
+      const template = [name, props];
+
+      // when
+      const description = Template.describe(template);
+
+      // then
+      assert.equal(description.type, 'element');
+      assert.equal(description.name, 'section');
+      assert.deepEqual(description.custom.attrs, {
+        custom: '',
+      });
+    });
+
+    it('detects element with custom listeners', () => {
+
+      // given
+      const name = 'section';
+      const myListener = () => {};
+      const props = {
+        on: {
+          'my-event': myListener,
+        },
+      };
+      const template = [name, props];
+
+      // when
+      const description = Template.describe(template);
+
+      // then
+      assert.equal(description.type, 'element');
+      assert.equal(description.name, 'section');
+      assert.deepEqual(description.custom.listeners, props.on);
+    });
+
     it('detects element with child nodes', () => {
 
       // given

@@ -75,11 +75,10 @@ describe('Patch component => apply', () => {
       },
     ]);
 
-    const patch = Patch.updateComponent(component, description);
-    patch.apply();
+    Patch.updateNode(component, description).apply();
 
     // then
-    assert.deepEqual(patch.prevProps, props);
+    assert.deepEqual(component.description.props, description.props);
   });
 
   describe('add component', () => {

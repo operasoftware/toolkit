@@ -15,19 +15,16 @@ limitations under the License.
 */
 
 {
-
-  const isNotEmpty = object => Boolean(Object.keys(object).length);
   const isDefined = value => value !== undefined && value !== null;
+  const isFalsy = template => template === null || template === false;
+  const isNotEmpty = object => Boolean(Object.keys(object).length);
 
   class Template {
 
     /*
-     * Creates a normalised description of a virtual node
-     * (either instance of ComponentDescription or ElementDescription).
+     * Creates a normalized Description of given template.
      */
     static describe(template) {
-
-      const isFalsy = template => template === null || template === false;
 
       if (isFalsy(template)) {
         return null;
@@ -39,39 +36,35 @@ limitations under the License.
                  (item, index) => [item, this.getItemType(item), index])) {
           if (index === 0) {
             switch (type) {
-              case 'string':
-                details.type = 'element';
-                details.name = item;
-                break;
-              case 'component':
-              case 'function':
-              case 'symbol':
-                details.type = 'component';
-                details.component =
-                    opr.Toolkit.resolveComponentClass(item, type);
-                break;
-              default:
-                console.error(
-                    'Invalid node type:', item,
-                    `(${type}) at index: ${index}, template:`, template);
-                throw new Error(`Invalid node type specified: ${type}`);
+            case 'string':
+              details.type = 'element';
+              details.name = item;
+              break;
+            case 'component':
+            case 'function':
+            case 'symbol':
+              details.type = 'component';
+              details.component = opr.Toolkit.resolveComponentClass(item, type);
+              break;
+            default:
+              console.error('Invalid node type:', item,
+                            `(${type}) at index: ${index}, template:`,
+                            template);
+              throw new Error(`Invalid node type specified: ${type}`);
             }
             continue;
           }
           if (index === 1 && type === 'props') {
             if (details.type === 'component') {
-              const componentProps = this.normalizeComponentProps(
-                  item, details.component);
+              const componentProps =
+                  this.normalizeComponentProps(item, details.component);
               if (componentProps) {
                 details.props = componentProps;
-                if (isDefined(componentProps.key)) {
-                  details.key = componentProps.key;
-                }
               }
             } else {
               const elementProps = this.normalizeElementProps(item);
               if (elementProps) {
-                details.details = elementProps;
+                details.props = elementProps;
               }
             }
             continue;
@@ -119,9 +112,8 @@ limitations under the License.
     }
 
     /*
-     * Returns either a non-empty props object supplemented with
-     * default values provided by the component class for the missing values
-     * or null,
+     * Supplements given object with default props for given class.
+     * Returns either a non-empty props object or null.
      */
     static normalizeComponentProps(props = {}, ComponentClass) {
       const normalized =
@@ -130,7 +122,7 @@ limitations under the License.
     }
 
     /*
-     * Provides props object supplemented with default props values.
+     * Returns a new props object supplemented by overriden values.
      */
     static normalizeProps(...overrides) {
       const result = {};
@@ -148,33 +140,44 @@ limitations under the License.
      * Normalizes specified element props object and returns either
      * a non-empty object containing only supported props or null.
      */
-    static normalizeElementProps(props) {
-      const details = {};
-      for (const [key, value] of Object.keys(props).map(
-               key => [key, props[key]])) {
+    static normalizeElementProps(object) {
+      const props = {};
+      for (const [key, value] of Object.entries(object)) {
         if (key === 'key') {
           if (isDefined(value)) {
-            details.key = value;
+            props.key = value;
           }
         } else if (key === 'class') {
           const className = this.getClassName(value);
           if (className) {
-            details.class = className;
+            props.class = className;
           }
         } else if (key === 'style') {
           const style = this.getStyle(value);
           if (style) {
-            details.style = style;
+            props.style = style;
           }
         } else if (key === 'dataset') {
           const dataset = this.getDataset(value);
           if (dataset) {
-            details.dataset = dataset;
+            props.dataset = dataset;
           }
         } else if (key === 'properties') {
           const properties = this.getProperties(value);
           if (properties) {
-            details.properties = properties;
+            props.properties = properties;
+          }
+        } else if (key === 'attrs') {
+          const customAttrs = this.getCustomAttributes(value);
+          if (customAttrs) {
+            props.custom = props.custom || {};
+            props.custom.attrs = customAttrs;
+          }
+        } else if (key === 'on') {
+          const customListeners = this.getCustomListeners(value);
+          if (customListeners) {
+            props.custom = props.custom || {};
+            props.custom.listeners = customListeners;
           }
         } else {
 
@@ -183,23 +186,24 @@ limitations under the License.
             SUPPORTED_EVENTS,
           } = opr.Toolkit;
 
-          if (SUPPORTED_EVENTS.includes(key)) {
-            if (typeof value === 'function') {
-              details.listeners = details.listeners || {};
-              details.listeners[key] = value;
-            }
-          }
-
           if (SUPPORTED_ATTRIBUTES.includes(key)) {
-            const attributeValue = this.getAttribute(value, true);
-            if (attributeValue !== null && attributeValue !== undefined) {
-              details.attrs = details.attrs || {};
-              details.attrs[key] = attributeValue;
+            const attr = this.getAttributeValue(value);
+            if (isDefined(attr)) {
+              props.attrs = props.attrs || {};
+              props.attrs[key] = attr;
             }
+          } else if (SUPPORTED_EVENTS.includes(key)) {
+            const listener = this.getListener(value, key);
+            if (listener) {
+              props.listeners = props.listeners || {};
+              props.listeners[key] = value;
+            }
+          } else {
+            console.warn('Unsupported property:', key);
           }
         }
       }
-      return isNotEmpty(details) ? details : null;
+      return isNotEmpty(props) ? props : null;
     }
 
     /*
@@ -265,7 +269,7 @@ limitations under the License.
             .filter(item => item)
             .join(' ');
       }
-      return '';
+      throw new Error(`Invalid value: ${JSON.stringify(value)}`);
     }
 
     /*
@@ -274,34 +278,104 @@ limitations under the License.
      */
     static getStyle(object) {
 
-      opr.Toolkit.assert(
-          object.constructor === Object, 'Style must be a plain object!');
+      opr.Toolkit.assert(object.constructor === Object,
+                         'Style must be a plain object!');
 
-      const style = {};
-      for (const [key, value] of Object.entries(object)) {
-        if (key === 'filter') {
-          const filter =
-              this.getComposite(value, key, opr.Toolkit.SUPPORTED_FILTERS);
-          if (filter) {
-            style.filter = filter;
-          }
-        } else if (key === 'transform') {
-          const transform =
-              this.getComposite(value, key, opr.Toolkit.SUPPORTED_TRANSFORMS);
-          if (transform) {
-            style.transform = transform;
-          }
-        } else if (opr.Toolkit.SUPPORTED_STYLES.includes(key)) {
-          const string = this.getAttribute(value, false);
-          if (string !== null) {
-            style[key] = string;
-          }
-        } else {
-          console.warn(
-              `Unsupported style property, key: ${key}, value:`, value);
+      const isSupported = key => opr.Toolkit.SUPPORTED_STYLES.includes(key);
+
+      const reduceToNonEmptyValues = (style, [name, value]) => {
+        const string = this.getStyleProperty(value, name);
+        if (string !== null) {
+          style[name] = string;
+        }
+        return style;
+      };
+
+      const entries = Object.entries(object);
+
+      if (opr.Toolkit.isDebug()) {
+        for (const [key, value] of entries.filter(([key]) =>
+                                                      !isSupported(key))) {
+          console.warn(`Unsupported style property, key: ${key}, value:`,
+                       value);
         }
       }
+
+      const style = Object.entries(object)
+                        .filter(([key, value]) => isSupported(key))
+                        .reduce(reduceToNonEmptyValues, {});
       return isNotEmpty(style) ? style : null;
+    }
+
+    static getStyleProperty(value, name) {
+      if (typeof value === 'string') {
+        return value || '\'\'';
+      } else if ([true, false, null, undefined].includes(value)) {
+        return null;
+      } else if (Array.isArray(value)) {
+        return value.join('');
+      } else if (typeof value === 'number') {
+        return String(value);
+      } else if (typeof value === 'object') {
+        let whitelist;
+        if (name === 'filter') {
+          whitelist = opr.Toolkit.SUPPORTED_FILTERS;
+        } else if (name === 'transform') {
+          whitelist = opr.Toolkit.SUPPORTED_TRANSFORMS;
+        } else {
+          throw new Error(`Unknown function list: ${JSON.stringify(value)}`);
+        }
+        return this.getFunctionList(value, whitelist);
+      }
+      throw new Error(`Invalid style property value: ${JSON.stringify(value)}`);
+    }
+
+    /*
+     * Returns a multi-property string value.
+     */
+    static getFunctionList(object, whitelist) {
+      const composite = {};
+      let entries = Object.entries(object);
+      if (whitelist) {
+        entries = entries.filter(([key, value]) => whitelist.includes(key));
+      }
+      for (const [key, value] of entries) {
+        const stringValue = this.getAttributeValue(value, false);
+        if (stringValue !== null) {
+          composite[key] = stringValue;
+        }
+      }
+      return Object.entries(composite)
+          .map(([key, value]) => `${key}(${value})`)
+          .join(' ');
+    }
+
+    static getListener(value, name) {
+      if (typeof value === 'function') {
+        return value;
+      }
+      if (value === null || value === false || value === undefined) {
+        return null;
+      }
+      throw new Error(`Invalid listener specified for event: ${name}`);
+    }
+
+    /*
+     * Resolves given value to a string.
+     */
+    static getAttributeValue(value, allowEmpty = true) {
+      if (value === true || value === '') {
+        return allowEmpty ? '' : null;
+      } else if (typeof value === 'string') {
+        return value;
+      } else if ([null, false, undefined].includes(value)) {
+        return null;
+      } else if (Array.isArray(value)) {
+        return value.join('');
+      } else if (['object', 'function', 'symbol'].includes(typeof value)) {
+        throw new Error(`Invalid attribute value: ${JSON.stringify(value)}!`);
+      }
+      return String(value);
     }
 
     /*
@@ -310,7 +384,7 @@ limitations under the License.
     static getDataset(object) {
       const dataset = {};
       for (const key of Object.keys(object)) {
-        const value = this.getAttribute(object[key], key);
+        const value = this.getAttributeValue(object[key]);
         if (value !== null) {
           dataset[key] = value;
         }
@@ -326,37 +400,32 @@ limitations under the License.
       return isNotEmpty(object) ? object : null;
     }
 
-    static convert(value, type) {}
-
-    static getComposite(object, type, whitelist = []) {
-
-      const composite = {};
-      const keys = Object.keys(object).filter(key => whitelist.includes(key));
-      for (const [key, value] of keys.map(key => [key, object[key]])) {
-        const stringValue =
-            this.getAttribute(value, /*= allow empty */ false);
-        if (typeof stringValue === 'string') {
-          composite[key] = stringValue;
+    static getCustomAttributes(object) {
+      console.assert(
+          object.constructor === Object,
+          'Expecting object for custom attributes!');
+      const attrs = {};
+      for (const [key, value] of Object.entries(object)) {
+        const attr = this.getAttributeValue(value, true);
+        if (attr !== null) {
+          attrs[key] = attr;
         }
       }
-      return Object.entries(composite)
-          .map(([key, value]) => `${key}(${value})`)
-          .join(' ');
+      return isNotEmpty(attrs) ? attrs : null;
     }
 
-    static getAttribute(value, allowEmpty = true) {
-      if (value === true || value === '') {
-        return allowEmpty ? '' : null;
-      } else if (typeof value === 'string') {
-        return value;
-      } else if ([null, false, undefined].includes(value)) {
-        return null;
-      } else if (Array.isArray(value)) {
-        return value.join('');
-      } else if (['object', 'function', 'symbol'].includes(typeof value)) {
-        return null;
+    static getCustomListeners(object) {
+      console.assert(
+          object.constructor === Object,
+          'Expecting object for custom listeners!');
+      const listeners = {};
+      for (const [key, value] of Object.entries(object)) {
+        const listener = this.getListener(value, key);
+        if (listener) {
+          listeners[key] = listener;
+        }
       }
-      return String(value);
+      return isNotEmpty(listeners) ? listeners : null;
     }
   }
 
