@@ -251,7 +251,7 @@ limitations under the License.
       }
     }
 
-    listenerPatches(current = {}, next = {}, target = null) {
+    listenerPatches(current = {}, next = {}, target = null, isCustom = false) {
       const Patch = opr.Toolkit.Patch;
 
       const listeners = Object.keys(current);
@@ -267,14 +267,15 @@ limitations under the License.
                     current[event].source !== next[event].source));
 
       for (let event of added) {
-        this.addPatch(Patch.addListener(event, next[event], target));
+        this.addPatch(Patch.addListener(event, next[event], target, isCustom));
       }
       for (let event of removed) {
-        this.addPatch(Patch.removeListener(event, current[event], target));
+        this.addPatch(
+            Patch.removeListener(event, current[event], target, isCustom));
       }
       for (let event of changed) {
-        this.addPatch(
-            Patch.replaceListener(event, current[event], next[event], target));
+        this.addPatch(Patch.replaceListener(
+            event, current[event], next[event], target, isCustom));
       }
     }
 

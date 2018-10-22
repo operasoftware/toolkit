@@ -566,13 +566,13 @@ limitations under the License.
       this.ref.style[prop] = null;
     }
 
-    addListener(name, listener) {
-      const event = opr.Toolkit.utils.getEventName(name);
+    addListener(name, listener, isCustom) {
+      const event = isCustom ? name : opr.Toolkit.utils.getEventName(name);
       this.ref.addEventListener(event, listener);
     }
 
-    removeListener(name, listener) {
-      const event = opr.Toolkit.utils.getEventName(name);
+    removeListener(name, listener, isCustom) {
+      const event = isCustom ? name : opr.Toolkit.utils.getEventName(name);
       this.ref.removeEventListener(event, listener);
     }
 

@@ -102,20 +102,20 @@ limitations under the License.
   const ADD_LISTENER = {
     type: Symbol('add-listener'),
     apply: function() {
-      this.target.addListener(this.name, this.listener);
+      this.target.addListener(this.name, this.listener, this.isCustom);
     },
   };
   const REPLACE_LISTENER = {
     type: Symbol('replace-listener'),
     apply: function() {
-      this.target.removeListener(this.name, this.removed);
-      this.target.addListener(this.name, this.added);
+      this.target.removeListener(this.name, this.removed, this.isCustom);
+      this.target.addListener(this.name, this.added, this.isCustom);
     },
   };
   const REMOVE_LISTENER = {
     type: Symbol('remove-listener'),
     apply: function() {
-      this.target.removeListener(this.name, this.listener);
+      this.target.removeListener(this.name, this.listener, this.isCustom);
     },
   };
 
@@ -297,28 +297,31 @@ limitations under the License.
       return patch;
     }
 
-    static addListener(name, listener, target) {
+    static addListener(name, listener, target, isCustom) {
       const patch = new Patch(ADD_LISTENER);
       patch.name = name;
       patch.listener = listener;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 
-    static replaceListener(name, removed, added, target) {
+    static replaceListener(name, removed, added, target, isCustom) {
       const patch = new Patch(REPLACE_LISTENER);
       patch.name = name;
       patch.removed = removed;
       patch.added = added;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 
-    static removeListener(name, listener, target) {
+    static removeListener(name, listener, target, isCustom) {
       const patch = new Patch(REMOVE_LISTENER);
       patch.name = name;
       patch.listener = listener;
       patch.target = target;
+      patch.isCustom = isCustom;
       return patch;
     }
 
