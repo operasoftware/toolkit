@@ -111,12 +111,12 @@ limitations under the License.
    * - text (a string representing text content),
    * - children (an array of child nodes),
    * - props (an object) defining:
+   *    - class (a class name string)
+   *    - style (an object for style property to string value mapping)
    *    - listeners (an object for event name to listener mapping)
    *    - attrs (an object for normalized attribute name to value mapping)
    *    - dataset (an object representing data attributes)
-   *    - classNames (an array of sorted class names)
-   *    - style (an object for style property to string value mapping)
-   *    - metadata (an object for properties set directly on DOM element)
+   *    - properties (an object for properties set directly on DOM element)
    *
    * Non-enumerable properties:
    * - asTemplate: returns element description as a normalized template

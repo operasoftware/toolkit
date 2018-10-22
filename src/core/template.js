@@ -55,17 +55,11 @@ limitations under the License.
             continue;
           }
           if (index === 1 && type === 'props') {
-            if (details.type === 'component') {
-              const componentProps =
-                  this.normalizeComponentProps(item, details.component);
-              if (componentProps) {
-                details.props = componentProps;
-              }
-            } else {
-              const elementProps = this.normalizeElementProps(item);
-              if (elementProps) {
-                details.props = elementProps;
-              }
+            const props = details.type === 'component'
+                              ? this.getComponentProps(item, details.component)
+                              : this.getElementProps(item);
+            if (props) {
+              details.props = props;
             }
             continue;
           }
@@ -111,14 +105,20 @@ limitations under the License.
       throw new Error('Expecting array, null or false');
     }
 
+    static getComponentProps(object, ComponentClass) {
+      const isRoot = ComponentClass.prototype instanceof opr.Toolkit.Root;
+      const props = isRoot
+                        ? object
+                        : this.normalizeComponentProps(object, ComponentClass);
+      return isNotEmpty(props) ? props : null;
+    }
+
     /*
      * Supplements given object with default props for given class.
      * Returns either a non-empty props object or null.
      */
     static normalizeComponentProps(props = {}, ComponentClass) {
-      const normalized =
-          this.normalizeProps(props, ComponentClass.defaultProps || {});
-      return isNotEmpty(normalized) ? normalized : null;
+      return this.normalizeProps(props, ComponentClass.defaultProps);
     }
 
     /*
@@ -140,7 +140,7 @@ limitations under the License.
      * Normalizes specified element props object and returns either
      * a non-empty object containing only supported props or null.
      */
-    static normalizeElementProps(object) {
+    static getElementProps(object) {
       const props = {};
       for (const [key, value] of Object.entries(object)) {
         if (key === 'key') {

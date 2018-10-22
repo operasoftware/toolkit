@@ -87,7 +87,13 @@
     "one-var-declaration-per-line": "error",
     "operator-linebreak": [
       "error",
-      "after"
+      "after",
+      {
+        "overrides": {
+          "?": "ignore",
+          ":": "ignore"
+        }
+      }
     ],
     "quotes": [
       "error",

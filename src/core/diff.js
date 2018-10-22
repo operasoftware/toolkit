@@ -50,6 +50,10 @@ limitations under the License.
      */
     rootPatches(currentState, nextState) {
 
+      if (!currentState) {
+        this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
+      }
+
       if (Diff.deepEqual(currentState, nextState)) {
         return [];
       }
@@ -58,9 +62,7 @@ limitations under the License.
         this.root.constructor,
         nextState,
       ]);
-      if (!currentState) {
-        this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
-      }
+
       this.componentPatches(this.root, description);
       this.root.state = nextState;
       return this.patches;
@@ -141,7 +143,7 @@ limitations under the License.
     childPatches(child, description) {
       if (child.isComponent()) {
         if (child.isRoot()) {
-          // TODO: support Root updates
+          return child.update(description);
         }
         return this.componentPatches(child, description);
       }

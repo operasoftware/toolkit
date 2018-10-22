@@ -295,7 +295,7 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.normalizeElementProps(listeners);
+      const props = Template.getElementProps(listeners);
 
       // then
       assert.deepEqual(props, {listeners});
@@ -313,7 +313,7 @@ describe('Template', () => {
         };
 
         // when
-        const props = Template.normalizeElementProps(unknownListeners);
+        const props = Template.getElementProps(unknownListeners);
 
         // then
         assert.equal(props, null);
@@ -696,7 +696,7 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.normalizeElementProps(value);
+      const props = Template.getElementProps(value);
 
       // then
       assert.deepEqual(props, {
@@ -716,7 +716,7 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.normalizeElementProps(value);
+      const props = Template.getElementProps(value);
 
       // then
       assert.equal(props, null);
@@ -732,7 +732,7 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.normalizeElementProps(value);
+      const props = Template.getElementProps(value);
 
       // then
       assert.equal(props, null);
@@ -748,7 +748,7 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.normalizeElementProps(value);
+      const props = Template.getElementProps(value);
 
       // then
       assert.equal(props, null);
@@ -757,7 +757,7 @@ describe('Template', () => {
     it('rejects anything else', () => {
 
       // given
-      const createCustomListener = value => Template.normalizeElementProps({
+      const createCustomListener = value => Template.getElementProps({
         on: {
           'another-event': value,
         },

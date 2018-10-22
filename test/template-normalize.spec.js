@@ -28,7 +28,7 @@ describe('Template => normalize props', () => {
     assert.deepEqual(normalizedProps, props);
   });
 
-  it('returns null when no empty props defined', () => {
+  it('returns an empty object when no empty props defined', () => {
 
     // given
     const ComponentClass = createComponentClass();
@@ -38,7 +38,7 @@ describe('Template => normalize props', () => {
         Template.normalizeComponentProps(undefined, ComponentClass);
 
     // then
-    assert.equal(normalizedProps, null);
+    assert.deepEqual(normalizedProps, {});
   });
 
   it('overrides undefined values', () => {
