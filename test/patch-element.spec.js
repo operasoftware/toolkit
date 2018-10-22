@@ -12,9 +12,9 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate(['div']);
 
     // when
-    Patch.addAttribute('name', 'value', element).apply();
-    Patch.addAttribute('noValidate', '', element).apply();
-    Patch.addAttribute('minLength', '100px', element).apply();
+    Patch.setAttribute('name', 'value', element).apply();
+    Patch.setAttribute('noValidate', '', element).apply();
+    Patch.setAttribute('minLength', '100px', element).apply();
 
     // then
     // assert.equal(Object.entries(element.description.attrs).length, 3);
@@ -47,9 +47,9 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.attributes['minlength'].value, '50px');
 
     // when
-    Patch.replaceAttribute('name', 'value', element).apply();
-    Patch.replaceAttribute('noValidate', 'true', element).apply();
-    Patch.replaceAttribute('minLength', '100px', element).apply();
+    Patch.setAttribute('name', 'value', element).apply();
+    Patch.setAttribute('noValidate', 'true', element).apply();
+    Patch.setAttribute('minLength', '100px', element).apply();
 
     // then
     // assert.equal(Object.entries(element.description.attrs).length, 3);
@@ -101,8 +101,8 @@ describe('Patch element => apply', () => {
     ]);
 
     // when
-    Patch.addDataAttribute('id', '10', element).apply();
-    Patch.addDataAttribute('customAttribute', 'true', element).apply();
+    Patch.setDataAttribute('id', '10', element).apply();
+    Patch.setDataAttribute('customAttribute', 'true', element).apply();
 
     // then
     // assert.equal(Object.entries(element.description.dataset).length, 2);
@@ -134,7 +134,7 @@ describe('Patch element => apply', () => {
     ]);
 
     // when
-    Patch.replaceDataAttribute('toolkitId', '23', element).apply();
+    Patch.setDataAttribute('toolkitId', '23', element).apply();
 
     assert.equal(Object.keys(element.ref.dataset).length, 2);
     assert.equal(element.ref.dataset.toolkitId, '23');
@@ -144,8 +144,8 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
 
     // when
-    Patch.replaceDataAttribute('toolkitId', '23', element).apply();
-    Patch.replaceDataAttribute('someName', 'Other Name', element).apply();
+    Patch.setDataAttribute('toolkitId', '23', element).apply();
+    Patch.setDataAttribute('someName', 'Other Name', element).apply();
 
     // then
     // assert.equal(Object.entries(element.description.dataset).length, 2);
@@ -202,7 +202,7 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate(['div']);
 
     // when
-    Patch.addStyleProperty('color', 'black', element).apply();
+    Patch.setStyleProperty('color', 'black', element).apply();
 
     // then
     // assert.equal(element.description.style.color, 'black');
@@ -224,7 +224,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.style.textDecoration, 'underline');
 
     // when
-    Patch.replaceStyleProperty('textDecoration', 'overline', element).apply();
+    Patch.setStyleProperty('textDecoration', 'overline', element).apply();
 
     // then
     // assert.equal(element.description.style.textDecoration, 'overline');

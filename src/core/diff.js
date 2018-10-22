@@ -109,21 +109,13 @@ limitations under the License.
       // insert
       if (!child && description) {
         const node = VirtualDOM.createFromDescription(description, parent);
-        if (node.isElement()) {
-          this.addPatch(Patch.addElement(node, parent));
-          return;
-        }
-        this.addPatch(Patch.addComponent(node, parent));
+        this.addPatch(Patch.appendChild(node, parent));
         return;
       }
 
       // remove
       if (child && !description) {
-        if (child.isElement()) {
-          this.addPatch(Patch.removeElement(child, parent));
-          return;
-        }
-        this.addPatch(Patch.removeComponent(child, parent));
+        this.addPatch(Patch.removeChild(child, parent));
         return;
       }
 
@@ -227,13 +219,13 @@ limitations under the License.
                                            current[prop] !== next[prop]);
 
       for (let prop of added) {
-        this.addPatch(Patch.addStyleProperty(prop, next[prop], target));
+        this.addPatch(Patch.setStyleProperty(prop, next[prop], target));
       }
       for (let prop of removed) {
         this.addPatch(Patch.removeStyleProperty(prop, target));
       }
       for (let prop of changed) {
-        this.addPatch(Patch.replaceStyleProperty(prop, next[prop], target));
+        this.addPatch(Patch.setStyleProperty(prop, next[prop], target));
       }
     }
 
@@ -249,14 +241,13 @@ limitations under the License.
                                            current[attr] !== next[attr]);
 
       for (let attr of added) {
-        this.addPatch(Patch.addAttribute(attr, next[attr], target, isCustom));
+        this.addPatch(Patch.setAttribute(attr, next[attr], target, isCustom));
       }
       for (let attr of removed) {
         this.addPatch(Patch.removeAttribute(attr, target, isCustom));
       }
       for (let attr of changed) {
-        this.addPatch(
-            Patch.replaceAttribute(attr, next[attr], target, isCustom));
+        this.addPatch(Patch.setAttribute(attr, next[attr], target, isCustom));
       }
     }
 
@@ -299,13 +290,13 @@ limitations under the License.
                                            current[attr] !== next[attr]);
 
       for (let attr of added) {
-        this.addPatch(Patch.addDataAttribute(attr, next[attr], target));
+        this.addPatch(Patch.setDataAttribute(attr, next[attr], target));
       }
       for (let attr of removed) {
         this.addPatch(Patch.removeDataAttribute(attr, target));
       }
       for (let attr of changed) {
-        this.addPatch(Patch.replaceDataAttribute(attr, next[attr], target));
+        this.addPatch(Patch.setDataAttribute(attr, next[attr], target));
       }
     }
 

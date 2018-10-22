@@ -32,12 +32,7 @@ describe('Patch component => apply', () => {
     let node = null;
     if (template) {
       node = createFromTemplate(template);
-      if (node.isElement()) {
-        Patch.addElement(node, root).apply();
-      }
-      if (node.isComponent()) {
-        Patch.addComponent(node, root).apply();
-      }
+      Patch.appendChild(node, root).apply();
     }
     return [root, node];
   };
@@ -91,7 +86,7 @@ describe('Patch component => apply', () => {
       const component = createFromTemplate([Component]);
 
       // when
-      Patch.addComponent(component, root).apply();
+      Patch.appendChild(component, root).apply();
 
       // then
       assert.equal(root.container, container);
@@ -116,7 +111,7 @@ describe('Patch component => apply', () => {
 
       // given
       const [root, subcomponent] = createRootWith([Subcomponent]);
-      Patch.removeComponent(subcomponent, root).apply();
+      Patch.removeChild(subcomponent, root).apply();
       const component = createFromTemplate([Component]);
 
       // then
@@ -128,7 +123,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, root.comment.ref);
 
       // when
-      Patch.addComponent(component, root).apply();
+      Patch.appendChild(component, root).apply();
 
       // then
       assert.equal(root.container, container);
@@ -183,7 +178,7 @@ describe('Patch component => apply', () => {
       const subcomponent = createFromTemplate([Subcomponent]);
 
       // when
-      Patch.addComponent(subcomponent, component).apply();
+      Patch.appendChild(subcomponent, component).apply();
 
       // then
       assert.equal(component.child, subcomponent);
@@ -242,7 +237,7 @@ describe('Patch component => apply', () => {
       const component = createFromTemplate([Component]);
 
       // when
-      Patch.addComponent(component, parentComponent).apply();
+      Patch.appendChild(component, parentComponent).apply();
 
       // then
       assert.equal(parentComponent.child, component);
@@ -279,7 +274,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addComponent(component, root).apply();
+      Patch.appendChild(component, root).apply();
 
       // then
       assert.equal(root.container, container);
@@ -331,7 +326,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addComponent(subcomponent, component).apply();
+      Patch.appendChild(subcomponent, component).apply();
 
       // then
       assert.equal(component.child, subcomponent);
@@ -387,7 +382,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addComponent(component, parentComponent).apply();
+      Patch.appendChild(component, parentComponent).apply();
 
       // then
       assert.equal(parentComponent.child, component);
@@ -419,7 +414,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addElement(element, app).apply();
+      Patch.appendChild(element, app).apply();
 
       // then
       assert.equal(app.container, container);
@@ -452,7 +447,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addElement(element, component).apply();
+      Patch.appendChild(element, component).apply();
 
       // then
       assert.equal(app.child, component);
@@ -489,7 +484,7 @@ describe('Patch component => apply', () => {
       ]);
 
       // when
-      Patch.addElement(element, subcomponent).apply();
+      Patch.appendChild(element, subcomponent).apply();
 
       // then
       assert.equal(element.container, container);
@@ -521,7 +516,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, domElement);
 
       // when
-      Patch.removeElement(element, app).apply();
+      Patch.removeChild(element, app).apply();
 
       // then
       assert(app.placeholder);
@@ -554,7 +549,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, domElement);
 
       // when
-      Patch.removeElement(element, component).apply();
+      Patch.removeChild(element, component).apply();
 
       // then
       assert(app.placeholder);
@@ -591,7 +586,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, domElement);
 
       // when
-      Patch.removeElement(element, subcomponent).apply();
+      Patch.removeChild(element, subcomponent).apply();
 
       // then
       assert(app.placeholder);
@@ -620,7 +615,7 @@ describe('Patch component => apply', () => {
       assert(app.placeholder.text.includes('Component'));
 
       // when
-      Patch.removeComponent(component, app).apply();
+      Patch.removeChild(component, app).apply();
 
       // then
       assert(app.placeholder);
@@ -649,7 +644,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, element.ref);
 
       // when
-      Patch.removeComponent(component, app).apply();
+      Patch.removeChild(component, app).apply();
 
       // then
       assert(app.placeholder);
@@ -674,7 +669,7 @@ describe('Patch component => apply', () => {
       assert(app.placeholder.text.includes('Subcomponent'));
 
       // when
-      Patch.removeComponent(subcomponent, component).apply();
+      Patch.removeChild(subcomponent, component).apply();
 
       // then
       assert(app.placeholder);
@@ -707,7 +702,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, element.ref);
 
       // when
-      Patch.removeComponent(subcomponent, component).apply();
+      Patch.removeChild(subcomponent, component).apply();
 
       // then
       assert(app.placeholder);

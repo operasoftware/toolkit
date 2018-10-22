@@ -78,7 +78,7 @@ describe('Diff => calculate patches', () => {
 
       // then
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.ADD_ATTRIBUTE);
+      assert.equal(patches[0].type, Patch.Type.SET_ATTRIBUTE);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].name, 'value');
       assert.equal(patches[0].value, 'next');
@@ -109,7 +109,7 @@ describe('Diff => calculate patches', () => {
 
       // then
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.REPLACE_ATTRIBUTE);
+      assert.equal(patches[0].type, Patch.Type.SET_ATTRIBUTE);
       assert(patches[0].target.isElement());
       assert.equal(patches[0].name, 'name');
       assert.equal(patches[0].value, 'next');
@@ -167,7 +167,7 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.ADD_DATA_ATTRIBUTE);
+      assert.equal(patches[0].type, Patch.Type.SET_DATA_ATTRIBUTE);
       assert.equal(patches[0].name, 'reactorId');
       assert.equal(patches[0].value, '666');
       assert(patches[0].target.isElement());
@@ -201,7 +201,7 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.REPLACE_DATA_ATTRIBUTE);
+      assert.equal(patches[0].type, Patch.Type.SET_DATA_ATTRIBUTE);
       assert.equal(patches[0].name, 'customAttrName');
       assert.equal(patches[0].value, 'foobar');
       assert(patches[0].target.isElement());
@@ -249,7 +249,7 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.ADD_STYLE_PROPERTY);
+      assert.equal(patches[0].type, Patch.Type.SET_STYLE_PROPERTY);
       assert.equal(patches[0].property, 'width');
       assert.equal(patches[0].value, '100px');
       assert(patches[0].target.isElement());
@@ -283,7 +283,7 @@ describe('Diff => calculate patches', () => {
       const patches = calculatePatches(element, description);
 
       assert.equal(patches.length, 2);
-      assert.equal(patches[0].type, Patch.Type.REPLACE_STYLE_PROPERTY);
+      assert.equal(patches[0].type, Patch.Type.SET_STYLE_PROPERTY);
       assert.equal(patches[0].property, 'height');
       assert.equal(patches[0].value, '50%');
       assert(patches[0].target.isElement());
@@ -1220,7 +1220,7 @@ describe('Diff => calculate patches', () => {
 
           // then
           assert.equal(patches.length, 2);
-          assert.equal(patches[0].type, Patch.Type.ADD_ATTRIBUTE);
+          assert.equal(patches[0].type, Patch.Type.SET_ATTRIBUTE);
           assert.equal(patches[0].name, 'name');
           assert.equal(patches[0].value, 'value');
           assertUpdatesNode(patches[1], element);
@@ -1441,11 +1441,11 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.ADD_ELEMENT);
+      assert.equal(patches[0].type, Patch.Type.APPEND_CHILD);
       assert(patches[0].parent.isComponent());
       assert.equal(patches[0].parent, component);
-      assert(patches[0].element.isElement());
-      assert.equal(patches[0].element.description.name, 'div');
+      assert(patches[0].child.isElement());
+      assert.equal(patches[0].child.description.name, 'div');
 
       assertComponentUpdate(patches[1], component, nextProps);
     });
@@ -1478,11 +1478,11 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REMOVE_ELEMENT);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_CHILD);
       assert(patches[0].parent.isComponent());
       assert.equal(patches[0].parent, component);
-      assert(patches[0].element.isElement());
-      assert.equal(patches[0].element.description.name, 'div');
+      assert(patches[0].child.isElement());
+      assert.equal(patches[0].child.description.name, 'div');
 
       assertComponentUpdate(patches[1], component, nextProps);
     });
@@ -1515,11 +1515,11 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.ADD_COMPONENT);
+      assert.equal(patches[0].type, Patch.Type.APPEND_CHILD);
       assert(patches[0].parent.isComponent());
       assert.equal(patches[0].parent, component);
-      assert(patches[0].component.isComponent());
-      assert.equal(patches[0].component.constructor, Subcomponent);
+      assert(patches[0].child.isComponent());
+      assert.equal(patches[0].child.constructor, Subcomponent);
 
       assertComponentUpdate(patches[1], component, nextProps);
     });
@@ -1546,11 +1546,11 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REMOVE_COMPONENT);
+      assert.equal(patches[0].type, Patch.Type.REMOVE_CHILD);
       assert(patches[0].parent.isComponent());
       assert.equal(patches[0].parent, component);
-      assert(patches[0].component.isComponent());
-      assert.equal(patches[0].component.constructor, Subcomponent);
+      assert(patches[0].child.isComponent());
+      assert.equal(patches[0].child.constructor, Subcomponent);
 
       assertComponentUpdate(patches[1], component, nextProps);
     });

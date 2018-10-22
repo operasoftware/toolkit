@@ -170,20 +170,16 @@ limitations under the License.
     static beforePatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.ADD_COMPONENT:
-          return this.onComponentCreated(patch.component);
-        case Type.ADD_ELEMENT:
-          return this.onElementCreated(patch.element);
+        case Type.APPEND_CHILD:
+          return this.onNodeCreated(patch.child);
         case Type.INIT_ROOT_COMPONENT:
           return this.onRootCreated(patch.root);
         case Type.INSERT_CHILD_NODE:
           return this.onNodeCreated(patch.node);
         case Type.REMOVE_CHILD_NODE:
           return this.onNodeDestroyed(patch.node);
-        case Type.REMOVE_COMPONENT:
-          return this.onComponentDestroyed(patch.component);
-        case Type.REMOVE_ELEMENT:
-          return this.onElementDestroyed(patch.element);
+        case Type.REMOVE_CHILD:
+          return this.onNodeDestroyed(patch.child);
         case Type.REPLACE_CHILD:
           this.onNodeDestroyed(patch.child);
           this.onNodeCreated(patch.node);
@@ -202,20 +198,16 @@ limitations under the License.
     static afterPatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.ADD_COMPONENT:
-          return this.onComponentAttached(patch.component);
-        case Type.ADD_ELEMENT:
-          return this.onElementAttached(patch.element);
+        case Type.APPEND_CHILD:
+          return this.onNodeAttached(patch.child);
         case Type.INIT_ROOT_COMPONENT:
           return this.onRootAttached(patch.root);
         case Type.INSERT_CHILD_NODE:
           return this.onNodeAttached(patch.node);
         case Type.REMOVE_CHILD_NODE:
           return this.onNodeDetached(patch.node);
-        case Type.REMOVE_COMPONENT:
-          return this.onComponentDetached(patch.component);
-        case Type.REMOVE_ELEMENT:
-          return this.onElementDetached(patch.element);
+        case Type.REMOVE_CHILD:
+          return this.onNodeDetached(patch.child);
         case Type.REPLACE_CHILD:
           this.onNodeDetached(patch.child);
           this.onNodeAttached(patch.node);

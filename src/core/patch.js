@@ -28,60 +28,33 @@ limitations under the License.
     },
   };
 
-  const ADD_ELEMENT = {
-    type: Symbol('add-element'),
-    apply: function() {
-      const comment = this.parent.placeholder;
-      this.parent.appendChild(this.element);
-      // this.element.attachDOM();
-      comment.ref.replaceWith(this.element.ref);
-    },
-  };
-  const REMOVE_ELEMENT = {
-    type: Symbol('remove-element'),
-    apply: function() {
-      const ref = this.element.ref;
-      this.parent.removeChild(this.element);
-      ref.replaceWith(this.parent.placeholder.ref);
-    },
-  };
-
-  const ADD_COMPONENT = {
-    type: Symbol('add-component'),
+  const APPEND_CHILD = {
+    type: Symbol('append-child'),
     apply: function() {
       const placeholder = this.parent.placeholder.ref;
-      // this.component.attachDOM();
-      this.parent.appendChild(this.component);
-      placeholder.replaceWith(this.component.ref);
+      this.parent.appendChild(this.child);
+      placeholder.replaceWith(this.child.ref);
     },
   };
-  const REMOVE_COMPONENT = {
-    type: Symbol('remove-component'),
-    apply: function() {
-      const ref = this.component.ref;
-      this.parent.removeChild(this.component);
-      ref.replaceWith(this.parent.placeholder.ref);
-    },
-  };
-
   const REPLACE_CHILD = {
     type: Symbol('replace-child'),
     apply: function() {
       const ref = this.child.ref;
-      // this.node.attachDOM();
       this.parent.replaceChild(this.child, this.node);
       ref.replaceWith(this.node.ref);
     },
   };
-
-  const ADD_ATTRIBUTE = {
-    type: Symbol('add-attribute'),
+  const REMOVE_CHILD = {
+    type: Symbol('remove-child'),
     apply: function() {
-      this.target.setAttribute(this.name, this.value, this.isCustom);
+      const ref = this.child.ref;
+      this.parent.removeChild(this.child);
+      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
-  const REPLACE_ATTRIBUTE = {
-    type: Symbol('replace-attribute'),
+
+  const SET_ATTRIBUTE = {
+    type: Symbol('set-attribute'),
     apply: function() {
       this.target.setAttribute(this.name, this.value, this.isCustom);
     },
@@ -93,14 +66,8 @@ limitations under the License.
     },
   };
 
-  const ADD_DATA_ATTRIBUTE = {
-    type: Symbol('add-data-attribute'),
-    apply: function() {
-      this.target.setDataAttribute(this.name, this.value);
-    },
-  };
-  const REPLACE_DATA_ATTRIBUTE = {
-    type: Symbol('replace-data-attribute'),
+  const SET_DATA_ATTRIBUTE = {
+    type: Symbol('set-data-attribute'),
     apply: function() {
       this.target.setDataAttribute(this.name, this.value);
     },
@@ -112,14 +79,8 @@ limitations under the License.
     },
   };
 
-  const ADD_STYLE_PROPERTY = {
-    type: Symbol('add-style-property'),
-    apply: function() {
-      this.target.setStyleProperty(this.property, this.value);
-    },
-  };
-  const REPLACE_STYLE_PROPERTY = {
-    type: Symbol('replace-style-property'),
+  const SET_STYLE_PROPERTY = {
+    type: Symbol('set-style-property'),
     apply: function() {
       this.target.setStyleProperty(this.property, this.value);
     },
@@ -174,7 +135,6 @@ limitations under the License.
   const INSERT_CHILD_NODE = {
     type: Symbol('insert-child-node'),
     apply: function() {
-      // this.node.attachDOM();
       this.parent.insertChild(this.node, this.at);
     },
   };
@@ -187,7 +147,6 @@ limitations under the License.
   const REPLACE_CHILD_NODE = {
     type: Symbol('replace-child-node'),
     apply: function() {
-      // this.node.attachDOM();
       this.parent.replaceChild(this.child, this.node);
     },
   };
@@ -214,19 +173,14 @@ limitations under the License.
   const Types = {
     INIT_ROOT_COMPONENT,
     UPDATE_NODE,
-    ADD_ELEMENT,
-    REMOVE_ELEMENT,
-    ADD_COMPONENT,
-    REMOVE_COMPONENT,
+    APPEND_CHILD,
     REPLACE_CHILD,
-    ADD_ATTRIBUTE,
-    REPLACE_ATTRIBUTE,
+    REMOVE_CHILD,
+    SET_ATTRIBUTE,
     REMOVE_ATTRIBUTE,
-    ADD_DATA_ATTRIBUTE,
-    REPLACE_DATA_ATTRIBUTE,
+    SET_DATA_ATTRIBUTE,
     REMOVE_DATA_ATTRIBUTE,
-    ADD_STYLE_PROPERTY,
-    REPLACE_STYLE_PROPERTY,
+    SET_STYLE_PROPERTY,
     REMOVE_STYLE_PROPERTY,
     SET_CLASS_NAME,
     ADD_LISTENER,
@@ -267,30 +221,16 @@ limitations under the License.
       return patch;
     }
 
-    static addElement(element, parent) {
-      const patch = new Patch(ADD_ELEMENT);
-      patch.element = element;
+    static appendChild(child, parent) {
+      const patch = new Patch(APPEND_CHILD);
+      patch.child = child;
       patch.parent = parent;
       return patch;
     }
 
-    static removeElement(element, parent) {
-      const patch = new Patch(REMOVE_ELEMENT);
-      patch.element = element;
-      patch.parent = parent;
-      return patch;
-    }
-
-    static addComponent(component, parent) {
-      const patch = new Patch(ADD_COMPONENT);
-      patch.component = component;
-      patch.parent = parent;
-      return patch;
-    }
-
-    static removeComponent(component, parent) {
-      const patch = new Patch(REMOVE_COMPONENT);
-      patch.component = component;
+    static removeChild(child, parent) {
+      const patch = new Patch(REMOVE_CHILD);
+      patch.child = child;
       patch.parent = parent;
       return patch;
     }
@@ -303,17 +243,8 @@ limitations under the License.
       return patch;
     }
 
-    static addAttribute(name, value, target, isCustom) {
-      const patch = new Patch(ADD_ATTRIBUTE);
-      patch.name = name;
-      patch.value = value;
-      patch.target = target;
-      patch.isCustom = isCustom;
-      return patch;
-    }
-
-    static replaceAttribute(name, value, target, isCustom) {
-      const patch = new Patch(REPLACE_ATTRIBUTE);
+    static setAttribute(name, value, target, isCustom) {
+      const patch = new Patch(SET_ATTRIBUTE);
       patch.name = name;
       patch.value = value;
       patch.target = target;
@@ -329,16 +260,8 @@ limitations under the License.
       return patch;
     }
 
-    static addDataAttribute(name, value, target) {
-      const patch = new Patch(ADD_DATA_ATTRIBUTE);
-      patch.name = name;
-      patch.value = value;
-      patch.target = target;
-      return patch;
-    }
-
-    static replaceDataAttribute(name, value, target) {
-      const patch = new Patch(REPLACE_DATA_ATTRIBUTE);
+    static setDataAttribute(name, value, target) {
+      const patch = new Patch(SET_DATA_ATTRIBUTE);
       patch.name = name;
       patch.value = value;
       patch.target = target;
@@ -352,16 +275,8 @@ limitations under the License.
       return patch;
     }
 
-    static addStyleProperty(property, value, target) {
-      const patch = new Patch(ADD_STYLE_PROPERTY);
-      patch.property = property;
-      patch.value = value;
-      patch.target = target;
-      return patch;
-    }
-
-    static replaceStyleProperty(property, value, target) {
-      const patch = new Patch(REPLACE_STYLE_PROPERTY);
+    static setStyleProperty(property, value, target) {
+      const patch = new Patch(SET_STYLE_PROPERTY);
       patch.property = property;
       patch.value = value;
       patch.target = target;
