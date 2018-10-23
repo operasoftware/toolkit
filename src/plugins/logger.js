@@ -2,6 +2,8 @@
   const RENDER_TIME = 'Render time';
   const title = update => `==> ${update.root.constructor.displayName} <==`;
 
+  /* eslint-disable no-console */
+
   const Logger = {
 
     name: 'logger',
@@ -24,6 +26,8 @@
       console.groupEnd(title(update));
     },
   };
+
+  /* eslint-enable no-console */
 
   module.exports = Logger;
 }
