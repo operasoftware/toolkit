@@ -493,9 +493,7 @@ limitations under the License.
     constructor(root) {
 
       super();
-
       this.$root = root;
-      this.isBeingMoved_ = false;
 
       const shadow = this.attachShadow({
         mode: 'open',
@@ -526,18 +524,12 @@ limitations under the License.
       return true;
     }
 
-    async connectedCallback() {
-      opr.Toolkit.assert(
-          this.$root, 'Custom Element is not bound to Root component!');
-      if (this.isBeingMoved_) {
-        this.isBeingMoved_ = false;
-      }
+    connectedCallback() {
+      clearTimeout(this.pendingDestruction);
     }
 
     disconnectedCallback() {
-      if (!this.isBeingMoved_) {
-        this.destroy();
-      }
+      this.pendingDestruction = setTimeout(() => this.destroy(), 50);
     }
 
     destroy() {
@@ -634,9 +626,6 @@ limitations under the License.
           'Specified node is not a child of this element');
       this.children.splice(from, 1);
       this.children.splice(to, 0, child);
-      if (child.ref.isComponentElement) {
-        child.ref.isBeingMoved_ = true;
-      }
       this.ref.removeChild(child.ref);
       this.ref.insertBefore(child.ref, this.ref.children[to]);
     }

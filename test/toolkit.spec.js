@@ -91,7 +91,7 @@ describe('Toolkit', () => {
     assert.equal(toolkit.tracked.length, 2);
 
     // when
-    shadowRoot.ref.remove();
+    shadowRoot.destroy();
 
     // then
     assert.equal(toolkit.tracked.length, 1);
