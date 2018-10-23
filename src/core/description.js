@@ -21,26 +21,11 @@ limitations under the License.
    */
   class Description {
 
-    static create(options) {
-      return options.type === 'component' ?
-                                  new ComponentDescription(options) :
-                                  new ElementDescription(options);
-    }
-
-    constructor(type, key = null) {
-      this.type = type;
-      this.key = key;
-    }
-
     get childrenAsTemplates() {
       if (this.children) {
         return this.children.map(child => child.asTemplate);
       }
       return undefined;
-    }
-
-    isCompatible(desc) {
-      return desc && desc.type === this.type;
     }
 
     get isComponent() {
@@ -49,6 +34,10 @@ limitations under the License.
 
     get isElement() {
       return this instanceof ElementDescription;
+    }
+
+    isCompatible(description) {
+      return this.constructor === description.constructor;
     }
   }
 
@@ -66,39 +55,30 @@ limitations under the License.
    */
   class ComponentDescription extends Description {
 
-    constructor({component, children, props}) {
-
-      super(opr.Toolkit.Component.NodeType, props && props.key);
-
+    constructor(component) {
+      super();
       this.component = component;
-      if (children) {
-        this.children = children;
-      }
-      if (props) {
-        this.props = props;
-      }
-      Object.defineProperty(this, 'asTemplate', {
-        enumerable: false,
-        configurable: false,
-        get: () => {
-          const template = [this.component];
-          if (this.props) {
-            template.push(this.props);
-          }
-          if (this.children) {
-            template.push(...this.children.map(child => child.asTemplate));
-          }
-          return template;
-        },
-      });
+      this.type = 'component';
+    }
+
+    isCompatible(description) {
+      return super.isCompatible(description) &&
+          this.component === description.component;
     }
 
     get isRoot() {
       return this.component.prototype instanceof opr.Toolkit.Root;
     }
 
-    isCompatible(desc) {
-      return super.isCompatible(desc) && this.component === desc.component;
+    get asTemplate() {
+      const template = [this.component];
+      if (this.props) {
+        template.push(this.props);
+      }
+      if (this.children) {
+        template.push(...this.children.map(child => child.asTemplate));
+      }
+      return template;
     }
   }
 
@@ -123,66 +103,49 @@ limitations under the License.
    */
   class ElementDescription extends Description {
 
-    constructor({name, text, children, props}) {
-
-      super(opr.Toolkit.VirtualElement.NodeType, props && props.key);
-
+    constructor(name) {
+      super();
       this.name = name;
-      if (text) {
-        this.text = text;
-      }
-      if (children) {
-        this.children = children;
-      }
-      if (props) {
-        Object.assign(this, props);
-      }
-
-      Object.defineProperty(this, 'asTemplate', {
-        enumerable: false,
-        configurable: false,
-        get: () => {
-          const template = [this.name];
-          if (props) {
-            const flatten = () => {
-              const object = {};
-              if (props.key) {
-                object.key = props.key;
-              }
-              if (props.class) {
-                object.class = props.class;
-              }
-              if (props.style) {
-                object.style = props.style;
-              }
-              if (props.attrs) {
-                Object.assign(object, props.attrs);
-              }
-              if (props.dataset) {
-                object.dataset = props.dataset;
-              }
-              if (props.listeners) {
-                Object.assign(object, props.listeners);
-              }
-              if (props.properties) {
-                object.properties = props.properties;
-              }
-              return object;
-            };
-            template.push(flatten(props));
-          }
-          if (this.children) {
-            template.push(...this.children.map(child => child.asTemplate));
-          } else if (typeof this.text === 'string') {
-            template.push(this.text);
-          }
-          return template;
-        },
-      });
+      this.type = 'element';
     }
 
-    isCompatible(desc) {
-      return super.isCompatible(desc) && desc.name === this.name;
+    isCompatible(description) {
+      return super.isCompatible(description) && this.name === description.name;
+    }
+
+    get asTemplate() {
+      const template = [this.name];
+      const props = {};
+      if (this.key) {
+        props.key = this.key;
+      }
+      if (this.class) {
+        props.class = this.class;
+      }
+      if (this.style) {
+        props.style = this.style;
+      }
+      if (this.attrs) {
+        Object.assign(props, this.attrs);
+      }
+      if (this.dataset) {
+        props.dataset = this.dataset;
+      }
+      if (this.listeners) {
+        Object.assign(props, this.listeners);
+      }
+      if (this.properties) {
+        props.properties = this.properties;
+      }
+      if (Object.keys(props).length) {
+        template.push(props);
+      }
+      if (this.children) {
+        template.push(...this.children.map(child => child.asTemplate));
+      } else if (typeof this.text === 'string') {
+        template.push(this.text);
+      }
+      return template;
     }
   }
 

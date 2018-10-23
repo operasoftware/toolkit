@@ -288,17 +288,18 @@ describe('Template', () => {
       const onDoubleClick = () => {};
       const onChange = () => {};
 
-      const listeners = {
+      const props = {
         onClick,
         onDoubleClick,
         onChange,
       };
 
       // when
-      const props = Template.getElementProps(listeners);
+      const element = {};
+      Template.assignPropsToElement(props, element);
 
       // then
-      assert.deepEqual(props, {listeners});
+      assert.deepEqual(element, {listeners: props});
     });
 
     it('warns on unknown events', () => {
@@ -313,10 +314,11 @@ describe('Template', () => {
         };
 
         // when
-        const props = Template.getElementProps(unknownListeners);
+        const element = {};
+        Template.assignPropsToElement(unknownListeners, element);
 
         // then
-        assert.equal(props, null);
+        assert.deepEqual(element, {});
         assert(console.warn.calledOnce);
 
       } finally {
@@ -688,7 +690,7 @@ describe('Template', () => {
       // given
       const myListener = () => {};
       const otherListener = () => {};
-      const value = {
+      const props = {
         on: {
           'my-event': myListener,
           'other-listener': otherListener,
@@ -696,12 +698,13 @@ describe('Template', () => {
       };
 
       // when
-      const props = Template.getElementProps(value);
+      const element = {};
+      Template.assignPropsToElement(props, element);
 
       // then
-      assert.deepEqual(props, {
+      assert.deepEqual(element, {
         custom: {
-          listeners: value.on,
+          listeners: props.on,
         },
       });
     });
@@ -709,59 +712,63 @@ describe('Template', () => {
     it('ignores null', () => {
 
       // given
-      const value = {
+      const props = {
         on: {
           'my-event': null,
         },
       };
 
       // when
-      const props = Template.getElementProps(value);
+      const element = {};
+      Template.assignPropsToElement(props, element);
 
       // then
-      assert.equal(props, null);
+      assert.deepEqual(element, {});
     });
 
     it('ignores false', () => {
 
       // given
-      const value = {
+      const props = {
         on: {
           'some-event': false,
         },
       };
 
       // when
-      const props = Template.getElementProps(value);
+      const element = {};
+      Template.assignPropsToElement(props, element);
 
       // then
-      assert.equal(props, null);
+      assert.deepEqual(element, {});
     });
 
     it('ignores undefined', () => {
 
       // given
-      const value = {
+      const props = {
         on: {
           'another-event': undefined,
         },
       };
 
       // when
-      const props = Template.getElementProps(value);
+      const element = {};
+      Template.assignPropsToElement(props);
 
       // then
-      assert.equal(props, null);
+      assert.deepEqual(element, {});
     });
 
     it('rejects anything else', () => {
 
       // given
-      const createCustomListener = value => Template.getElementProps({
-        on: {
-          'another-event': value,
-        },
-      });
+      const createCustomListener = value =>
+          Template.assignPropsToElement({
+            on: {
+              'another-event': value,
+            },
+          });
 
       // then
       assert.throws(() => createCustomListener(666));

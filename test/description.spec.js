@@ -25,14 +25,11 @@ describe('Description', () => {
     it('returns true for elements with the same name', () => {
 
       // given
-      const firstDivDescription = new ElementDescription({
-        name: 'div',
-        text: 'bar',
-      });
-      const secondDivDescription = new ElementDescription({
-        name: 'div',
-        text: 'bar',
-      });
+      const firstDivDescription = new ElementDescription('div');
+      firstDivDescription.text = 'bar';
+
+      const secondDivDescription = new ElementDescription('div');
+      secondDivDescription.text = 'bar';
 
       // assert
       assert(firstDivDescription.isCompatible(secondDivDescription));
@@ -59,15 +56,11 @@ describe('Description', () => {
       // given
       class Component extends opr.Toolkit.Component {}
 
-      const firstDescription = new ComponentDescription({
-        component: Component,
-        props: {
-          key: 'value',
-        },
-      });
-      const secondDescription = new ComponentDescription({
-        component: Component,
-      });
+      const firstDescription = new ComponentDescription(Component);
+      firstDescription.props = {
+        key: 'value',
+      };
+      const secondDescription = new ComponentDescription(Component);
 
       // assert
       assert(firstDescription.isCompatible(secondDescription));
@@ -80,15 +73,12 @@ describe('Description', () => {
       class Component extends opr.Toolkit.Component {}
       class OtherComponent extends opr.Toolkit.Component {}
 
-      const componentDescription = new ComponentDescription({
-        component: Component,
-        props: {
-          key: 'value',
-        },
-      });
-      const otherComponentDescription = new ComponentDescription({
-        component: OtherComponent,
-      });
+      const componentDescription = new ComponentDescription(Component);
+      componentDescription.props = {
+        key: 'value',
+      };
+      const otherComponentDescription =
+          new ComponentDescription(OtherComponent);
 
       // assert
       assert(!componentDescription.isCompatible(otherComponentDescription));
@@ -103,9 +93,7 @@ describe('Description', () => {
     it('returns template of Component', () => {
 
       // given
-      const description = new ComponentDescription({
-        component: Component,
-      });
+      const description = new ComponentDescription(Component);
 
       // when
       const template = description.asTemplate;
@@ -120,10 +108,8 @@ describe('Description', () => {
       const props = {
         foo: 'bar',
       };
-      const description = new ComponentDescription({
-        component: Component,
-        props,
-      });
+      const description = new ComponentDescription(Component);
+      description.props = props;
 
       // when
       const template = description.asTemplate;
@@ -135,19 +121,13 @@ describe('Description', () => {
     it('returns template of Component with children', () => {
 
       // given
-      const divDescription = new ElementDescription({
-        name: 'div',
-      });
-      const spanDescription = new ElementDescription({
-        name: 'span',
-      });
-      const description = new ComponentDescription({
-        component: Component,
-        children: [
-          divDescription,
-          spanDescription,
-        ],
-      });
+      const divDescription = new ElementDescription('div');
+      const spanDescription = new ElementDescription('span');
+      const description = new ComponentDescription(Component);
+      description.children = [
+        divDescription,
+        spanDescription,
+      ];
 
       // when
       const template = description.asTemplate;
@@ -170,20 +150,14 @@ describe('Description', () => {
       const props = {
         foo: 'bar',
       };
-      const divDescription = new ElementDescription({
-        name: 'div',
-      });
-      const spanDescription = new ElementDescription({
-        name: 'span',
-      });
-      const description = new ComponentDescription({
-        component: Component,
-        props,
-        children: [
-          divDescription,
-          spanDescription,
-        ],
-      });
+      const divDescription = new ElementDescription('div');
+      const spanDescription = new ElementDescription('span');
+      const description = new ComponentDescription(Component);
+      description.props = props;
+      description.children = [
+        divDescription,
+        spanDescription,
+      ];
 
       // when
       const template = description.asTemplate;
@@ -204,9 +178,7 @@ describe('Description', () => {
     it('returns template of empty Element', () => {
 
       // given
-      const description = new ElementDescription({
-        name: 'section',
-      });
+      const description = new ElementDescription('section');
 
       // when
       const template = description.asTemplate;
@@ -219,10 +191,8 @@ describe('Description', () => {
 
       // given
       const text = 'text';
-      const description = new ElementDescription({
-        name: 'section',
-        text,
-      });
+      const description = new ElementDescription('section');
+      description.text = text;
 
       // when
       const template = description.asTemplate;
@@ -234,13 +204,9 @@ describe('Description', () => {
     it('returns template of Element with children', () => {
 
       // given
-      const componentDescription = new ComponentDescription({
-        component: Component,
-      });
-      const description = new ElementDescription({
-        name: 'section',
-        children: [componentDescription],
-      });
+      const componentDescription = new ComponentDescription(Component);
+      const description = new ElementDescription('section');
+      description.children = [componentDescription];
 
       // when
       const template = description.asTemplate;

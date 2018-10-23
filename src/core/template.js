@@ -31,20 +31,25 @@ limitations under the License.
       }
 
       if (Array.isArray(template) && template.length) {
-        const details = {};
+
+        const {
+          ComponentDescription,
+          ElementDescription,
+        } = opr.Toolkit.Description;
+
+        let description;
         for (const [item, type, index] of template.map(
                  (item, index) => [item, this.getItemType(item), index])) {
           if (index === 0) {
             switch (type) {
             case 'string':
-              details.type = 'element';
-              details.name = item;
+              description = new ElementDescription(item);
               break;
             case 'component':
             case 'function':
             case 'symbol':
-              details.type = 'component';
-              details.component = opr.Toolkit.resolveComponentClass(item, type);
+              description = new ComponentDescription(
+                  opr.Toolkit.resolveComponentClass(item, type));
               break;
             default:
               console.error('Invalid node type:', item,
@@ -55,42 +60,48 @@ limitations under the License.
             continue;
           }
           if (index === 1 && type === 'props') {
-            const props = details.type === 'component'
-                              ? this.getComponentProps(item, details.component)
-                              : this.getElementProps(item);
-            if (props) {
-              details.props = props;
+            if (description.type === 'component') {
+              const props = this.getComponentProps(
+                  item, description.component, description.isRoot);
+              if (props) {
+                description.props = props;
+                if (props.key) {
+                  description.key = props.key;
+                }
+              }
+              continue;
             }
+            this.assignPropsToElement(item, description);
             continue;
           }
           if (isFalsy(item)) {
             continue;
           }
           if (type === 'string' || type === 'number' || item === true) {
-            if (details.component) {
+            if (description.component) {
               console.error(
                   `Invalid text item found at index: ${index}, template:`,
                   template);
               throw new Error('Components cannot define text content');
             }
-            if (details.children) {
+            if (description.children) {
               console.error(
                   `Invalid node item found at index: ${index}, template:`,
                   template);
               throw new Error(
                   'Elements with child nodes cannot define text content');
             }
-            details.text = String(item);
+            description.text = String(item);
             continue;
           } else if (type === 'node') {
-            if (typeof details.text === 'string') {
+            if (typeof description.text === 'string') {
               console.error(
                   `Invalid node item found at index: ${index}, template:`,
                   template);
               throw new Error('Text elements cannot have child nodes!');
             }
-            details.children = details.children || [];
-            details.children.push(this.describe(item));
+            description.children = description.children || [];
+            description.children.push(this.describe(item));
           } else {
             console.error('Invalid item', item, `at index: ${index}, template:`,
                           template);
@@ -98,15 +109,14 @@ limitations under the License.
           }
         }
 
-        return opr.Toolkit.Description.create(details);
+        return description;
       }
 
       console.error('Invalid template definition:', template);
       throw new Error('Expecting array, null or false');
     }
 
-    static getComponentProps(object, ComponentClass) {
-      const isRoot = ComponentClass.prototype instanceof opr.Toolkit.Root;
+    static getComponentProps(object, ComponentClass, isRoot) {
       const props = isRoot
                         ? object
                         : this.normalizeComponentProps(object, ComponentClass);
@@ -140,44 +150,43 @@ limitations under the License.
      * Normalizes specified element props object and returns either
      * a non-empty object containing only supported props or null.
      */
-    static getElementProps(object) {
-      const props = {};
-      for (const [key, value] of Object.entries(object)) {
+    static assignPropsToElement(props, description) {
+      for (const [key, value] of Object.entries(props)) {
         if (key === 'key') {
           if (isDefined(value)) {
-            props.key = value;
+            description.key = value;
           }
         } else if (key === 'class') {
           const className = this.getClassName(value);
           if (className) {
-            props.class = className;
+            description.class = className;
           }
         } else if (key === 'style') {
           const style = this.getStyle(value);
           if (style) {
-            props.style = style;
+            description.style = style;
           }
         } else if (key === 'dataset') {
           const dataset = this.getDataset(value);
           if (dataset) {
-            props.dataset = dataset;
+            description.dataset = dataset;
           }
         } else if (key === 'properties') {
           const properties = this.getProperties(value);
           if (properties) {
-            props.properties = properties;
+            description.properties = properties;
           }
         } else if (key === 'attrs') {
           const customAttrs = this.getCustomAttributes(value);
           if (customAttrs) {
-            props.custom = props.custom || {};
-            props.custom.attrs = customAttrs;
+            description.custom = description.custom || {};
+            description.custom.attrs = customAttrs;
           }
         } else if (key === 'on') {
           const customListeners = this.getCustomListeners(value);
           if (customListeners) {
-            props.custom = props.custom || {};
-            props.custom.listeners = customListeners;
+            description.custom = description.custom || {};
+            description.custom.listeners = customListeners;
           }
         } else {
 
@@ -189,21 +198,20 @@ limitations under the License.
           if (SUPPORTED_ATTRIBUTES.includes(key)) {
             const attr = this.getAttributeValue(value);
             if (isDefined(attr)) {
-              props.attrs = props.attrs || {};
-              props.attrs[key] = attr;
+              description.attrs = description.attrs || {};
+              description.attrs[key] = attr;
             }
           } else if (SUPPORTED_EVENTS.includes(key)) {
             const listener = this.getListener(value, key);
             if (listener) {
-              props.listeners = props.listeners || {};
-              props.listeners[key] = value;
+              description.listeners = description.listeners || {};
+              description.listeners[key] = value;
             }
           } else {
             console.warn('Unsupported property:', key);
           }
         }
       }
-      return isNotEmpty(props) ? props : null;
     }
 
     /*
