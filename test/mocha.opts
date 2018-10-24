@@ -1,5 +1,6 @@
 --require ./test/config/init.js
 --slow 250
+--timeout 2000
 --colors
 --sort
 --reporter spec

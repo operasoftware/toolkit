@@ -237,7 +237,7 @@ limitations under the License.
     }
 
     constructor(description, props, originator = null) {
-      super(description, /*= parentNode */ null, false);
+      super(description, /*= parentNode */ null, /*= attachDOM */ false);
       this.props = props;
       if (originator === null) {
         throw new Error('No originator specified for rendered root component');
@@ -392,7 +392,6 @@ limitations under the License.
     }
 
     async mount(container) {
-      this.attachDOM();
       if (this.constructor.elementName) {
         // triggers this.init() from element's connected callback
         container.appendChild(this.ref);
@@ -669,7 +668,6 @@ limitations under the License.
       this.ref = opr.Toolkit.Renderer.createElement(this.description);
       if (this.children) {
         for (const child of this.children) {
-          child.attachDOM();
           this.ref.appendChild(child.ref);
         }
       }
