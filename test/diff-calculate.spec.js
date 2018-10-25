@@ -35,6 +35,7 @@ describe('Diff => calculate patches', () => {
 
   const calculatePatches = (node, description) => {
     const diff = new Diff(node.rootNode);
+    diff.patches.length = 0;
     diff.childPatches(node, description);
     return diff.patches;
   };

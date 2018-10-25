@@ -115,8 +115,8 @@ limitations under the License.
     }
 
     update(prevState, nextState) {
-      const diff = new opr.Toolkit.Diff(this.root);
-      diff.rootPatches(prevState, nextState);
+      const diff = new opr.Toolkit.Diff(this.root, prevState, nextState);
+      this.root.state = nextState;
       diff.apply();
       return diff.patches;
     }

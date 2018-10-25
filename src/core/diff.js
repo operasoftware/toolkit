@@ -21,9 +21,10 @@ limitations under the License.
      * Creates a new instance bound to a root component
      * with an empty list of patches.
      */
-    constructor(root) {
+    constructor(root, currentState, nextState) {
       this.root = root;
       this.patches = [];
+      this.rootPatches(currentState, nextState);
     }
 
     /*
@@ -64,8 +65,6 @@ limitations under the License.
       ]);
 
       this.componentPatches(this.root, description);
-      this.root.state = nextState;
-      return this.patches;
     }
 
     /**
@@ -90,8 +89,7 @@ limitations under the License.
 
       const childDescription = opr.Toolkit.Renderer.render(
           component, description.props, description.childrenAsTemplates, true);
-      this.componentChildPatches(component.child, childDescription,
-                                 /*= parent */ component);
+      this.componentChildPatches(component.child, childDescription, component);
 
       this.addPatch(opr.Toolkit.Patch.updateNode(component, description));
     }

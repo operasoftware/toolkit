@@ -280,6 +280,11 @@ limitations under the License.
       }
 
       this.commands.init(this.normalize(state));
+      if (this.pendingDescription) {
+        const description = this.pendingDescription;
+        delete this.pendingDescription;
+        setTimeout(() => this.update(description));
+      }
       this.markAsReady();
     }
 
@@ -295,12 +300,16 @@ limitations under the License.
      * Triggers the component update.
      */
     update(description) {
+      if (this.state === null) {
+        this.pendingDescription = description;
+        return;
+      }
       const state =
           this.getUpdatedState(description.props, this.description.props);
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
-      this.commands.update(this.normalize(state));
+      this.commands.setState(this.normalize(state));
     }
 
     /*
