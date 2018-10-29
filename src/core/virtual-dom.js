@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 {
-  class VirtualDOM {
+  const VirtualDOM = {
 
     /*
      * Creates a new Virtual DOM structure from given description.
      */
-    static createFromDescription(description, parentNode) {
+    createFromDescription(description, parentNode) {
       if (!description) {
         return null;
       }
@@ -31,12 +31,12 @@ limitations under the License.
         return this.createComponent(description, parentNode);
       }
       throw new Error(`Unsupported node type: ${description.type}`)
-    }
+    },
 
     /*
      * Creates a new component instance from given description.
      */
-    static createComponent(description, parentNode) {
+    createComponent(description, parentNode) {
       const ComponentClass = description.component;
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
         return this.createRoot(
@@ -52,14 +52,14 @@ limitations under the License.
         component.appendChild(child);
       }
       return component;
-    }
+    },
 
     /*
      * Creates a new root instance from given description.
      *
      * If the root class declares a custom element name
      */
-    static createRoot(
+    createRoot(
         component, props = {}, originator = opr.Toolkit,
         requireCustomElement = false) {
 
@@ -79,8 +79,8 @@ limitations under the License.
         console.error('Error rendering root component:', description);
         throw error;
       }
-    }
-  }
+    },
+  };
 
   module.exports = VirtualDOM;
 }

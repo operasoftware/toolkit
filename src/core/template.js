@@ -19,12 +19,12 @@ limitations under the License.
   const isFalsy = template => template === null || template === false;
   const isNotEmpty = object => Boolean(Object.keys(object).length);
 
-  class Template {
+  const Template = {
 
     /*
      * Creates a normalized Description of given template.
      */
-    static describe(template) {
+    describe(template) {
 
       if (isFalsy(template)) {
         return null;
@@ -114,27 +114,27 @@ limitations under the License.
 
       console.error('Invalid template definition:', template);
       throw new Error('Expecting array, null or false');
-    }
+    },
 
-    static getComponentProps(object, ComponentClass, isRoot) {
+    getComponentProps(object, ComponentClass, isRoot) {
       const props = isRoot
                         ? object
                         : this.normalizeComponentProps(object, ComponentClass);
       return isNotEmpty(props) ? props : null;
-    }
+    },
 
     /*
      * Supplements given object with default props for given class.
      * Returns either a non-empty props object or null.
      */
-    static normalizeComponentProps(props = {}, ComponentClass) {
+    normalizeComponentProps(props = {}, ComponentClass) {
       return this.normalizeProps(props, ComponentClass.defaultProps);
-    }
+    },
 
     /*
      * Returns a new props object supplemented by overriden values.
      */
-    static normalizeProps(...overrides) {
+    normalizeProps(...overrides) {
       const result = {};
       for (const override of overrides) {
         for (const [key, value] of Object.entries(override || {})) {
@@ -144,13 +144,13 @@ limitations under the License.
         }
       }
       return result;
-    }
+    },
 
     /*
      * Normalizes specified element props object and returns either
      * a non-empty object containing only supported props or null.
      */
-    static assignPropsToElement(props, description) {
+    assignPropsToElement(props, description) {
       for (const [key, value] of Object.entries(props)) {
         if (key === 'key') {
           if (isDefined(value)) {
@@ -212,12 +212,12 @@ limitations under the License.
           }
         }
       }
-    }
+    },
 
     /*
      * Returns the type of item used in the array representing node template.
      */
-    static getItemType(item) {
+    getItemType(item) {
       const type = typeof item;
       switch (type) {
       case 'function':
@@ -237,12 +237,12 @@ limitations under the License.
       default:
         return type;
       }
-    }
+    },
 
     /*
      * Resolves any object to a space separated string of class names.
      */
-    static getClassName(value) {
+    getClassName(value) {
       if (!value) {
         return '';
       }
@@ -278,13 +278,13 @@ limitations under the License.
             .join(' ');
       }
       throw new Error(`Invalid value: ${JSON.stringify(value)}`);
-    }
+    },
 
     /*
      * Returns either a non-empty style object containing only understood
      * styling rules or null.
      */
-    static getStyle(object) {
+    getStyle(object) {
 
       opr.Toolkit.assert(object.constructor === Object,
                          'Style must be a plain object!');
@@ -313,9 +313,9 @@ limitations under the License.
                         .filter(([key, value]) => isSupported(key))
                         .reduce(reduceToNonEmptyValues, {});
       return isNotEmpty(style) ? style : null;
-    }
+    },
 
-    static getStyleProperty(value, name) {
+    getStyleProperty(value, name) {
       if (typeof value === 'string') {
         return value || '\'\'';
       } else if ([true, false, null, undefined].includes(value)) {
@@ -336,12 +336,12 @@ limitations under the License.
         return this.getFunctionList(value, whitelist);
       }
       throw new Error(`Invalid style property value: ${JSON.stringify(value)}`);
-    }
+    },
 
     /*
      * Returns a multi-property string value.
      */
-    static getFunctionList(object, whitelist) {
+    getFunctionList(object, whitelist) {
       const composite = {};
       let entries = Object.entries(object);
       if (whitelist) {
@@ -356,9 +356,9 @@ limitations under the License.
       return Object.entries(composite)
           .map(([key, value]) => `${key}(${value})`)
           .join(' ');
-    }
+    },
 
-    static getListener(value, name) {
+    getListener(value, name) {
       if (typeof value === 'function') {
         return value;
       }
@@ -366,12 +366,12 @@ limitations under the License.
         return null;
       }
       throw new Error(`Invalid listener specified for event: ${name}`);
-    }
+    },
 
     /*
      * Resolves given value to a string.
      */
-    static getAttributeValue(value, allowEmpty = true) {
+    getAttributeValue(value, allowEmpty = true) {
       if (value === true || value === '') {
         return allowEmpty ? '' : null;
       } else if (typeof value === 'string') {
@@ -384,12 +384,12 @@ limitations under the License.
         throw new Error(`Invalid attribute value: ${JSON.stringify(value)}!`);
       }
       return String(value);
-    }
+    },
 
     /*
      * Returns either a non-empty dataset object or null.
      */
-    static getDataset(object) {
+    getDataset(object) {
       const dataset = {};
       for (const key of Object.keys(object)) {
         const value = this.getAttributeValue(object[key]);
@@ -398,17 +398,17 @@ limitations under the License.
         }
       }
       return isNotEmpty(dataset) ? dataset : null;
-    }
+    },
 
     /*
      * Returns either a non-empty object containing properties set
      * directly on a rendered DOM Element or null.
      */
-    static getProperties(object) {
+    getProperties(object) {
       return isNotEmpty(object) ? object : null;
-    }
+    },
 
-    static getCustomAttributes(object) {
+    getCustomAttributes(object) {
       console.assert(
           object.constructor === Object,
           'Expecting object for custom attributes!');
@@ -420,9 +420,9 @@ limitations under the License.
         }
       }
       return isNotEmpty(attrs) ? attrs : null;
-    }
+    },
 
-    static getCustomListeners(object) {
+    getCustomListeners(object) {
       console.assert(
           object.constructor === Object,
           'Expecting object for custom listeners!');
@@ -434,8 +434,8 @@ limitations under the License.
         }
       }
       return isNotEmpty(listeners) ? listeners : null;
-    }
-  }
+    },
+  };
 
   module.exports = Template;
 }

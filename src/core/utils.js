@@ -137,12 +137,10 @@ limitations under the License.
 
   const addDataPrefix = attr => `data${attr[0].toUpperCase()}${attr.slice(1)}`;
 
-  const lowerDash = name => {
-    if (name.startsWith('aria')) {
-      return `aria-${name.slice(4).toLowerCase()}`;
-    }
-    return name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-  }
+  const lowerDash = name =>
+      name.startsWith('aria')
+          ? `aria-${name.slice(4).toLowerCase()}`
+          : name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
   const getAttributeName = name => {
     switch (name) {

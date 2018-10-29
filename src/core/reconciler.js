@@ -52,16 +52,16 @@ limitations under the License.
     }
   }
 
-  class Reconciler {
+  const Reconciler = {
 
-    static comparator(a, b) {
+    comparator(a, b) {
       if (Object.is(a.key, b.key)) {
         return 0;
       }
       return a.key > b.key ? 1 : -1;
-    }
+    },
 
-    static calculateMoves(source, target, favoredToMove = null) {
+    calculateMoves(source, target, favoredToMove = null) {
       const moves = [];
 
       const createItem = function(key, index) {
@@ -161,8 +161,8 @@ limitations under the License.
       moves.push(...defaultMoves);
       moves.result = defaultMoves.result;
       return moves;
-    }
-  }
+    },
+  };
 
   Reconciler.Move = Move;
   Reconciler.Move.Name = Name;
