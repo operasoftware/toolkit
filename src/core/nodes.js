@@ -236,11 +236,10 @@ limitations under the License.
       return [];
     }
 
-    constructor(description, props, originator = null) {
+    constructor(description, originator = null) {
       super(description, /*= parentNode */ null, /*= attachDOM */ false);
-      this.props = props;
       if (originator === null) {
-        throw new Error('No originator specified for rendered root component');
+        throw new Error('No originator specified for rendered root component!');
       }
       this.originator = originator;
       this.plugins = this.createPlugins();
@@ -274,7 +273,7 @@ limitations under the License.
       this.originator.track(this);
 
       const state =
-          await this.getInitialState.call(this.sandbox, this.props);
+          await this.getInitialState.call(this.sandbox, this.description.props);
       if (state.constructor !== Object) {
         throw new Error('Initial state must be a plain object!');
       }
@@ -624,7 +623,7 @@ limitations under the License.
       }
       const nextChild = this.children[index];
       this.children.splice(index, 0, child);
-      this.ref.insertBefore(child.ref, nextChild && nextChild.ref);
+      this.ref.insertBefore(child.ref, nextChild && nextChild.ref || null);
       child.parentNode = this;
     }
 

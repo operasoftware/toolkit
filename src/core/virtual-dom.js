@@ -65,6 +65,7 @@ limitations under the License.
 
       const description = opr.Toolkit.Template.describe([
         component,
+        props,
       ]);
       try {
         const ComponentClass = description.component;
@@ -74,7 +75,7 @@ limitations under the License.
                                  ComponentClass.displayName
                                }" does not define custom element name!`);
         }
-        return new ComponentClass(description, props, originator);
+        return new ComponentClass(description, originator);
       } catch (error) {
         console.error('Error rendering root component:', description);
         throw error;

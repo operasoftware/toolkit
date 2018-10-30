@@ -344,10 +344,9 @@ limitations under the License.
         return node;
       };
 
-      const from =
-          sourceNodes.map((node, index) => node.description.key || index);
-      const to = targetDescriptions.map((description, index) =>
-                                            description.key || index);
+      const from = sourceNodes.map((node, index) => node.key || index);
+      const to = targetDescriptions.map(
+          (description, index) => description.key || index);
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
