@@ -17,12 +17,6 @@ describe('Patch element => apply', () => {
     Patch.setAttribute('minLength', '100px', element).apply();
 
     // then
-    // assert.equal(Object.entries(element.description.attrs).length, 3);
-    // assert.deepEqual(element.description.attrs, {
-    //   name: 'value',
-    //   noValidate: '',
-    //   minLength: '100px',
-    // });
     assert.equal(element.ref.attributes['name'].value, 'value');
     assert.equal(element.ref.attributes['novalidate'].value, '');
     assert.equal(element.ref.attributes['minlength'].value, '100px');
@@ -39,10 +33,10 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.deepEqual(element.description.attrs, {
-    //   name: 'name',
-    //   minLength: '50px',
-    // });
+    assert.deepEqual(element.description.attrs, {
+      name: 'name',
+      minLength: '50px',
+    });
     assert.equal(element.ref.attributes['name'].value, 'name');
     assert.equal(element.ref.attributes['minlength'].value, '50px');
 
@@ -52,12 +46,6 @@ describe('Patch element => apply', () => {
     Patch.setAttribute('minLength', '100px', element).apply();
 
     // then
-    // assert.equal(Object.entries(element.description.attrs).length, 3);
-    // assert.deepEqual(element.description.attrs, {
-    //   name: 'value',
-    //   noValidate: 'true',
-    //   minLength: '100px',
-    // });
     assert.equal(element.ref.attributes['name'].value, 'value');
     assert.equal(element.ref.attributes['novalidate'].value, 'true');
     assert.equal(element.ref.attributes['minlength'].value, '100px');
@@ -74,11 +62,11 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.deepEqual(element.description.attrs, {
-    //   name: 'name',
-    //   noValidate: 'false',
-    //   minLength: '50px',
-    // });
+    assert.deepEqual(element.description.attrs, {
+      name: 'name',
+      noValidate: 'false',
+      minLength: '50px',
+    });
     assert.equal(element.ref.attributes['name'].value, 'name');
     assert.equal(element.ref.attributes['novalidate'].value, 'false');
     assert.equal(element.ref.attributes['minlength'].value, '50px');
@@ -89,7 +77,6 @@ describe('Patch element => apply', () => {
     Patch.removeAttribute('minLength', element).apply();
 
     // then
-    // assert.equal(element.description.attrs, undefined);
     assert.deepEqual(element.ref.attributes, {});
   });
 
@@ -105,13 +92,6 @@ describe('Patch element => apply', () => {
     Patch.setDataAttribute('customAttribute', 'true', element).apply();
 
     // then
-    // assert.equal(Object.entries(element.description.dataset).length, 2);
-    // const dataset = {
-    //   id: '10',
-    //   customAttribute: 'true',
-    // };
-    // assert.deepEqual(element.description.dataset, dataset);
-
     assert.equal(Object.keys(element.ref.dataset).length, 2);
     assert.equal(element.ref.dataset.id, '10');
     assert.equal(element.ref.dataset.customAttribute, 'true');
@@ -148,13 +128,6 @@ describe('Patch element => apply', () => {
     Patch.setDataAttribute('someName', 'Other Name', element).apply();
 
     // then
-    // assert.equal(Object.entries(element.description.dataset).length, 2);
-    // const nextDataset = {
-    //   toolkitId: '23',
-    //   someName: 'Other Name',
-    // };
-    // assert.deepEqual(element.description.dataset, nextDataset);
-
     assert.equal(Object.keys(element.ref.dataset).length, 2);
     assert.equal(element.ref.dataset.toolkitId, '23');
     assert.equal(element.ref.dataset.someName, 'Other Name');
@@ -176,12 +149,12 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(Object.entries(element.description.dataset).length, 2);
-    // const dataset = {
-    //   name: 'name',
-    //   anything: 'true',
-    // };
-    // assert.deepEqual(element.description.dataset, dataset);
+    assert.equal(Object.entries(element.description.dataset).length, 2);
+    const dataset = {
+      name: 'name',
+      anything: 'true',
+    };
+    assert.deepEqual(element.description.dataset, dataset);
 
     assert.equal(Object.keys(element.ref.dataset).length, 2);
     assert.equal(element.ref.dataset.name, 'name');
@@ -205,7 +178,6 @@ describe('Patch element => apply', () => {
     Patch.setStyleProperty('color', 'black', element).apply();
 
     // then
-    // assert.equal(element.description.style.color, 'black');
     assert.equal(element.ref.style.color, 'black');
   });
 
@@ -220,14 +192,13 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(element.description.style.textDecoration, 'underline');
+    assert.equal(element.description.style.textDecoration, 'underline');
     assert.equal(element.ref.style.textDecoration, 'underline');
 
     // when
     Patch.setStyleProperty('textDecoration', 'overline', element).apply();
 
     // then
-    // assert.equal(element.description.style.textDecoration, 'overline');
     assert.equal(element.ref.style.textDecoration, 'overline');
   });
 
@@ -243,14 +214,13 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(element.description.style.visibility, 'hidden');
+    assert.equal(element.description.style.visibility, 'hidden');
     assert.equal(element.ref.style.visibility, 'hidden');
 
     // when
     Patch.removeStyleProperty('visibility', element).apply();
 
     // then
-    // assert.equal(element.description.style, undefined);
     assert.equal(element.ref.style.visibility, '');
   });
 
@@ -264,14 +234,13 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(element.description.class, undefined);
+    assert.equal(element.description.class, undefined);
     assert.deepEqual([...element.ref.classList], []);
 
     // when
     Patch.setClassName('test', element).apply();
 
     // then
-    // assert.deepEqual(element.description.class, 'test');
     assert.deepEqual([...element.ref.classList], ['test']);
   });
 
@@ -285,14 +254,13 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(element.description.class, 'test');
+    assert.equal(element.description.class, 'test');
     assert.deepEqual([...element.ref.classList], ['test']);
 
     // when
     Patch.setClassName('', element).apply();
 
     // then
-    // assert.equal(element.description.class, '');
     assert.deepEqual([...element.ref.classList], []);
   });
 
@@ -306,7 +274,6 @@ describe('Patch element => apply', () => {
     Patch.addListener('onClick', onClick, element).apply();
 
     // then
-    // assert.equal(element.description.listeners.onClick, onClick);
     typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
   });
@@ -324,7 +291,6 @@ describe('Patch element => apply', () => {
     ]);
 
     // then
-    // assert.equal(element.description.listeners.onClick, doSomething);
     typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
 
@@ -333,7 +299,6 @@ describe('Patch element => apply', () => {
         .apply();
 
     // then
-    // assert.equal(element.description.listeners.onClick, doSomethingElse);
     typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
   });
@@ -345,7 +310,6 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate(['div', {onClick}]);
 
     // then
-    // assert.equal(element.description.listeners.onClick, onClick);
     typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
 
@@ -353,7 +317,6 @@ describe('Patch element => apply', () => {
     Patch.removeListener('onClick', onClick, element).apply();
 
     // then
-    // assert.equal(element.description.listeners, undefined);
     typeof window !== 'object' &&
         assert.deepEqual(element.ref.eventListeners_.click, []);
   });
@@ -363,15 +326,13 @@ describe('Patch element => apply', () => {
     // given
     const element = createFromTemplate(['div']);
 
-    // assert.equal(element.description.properties, undefined);
+    assert.equal(element.description.properties, undefined);
     assert.equal(element.ref.customAttribute, undefined);
 
     // when
     Patch.setProperty('customAttribute', 'customValue', element).apply();
 
     // then
-    // assert.equal(
-    //     element.description.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
   });
 
@@ -387,15 +348,14 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(
-    //     element.description.properties.customAttribute, 'customValue');
+    assert.equal(
+        element.description.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
 
     // when
     Patch.deleteProperty('customAttribute', element).apply();
 
     // then
-    // assert.equal(element.description.properties, undefined);
     assert.equal(element.ref.customAttribute, undefined);
   });
 
@@ -411,16 +371,14 @@ describe('Patch element => apply', () => {
       },
     ]);
 
-    // assert.equal(
-    //     element.description.properties.customAttribute, 'customValue');
+    assert.equal(
+        element.description.properties.customAttribute, 'customValue');
     assert.equal(element.ref.customAttribute, 'customValue');
 
     // when
     Patch.setProperty('customAttribute', 'anotherValue', element).apply();
 
     // then
-    // assert.equal(
-    //     element.description.properties.customAttribute, 'anotherValue');
     assert.equal(element.ref.customAttribute, 'anotherValue');
   });
 
@@ -796,7 +754,6 @@ describe('Patch element => apply', () => {
     Patch.setTextContent(element, 'two').apply();
 
     // then
-    // assert.equal(element.description.text, 'two');
     assert.equal(element.ref.textContent, 'two');
   });
 
@@ -815,7 +772,6 @@ describe('Patch element => apply', () => {
     Patch.removeTextContent(element).apply();
 
     // then
-    // assert.equal(element.description.text, null);
     assert.equal(element.ref.textContent, '');
   });
 });
