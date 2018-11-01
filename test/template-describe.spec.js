@@ -27,7 +27,6 @@ describe('Template => describe', () => {
       // then
       assert.equal(description.type, 'component');
       assert.equal(description.component, Component);
-      assert.equal(description.isComponent, true);
     });
 
     it('detects component symbol with properties', () => {
@@ -48,7 +47,6 @@ describe('Template => describe', () => {
       // then
       assert.equal(description.type, 'component');
       assert.equal(description.component, ComponentWithProps);
-      assert.equal(description.isComponent, true);
     });
 
     it('detects component symbol with child nodes', () => {
@@ -71,9 +69,9 @@ describe('Template => describe', () => {
       assert.equal(description.type, 'component');
       assert.equal(description.component, ComponentWithChildren);
       assert.equal(description.children.length, 2);
-      assert(description.children[0].isElement);
+      assert.equal(description.children[0].type, 'element');
       assert.equal(description.children[0].name, 'div');
-      assert(description.children[1].isElement);
+      assert.equal(description.children[1].type, 'element');
       assert.equal(description.children[1].name, 'span');
     });
 
@@ -99,9 +97,9 @@ describe('Template => describe', () => {
       assert.equal(description.type, 'component');
       assert.equal(description.component, ComponentWithChildren);
       assert.equal(description.children.length, 2);
-      assert(description.children[0].isElement);
+      assert(description.children[0].type, 'element');
       assert.equal(description.children[0].name, 'div');
-      assert(description.children[1].isElement);
+      assert(description.children[1].type, 'element');
       assert.equal(description.children[1].name, 'span');
     });
 
@@ -334,7 +332,7 @@ describe('Template => describe', () => {
       // then
       assert.equal(description.type, 'element');
       assert.equal(description.name, 'div');
-      assert.equal(description.text, 'text');
+      assert.equal(description.children[0].text, 'text');
     });
 
     it('allows text element with number value as content ', () => {
@@ -350,7 +348,7 @@ describe('Template => describe', () => {
       // then
       assert.equal(description.type, 'element');
       assert.equal(description.name, 'div');
-      assert.equal(description.text, '10');
+      assert.equal(description.children[0].text, '10');
     });
 
     it('allows text element with boolean true value as content', () => {
@@ -365,7 +363,7 @@ describe('Template => describe', () => {
       // then
       assert.equal(description.type, 'element');
       assert.equal(description.name, 'span');
-      assert.equal(description.text, 'true');
+      assert.equal(description.children[0].text, 'true');
     });
 
     it('detects text element with properties', () => {
@@ -383,7 +381,7 @@ describe('Template => describe', () => {
       assert.equal(description.type, 'element');
       assert.equal(description.name, 'div');
       assert.deepEqual(description.attrs, props);
-      assert.equal(description.text, 'text');
+      assert.equal(description.children[0].text, 'text');
     });
 
     it('detects element with custom attributes', () => {
@@ -774,7 +772,7 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(undefined));
     });
 
-    it('rejects child nodes in text element', () => {
+    it('allows child nodes and text content', () => {
 
       // given
       const template = [
@@ -787,15 +785,17 @@ describe('Template => describe', () => {
       ];
 
       // when
-      assert.throws(() => Template.describe(template));
+      const description = Template.describe(template);
 
       // then
-      assert(console.error.called);
-      assert(console.error.calledWith(
-          'Invalid node item found at index: 2, template:', template));
+      assert(description.children);
+      assert.equal(description.children.length, 2);
+
+      assert.equal(description.children[0].type, 'text');
+      assert.equal(description.children[1].type, 'element');
     });
 
-    it('rejects text content in element with child nodes', () => {
+    it('allows child nodes and text content', () => {
 
       // given
       const template = [
@@ -806,33 +806,32 @@ describe('Template => describe', () => {
       ];
 
       // when
-      assert.throws(() => Template.describe(template));
+      const description = Template.describe(template);
 
       // then
-      assert(console.error.called);
-      assert(console.error.calledWith(
-          'Invalid node item found at index: 3, template:', template));
+      assert.equal(description.children[0].type, 'element');
+      assert.equal(description.children[1].type, 'text');
     });
 
-    it('rejects component with text content', () => {
+    it('allows component with text content', () => {
 
       // given
       class Component extends opr.Toolkit.Component {}
       const template = [
         Component,
-        'Invalid',
+        'valid',
       ];
 
       // when
-      assert.throws(() => Template.describe(template));
+      const description = Template.describe(template);
 
       // then
-      assert(console.error.called);
-      assert(console.error.calledWith(
-          'Invalid text item found at index: 1, template:', template));
+      assert(description.children);
+      assert.equal(description.children.length, 1);
+      assert.equal(description.children[0].type, 'text');
     });
 
-    it('rejects component with properties and text content', () => {
+    it('allows component with properties and text content', () => {
 
       // given
       class Component extends opr.Toolkit.Component {}
@@ -842,16 +841,16 @@ describe('Template => describe', () => {
       const template = [
         Component,
         props,
-        'Wrong',
+        'fine',
       ];
 
       // when
-      assert.throws(() => Template.describe(template));
+      const description = Template.describe(template);
 
       // then
-      assert(console.error.called);
-      assert(console.error.calledWith(
-          'Invalid text item found at index: 2, template:', template));
+      assert(description.children);
+      assert.equal(description.children.length, 1);
+      assert.equal(description.children[0].type, 'text');
     });
 
     it('rejects object as type', () => {

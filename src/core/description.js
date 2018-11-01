@@ -28,14 +28,6 @@ limitations under the License.
       return undefined;
     }
 
-    get isComponent() {
-      return this instanceof ComponentDescription;
-    }
-
-    get isElement() {
-      return this instanceof ElementDescription;
-    }
-
     isCompatible(description) {
       return this.constructor === description.constructor;
     }
@@ -149,8 +141,52 @@ limitations under the License.
     }
   }
 
-  Description.ElementDescription = ElementDescription;
-  Description.ComponentDescription = ComponentDescription;
+  /*
+   * Description of a Comment node.
+   */
+  class CommentDescription extends Description {
+
+    constructor(text) {
+      super();
+      this.text = text;
+      this.type = 'comment';
+    }
+
+    get asTemplate() {
+      return null;
+    }
+
+    isCompatible(description) {
+      return super.isCompatible(description) && this.text === description.text;
+    }
+  }
+
+  /*
+   * Description of a Text node.
+   */
+  class TextDescription extends Description {
+
+    constructor(text) {
+      super();
+      this.text = text;
+      this.type = 'text';
+    }
+
+    get asTemplate() {
+      return this.text;
+    }
+
+    isCompatible(description) {
+      return super.isCompatible(description) && this.text === description.text;
+    }
+  }
+
+  Object.assign(Description, {
+    ElementDescription,
+    ComponentDescription,
+    CommentDescription,
+    TextDescription,
+  });
 
   module.exports = Description;
 }

@@ -74,7 +74,7 @@ describe('Lifecycle', () => {
   const createRootWith = template => {
     root = createRoot();
     const node = createFromTemplate(template);
-    root.appendChild(node);
+    root.child = node;
     return node;
   };
 
@@ -123,7 +123,7 @@ describe('Lifecycle', () => {
         const root = createRoot();
         const component = createFromTemplate([Component]);
         const patches = [
-          Patch.appendChild(component, root),
+          Patch.insertChild(component, 0, root),
         ];
 
         // when
@@ -144,7 +144,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(component, root),
+          Patch.insertChild(component, 0, root),
         ];
 
         // when
@@ -165,7 +165,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(element, root),
+          Patch.insertChild(element, 0, root),
         ];
 
         // when
@@ -192,7 +192,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(element, root),
+          Patch.insertChild(element, 0, root),
         ];
 
         // when
@@ -210,7 +210,7 @@ describe('Lifecycle', () => {
         ]);
         const component = createFromTemplate([Component]);
         const patches = [
-          Patch.insertChildNode(component, 0, element),
+          Patch.insertChild(component, 0, element),
         ];
 
         // when
@@ -237,7 +237,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.insertChildNode(component, 1, span),
+          Patch.insertChild(component, 1, span),
         ];
 
         // when
@@ -260,7 +260,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.insertChildNode(span, 0, div),
+          Patch.insertChild(span, 0, div),
         ];
 
         // when
@@ -285,7 +285,7 @@ describe('Lifecycle', () => {
             ],
           ],
         ]);
-        const patches = [Patch.insertChildNode(span, 0, div)];
+        const patches = [Patch.insertChild(span, 0, div)];
 
         // when
         Lifecycle.beforeUpdate(patches);
@@ -327,7 +327,7 @@ describe('Lifecycle', () => {
           Component,
         ]);
         const patches = [
-          Patch.appendChild(component, root),
+          Patch.insertChild(component, root),
         ];
 
         // when
@@ -348,7 +348,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(component, root),
+          Patch.insertChild(component, root),
         ];
 
         // when
@@ -369,7 +369,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(element, root),
+          Patch.insertChild(element, root),
         ];
 
         // when
@@ -396,7 +396,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.appendChild(element, root),
+          Patch.insertChild(element, root),
         ];
 
         // when
@@ -416,7 +416,7 @@ describe('Lifecycle', () => {
           Component,
         ]);
         const patches = [
-          Patch.insertChildNode(component, 0, element),
+          Patch.insertChild(component, 0, element),
         ];
 
         // when
@@ -443,7 +443,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.insertChildNode(component, 1, span),
+          Patch.insertChild(component, 1, span),
         ];
 
         // when
@@ -466,7 +466,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.insertChildNode(span, 0, div),
+          Patch.insertChild(span, 0, div),
         ];
 
         // when
@@ -492,7 +492,7 @@ describe('Lifecycle', () => {
           ],
         ]);
         const patches = [
-          Patch.insertChildNode(span, 0, div),
+          Patch.insertChild(span, 0, div),
         ];
 
         // when
@@ -680,7 +680,7 @@ describe('Lifecycle', () => {
           ]);
           const component = element.children[0];
           const patches = [
-            Patch.removeChildNode(component, 0, element),
+            Patch.removeChild(component, 0, element),
           ];
 
           // when
@@ -704,7 +704,7 @@ describe('Lifecycle', () => {
           ]);
           const component = element.children[0];
           const patches = [
-            Patch.removeChildNode(component, 0, element),
+            Patch.removeChild(component, 0, element),
           ];
 
           // when
@@ -727,7 +727,7 @@ describe('Lifecycle', () => {
             ],
           ]);
           const span = div.children[0];
-          const patches = [Patch.removeChildNode(span, 0, div)];
+          const patches = [Patch.removeChild(span, 0, div)];
 
           // when
           Lifecycle.beforeUpdate(patches);
@@ -755,7 +755,7 @@ describe('Lifecycle', () => {
             ],
           ]);
           const span = div.children[0];
-          const patches = [Patch.removeChildNode(span, 0, div)];
+          const patches = [Patch.removeChild(span, 0, div)];
 
           // when
           Lifecycle.beforeUpdate(patches);
@@ -783,7 +783,7 @@ describe('Lifecycle', () => {
       ]);
       const component = element.children[0];
       const patches = [
-        Patch.removeChildNode(component, 0, element),
+        Patch.removeChild(component, 0, element),
       ];
 
       // when
@@ -900,7 +900,7 @@ describe('Lifecycle', () => {
           ]);
           const component = element.children[0];
           const patches = [
-            Patch.removeChildNode(component, 0, element),
+            Patch.removeChild(component, 0, element),
           ];
 
           // when
@@ -923,7 +923,7 @@ describe('Lifecycle', () => {
             ],
           ]);
           const component = element.children[0];
-          const patches = [Patch.removeChildNode(component, 0, element)];
+          const patches = [Patch.removeChild(component, 0, element)];
 
           // when
           Lifecycle.afterUpdate(patches);
@@ -946,7 +946,7 @@ describe('Lifecycle', () => {
           ]);
           const span = div.children[0];
           const patches = [
-            Patch.removeChildNode(span, 0, div),
+            Patch.removeChild(span, 0, div),
           ];
 
           // when
@@ -972,7 +972,7 @@ describe('Lifecycle', () => {
             ],
           ]);
           const span = div.children[0];
-          const patches = [Patch.removeChildNode(span, 0, div)];
+          const patches = [Patch.removeChild(span, 0, div)];
 
           // when
           Lifecycle.afterUpdate(patches);

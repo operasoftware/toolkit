@@ -26,12 +26,14 @@ limitations under the License.
      * into the normalised description of the rendered node.
      */
     static render(component, props = {}, children = []) {
-      Object.assign(component.sandbox, {
-        props,
-        children,
-      });
+      component.sandbox.props = props;
+      component.sandbox.children = children;
       const template = component.render.call(component.sandbox);
-      return opr.Toolkit.Template.describe(template);
+      if (template) {
+        return opr.Toolkit.Template.describe(template);
+      }
+      const text = component.constructor.displayName;
+      return new opr.Toolkit.Description.CommentDescription(text);
     }
 
     /*

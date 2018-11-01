@@ -35,6 +35,7 @@ limitations under the License.
         const {
           ComponentDescription,
           ElementDescription,
+          TextDescription,
         } = opr.Toolkit.Description;
 
         let description;
@@ -78,33 +79,16 @@ limitations under the License.
             continue;
           }
           if (type === 'string' || type === 'number' || item === true) {
-            if (description.component) {
-              console.error(
-                  `Invalid text item found at index: ${index}, template:`,
-                  template);
-              throw new Error('Components cannot define text content');
-            }
-            if (description.children) {
-              console.error(
-                  `Invalid node item found at index: ${index}, template:`,
-                  template);
-              throw new Error(
-                  'Elements with child nodes cannot define text content');
-            }
-            description.text = String(item);
+            description.children = description.children || [];
+            description.children.push(new TextDescription(String(item)));
             continue;
           } else if (type === 'node') {
-            if (typeof description.text === 'string') {
-              console.error(
-                  `Invalid node item found at index: ${index}, template:`,
-                  template);
-              throw new Error('Text elements cannot have child nodes!');
-            }
             description.children = description.children || [];
             description.children.push(this.describe(item));
           } else {
-            console.error('Invalid item', item, `at index: ${index}, template:`,
-                          template);
+            console.error(
+                'Invalid item', item, `at index: ${index}, template:`,
+                template);
             throw new Error(`Invalid item specified: ${type}`);
           }
         }

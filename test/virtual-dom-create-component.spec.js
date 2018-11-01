@@ -42,7 +42,7 @@ describe('Virtual DOM', () => {
       assert.equal(component.child.parentNode, component);
 
       assert.equal(component.child.description.name, 'a');
-      assert.equal(component.child.description.text, label);
+      assert.equal(component.child.description.children[0].text, label);
       assert.equal(component.child.description.attrs.href, url);
     });
 
@@ -111,7 +111,7 @@ describe('Virtual DOM', () => {
 
       assert.equal(linkElement.description.name, 'a');
       assert(linkElement.description.attrs.href, url);
-      assert(linkElement.description.text, label);
+      assert(linkElement.description.children[0].text, label);
     });
 
     it('creates a branch with nested components', () => {

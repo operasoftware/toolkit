@@ -24,13 +24,18 @@ limitations under the License.
       if (!description) {
         return null;
       }
-      if (description.isElement) {
-        return new opr.Toolkit.VirtualElement(description, parentNode);
+      switch (description.type) {
+        case 'component':
+          return this.createComponent(description, parentNode);
+        case 'element':
+          return new opr.Toolkit.VirtualElement(description, parentNode);
+        case 'comment':
+          return new opr.Toolkit.Comment(description, parentNode);
+        case 'text':
+          return new opr.Toolkit.Text(description, parentNode);
+        default:
+          throw new Error(`Unsupported node type: ${description.type}`)
       }
-      if (description.isComponent) {
-        return this.createComponent(description, parentNode);
-      }
-      throw new Error(`Unsupported node type: ${description.type}`)
     },
 
     /*
@@ -45,12 +50,9 @@ limitations under the License.
             /*= requireCustomElement */ true);
       }
       const component = new ComponentClass(description, parentNode);
-      const childDescription = opr.Toolkit.Renderer.render(
+      const nodeDescription = opr.Toolkit.Renderer.render(
           component, description.props, description.childrenAsTemplates);
-      if (childDescription) {
-        const child = this.createFromDescription(childDescription, component);
-        component.appendChild(child);
-      }
+      component.child = this.createFromDescription(nodeDescription, component);
       return component;
     },
 

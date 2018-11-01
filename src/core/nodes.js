@@ -15,10 +15,14 @@ limitations under the License.
 */
 
 {
+  /*
+   * An abstract parent node.
+   */
   class VirtualNode {
 
-    constructor(key, parentNode = null) {
-      this.key = key;
+    constructor(description, parentNode = null) {
+      this.description = description;
+      this.key = description.key;
       this.parentNode = parentNode;
     }
 
@@ -63,34 +67,54 @@ limitations under the License.
       return this instanceof Comment;
     }
 
+    isText() {
+      return this instanceof Text;
+    }
+
     isCompatible(node) {
       return node && this.nodeType === node.nodeType && this.key === node.key;
     }
   }
 
+  /*
+   * Node representing Component in the virtual DOM tree.
+   * Components
+   */
   class Component extends VirtualNode {
 
     static get NodeType() {
       return 'component';
     }
 
+    static get displayName() {
+      return this.name;
+    }
+
     constructor(description, parentNode, attachDOM = true) {
-      super(description.key, parentNode);
-      this.description = description;
-
+      super(description, parentNode);
       this.sandbox = opr.Toolkit.Sandbox.create(this);
-
-      this.comment = this.createComment();
-      this.child = null;
-
       this.cleanUpTasks = [];
       if (attachDOM) {
         this.attachDOM();
       }
+      // the rendered child node is inserted right after instantiation
+      this.child = null;
     }
 
-    createComment() {
-      return new Comment(` ${this.constructor.name} `, this);
+    /*
+     * This is the only method making modifications to the component's child as
+     * Component always needs a child node to book it's place in the node tree.
+     */
+    replaceChild(child, node) {
+      opr.Toolkit.assert(
+          this.child === child, 'Replaced node is not a child of this node!');
+      opr.Toolkit.assert(
+          node.parentNode === this,
+          'Specified node does not have a valid parent!');
+      child.parentNode = null;
+      node.parentNode = this;
+      child.ref.replaceWith(node.ref);
+      this.child = node;
     }
 
     hasOwnMethod(method) {
@@ -99,37 +123,14 @@ limitations under the License.
 
     connectTo(service, listeners) {
       opr.Toolkit.assert(
-          service.connect instanceof Function,
+          typeof service.connect === 'function',
           'Services have to define the connect() method');
       const disconnect = service.connect(listeners);
       opr.Toolkit.assert(
-          disconnect instanceof Function,
+          typeof disconnect === 'function',
           'The result of the connect() method has to be a disconnect() method');
       disconnect.service = service;
       this.cleanUpTasks.push(disconnect);
-    }
-
-    appendChild(child) {
-      this.child = child;
-      this.child.parentNode = this;
-      this.comment.parentNode = null;
-      this.comment = null;
-    }
-
-    removeChild(child) {
-      opr.Toolkit.assert(
-          this.child === child, 'Specified node is not a child of this node');
-      this.child.parentNode = null;
-      this.child = null;
-      this.comment = this.createComment();
-    }
-
-    replaceChild(child, node) {
-      opr.Toolkit.assert(
-          this.child === child, 'Specified node is not a child of this node');
-      this.child.parentNode = null;
-      this.child = node;
-      this.child.parentNode = this;
     }
 
     get childElement() {
@@ -145,13 +146,10 @@ limitations under the License.
     }
 
     get placeholder() {
-      if (this.comment) {
-        return this.comment;
+      if (this.child.isComment()) {
+        return this.child;
       }
-      if (this.child && this.child.isComponent()) {
-        return this.child.placeholder;
-      }
-      return null;
+      return this.child.placeholder || null;
     }
 
     render() {
@@ -190,11 +188,7 @@ limitations under the License.
     }
 
     get ref() {
-      return this.renderedNode;
-    }
-
-    get renderedNode() {
-      return this.childElement ? this.childElement.ref : this.placeholder.ref;
+      return this.child.ref;
     }
 
     isCompatible(node) {
@@ -204,16 +198,12 @@ limitations under the License.
     attachDOM() {
       if (this.child) {
         this.child.attachDOM();
-      } else {
-        this.comment.attachDOM();
       }
     }
 
     detachDOM() {
       if (this.child) {
         this.child.detachDOM();
-      } else {
-        this.comment.detachDOM();
       }
     }
   }
@@ -226,10 +216,6 @@ limitations under the License.
 
     static get NodeType() {
       return 'root';
-    }
-
-    static get displayName() {
-      return this.name;
     }
 
     static get styles() {
@@ -256,6 +242,9 @@ limitations under the License.
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
+      this.child = opr.Toolkit.VirtualDOM.createFromDescription(
+          new opr.Toolkit.Description.CommentDescription(
+              this.constructor.displayName));
       this.attachDOM();
     }
 
@@ -451,7 +440,7 @@ limitations under the License.
     }
 
     get ref() {
-      return this[CUSTOM_ELEMENT] || super.renderedNode;
+      return this[CUSTOM_ELEMENT] || super.ref;
     }
 
     set ref(ref) {
@@ -555,8 +544,7 @@ limitations under the License.
     }
 
     constructor(description, parentNode) {
-      super(description.key || null, parentNode);
-      this.description = description;
+      super(description, parentNode);
       if (description.children) {
         this.children = description.children.map(
             childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
@@ -578,30 +566,31 @@ limitations under the License.
       child.parentNode = this;
     }
 
-    moveChild(child, from, to) {
-      opr.Toolkit.assert(
-          this.children[from] === child,
-          'Specified node is not a child of this element');
-      this.children.splice(from, 1);
-      this.children.splice(to, 0, child);
-      this.ref.removeChild(child.ref);
-      this.ref.insertBefore(child.ref, this.ref.children[to]);
-    }
-
     replaceChild(child, node) {
       const index = this.children.indexOf(child);
       opr.Toolkit.assert(
-          index >= 0, 'Specified node is not a child of this element');
+          index >= 0, 'Specified node is not a child of this element!');
       this.children.splice(index, 1, node);
       child.parentNode = null;
       node.parentNode = this;
       child.ref.replaceWith(node.ref);
     }
 
+    moveChild(child, from, to) {
+      opr.Toolkit.assert(
+          this.children[from] === child,
+          'Specified node is not a child of this element!');
+      this.children.splice(from, 1);
+      this.children.splice(to, 0, child);
+      this.ref.removeChild(child.ref);
+      this.ref.insertBefore(child.ref, this.ref.children[to]);
+    }
+
+
     removeChild(child) {
       const index = this.children.indexOf(child);
       opr.Toolkit.assert(
-          index >= 0, 'Specified node is not a child of this element');
+          index >= 0, 'Specified node is not a child of this element!');
       this.children.splice(index, 1);
       child.parentNode = null;
       if (!this.children.length) {
@@ -641,9 +630,8 @@ limitations under the License.
       return 'comment';
     }
 
-    constructor(text, parentNode) {
-      super(null, parentNode);
-      this.text = text;
+    constructor(description, parentNode) {
+      super(description, parentNode);
       this.attachDOM();
     }
 
@@ -652,7 +640,31 @@ limitations under the License.
     }
 
     attachDOM() {
-      this.ref = document.createComment(this.text);
+      this.ref = document.createComment(` ${this.description.text} `);
+    }
+
+    detachDOM() {
+      this.ref = null;
+    }
+  }
+
+  class Text extends VirtualNode {
+
+    static get NodeType() {
+      return 'text';
+    }
+
+    constructor(description, parentNode) {
+      super(description, parentNode);
+      this.attachDOM();
+    }
+
+    get nodeType() {
+      return Text.NodeType;
+    }
+
+    attachDOM() {
+      this.ref = document.createTextNode(this.description.text);
     }
 
     detachDOM() {
@@ -666,6 +678,7 @@ limitations under the License.
     Root,
     VirtualElement,
     Comment,
+    Text,
   };
 
   module.exports = CoreTypes;

@@ -394,7 +394,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 0);
 
     // when
-    Patch.insertChildNode(span, 0, element).apply();
+    Patch.insertChild(span, 0, element).apply();
 
     // then
     assert.equal(element.children.length, 1);
@@ -426,7 +426,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 3);
 
     // when
-    Patch.insertChildNode(link, 0, element).apply();
+    Patch.insertChild(link, 0, element).apply();
 
     // then
     assert.equal(element.children.length, 4);
@@ -453,7 +453,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 1);
 
     // when
-    Patch.insertChildNode(link, 1, element).apply();
+    Patch.insertChild(link, 1, element).apply();
 
     // then
     assert.equal(element.children.length, 2);
@@ -493,7 +493,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3);
 
       // when
-      Patch.moveChildNode(paragraph, 0, 2, element).apply();
+      Patch.moveChild(paragraph, 0, 2, element).apply();
 
       // then
       assert.equal(element.children.length, 3);
@@ -532,7 +532,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3);
 
       // when
-      Patch.moveChildNode(component, 1, 0, element).apply();
+      Patch.moveChild(component, 1, 0, element).apply();
 
       // then
       assert.equal(element.children.length, 3);
@@ -567,7 +567,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 2);
 
       // when
-      Patch.moveChildNode(component, 0, 1, element).apply();
+      Patch.moveChild(component, 0, 1, element).apply();
 
       // then
       assert.equal(element.children.length, 2);
@@ -605,7 +605,7 @@ describe('Patch element => apply', () => {
       ]);
 
       // when
-      Patch.replaceChildNode(child, component, element).apply();
+      Patch.replaceChild(child, component, element).apply();
 
       // then
       assert.equal(element.children[0], component);
@@ -628,7 +628,7 @@ describe('Patch element => apply', () => {
       ]);
 
       // when
-      Patch.replaceChildNode(child, span, element).apply();
+      Patch.replaceChild(child, span, element).apply();
 
       // then
       assert.equal(element.children[0], span);
@@ -651,7 +651,7 @@ describe('Patch element => apply', () => {
       ]);
 
       // when
-      Patch.replaceChildNode(child, component, element).apply();
+      Patch.replaceChild(child, component, element).apply();
 
       // then
       assert.equal(element.children[0], component);
@@ -674,7 +674,7 @@ describe('Patch element => apply', () => {
       ]);
 
       // when
-      Patch.replaceChildNode(child, span, element).apply();
+      Patch.replaceChild(child, span, element).apply();
 
       // then
       assert.equal(element.children[0], span);
@@ -712,7 +712,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3);
 
       // when
-      Patch.removeChildNode(div, 1, element).apply();
+      Patch.removeChild(div, 1, element).apply();
 
       // then
       assert.equal(element.children.length, 2);
@@ -728,7 +728,7 @@ describe('Patch element => apply', () => {
       const p = element.children[0];
 
       // when
-      Patch.removeChildNode(p, 0, element).apply();
+      Patch.removeChild(p, 0, element).apply();
 
       // then
       assert.equal(element.children.length, 1);
@@ -741,7 +741,7 @@ describe('Patch element => apply', () => {
       const span = element.children[0];
 
       // when
-      Patch.removeChildNode(span, 0, element).apply();
+      Patch.removeChild(span, 0, element).apply();
 
       // then
       assert.equal(element.children, undefined);
@@ -773,7 +773,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
 
       // when
-      Patch.removeChildNode(component, 1, element).apply();
+      Patch.removeChild(component, 1, element).apply();
 
       // then
       assert.equal(element.children.length, 1);
@@ -802,7 +802,7 @@ describe('Patch element => apply', () => {
       assert(element.ref.childNodes[1].textContent.includes('Component'));
 
       // when
-      Patch.removeChildNode(component, 1, element).apply();
+      Patch.removeChild(component, 1, element).apply();
 
       // then
       assert.equal(element.children.length, 1);
@@ -818,11 +818,19 @@ describe('Patch element => apply', () => {
       'one',
     ]);
 
-    assert.equal(element.description.text, 'one');
+    assert.equal(element.description.children[0].text, 'one');
     assert.equal(element.ref.textContent, 'one');
 
     // when
-    Patch.setTextContent(element, 'two').apply();
+
+    const {
+      Description,
+      VirtualDOM,
+    } = opr.Toolkit;
+
+    const two = VirtualDOM.createFromDescription(
+        new Description.TextDescription('two'));
+    Patch.replaceChild(element.children[0], two, element).apply();
 
     // then
     assert.equal(element.ref.textContent, 'two');
@@ -836,11 +844,11 @@ describe('Patch element => apply', () => {
       'one',
     ]);
 
-    assert.equal(element.description.text, 'one');
+    assert.equal(element.description.children[0].text, 'one');
     assert.equal(element.ref.textContent, 'one');
 
     // when
-    Patch.removeTextContent(element).apply();
+    Patch.removeChild(element.children[0], 0, element).apply();
 
     // then
     assert.equal(element.ref.textContent, '');

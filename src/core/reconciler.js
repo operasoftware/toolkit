@@ -151,7 +151,7 @@ limitations under the License.
           favoredToMove && defaultMoves.length === 1 &&
               defaultMoves[0].item !== favoredToMove) {
         const alternativeMoves =
-            calculateIndexChanges([...result], target, /*= reversed*/ true);
+            calculateIndexChanges([...result], target, /*= reversed */ true);
         if (alternativeMoves.length <= defaultMoves.length) {
           moves.push(...alternativeMoves);
           moves.result = alternativeMoves.result;

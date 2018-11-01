@@ -26,9 +26,10 @@ describe('Nodes', () => {
     const root = VirtualDOM.createRoot(Root);
     root.container = container;
 
-    const node = VirtualDOM.createFromDescription(Template.describe(template));
+    const node = VirtualDOM.createFromDescription(
+                                Template.describe(template), root);
     if (node) {
-      root.appendChild(node);
+      root.child = node;
     }
     return root;
   }
@@ -43,8 +44,8 @@ describe('Nodes', () => {
   }
 
   const root = VirtualDOM.createRoot(Root);
-  const createElement = name =>
-      VirtualDOM.createFromDescription(Template.describe([name]));
+  const createElement = (name, parentNode) =>
+      VirtualDOM.createFromDescription(Template.describe([name]), parentNode);
 
   const component = new opr.Toolkit.Component({}, [], null);
   const element = createElement('section');
@@ -375,8 +376,8 @@ describe('Nodes', () => {
 
         const root = opr.Toolkit.VirtualDOM.createRoot(Root);
         root.container = container;
-        const element = createElement('section');
-        root.appendChild(element);
+        const element = createElement('section', root);
+        root.child = element;
         const component = createComponent();
         element.insertChild(component);
         const eventName = 'event-name';
@@ -444,46 +445,40 @@ describe('Nodes', () => {
 
     describe('get ref', () => {
 
-      it('returns DOM element for component with child element', () => {
+      it('returns element for component with child element', () => {
 
         // given
-        const component = createComponent();
-        const element = createElement('span');
-        const span = document.createElement('span');
-        element.ref = span;
-        component.appendChild(element);
+        const component = createComponent([
+          'span',
+        ]);
 
         // then
-        assert.equal(component.ref, span);
+        assert.equal(component.ref.nodeName, 'SPAN');
       });
 
-      it('returns DOM text node for empty component', () => {
+      it('returns comment node for empty component', () => {
 
         // given
         const component = createComponent();
-        const text = document.createTextNode('Component');
-        component.comment.ref = text;
 
         // then
-        assert.equal(component.ref, text);
+        assert(component.ref.textContent.includes(Component.name));
       });
     });
 
-    describe('append child', () => {
+    describe('replace child', () => {
 
       it('removes the comment', () => {
 
         // given
         const component = createComponent();
         const subcomponent = createComponent();
+        subcomponent.parentNode = component;
 
         // when
-        component.appendChild(subcomponent);
+        component.replaceChild(component.child, subcomponent);
 
         // then
-        assert.equal(component.comment, null);
-        assert(subcomponent.comment.isComment());
-        assert.equal(subcomponent.placeholder, subcomponent.comment);
         assert.equal(component.placeholder, subcomponent.placeholder);
       });
 
@@ -494,9 +489,11 @@ describe('Nodes', () => {
           // given
           const component = createComponent();
           const subcomponent = createComponent();
+          subcomponent.parentNode = component;
+
 
           // when
-          component.appendChild(subcomponent);
+          component.replaceChild(component.child, subcomponent);
 
           // then
           assert.equal(component.child, subcomponent);
@@ -508,47 +505,15 @@ describe('Nodes', () => {
           // given
           const component = createComponent();
           const element = createElement('span');
+          element.parentNode = component;
 
           // when
-          component.appendChild(element);
+          component.replaceChild(component.child, element);
 
           // then
           assert.equal(component.child, element);
           assert.equal(element.parentNode, component);
         });
-      });
-    });
-
-    describe('remove child', () => {
-
-      it('removes the parent-child relation', () => {
-
-        // given
-        const component = createComponent();
-        const subcomponent = createComponent();
-        component.appendChild(subcomponent);
-
-        // when
-        component.removeChild(subcomponent);
-
-        // then
-        assert.equal(component.child, null);
-        assert.equal(subcomponent.parentNode, null);
-      });
-
-      it('creates the comment', () => {
-        // given
-        const component = createComponent();
-        const subcomponent = createComponent();
-        component.appendChild(subcomponent);
-
-        // when
-        component.removeChild(subcomponent);
-
-        // then
-        assert(component.comment);
-        assert.equal(component.placeholder, component.comment);
-        assert(component.comment.isComment());
       });
     });
 
@@ -631,7 +596,6 @@ describe('Nodes', () => {
 
         // when
         const component = createComponent();
-        component.appendChild(new opr.Toolkit.Comment());
 
         // then
         assert.equal(component.childElement, null);
@@ -648,7 +612,7 @@ describe('Nodes', () => {
         // then
         assert(component.placeholder);
         assert(component.placeholder.isComment());
-        assert.equal(component.placeholder, component.comment);
+        assert(component.placeholder.description.text.includes(Component.name));
       });
 
       it('returns null for a component with a child element', () => {
@@ -656,54 +620,31 @@ describe('Nodes', () => {
         // given
         const component = createComponent();
         const element = createElement('span');
+        element.parentNode = component;
 
         // when
-        component.appendChild(element);
+        component.replaceChild(component.child, element);
 
         // then
         assert.equal(component.placeholder, null);
       });
 
-      it('returns a subcomponents comment for a component with a child', () => {
+      it('returns a subcomponents placeholder for a component with a child',
+         () => {
 
-        // given
-        const component = createComponent();
-        const subcomponent = createComponent();
+           // given
+           const component = createComponent();
+           const subcomponent = createComponent();
+           subcomponent.parentNode = component;
 
-        // when
-        component.appendChild(subcomponent);
+           // when
+           component.replaceChild(component.child, subcomponent);
 
-        // then
-        assert(component.placeholder);
-        assert(component.placeholder.isComment());
-        assert(component.placeholder, subcomponent.comment);
-      });
-
-      it('returns a comment for a component with no child', () => {
-
-        // given
-        const component = createComponent();
-        const subcomponent = createComponent();
-        const element = createElement('span');
-
-        // when
-        component.appendChild(subcomponent);
-        component.removeChild(subcomponent);
-
-        // then
-        assert(component.placeholder);
-        assert(component.placeholder.isComment());
-        assert.equal(component.placeholder, component.comment);
-
-        // when
-        component.appendChild(element);
-        component.removeChild(element);
-
-        // then
-        assert(component.placeholder);
-        assert(component.placeholder.isComment());
-        assert.equal(component.placeholder, component.comment);
-      });
+           // then
+           assert(component.placeholder);
+           assert(component.placeholder.isComment());
+           assert(component.placeholder, subcomponent.placeholder);
+         });
     });
   });
 
