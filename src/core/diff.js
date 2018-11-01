@@ -43,6 +43,7 @@ limitations under the License.
         }
         opr.Toolkit.Lifecycle.afterUpdate(this.patches);
       }
+      return this.patches;
     }
 
     /*
@@ -76,15 +77,9 @@ limitations under the License.
      */
     componentPatches(component, description) {
 
-      if (Diff.deepEqual(component.description, description)) {
-        // TODO(aswitalski): do this properly!
-        if (component.isRoot()) {
-          if (component.state !== null) {
-            return;
-          }
-        } else {
-          return;
-        }
+      if (component.isInitialized &&
+          Diff.deepEqual(component.description, description)) {
+        return;
       }
 
       const childDescription = opr.Toolkit.Renderer.render(

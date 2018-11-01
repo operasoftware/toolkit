@@ -55,9 +55,11 @@ const Lifecycle = normalizeModule('core/lifecycle');
 const Patch = normalizeModule('core/patch');
 const Plugins = normalizeModule('core/plugins');
 const Reconciler = normalizeModule('core/reconciler');
+const Reducers = normalizeModule('core/reducers');
 const Renderer = normalizeModule('core/renderer');
 const Sandbox = normalizeModule('core/sandbox');
 const Service = normalizeModule('core/service');
+const State = normalizeModule('core/state');
 const Template = normalizeModule('core/template');
 const VirtualDOM = normalizeModule('core/virtual-dom');
 const utils = normalizeModule('core/utils');
@@ -67,8 +69,8 @@ const Release = loadModule('release');
 
 let release = merge(
                     Loader, Consts, Nodes, Diff, Lifecycle, Patch, Description,
-                    Plugins, Reconciler, Renderer, Sandbox, Service, Template,
-                    VirtualDOM, utils, Toolkit, Release
+                    Plugins, Reconciler, Renderer, Sandbox, Service, State,
+                    Reducers, Template, VirtualDOM, utils, Toolkit, Release,
               ).replace(/\n\n\n/g, '\n\n');
 
 while (release.includes(copyrightHeader)) {

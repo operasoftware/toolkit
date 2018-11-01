@@ -1,3 +1,4 @@
+
 /*
 Copyright 2017-2018 Opera Software AS
 
@@ -94,6 +95,7 @@ limitations under the License.
       super(description, parentNode);
       this.sandbox = opr.Toolkit.Sandbox.create(this);
       this.cleanUpTasks = [];
+      this.isInitialized = attachDOM;
       if (attachDOM) {
         this.attachDOM();
       }
@@ -230,13 +232,12 @@ limitations under the License.
       this.originator = originator;
       this.plugins = this.createPlugins();
       this.subroots = new Set();
-      this.renderer = new opr.Toolkit.Renderer(this);
-      this.state = null;
+      this.state = opr.Toolkit.Reducers.create(this);
       this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
       this.dispatch = command => {
-        const prevState = this.state;
+        const prevState = this.state.current;
         const nextState = this.reducer(prevState, command);
-        this.renderer.updateDOM(command, prevState, nextState);
+        opr.Toolkit.Renderer.update(this, prevState, nextState, command);
       };
       this.commands = this.createCommandsDispatcher();
       this.ready = new Promise(resolve => {
@@ -248,9 +249,9 @@ limitations under the License.
       this.attachDOM();
     }
 
-    normalize(state) {
+    normalize(props) {
       return opr.Toolkit.Template.normalizeComponentProps(
-          state, this.constructor);
+          props, this.constructor);
     }
 
     /*
@@ -273,27 +274,28 @@ limitations under the License.
         delete this.pendingDescription;
         setTimeout(() => this.update(description));
       }
+      this.isInitialized = true;
       this.markAsReady();
     }
 
     /*
-     * The default implementation of the method returning
-     * the props passed from the parent.
+     * The default implementation delegating the calculation of initial state
+     * to the state manager.
      */
-    async getInitialState(props = {}) {
-      return props;
+    async getInitialState(props) {
+      return this.state.getInitialState(props);
     }
 
     /*
      * Triggers the component update.
      */
     update(description) {
-      if (this.state === null) {
+      if (!this.isInitialized) {
         this.pendingDescription = description;
         return;
       }
-      const state = this.getUpdatedState(description.props || {},
-                                         this.description.props || {});
+      const state = this.getUpdatedState(
+          description.props || {}, this.description.props || {});
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
@@ -301,13 +303,11 @@ limitations under the License.
     }
 
     /*
-     * The default implementation returns the state overriden by updated props.
+     * The default implementation delegating the calculation of updated state
+     * to the state manager.
      */
-    getUpdatedState(props = {}, state = {}) {
-      return {
-        ...state,
-        ...props,
-      };
+    getUpdatedState(props, state) {
+      return this.state.getUpdatedState(props, state);
     }
 
     set commands(commands) {
@@ -338,8 +338,9 @@ limitations under the License.
       const dispatcher = {};
       for (const key of Object.keys(this.reducer.commands)) {
         dispatcher[key] = (...args) => {
-          if (this.dispatch) {
-            this.dispatch(this.reducer.commands[key](...args));
+          if (this.reducer) {
+            const command = this.reducer.commands[key](...args);
+            this.dispatch(command);
           }
         };
       }
@@ -466,8 +467,8 @@ limitations under the License.
     destroy() {
       super.destroy();
       this.originator.stopTracking(this);
-      this.renderer.destroy();
-      this.renderer = null;
+      this.state.destroy();
+      this.state = null;
       this.plugins.destroy();
       this.plugins = null;
       this.reducer = null;

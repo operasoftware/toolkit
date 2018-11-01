@@ -208,9 +208,9 @@ limitations under the License.
             listener.onBeforeUpdate(event);
           }
           return;
-        case 'update':
+        case 'after-update':
           for (const listener of this.registry.cache.listeners) {
-            listener.onUpdate(event);
+            listener.onAfterUpdate(event);
           }
           return;
         default:
