@@ -382,7 +382,29 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.customAttribute, 'anotherValue');
   });
 
-  it('inserts child node', () => {
+  it('inserts child node to an empty element', () => {
+
+    // given
+    const element = createFromTemplate([
+      'div',
+    ]);
+    const span = createElement('span');
+
+    // then
+    assert.equal(element.ref.childNodes.length, 0);
+
+    // when
+    Patch.insertChildNode(span, 0, element).apply();
+
+    // then
+    assert.equal(element.children.length, 1);
+    assert.equal(element.ref.childNodes.length, 1);
+
+    assert.equal(element.children[0], span);
+    assert.equal(element.ref.firstElementChild, span.ref);
+  });
+
+  it('inserts child node before other child', () => {
 
     // given
     const element = createFromTemplate([
@@ -415,6 +437,32 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.firstElementChild, link.ref);
   });
 
+  it('inserts child node at the end', () => {
+
+    // given
+    const element = createFromTemplate([
+      'div',
+      [
+        'span',
+      ],
+    ]);
+    const link = createElement('a');
+
+    // then
+    assert.equal(element.children.length, 1);
+    assert.equal(element.ref.childNodes.length, 1);
+
+    // when
+    Patch.insertChildNode(link, 1, element).apply();
+
+    // then
+    assert.equal(element.children.length, 2);
+    assert.equal(element.ref.childNodes.length, 2);
+
+    assert.equal(element.children[1], link);
+    assert(link.ref);
+    assert.equal(element.ref.childNodes[1], link.ref);
+  });
   describe('move child node', () => {
 
     const Component = class extends opr.Toolkit.Component {
@@ -675,6 +723,29 @@ describe('Patch element => apply', () => {
 
       assert.equal(element.children[1].description.name, 'span');
       assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+
+      // given
+      const p = element.children[0];
+
+      // when
+      Patch.removeChildNode(p, 0, element).apply();
+
+      // then
+      assert.equal(element.children.length, 1);
+      assert.equal(element.ref.childNodes.length, 1);
+
+      assert.equal(element.children[0].description.name, 'span');
+      assert.equal(element.ref.childNodes[0].tagName, 'SPAN');
+
+      // given
+      const span = element.children[0];
+
+      // when
+      Patch.removeChildNode(span, 0, element).apply();
+
+      // then
+      assert.equal(element.children, undefined);
+      assert.equal(element.ref.childNodes.length, 0);
     });
 
     it('removes component with child element', () => {
