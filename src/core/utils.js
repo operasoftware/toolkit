@@ -218,6 +218,18 @@ limitations under the License.
     /* eslint-enable prefer-arrow-callback */
   };
 
+  const deepFreeze = obj => {
+    if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
+      // functions are intentionally not frozen
+      return obj;
+    }
+    Object.freeze(obj);
+    for (const property of Object.getOwnPropertyNames(obj)) {
+      deepFreeze(obj[property]);
+    }
+    return obj;
+  };
+
   const Utils = {
     throttle,
     debounce,
@@ -230,6 +242,7 @@ limitations under the License.
     isSupportedAttribute,
     isSpecialProperty,
     postRender,
+    deepFreeze,
   };
 
   module.exports = Utils;
