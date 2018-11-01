@@ -56,79 +56,104 @@ limitations under the License.
   const SET_ATTRIBUTE = {
     type: Symbol('set-attribute'),
     apply: function() {
-      this.target.setAttribute(this.name, this.value, this.isCustom);
+      const attr = this.isCustom ?
+          this.name :
+          opr.Toolkit.utils.getAttributeName(this.name);
+      this.target.ref.setAttribute(attr, this.value);
     },
   };
   const REMOVE_ATTRIBUTE = {
     type: Symbol('remove-attribute'),
     apply: function() {
-      this.target.removeAttribute(this.name, this.isCustom);
+      const attr = this.isCustom ?
+          this.name :
+          opr.Toolkit.utils.getAttributeName(this.name);
+      this.target.ref.removeAttribute(attr);
     },
   };
 
   const SET_DATA_ATTRIBUTE = {
     type: Symbol('set-data-attribute'),
     apply: function() {
-      this.target.setDataAttribute(this.name, this.value);
+      this.target.ref.dataset[this.name] = this.value;
     },
   };
   const REMOVE_DATA_ATTRIBUTE = {
     type: Symbol('remove-data-attribute'),
     apply: function() {
-      this.target.removeDataAttribute(this.name);
+      delete this.target.ref.dataset[this.name];
     },
   };
 
   const SET_STYLE_PROPERTY = {
     type: Symbol('set-style-property'),
     apply: function() {
-      this.target.setStyleProperty(this.property, this.value);
+      this.target.ref.style[this.property] = this.value;
     },
   };
   const REMOVE_STYLE_PROPERTY = {
     type: Symbol('remove-style-property'),
     apply: function() {
-      this.target.removeStyleProperty(this.property);
+      this.target.ref.style[this.property] = null;
     },
   };
 
   const SET_CLASS_NAME = {
     type: Symbol('set-class-name'),
     apply: function() {
-      this.target.setClassName(this.className);
+      this.target.ref.className = this.className;
     },
   };
 
   const ADD_LISTENER = {
     type: Symbol('add-listener'),
     apply: function() {
-      this.target.addListener(this.name, this.listener, this.isCustom);
+      const event =
+          this.isCustom ? this.name : opr.Toolkit.utils.getEventName(this.name);
+      this.target.ref.addEventListener(event, this.listener);
     },
   };
   const REPLACE_LISTENER = {
     type: Symbol('replace-listener'),
     apply: function() {
-      this.target.removeListener(this.name, this.removed, this.isCustom);
-      this.target.addListener(this.name, this.added, this.isCustom);
+      const event =
+          this.isCustom ? this.name : opr.Toolkit.utils.getEventName(this.name);
+      this.target.ref.removeEventListener(event, this.removed);
+      this.target.ref.addEventListener(event, this.added);
     },
   };
   const REMOVE_LISTENER = {
     type: Symbol('remove-listener'),
     apply: function() {
-      this.target.removeListener(this.name, this.listener, this.isCustom);
+      const event =
+          this.isCustom ? this.name : opr.Toolkit.utils.getEventName(this.name);
+      this.target.ref.removeEventListener(event, this.listener);
     },
   };
 
   const SET_PROPERTY = {
     type: Symbol('set-property'),
     apply: function() {
-      this.target.setProperty(this.key, this.value);
+      this.target.ref[this.key] = this.value;
     },
   };
   const DELETE_PROPERTY = {
     type: Symbol('delete-property'),
     apply: function() {
-      this.target.deleteProperty(this.key);
+      delete this.target.ref[this.key];
+    },
+  };
+
+  const SET_TEXT_CONTENT = {
+    type: Symbol('set-text-content'),
+    apply: function() {
+      this.element.ref.textContent = this.text;
+    },
+  };
+  const REMOVE_TEXT_CONTENT = {
+    type: Symbol('remove-text-content'),
+    apply: function() {
+      this.element.ref.textContent = '';
     },
   };
 
@@ -157,19 +182,6 @@ limitations under the License.
     },
   };
 
-  const SET_TEXT_CONTENT = {
-    type: Symbol('set-text-content'),
-    apply: function() {
-      this.element.setTextContent(this.text);
-    },
-  };
-  const REMOVE_TEXT_CONTENT = {
-    type: Symbol('remove-text-content'),
-    apply: function() {
-      this.element.removeTextContent();
-    },
-  };
-
   const Types = {
     INIT_ROOT_COMPONENT,
     UPDATE_NODE,
@@ -188,12 +200,12 @@ limitations under the License.
     REMOVE_LISTENER,
     SET_PROPERTY,
     DELETE_PROPERTY,
+    SET_TEXT_CONTENT,
+    REMOVE_TEXT_CONTENT,
     INSERT_CHILD_NODE,
     MOVE_CHILD_NODE,
     REPLACE_CHILD_NODE,
     REMOVE_CHILD_NODE,
-    SET_TEXT_CONTENT,
-    REMOVE_TEXT_CONTENT,
   };
   const PatchTypes = Object.keys(Types).reduce((result, key) => {
     result[key] = Types[key].type;
@@ -340,6 +352,19 @@ limitations under the License.
       return patch;
     }
 
+    static setTextContent(element, text) {
+      const patch = new Patch(SET_TEXT_CONTENT);
+      patch.element = element;
+      patch.text = text;
+      return patch;
+    }
+
+    static removeTextContent(element) {
+      const patch = new Patch(REMOVE_TEXT_CONTENT);
+      patch.element = element;
+      return patch;
+    }
+
     static insertChildNode(node, at, parent) {
       const patch = new Patch(INSERT_CHILD_NODE);
       patch.node = node;
@@ -370,19 +395,6 @@ limitations under the License.
       patch.node = node;
       patch.at = at;
       patch.parent = parent;
-      return patch;
-    }
-
-    static setTextContent(element, text) {
-      const patch = new Patch(SET_TEXT_CONTENT);
-      patch.element = element;
-      patch.text = text;
-      return patch;
-    }
-
-    static removeTextContent(element) {
-      const patch = new Patch(REMOVE_TEXT_CONTENT);
-      patch.element = element;
       return patch;
     }
 

@@ -272,8 +272,8 @@ limitations under the License.
       await this.plugins.installAll();
       this.originator.track(this);
 
-      const state =
-          await this.getInitialState.call(this.sandbox, this.description.props);
+      const state = await this.getInitialState.call(
+          this.sandbox, this.description.props || {});
       if (state.constructor !== Object) {
         throw new Error('Initial state must be a plain object!');
       }
@@ -303,8 +303,8 @@ limitations under the License.
         this.pendingDescription = description;
         return;
       }
-      const state =
-          this.getUpdatedState(description.props, this.description.props);
+      const state = this.getUpdatedState(description.props || {},
+                                         this.description.props || {});
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
@@ -312,8 +312,7 @@ limitations under the License.
     }
 
     /*
-     * The default implementation of the method returning
-     * the current state with overrides by the props passed from the parent.
+     * The default implementation returns the state overriden by updated props.
      */
     getUpdatedState(props = {}, state = {}) {
       return {
@@ -566,54 +565,6 @@ limitations under the License.
       this.attachDOM();
     }
 
-    setAttribute(name, value, isCustom) {
-      const attr = isCustom ? name : opr.Toolkit.utils.getAttributeName(name);
-      this.ref.setAttribute(attr, value);
-    }
-
-    removeAttribute(name, isCustom) {
-      const attr = isCustom ? name : opr.Toolkit.utils.getAttributeName(name);
-      this.ref.removeAttribute(attr);
-    }
-
-    setDataAttribute(name, value) {
-      this.ref.dataset[name] = value;
-    }
-
-    removeDataAttribute(name) {
-      delete this.ref.dataset[name];
-    }
-
-    setClassName(className = '') {
-      this.ref.className = className;
-    }
-
-    setStyleProperty(prop, value) {
-      this.ref.style[prop] = String(value);
-    }
-
-    removeStyleProperty(prop) {
-      this.ref.style[prop] = null;
-    }
-
-    addListener(name, listener, isCustom) {
-      const event = isCustom ? name : opr.Toolkit.utils.getEventName(name);
-      this.ref.addEventListener(event, listener);
-    }
-
-    removeListener(name, listener, isCustom) {
-      const event = isCustom ? name : opr.Toolkit.utils.getEventName(name);
-      this.ref.removeEventListener(event, listener);
-    }
-
-    setProperty(key, value) {
-      this.ref[key] = value;
-    }
-
-    deleteProperty(key, value) {
-      delete this.ref[key];
-    }
-
     insertChild(child, index) {
       if (!this.children) {
         this.children = [];
@@ -653,15 +604,10 @@ limitations under the License.
           index >= 0, 'Specified node is not a child of this element');
       this.children.splice(index, 1);
       child.parentNode = null;
+      if (!this.children.length) {
+        delete this.children;
+      }
       this.ref.removeChild(child.ref);
-    }
-
-    setTextContent(text) {
-      this.ref.textContent = text;
-    }
-
-    removeTextContent() {
-      this.ref.textContent = '';
     }
 
     get nodeType() {

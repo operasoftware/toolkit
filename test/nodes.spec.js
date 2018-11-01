@@ -846,7 +846,7 @@ describe('Nodes', () => {
         parent.removeChild(child);
 
         // then
-        assert.deepEqual(parent.children, []);
+        assert.equal(parent.children, undefined);
         assert.equal(child.parentNode, null);
       });
 

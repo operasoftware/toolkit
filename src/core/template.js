@@ -109,6 +109,9 @@ limitations under the License.
           }
         }
 
+        if (opr.Toolkit.isDebug()) {
+          opr.Toolkit.utils.deepFreeze(description);
+        }
         return description;
       }
 
