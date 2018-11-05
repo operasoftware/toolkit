@@ -329,9 +329,10 @@ limitations under the License.
         return node;
       };
 
-      const from = sourceNodes.map((node, index) => node.key || index);
+      const from =
+          sourceNodes.map((node, index) => node.key || Diff.createKey(index));
       const to = targetDescriptions.map(
-          (description, index) => description.key || index);
+          (description, index) => description.key || Diff.createKey(index));
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
@@ -419,6 +420,10 @@ limitations under the License.
         return 'array';
       }
       return 'object';
+    }
+
+    static createKey(index) {
+      return `00000000${index}`.slice(-8);
     }
 
     static deepEqual(current, next) {

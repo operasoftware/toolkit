@@ -45,6 +45,15 @@ describe('Diff => calculate patches', () => {
     assert.equal(patch.node, node);
   };
 
+  describe('create key', () => {
+
+    it('creates valid string key for indices', () => {
+      assert.equal(Diff.createKey(10), '00000010');
+      assert.equal(Diff.createKey(999), '00000999');
+      assert.equal(Diff.createKey(4444), '00004444');
+    });
+  });
+
   describe('=> on an Element', () => {
 
     const renderNodeAndDescription = (currentTemplate, nextTemplate) => {
