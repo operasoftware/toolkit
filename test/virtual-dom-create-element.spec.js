@@ -43,7 +43,47 @@ describe('Virtual DOM => create element', () => {
       const link = span.children[0];
       assert(link.isElement());
       assert.equal(link.description.name, 'a');
-      assert.equal(link.description.text, 'Text');
+      assert.equal(link.description.children[0].text, 'Text');
+    });
+
+    it('supports mixed element nodes with text nodes', () => {
+
+      // given
+      const template = [
+        'div',
+        [
+          'span',
+          [
+            'a',
+            '1',
+            '2',
+            '3',
+          ],
+          'foo',
+          'bar',
+        ],
+      ];
+
+      // when
+      const div = createFromTemplate(template);
+
+      // then
+      assert(div.isElement())
+      assert.equal(div.description.name, 'div');
+      assert.equal(div.description.children.length, 1);
+      assert.equal(div.children.length, 1);
+
+      const span = div.children[0];
+      assert(span.isElement());
+      assert.equal(span.description.name, 'span');
+      assert.equal(span.description.children.length, 3);
+      assert.equal(span.children.length, 3);
+      assert.equal(span.ref.textContent, '123foobar');
+
+      const link = span.children[0];
+      assert(link.isElement());
+      assert.equal(link.description.name, 'a');
+      assert.equal(link.ref.textContent, '123');
     });
   });
 
@@ -134,8 +174,31 @@ describe('Virtual DOM => create element', () => {
     assert.equal(element.description.name, 'div');
     assert(element.description.attrs === undefined);
     assert(element.description.listeners === undefined);
-    assert.equal(element.description.text, 'Text');
-    assert(element.children === undefined);
+    assert(element.children);
+    assert.equal(element.description.children[0].text, 'Text');
+  });
+
+  it('creates element with two text nodes', () => {
+
+    // given
+    const description = Template.describe([
+      'div',
+      'Text',
+      'Another text',
+    ]);
+
+    // when
+    const element = VirtualDOM.createFromDescription(description);
+
+    // then
+    assert(element instanceof VirtualElement);
+    assert.equal(element.description.name, 'div');
+    assert(element.description.attrs === undefined);
+    assert(element.description.listeners === undefined);
+    assert(element.children);
+    assert.equal(element.children.length, 2);
+    assert.equal(element.description.children[0].text, 'Text');
+    assert.equal(element.description.children[1].text, 'Another text');
   });
 
   it('creates element with attributes', () => {
@@ -255,8 +318,9 @@ describe('Virtual DOM => create element', () => {
     assert.deepEqual(element.description.listeners, {
       onClick: onClickListener,
     });
-    assert.equal(element.description.text, 'Example');
-    assert(element.children === undefined);
+    assert(element.children);
+    assert.equal(element.children.length, 1);
+    assert.equal(element.description.children[0].text, 'Example');
   });
 
   it('ignores null and undefined attribute values', () => {
@@ -282,8 +346,9 @@ describe('Virtual DOM => create element', () => {
     assert.deepEqual(element.description.attrs, {
       'title': 'Test',
     });
-    assert.equal(element.description.text, 'Text');
-    assert(element.children === undefined);
+    assert(element.children);
+    assert.equal(element.children.length, 1);
+    assert.equal(element.description.children[0].text, 'Text');
   });
 
   describe('supports adding attributes', () => {

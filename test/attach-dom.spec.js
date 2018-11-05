@@ -29,7 +29,7 @@ describe('Virtual Element => Attach DOM', () => {
     const description = Template.describe(template);
     const root = VirtualDOM.createRoot(Root);
     const element = VirtualDOM.createFromDescription(description, root);
-    root.appendChild(element);
+    root.child = element;
     return element;
   };
 
@@ -102,7 +102,7 @@ describe('Virtual Element => Attach DOM', () => {
       const root = VirtualDOM.createRoot(Root);
       const node =
           VirtualDOM.createFromDescription(Template.describe(template), root);
-      root.appendChild(node);
+      root.child = node;
       return node;
     };
 
@@ -249,9 +249,9 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
 
-      const subcompoennt = span.children[0];
-      assert.equal(subcompoennt.constructor, Subcomponent);
-      assert.equal(subcompoennt.child, null);
+      const subcomponent = span.children[0];
+      assert.equal(subcomponent.constructor, Subcomponent);
+      assert(subcomponent.child.isComment());
     });
 
     it('creates properties', () => {
@@ -283,8 +283,8 @@ describe('Virtual Element => Attach DOM', () => {
         ]);
 
         // then
-        assert(component.placeholder);
-        assert(component.placeholder.text.includes('Component'));
+        assert(component.child);
+        assert(component.placeholder.description.text.includes(Component.name));
       });
 
       it('for nested components with no child element', () => {
@@ -301,8 +301,9 @@ describe('Virtual Element => Attach DOM', () => {
         ]);
 
         // then
-        assert(component.placeholder);
-        assert(component.placeholder.text.includes('Subcomponent'));
+        assert(component.child);
+        assert(
+            component.placeholder.description.text.includes(Subcomponent.name));
       });
     });
   });

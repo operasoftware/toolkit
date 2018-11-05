@@ -1,5 +1,0 @@
-{
-  "presets": [ "env", "stage-0" ],
-  "plugins": [ "transform-class-properties", "transform-async-to-generator"]
-}
-

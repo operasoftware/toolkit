@@ -18,38 +18,13 @@ limitations under the License.
   const INIT_ROOT_COMPONENT = {
     type: Symbol('init-root-component'),
     apply: function() {
-      this.root.container.appendChild(this.root.placeholder.ref);
+      this.root.container.appendChild(this.root.child.ref);
     },
   };
   const UPDATE_NODE = {
     type: Symbol('update-node'),
     apply: function() {
       this.node.description = this.description;
-    },
-  };
-
-  const APPEND_CHILD = {
-    type: Symbol('append-child'),
-    apply: function() {
-      const placeholder = this.parent.placeholder.ref;
-      this.parent.appendChild(this.child);
-      placeholder.replaceWith(this.child.ref);
-    },
-  };
-  const REPLACE_CHILD = {
-    type: Symbol('replace-child'),
-    apply: function() {
-      const ref = this.child.ref;
-      this.parent.replaceChild(this.child, this.node);
-      ref.replaceWith(this.node.ref);
-    },
-  };
-  const REMOVE_CHILD = {
-    type: Symbol('remove-child'),
-    apply: function() {
-      const ref = this.child.ref;
-      this.parent.removeChild(this.child);
-      ref.replaceWith(this.parent.placeholder.ref);
     },
   };
 
@@ -144,50 +119,34 @@ limitations under the License.
     },
   };
 
-  const SET_TEXT_CONTENT = {
-    type: Symbol('set-text-content'),
-    apply: function() {
-      this.element.ref.textContent = this.text;
-    },
-  };
-  const REMOVE_TEXT_CONTENT = {
-    type: Symbol('remove-text-content'),
-    apply: function() {
-      this.element.ref.textContent = '';
-    },
-  };
-
-  const INSERT_CHILD_NODE = {
-    type: Symbol('insert-child-node'),
+  const INSERT_CHILD = {
+    type: Symbol('insert-child'),
     apply: function() {
       this.parent.insertChild(this.node, this.at);
     },
   };
-  const MOVE_CHILD_NODE = {
-    type: Symbol('move-child-node'),
-    apply: function() {
-      this.parent.moveChild(this.node, this.from, this.to);
-    },
-  };
-  const REPLACE_CHILD_NODE = {
-    type: Symbol('replace-child-node'),
+  const REPLACE_CHILD = {
+    type: Symbol('replace-child'),
     apply: function() {
       this.parent.replaceChild(this.child, this.node);
     },
   };
-  const REMOVE_CHILD_NODE = {
-    type: Symbol('remove-child-node'),
+  const MOVE_CHILD = {
+    type: Symbol('move-child'),
     apply: function() {
-      this.parent.removeChild(this.node);
+      this.parent.moveChild(this.child, this.from, this.to);
+    },
+  };
+  const REMOVE_CHILD = {
+    type: Symbol('remove-child'),
+    apply: function() {
+      this.parent.removeChild(this.child);
     },
   };
 
   const Types = {
     INIT_ROOT_COMPONENT,
     UPDATE_NODE,
-    APPEND_CHILD,
-    REPLACE_CHILD,
-    REMOVE_CHILD,
     SET_ATTRIBUTE,
     REMOVE_ATTRIBUTE,
     SET_DATA_ATTRIBUTE,
@@ -200,12 +159,10 @@ limitations under the License.
     REMOVE_LISTENER,
     SET_PROPERTY,
     DELETE_PROPERTY,
-    SET_TEXT_CONTENT,
-    REMOVE_TEXT_CONTENT,
-    INSERT_CHILD_NODE,
-    MOVE_CHILD_NODE,
-    REPLACE_CHILD_NODE,
-    REMOVE_CHILD_NODE,
+    INSERT_CHILD,
+    REPLACE_CHILD,
+    MOVE_CHILD,
+    REMOVE_CHILD,
   };
   const PatchTypes = Object.keys(Types).reduce((result, key) => {
     result[key] = Types[key].type;
@@ -233,16 +190,19 @@ limitations under the License.
       return patch;
     }
 
-    static appendChild(child, parent) {
-      const patch = new Patch(APPEND_CHILD);
-      patch.child = child;
+    static insertChild(node, at, parent) {
+      const patch = new Patch(INSERT_CHILD);
+      patch.node = node;
+      patch.at = at;
       patch.parent = parent;
       return patch;
     }
 
-    static removeChild(child, parent) {
-      const patch = new Patch(REMOVE_CHILD);
+    static moveChild(child, from, to, parent) {
+      const patch = new Patch(MOVE_CHILD);
       patch.child = child;
+      patch.from = from;
+      patch.to = to;
       patch.parent = parent;
       return patch;
     }
@@ -251,6 +211,14 @@ limitations under the License.
       const patch = new Patch(REPLACE_CHILD);
       patch.child = child;
       patch.node = node;
+      patch.parent = parent;
+      return patch;
+    }
+
+    static removeChild(child, at, parent) {
+      const patch = new Patch(REMOVE_CHILD);
+      patch.child = child;
+      patch.at = at;
       patch.parent = parent;
       return patch;
     }
@@ -349,52 +317,6 @@ limitations under the License.
       const patch = new Patch(DELETE_PROPERTY);
       patch.key = key;
       patch.target = target;
-      return patch;
-    }
-
-    static setTextContent(element, text) {
-      const patch = new Patch(SET_TEXT_CONTENT);
-      patch.element = element;
-      patch.text = text;
-      return patch;
-    }
-
-    static removeTextContent(element) {
-      const patch = new Patch(REMOVE_TEXT_CONTENT);
-      patch.element = element;
-      return patch;
-    }
-
-    static insertChildNode(node, at, parent) {
-      const patch = new Patch(INSERT_CHILD_NODE);
-      patch.node = node;
-      patch.at = at;
-      patch.parent = parent;
-      return patch;
-    }
-
-    static moveChildNode(node, from, to, parent) {
-      const patch = new Patch(MOVE_CHILD_NODE);
-      patch.node = node;
-      patch.from = from;
-      patch.to = to;
-      patch.parent = parent;
-      return patch;
-    }
-
-    static replaceChildNode(child, node, parent) {
-      const patch = new Patch(REPLACE_CHILD_NODE);
-      patch.child = child;
-      patch.node = node;
-      patch.parent = parent;
-      return patch;
-    }
-
-    static removeChildNode(node, at, parent) {
-      const patch = new Patch(REMOVE_CHILD_NODE);
-      patch.node = node;
-      patch.at = at;
-      patch.parent = parent;
       return patch;
     }
 

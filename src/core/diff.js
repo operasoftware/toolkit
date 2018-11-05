@@ -108,15 +108,12 @@ limitations under the License.
 
       // insert
       if (!child && description) {
-        const node = VirtualDOM.createFromDescription(description, parent);
-        this.addPatch(Patch.appendChild(node, parent));
-        return;
+        throw new Error('Invalid component state!');
       }
 
       // remove
       if (child && !description) {
-        this.addPatch(Patch.removeChild(child, parent));
-        return;
+        throw new Error('Invalid component state!');
       }
 
       // update
@@ -161,8 +158,6 @@ limitations under the License.
         return;
       }
 
-      const isDefined = value => value !== undefined && value !== null;
-
       this.classNamePatches(element.description.class, description.class,
                             element);
       this.stylePatches(element.description.style, description.style, element);
@@ -184,20 +179,10 @@ limitations under the License.
             description.custom && description.custom.listeners, element, true);
       }
 
-      // TODO: handle text as a child
-      if (isDefined(element.description.text) && !isDefined(description.text)) {
-        this.addPatch(opr.Toolkit.Patch.removeTextContent(element));
-      }
       if (element.children || description.children) {
         this.elementChildrenPatches(element.children, description.children,
                                     element);
       }
-      if (isDefined(description.text) &&
-          description.text !== element.description.text) {
-        this.addPatch(
-            opr.Toolkit.Patch.setTextContent(element, description.text));
-      }
-
       this.addPatch(opr.Toolkit.Patch.updateNode(element, description));
     }
 
@@ -344,9 +329,10 @@ limitations under the License.
         return node;
       };
 
-      const from = sourceNodes.map((node, index) => node.key || index);
+      const from =
+          sourceNodes.map((node, index) => node.key || Diff.createKey(index));
       const to = targetDescriptions.map(
-          (description, index) => description.key || index);
+          (description, index) => description.key || Diff.createKey(index));
 
       const getNode = (key, isMove) => {
         if (from.includes(key)) {
@@ -384,15 +370,15 @@ limitations under the License.
         const node = getNode(move.item, move.name === Move.Name.MOVE);
         switch (move.name) {
         case Move.Name.REMOVE:
-          this.addPatch(Patch.removeChildNode(node, move.at, parent));
+          this.addPatch(Patch.removeChild(node, move.at, parent));
           Move.remove(node, move.at).make(children);
           continue;
         case Move.Name.INSERT:
-          this.addPatch(Patch.insertChildNode(node, move.at, parent));
+          this.addPatch(Patch.insertChild(node, move.at, parent));
           Move.insert(node, move.at).make(children);
           continue;
         case Move.Name.MOVE:
-          this.addPatch(Patch.moveChildNode(node, move.from, move.to, parent));
+          this.addPatch(Patch.moveChild(node, move.from, move.to, parent));
           Move.move(node, move.from, move.to).make(children);
           continue;
         }
@@ -415,7 +401,7 @@ limitations under the License.
       } else {
         const node = opr.Toolkit.VirtualDOM.createFromDescription(
             description, parent, this.root);
-        this.addPatch(opr.Toolkit.Patch.replaceChildNode(child, node, parent));
+        this.addPatch(opr.Toolkit.Patch.replaceChild(child, node, parent));
       }
     }
 
@@ -434,6 +420,10 @@ limitations under the License.
         return 'array';
       }
       return 'object';
+    }
+
+    static createKey(index) {
+      return `00000000${index}`.slice(-8);
     }
 
     static deepEqual(current, next) {

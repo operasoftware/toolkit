@@ -4,16 +4,16 @@ describe('Reconciler', () => {
   const MoveName = Reconciler.Move.Name;
 
   const A = 'A',
-B = 'B',
-C = 'C',
-D = 'D',
-E = 'E',
-F = 'F',
-G = 'G',
-H = 'H';
+        B = 'B',
+        C = 'C',
+        D = 'D',
+        E = 'E',
+        F = 'F',
+        G = 'G',
+        H = 'H';
   const X = 'X',
-Y = 'Y',
-Z = 'Z';
+        Y = 'Y',
+        Z = 'Z';
 
   const assertSingleMove = moves => {
     assert(Array.isArray(moves));

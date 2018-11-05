@@ -37,8 +37,7 @@ limitations under the License.
     onNodeCreated(node) {
       if (node.isElement()) {
         return this.onElementCreated(node);
-      }
-      if (!node.isRoot()) {
+      } else if (node.isComponent() && !node.isRoot()) {
         return this.onComponentCreated(node);
       }
     },
@@ -69,8 +68,7 @@ limitations under the License.
     onNodeAttached(node) {
       if (node.isElement()) {
         return this.onElementAttached(node);
-      }
-      if (!node.isRoot()) {
+      } else if (node.isComponent() && !node.isRoot()) {
         return this.onComponentAttached(node);
       }
     },
@@ -126,8 +124,7 @@ limitations under the License.
     onNodeDestroyed(node) {
       if (node.isElement()) {
         return this.onElementDestroyed(node);
-      }
-      if (!node.isRoot()) {
+      } else if (node.isComponent() && !node.isRoot()) {
         return this.onComponentDestroyed(node);
       }
     },
@@ -152,8 +149,7 @@ limitations under the License.
     onNodeDetached(node) {
       if (node.isElement()) {
         return this.onElementDetached(node);
-      }
-      if (!node.isRoot()) {
+      } else if (node.isComponent() && !node.isRoot()) {
         return this.onComponentDetached(node);
       }
     },
@@ -167,22 +163,22 @@ limitations under the License.
     beforePatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.APPEND_CHILD:
-          return this.onNodeCreated(patch.child);
         case Type.INIT_ROOT_COMPONENT:
-          return this.onRootCreated(patch.root);
-        case Type.INSERT_CHILD_NODE:
-          return this.onNodeCreated(patch.node);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDestroyed(patch.node);
-        case Type.REMOVE_CHILD:
-          return this.onNodeDestroyed(patch.child);
+          this.onRootCreated(patch.root);
+          return;
+        case Type.INSERT_CHILD:
+          this.onNodeCreated(patch.node);
+          return;
         case Type.REPLACE_CHILD:
           this.onNodeDestroyed(patch.child);
           this.onNodeCreated(patch.node);
           return;
+        case Type.REMOVE_CHILD:
+          this.onNodeDestroyed(patch.child);
+          return;
         case Type.UPDATE_NODE:
-          return this.onNodeReceivedDescription(patch.node, patch.description);
+          this.onNodeReceivedDescription(patch.node, patch.description);
+          return;
       }
     },
 
@@ -196,22 +192,22 @@ limitations under the License.
     afterPatchApplied(patch) {
       const Type = opr.Toolkit.Patch.Type;
       switch (patch.type) {
-        case Type.APPEND_CHILD:
-          return this.onNodeAttached(patch.child);
         case Type.INIT_ROOT_COMPONENT:
-          return this.onRootAttached(patch.root);
-        case Type.INSERT_CHILD_NODE:
-          return this.onNodeAttached(patch.node);
-        case Type.REMOVE_CHILD_NODE:
-          return this.onNodeDetached(patch.node);
-        case Type.REMOVE_CHILD:
-          return this.onNodeDetached(patch.child);
+          this.onRootAttached(patch.root);
+          return;
+        case Type.INSERT_CHILD:
+          this.onNodeAttached(patch.node);
+          return;
         case Type.REPLACE_CHILD:
           this.onNodeDetached(patch.child);
           this.onNodeAttached(patch.node);
           return;
+        case Type.REMOVE_CHILD:
+          this.onNodeDetached(patch.child);
+          return;
         case Type.UPDATE_NODE:
-          return this.onNodeUpdated(patch.node, patch.prevDescription);
+          this.onNodeUpdated(patch.node, patch.prevDescription);
+          return;
       }
     },
   };

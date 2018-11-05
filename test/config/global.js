@@ -2,9 +2,9 @@ const isBrowser = typeof window === 'object';
 
 const $global = isBrowser ? window : global;
 
-$global.createFromTemplate = (template, root) =>
+$global.createFromTemplate = (template, parent) =>
     opr.Toolkit.VirtualDOM.createFromDescription(
-        opr.Toolkit.Template.describe(template), root);
+        opr.Toolkit.Template.describe(template), parent);
 
 $global.createRoot = (template = null, container) => {
   const {
@@ -20,7 +20,7 @@ $global.createRoot = (template = null, container) => {
   root.container = document.createElement('main');
   const node = VirtualDOM.createFromDescription(Template.describe(template));
   if (node) {
-    root.appendChild(node);
+    root.insertChild(node);
   }
   return root;
 };
