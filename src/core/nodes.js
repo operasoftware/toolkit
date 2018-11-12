@@ -52,6 +52,10 @@ limitations under the License.
       throw new Error('Inconsistent virtual DOM tree detected!');
     }
 
+    get sourceNode() {
+      return this.parentNode ? this.parentNode.sourceNode : this;
+    }
+
     isRoot() {
       return this instanceof Root;
     }
