@@ -15,7 +15,7 @@
       console.time(RENDER_TIME);
     },
 
-    onUpdate(update) {
+    onAfterUpdate(update) {
       if (update.patches.length) {
         console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', update.patches);
       } else {

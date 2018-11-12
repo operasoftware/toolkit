@@ -15,17 +15,13 @@ limitations under the License.
 */
 
 {
-  class Renderer {
-
-    constructor(root) {
-      this.root = root;
-    }
+  const Renderer = {
 
     /*
      * Calls the component render method and transforms the returned template
      * into the normalised description of the rendered node.
      */
-    static render(component, props = {}, children = []) {
+    render(component, props = {}, children = []) {
       component.sandbox.props = props;
       component.sandbox.children = children;
       const template = component.render.call(component.sandbox);
@@ -34,12 +30,12 @@ limitations under the License.
       }
       const text = component.constructor.displayName;
       return new opr.Toolkit.Description.CommentDescription(text);
-    }
+    },
 
     /*
      * Creates a new DOM Element based on the specified description.
      */
-    static createElement(description) {
+    createElement(description) {
       const element = document.createElement(description.name);
       if (description.text) {
         element.textContent = description.text;
@@ -89,44 +85,40 @@ limitations under the License.
         }
       }
       return element;
-    }
+    },
 
-    updateDOM(command, prevState, nextState) {
+    /*
+     * Updates the root component and patches the DOM tree
+     * to match the component state.
+     */
+    update(root, from, to, command) {
+
       const update = {
         command,
-        root: this.root,
+        root,
         state: {
-          from: prevState,
-          to: nextState,
+          from,
+          to,
         },
       };
-      this.onBeforeUpdate(update);
-      const patches = this.update(prevState, nextState);
-      this.onUpdate({
-        ...update,
-        patches,
-      });
-    }
+      root.state.update(to);
 
-    onBeforeUpdate(update) {
-      this.root.plugins.notify('before-update', update);
-    }
+      this.onBeforeUpdate(update, root);
 
-    onUpdate(update) {
-      this.root.plugins.notify('update', update);
-    }
+      const diff = new opr.Toolkit.Diff(root, from, to);
+      update.patches = diff.apply();
 
-    update(prevState, nextState) {
-      const diff = new opr.Toolkit.Diff(this.root, prevState, nextState);
-      this.root.state = nextState;
-      diff.apply();
-      return diff.patches;
-    }
+      this.onAfterUpdate(update, root);
+    },
 
-    destroy() {
-      this.root = null;
-    }
-  }
+    onBeforeUpdate(update, root) {
+      root.plugins.notify('before-update', update);
+    },
+
+    onAfterUpdate(update, root) {
+      root.plugins.notify('after-update', update);
+    },
+  };
 
   module.exports = Renderer;
 }
