@@ -772,8 +772,8 @@ describe('Nodes', () => {
 
         // then
         assert.deepEqual(parent.children, [div]);
-        assert.equal(component.parentNode, null);
-        assert.equal(span.parentNode, null);
+        // assert.equal(component.parentNode, null);
+        // assert.equal(span.parentNode, null);
       });
 
       it('removes the last child', () => {
@@ -788,7 +788,7 @@ describe('Nodes', () => {
 
         // then
         assert.equal(parent.children, undefined);
-        assert.equal(child.parentNode, null);
+        // assert.equal(child.parentNode, null);
       });
 
       it('ignores node not being child', () => {

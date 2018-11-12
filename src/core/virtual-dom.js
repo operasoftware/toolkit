@@ -62,8 +62,7 @@ limitations under the License.
      * If the root class declares a custom element name
      */
     createRoot(
-        component, props = {}, originator = opr.Toolkit,
-        requireCustomElement = false) {
+        component, props = {}, parentNode, requireCustomElement = false) {
 
       const description = opr.Toolkit.Template.describe([
         component,
@@ -77,7 +76,7 @@ limitations under the License.
                                  ComponentClass.displayName
                                }" does not define custom element name!`);
         }
-        return new ComponentClass(description, originator);
+        return new ComponentClass(description, parentNode);
       } catch (error) {
         console.error('Error rendering root component:', description);
         throw error;
