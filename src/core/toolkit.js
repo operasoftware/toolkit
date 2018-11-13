@@ -111,8 +111,9 @@ limitations under the License.
         throw new Error(`Error resolving component class for '${id}'`);
       }
       if (!(ComponentClass.prototype instanceof opr.Toolkit.Component)) {
-        console.error('Module:', ComponentClass,
-                      'is not a component extending opr.Toolkit.Component!');
+        console.error(
+            'Module:', ComponentClass,
+            'is not a component extending opr.Toolkit.Component!');
         throw new Error(
             `Module defined with id "${id}" is not a component class.`);
       }

@@ -173,7 +173,7 @@ limitations under the License.
         detail: data,
         bubbles: true,
         composed: true,
-      }))
+      }));
     }
 
     preventDefault(event) {
