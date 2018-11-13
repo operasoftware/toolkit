@@ -81,25 +81,26 @@ describe('Toolkit', () => {
     }
 
     // given
-    const toolkit = await opr.Toolkit.create();
+    opr.Toolkit.reset();
+    await opr.Toolkit.configure({});
 
     // when
-    const mainRoot = await toolkit.render(MainRoot, document.body);
-    const shadowRoot = await toolkit.render(ShadowRoot, document.body);
+    const mainRoot = await opr.Toolkit.render(MainRoot, document.body);
+    const shadowRoot = await opr.Toolkit.render(ShadowRoot, document.body);
 
     // then
-    assert.equal(toolkit.tracked.length, 2);
+    assert.equal(opr.Toolkit.tracked.length, 2);
 
     // when
     shadowRoot.destroy();
 
     // then
-    assert.equal(toolkit.tracked.length, 1);
+    assert.equal(opr.Toolkit.tracked.length, 1);
 
     // when
     mainRoot.destroy();
 
     // then
-    assert.equal(toolkit.tracked.length, 0);
+    assert.equal(opr.Toolkit.tracked.length, 0);
   });
 });

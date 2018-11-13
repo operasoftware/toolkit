@@ -31,6 +31,9 @@ limitations under the License.
       this.assert = console.assert;
     }
 
+    /*
+     * Configures Toolkit with given options object.
+     */
     async configure(options) {
       const settings = {};
       settings.debug = options.debug || false;
@@ -38,6 +41,21 @@ limitations under the License.
       this.settings = settings;
       this.plugins = this.createPlugins(options.plugins);
       this[INIT](true);
+    }
+
+    /*
+     * Resets Toolkit to a pristine state. All future render requests
+     * will require new configuration to be provided first.
+     */
+    reset() {
+      this.plugins.destroy();
+      this.plugins = null;
+      this.roots.clear();
+      this.settings = null;
+      pureComponentClassRegistry.clear();
+      this.ready = new Promise(resolve => {
+        this[INIT] = resolve;
+      });
     }
 
     createPlugins(manifests = []) {
@@ -93,8 +111,9 @@ limitations under the License.
         throw new Error(`Error resolving component class for '${id}'`);
       }
       if (!(ComponentClass.prototype instanceof opr.Toolkit.Component)) {
-        console.error('Module:', ComponentClass,
-                      'is not a component extending opr.Toolkit.Component!');
+        console.error(
+            'Module:', ComponentClass,
+            'is not a component extending opr.Toolkit.Component!');
         throw new Error(
             `Module defined with id "${id}" is not a component class.`);
       }
@@ -102,11 +121,19 @@ limitations under the License.
     }
 
     track(root) {
-      this.roots.add(root);
+      if (root.parentNode) {
+        root.parentNode.rootNode.subroots.add(root);
+      } else {
+        this.roots.add(root);
+      }
     }
 
     stopTracking(root) {
-      this.roots.delete(root);
+      if (root.parentNode) {
+        root.parentNode.rootNode.subroots.delete(root);
+      } else {
+        this.roots.delete(root);
+      }
     }
 
     get tracked() {
@@ -131,7 +158,7 @@ limitations under the License.
       if (typeof component === 'string') {
         const RootClass = await loader.preload(component);
         if (RootClass.prototype instanceof opr.Toolkit.Root) {
-          return opr.Toolkit.VirtualDOM.createRoot(RootClass, props, this);
+          return opr.Toolkit.VirtualDOM.createRoot(RootClass, props, null);
         }
         console.error(
             'Specified class is not a root component: ', ComponentClass);
@@ -141,22 +168,13 @@ limitations under the License.
         component,
       ]);
       return opr.Toolkit.VirtualDOM.createRoot(
-          description.component, props, this);
+          description.component, props, null);
     }
 
     async render(component, container, props = {}) {
       await this.ready;
       const root = await this.createRoot(component, props);
-      this.track(root);
-      await root.mount(container);
-      await root.ready;
-      return root;
-    }
-
-    async create(options = {}) {
-      const toolkit = new Toolkit();
-      await toolkit.configure(options);
-      return toolkit;
+      return root.mount(container);
     }
   }
 

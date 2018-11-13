@@ -43,20 +43,20 @@ limitations under the License.
                  (item, index) => [item, this.getItemType(item), index])) {
           if (index === 0) {
             switch (type) {
-            case 'string':
-              description = new ElementDescription(item);
-              break;
-            case 'component':
-            case 'function':
-            case 'symbol':
-              description = new ComponentDescription(
-                  opr.Toolkit.resolveComponentClass(item, type));
-              break;
-            default:
-              console.error('Invalid node type:', item,
-                            `(${type}) at index: ${index}, template:`,
-                            template);
-              throw new Error(`Invalid node type specified: ${type}`);
+              case 'string':
+                description = new ElementDescription(item);
+                break;
+              case 'component':
+              case 'function':
+              case 'symbol':
+                description = new ComponentDescription(
+                    opr.Toolkit.resolveComponentClass(item, type));
+                break;
+              default:
+                console.error(
+                    'Invalid node type:', item,
+                    `(${type}) at index: ${index}, template:`, template);
+                throw new Error(`Invalid node type specified: ${type}`);
             }
             continue;
           }
@@ -104,9 +104,9 @@ limitations under the License.
     },
 
     getComponentProps(object, ComponentClass, isRoot) {
-      const props = isRoot
-                        ? object
-                        : this.normalizeComponentProps(object, ComponentClass);
+      const props = isRoot ?
+          object :
+          this.normalizeComponentProps(object, ComponentClass);
       return isNotEmpty(props) ? props : null;
     },
 
@@ -207,22 +207,22 @@ limitations under the License.
     getItemType(item) {
       const type = typeof item;
       switch (type) {
-      case 'function':
-        if (item.prototype instanceof opr.Toolkit.Component) {
-          return 'component';
-        }
-        return 'function';
-      case 'object':
-        if (item === null) {
-          return 'null';
-        } else if (Array.isArray(item)) {
-          return 'node';
-        } else if (item.constructor === Object) {
-          return 'props';
-        }
-        return 'unknown';
-      default:
-        return type;
+        case 'function':
+          if (item.prototype instanceof opr.Toolkit.Component) {
+            return 'component';
+          }
+          return 'function';
+        case 'object':
+          if (item === null) {
+            return 'null';
+          } else if (Array.isArray(item)) {
+            return 'node';
+          } else if (item.constructor === Object) {
+            return 'props';
+          }
+          return 'unknown';
+        default:
+          return type;
       }
     },
 
@@ -273,8 +273,8 @@ limitations under the License.
      */
     getStyle(object) {
 
-      opr.Toolkit.assert(object.constructor === Object,
-                         'Style must be a plain object!');
+      opr.Toolkit.assert(
+          object.constructor === Object, 'Style must be a plain object!');
 
       const isSupported = key => opr.Toolkit.SUPPORTED_STYLES.includes(key);
 
@@ -289,10 +289,10 @@ limitations under the License.
       const entries = Object.entries(object);
 
       if (opr.Toolkit.isDebug()) {
-        for (const [key, value] of entries.filter(([key]) =>
-                                                      !isSupported(key))) {
-          console.warn(`Unsupported style property, key: ${key}, value:`,
-                       value);
+        for (const [key, value] of entries.filter(
+                 ([key]) => !isSupported(key))) {
+          console.warn(
+              `Unsupported style property, key: ${key}, value:`, value);
         }
       }
 

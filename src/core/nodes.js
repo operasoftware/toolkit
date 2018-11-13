@@ -173,7 +173,7 @@ limitations under the License.
         detail: data,
         bubbles: true,
         composed: true,
-      }))
+      }));
     }
 
     preventDefault(event) {
@@ -224,12 +224,8 @@ limitations under the License.
       return [];
     }
 
-    constructor(description, originator = null) {
-      super(description, /*= parentNode */ null, /*= attachDOM */ false);
-      if (originator === null) {
-        throw new Error('No originator specified for rendered root component!');
-      }
-      this.originator = originator;
+    constructor(description, parentNode = null) {
+      super(description, parentNode, /*= attachDOM */ false);
       this.plugins = this.createPlugins();
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
@@ -259,8 +255,9 @@ limitations under the License.
      */
     async init(container) {
       this.container = container;
+
       await this.plugins.installAll();
-      this.originator.track(this);
+      opr.Toolkit.track(this);
 
       const state = await this.getInitialState.call(
           this.sandbox, this.description.props || {});
@@ -275,7 +272,7 @@ limitations under the License.
         setTimeout(() => this.update(description));
       }
       this.isInitialized = true;
-      this.markAsReady();
+      this.markAsReady(this);
     }
 
     /*
@@ -318,22 +315,6 @@ limitations under the License.
       return this[COMMANDS];
     }
 
-    track(root) {
-      this.subroots.add(root);
-    }
-
-    stopTracking(root) {
-      this.subroots.delete(root);
-    }
-
-    get tracked() {
-      const tracked = [];
-      for (const root of this.subroots) {
-        tracked.push(root, ...root.tracked);
-      }
-      return tracked;
-    }
-
     createCommandsDispatcher() {
       const dispatcher = {};
       for (const key of Object.keys(this.reducer.commands)) {
@@ -349,7 +330,9 @@ limitations under the License.
 
     createPlugins(toolkit) {
       const plugins = new opr.Toolkit.Plugins(this);
-      for (const plugin of this.originator.plugins) {
+      const inherited =
+          this.parentNode ? this.parentNode.plugins : opr.Toolkit.plugins;
+      for (const plugin of inherited) {
         plugins.register(plugin);
       }
       return plugins;
@@ -392,9 +375,11 @@ limitations under the License.
       if (this.constructor.elementName) {
         // triggers this.init() from element's connected callback
         container.appendChild(this.ref);
+        await this.ready;
       } else {
         await this.init(container);
       }
+      return this;
     }
 
     attachDOM() {
@@ -416,7 +401,7 @@ limitations under the License.
         return ElementClass;
       };
       const ElementClass = defineCustomElementClass(this.constructor);
-      const customElement = new ElementClass(this, this.toolkit);
+      const customElement = new ElementClass(this);
       this.addPluginsAPI(customElement);
       return customElement;
     }
@@ -456,24 +441,28 @@ limitations under the License.
       return this[CONTAINER];
     }
 
-    get toolkit() {
-      return this.originator.toolkit || this.originator;
-    }
-
     getReducers() {
       return [];
     }
 
+    get tracked() {
+      const tracked = [];
+      for (const root of this.subroots) {
+        tracked.push(root, ...root.tracked);
+      }
+      return tracked;
+    }
+
     destroy() {
       super.destroy();
-      this.originator.stopTracking(this);
+      opr.Toolkit.stopTracking(this);
       this.state.destroy();
       this.state = null;
       this.plugins.destroy();
       this.plugins = null;
       this.reducer = null;
       this.dispatch = null;
-      this.originator = null;
+      this.parentNode = null;
     }
 
     get nodeType() {
@@ -587,13 +576,11 @@ limitations under the License.
       this.ref.insertBefore(child.ref, this.ref.children[to]);
     }
 
-
     removeChild(child) {
       const index = this.children.indexOf(child);
       opr.Toolkit.assert(
           index >= 0, 'Specified node is not a child of this element!');
       this.children.splice(index, 1);
-      child.parentNode = null;
       if (!this.children.length) {
         delete this.children;
       }

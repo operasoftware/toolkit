@@ -10,7 +10,8 @@ describe('Plugins', () => {
     it('installs plugin on the root component', async () => {
 
       // given
-      const toolkit = await opr.Toolkit.create({
+      opr.Toolkit.reset();
+      await opr.Toolkit.configure({
         debug: true,
         plugins: [plugin],
       });
@@ -22,7 +23,7 @@ describe('Plugins', () => {
       }
 
       // when
-      await toolkit.render(SomeRoot, document.body);
+      await opr.Toolkit.render(SomeRoot, document.body);
 
       // then
       assert(plugin.install.calledOnce);

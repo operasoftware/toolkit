@@ -148,9 +148,11 @@ limitations under the License.
 
     onNodeDetached(node) {
       if (node.isElement()) {
-        return this.onElementDetached(node);
+        this.onElementDetached(node);
+        node.parentNode = null;
       } else if (node.isComponent() && !node.isRoot()) {
-        return this.onComponentDetached(node);
+        this.onComponentDetached(node);
+        node.parentNode = null;
       }
     },
 
