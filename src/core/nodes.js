@@ -462,7 +462,6 @@ limitations under the License.
       this.plugins = null;
       this.reducer = null;
       this.dispatch = null;
-      this.parentNode = null;
     }
 
     get nodeType() {

@@ -149,11 +149,10 @@ limitations under the License.
     onNodeDetached(node) {
       if (node.isElement()) {
         this.onElementDetached(node);
-        node.parentNode = null;
       } else if (node.isComponent() && !node.isRoot()) {
         this.onComponentDetached(node);
-        node.parentNode = null;
       }
+      node.parentNode = null;
     },
 
     beforeUpdate(patches) {
