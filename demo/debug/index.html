@@ -13,29 +13,6 @@
     <app id="left"></app>
     <app id="right"></app>
   </apps>
-  <script>
-    (async () => {
-      await loadToolkit(() => {
-        loader.use({
-          getPath(key) {
-            if (key.startsWith('core') || key.startsWith('plugins')) {
-              return `/src/${this.next.getPath(key)}`;
-            }
-            return this.next.getPath(key);
-          },
-        });
-      });
-
-      const logger = await loader.require('plugins/logger');
-
-      opr.Toolkit.configure({
-        debug: true,
-        plugins: [logger],
-      });
-      await opr.Toolkit.ready;
-      await opr.Toolkit.render('src/demo', document.querySelector('#left'));
-      await opr.Toolkit.render('src/demo', document.querySelector('#right'));
-    })();
-  </script>
+  <script src="debug/render.js"></script>
 </body>
 </html>
