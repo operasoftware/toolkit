@@ -15,6 +15,67 @@ limitations under the License.
 */
 
 {
+
+  const INIT = Symbol('init');
+  const SET_STATE = Symbol('set-state');
+  const UPDATE = Symbol('update');
+
+  const coreReducer = (state, command) => {
+    if (command.type === INIT) {
+      return command.state;
+    }
+    if (command.type === SET_STATE) {
+      return command.state;
+    }
+    if (command.type === UPDATE) {
+      return {
+        ...state,
+        ...command.state,
+      };
+    }
+    return state;
+  };
+
+  coreReducer.commands = {
+    init: state => ({
+      type: INIT,
+      state,
+    }),
+    setState: state => ({
+      type: SET_STATE,
+      state,
+    }),
+    update: state => ({
+      type: UPDATE,
+      state,
+    }),
+  };
+
+  const combineReducers = (...reducers) => {
+    const commands = {};
+    const reducer = (state, command) => {
+      [coreReducer, ...reducers].forEach(reducer => {
+        state = reducer(state, command);
+      });
+      return state;
+    };
+    [coreReducer, ...reducers].forEach(reducer => {
+      const defined = Object.keys(commands);
+      const incoming = Object.keys(reducer.commands);
+
+      const overriden = incoming.find(key => defined.includes(key));
+      if (overriden) {
+        console.error(
+            'Reducer:', reducer,
+            `conflicts an with exiting one with method: "${overriden}"`);
+        throw new Error(`The "${overriden}" command is already defined!`)
+      }
+      Object.assign(commands, reducer.commands);
+    });
+    reducer.commands = commands;
+    return reducer;
+  };
+
   class Reducers {
 
     /*
@@ -23,6 +84,11 @@ limitations under the License.
     static create(root) {
 
       class Reducers extends opr.Toolkit.State {
+
+        constructor(root) {
+          super(root);
+          this.reducer = combineReducers(...(root.getReducers() || []));
+        }
 
         /*
          * By default returns a new object derived from the current state.
@@ -42,6 +108,14 @@ limitations under the License.
             ...state,
             ...props,
           };
+        }
+
+        /*
+         * Removes references to used objects.
+         */
+        destroy() {
+          super.destroy();
+          this.reducer = null;
         }
       }
 

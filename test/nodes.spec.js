@@ -808,8 +808,8 @@ describe('Nodes', () => {
         // given
         const root = createRoot();
         root.dispatch = sinon.spy();
-        root.reducer = () => {};
-        root.reducer.commands = {
+        root.state.reducer = () => {};
+        root.state.reducer.commands = {
           someCommand: (key, value) => ({
             key,
             value,

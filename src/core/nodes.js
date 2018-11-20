@@ -229,10 +229,9 @@ limitations under the License.
       this.plugins = this.createPlugins();
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
-      this.reducer = opr.Toolkit.utils.combineReducers(...this.getReducers());
       this.dispatch = command => {
         const prevState = this.state.current;
-        const nextState = this.reducer(prevState, command);
+        const nextState = this.state.reducer(prevState, command);
         opr.Toolkit.Renderer.update(this, prevState, nextState, command);
       };
       this.commands = this.createCommandsDispatcher();
@@ -317,10 +316,10 @@ limitations under the License.
 
     createCommandsDispatcher() {
       const dispatcher = {};
-      for (const key of Object.keys(this.reducer.commands)) {
+      for (const key of Object.keys(this.state.reducer.commands)) {
         dispatcher[key] = (...args) => {
-          if (this.reducer) {
-            const command = this.reducer.commands[key](...args);
+          if (this.state) {
+            const command = this.state.reducer.commands[key](...args);
             this.dispatch(command);
           }
         };
@@ -460,7 +459,6 @@ limitations under the License.
       this.state = null;
       this.plugins.destroy();
       this.plugins = null;
-      this.reducer = null;
       this.dispatch = null;
       this.parentNode = null;
     }
