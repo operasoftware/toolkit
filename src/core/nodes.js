@@ -455,7 +455,7 @@ limitations under the License.
 
     destroy() {
       super.destroy();
-      opr.Toolkit.stopTracking(this);
+      this.stopTracking();
       this.state.destroy();
       this.state = null;
       this.plugins.destroy();

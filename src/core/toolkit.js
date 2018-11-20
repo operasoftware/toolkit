@@ -122,17 +122,16 @@ limitations under the License.
 
     track(root) {
       if (root.parentNode) {
-        root.parentNode.rootNode.subroots.add(root);
+        const parentRootNode = root.parentNode.rootNode;
+        parentRootNode.subroots.add(root);
+        root.stopTracking = () => {
+          parentRootNode.subroots.delete(root);
+        };
       } else {
         this.roots.add(root);
-      }
-    }
-
-    stopTracking(root) {
-      if (root.parentNode) {
-        root.parentNode.rootNode.subroots.delete(root);
-      } else {
-        this.roots.delete(root);
+        root.stopTracking = () => {
+          this.roots.delete(root);
+        };
       }
     }
 
