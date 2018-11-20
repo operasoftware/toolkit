@@ -100,13 +100,13 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'span',
+        'button',
         {
           name: 'prev',
         },
       ];
       const nextTemplate = [
-        'span',
+        'button',
         {
           name: 'next',
         },
@@ -131,13 +131,13 @@ describe('Diff => calculate patches', () => {
 
       // given
       const template = [
-        'span',
+        'button',
         {
           name: 'prev',
         },
       ];
       const nextTemplate = [
-        'span',
+        'button',
         {},
       ];
 
@@ -1213,11 +1213,11 @@ describe('Diff => calculate patches', () => {
 
           // given
           const template = [
-            'section',
+            'textarea',
           ];
 
           const nextTemplate = [
-            'section',
+            'textarea',
             {
               name: 'value',
             },

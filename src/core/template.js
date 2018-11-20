@@ -178,24 +178,43 @@ limitations under the License.
         } else {
 
           const {
-            SUPPORTED_ATTRIBUTES,
-            SUPPORTED_EVENTS,
-          } = opr.Toolkit;
+            isAttributeSupported,
+            isAttributeValid,
+            getValidElementNamesFor,
+            isEventSupported,
+          } = opr.Toolkit.Browser;
 
-          if (SUPPORTED_ATTRIBUTES.includes(key)) {
+          if (isAttributeSupported(key)) {
             const attr = this.getAttributeValue(value);
             if (isDefined(attr)) {
               description.attrs = description.attrs || {};
               description.attrs[key] = attr;
             }
-          } else if (SUPPORTED_EVENTS.includes(key)) {
+            if (opr.Toolkit.isDebug()) {
+              const element = description.name;
+              if (!element.includes('-') && !isAttributeValid(key, element)) {
+                const names = getValidElementNamesFor(key)
+                                  .map(key => `"${key}"`)
+                                  .join(', ');
+                const message =
+                    `The "${key}" attribute is not supported on "${
+                                                                   element
+                                                                 }" elements.`;
+                const hint = `Use one of ${names}.`;
+                console.warn(message, hint);
+              }
+            }
+          } else if (isEventSupported(key)) {
             const listener = this.getListener(value, key);
             if (listener) {
               description.listeners = description.listeners || {};
               description.listeners[key] = value;
             }
           } else {
-            console.warn('Unsupported property:', key);
+            console.warn(
+                `Unsupported property "${key}" on element "${
+                                                             description.name
+                                                           }".`);
           }
         }
       }
@@ -276,8 +295,6 @@ limitations under the License.
       opr.Toolkit.assert(
           object.constructor === Object, 'Style must be a plain object!');
 
-      const isSupported = key => opr.Toolkit.SUPPORTED_STYLES.includes(key);
-
       const reduceToNonEmptyValues = (style, [name, value]) => {
         const string = this.getStyleProperty(value, name);
         if (string !== null) {
@@ -290,15 +307,17 @@ limitations under the License.
 
       if (opr.Toolkit.isDebug()) {
         for (const [key, value] of entries.filter(
-                 ([key]) => !isSupported(key))) {
+                 ([key]) => !opr.Toolkit.Browser.isStyleSupported(key))) {
           console.warn(
               `Unsupported style property, key: ${key}, value:`, value);
         }
       }
 
-      const style = Object.entries(object)
-                        .filter(([key, value]) => isSupported(key))
-                        .reduce(reduceToNonEmptyValues, {});
+      const style =
+          Object.entries(object)
+              .filter(
+                  ([key, value]) => opr.Toolkit.Browser.isStyleSupported(key))
+              .reduce(reduceToNonEmptyValues, {});
       return isNotEmpty(style) ? style : null;
     },
 
@@ -314,9 +333,9 @@ limitations under the License.
       } else if (typeof value === 'object') {
         let whitelist;
         if (name === 'filter') {
-          whitelist = opr.Toolkit.SUPPORTED_FILTERS;
+          whitelist = opr.Toolkit.Browser.SUPPORTED_FILTERS;
         } else if (name === 'transform') {
-          whitelist = opr.Toolkit.SUPPORTED_TRANSFORMS;
+          whitelist = opr.Toolkit.Browser.SUPPORTED_TRANSFORMS;
         } else {
           throw new Error(`Unknown function list: ${JSON.stringify(value)}`);
         }

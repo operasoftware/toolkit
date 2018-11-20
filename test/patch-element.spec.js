@@ -9,7 +9,7 @@ describe('Patch element => apply', () => {
   it('adds attribute', () => {
 
     // given
-    const element = createFromTemplate(['div']);
+    const element = createFromTemplate(['input']);
 
     // when
     Patch.setAttribute('name', 'value', element).apply();
@@ -26,9 +26,8 @@ describe('Patch element => apply', () => {
 
     // given
     const element = createFromTemplate([
-      'div', {
+      'input', {
         name: 'name',
-        noValidate: false,
         minLength: '50px',
       },
     ]);
@@ -42,12 +41,10 @@ describe('Patch element => apply', () => {
 
     // when
     Patch.setAttribute('name', 'value', element).apply();
-    Patch.setAttribute('noValidate', 'true', element).apply();
     Patch.setAttribute('minLength', '100px', element).apply();
 
     // then
     assert.equal(element.ref.attributes['name'].value, 'value');
-    assert.equal(element.ref.attributes['novalidate'].value, 'true');
     assert.equal(element.ref.attributes['minlength'].value, '100px');
   });
 
@@ -55,25 +52,21 @@ describe('Patch element => apply', () => {
 
     // given
     const element = createFromTemplate([
-      'div', {
+      'input', {
         name: 'name',
-        noValidate: 'false',
         minLength: '50px',
       },
     ]);
 
     assert.deepEqual(element.description.attrs, {
       name: 'name',
-      noValidate: 'false',
       minLength: '50px',
     });
     assert.equal(element.ref.attributes['name'].value, 'name');
-    assert.equal(element.ref.attributes['novalidate'].value, 'false');
     assert.equal(element.ref.attributes['minlength'].value, '50px');
 
     // when
     Patch.removeAttribute('name', element).apply();
-    Patch.removeAttribute('noValidate', element).apply();
     Patch.removeAttribute('minLength', element).apply();
 
     // then

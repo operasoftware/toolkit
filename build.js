@@ -6,15 +6,14 @@ const loadModule = path => loadFile(`./src/${path}.js`);
 const loadExternalModule = path => loadFile(`./node_modules/${path}.js`);
 
 const convertModuleExportsToDefine = (script, path) => {
-  const moduleExportsRegExp = /module\.exports\ \=\ (.+?);/;
+  const moduleExportsRegExp = /module\.exports = (.+?);/;
   const match = script.match(moduleExportsRegExp);
   if (match) {
     const normalized =
         script.replace(match[0], `loader.define('${path}', ${match[1]});`);
     return normalized;
-  } else {
-    throw new Error('No module.exports statement found in: ' + path);
   }
+  throw new Error(`No module.exports statement found in: ${path}`);
 };
 
 const normalizeModule = path => {
@@ -42,13 +41,12 @@ limitations under the License.
 
 const merge = (...contents) => contents.join('\n\n');
 
-const package = loadJSON('./package.json');
+const packageJson = loadJSON('./package.json');
 
 const Loader = loadExternalModule('lazy-module-loader/loader');
 
-const Consts = normalizeModule('core/consts');
+const Browser = normalizeModule('core/browser');
 const Nodes = normalizeModule('core/nodes');
-
 const Description = normalizeModule('core/description');
 const Diff = normalizeModule('core/diff');
 const Lifecycle = normalizeModule('core/lifecycle');
@@ -68,7 +66,7 @@ const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 let release = merge(
-                    Loader, Consts, Nodes, Diff, Lifecycle, Patch, Description,
+                    Loader, Browser, Nodes, Diff, Lifecycle, Patch, Description,
                     Plugins, Reconciler, Renderer, Sandbox, Service, State,
                     Reducers, Template, VirtualDOM, utils, Toolkit, Release,
               ).replace(/\n\n\n/g, '\n\n');
@@ -82,7 +80,7 @@ const targetDir = './dist';
 if (!fs.existsSync(targetDir)) {
  fs.mkdirSync(targetDir);
 }
-const targetPath = `${targetDir}/toolkit-${package.version}.js`;
+const targetPath = `${targetDir}/toolkit-${packageJson.version}.js`;
 fs.writeFileSync(targetPath, release, 'utf8');
 
 const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
@@ -90,13 +88,15 @@ const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1');
 const size = formatNumber(release.length);
 const lines = formatNumber(release.split('\n').length);
 
+/* eslint-disable no-console */
 console.log();
 console.log('-------------------------------------------------------');
 console.log(' Finished bundling release version of Opera Toolkit');
 console.log('-------------------------------------------------------');
 console.log(` => Target file: ${targetPath}`);
-console.log(` => Version: ${package.version}`);
+console.log(` => Version: ${packageJson.version}`);
 console.log(` => Lines: ${lines}`);
 console.log(` => Size: ${size} bytes`);
 console.log('-------------------------------------------------------');
 console.log();
+/* eslint-enable no-console */

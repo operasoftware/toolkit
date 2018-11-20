@@ -98,6 +98,8 @@ describe('Reducers', () => {
 
     it('detects name conflicts', () => {
 
+      sinon.stub(console, 'error');
+
       // given
       const conflictingReducer = (state, command) => state;
       conflictingReducer.commands = {
@@ -113,7 +115,11 @@ describe('Reducers', () => {
       }
 
       // when
-      assert.throws(() => opr.Toolkit.VirtualDOM.createRoot(ConflictingRoot));
+      try {
+        assert.throws(() => opr.Toolkit.VirtualDOM.createRoot(ConflictingRoot));
+      } finally {
+        console.error.restore();
+      }
     });
 
     it('chains reducers and merges commands', () => {

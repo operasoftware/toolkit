@@ -369,7 +369,7 @@ describe('Template => describe', () => {
     it('detects text element with properties', () => {
 
       // given
-      const name = 'div';
+      const name = 'textarea';
       const text = 'text';
       const props = {name: 'name'};
       const template = [name, props, text];
@@ -379,7 +379,7 @@ describe('Template => describe', () => {
 
       // then
       assert.equal(description.type, 'element');
-      assert.equal(description.name, 'div');
+      assert.equal(description.name, 'textarea');
       assert.deepEqual(description.attrs, props);
       assert.equal(description.children[0].text, 'text');
     });
