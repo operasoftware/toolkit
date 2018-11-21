@@ -21,11 +21,10 @@ window.loadToolkit = async configureLoader => {
   }
 
   const Toolkit = await loader.require('core/toolkit');
-
-  const consts = await loader.require('core/consts');
   const nodes = await loader.require('core/nodes');
 
-  Object.assign(Toolkit.prototype, consts, nodes, {
+  Object.assign(Toolkit.prototype, nodes, {
+    Browser: await loader.require('core/browser'),
     Description: await loader.require('core/description'),
     Diff: await loader.require('core/diff'),
     Lifecycle: await loader.require('core/lifecycle'),

@@ -76,73 +76,33 @@ limitations under the License.
 
   const addDataPrefix = attr => `data${attr[0].toUpperCase()}${attr.slice(1)}`;
 
-  const lowerDash = name => name.startsWith('aria') ?
-      `aria-${name.slice(4).toLowerCase()}` :
-      name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-
-  const getAttributeName = name => {
-    switch (name) {
-      case 'accessKey':
-      case 'allowFullScreen':
-      case 'allowTransparency':
-      case 'autoComplete':
-      case 'autoFocus':
-      case 'autoPlay':
-      case 'cellPadding':
-      case 'cellSpacing':
-      case 'charSet':
-      case 'classID':
-      case 'colSpan':
-      case 'contentEditable':
-      case 'contextMenu':
-      case 'crossOrigin':
-      case 'dateTime':
-      case 'encType':
-      case 'frameBorder':
-      case 'hrefLang':
-      case 'inputMode':
-      case 'keyType':
-      case 'marginHeight':
-      case 'marginWidth':
-      case 'maxLength':
-      case 'minLength':
-      case 'noValidate':
-      case 'radioGroup':
-      case 'readOnly':
-      case 'rowSpan':
-      case 'spellCheck':
-      case 'srcDoc':
-      case 'srcLang':
-      case 'srcSet':
-      case 'useMap':
-      case 'tabIndex':
-        return name.toLowerCase();
-      default:
-        return lowerDash(name);
-    }
-  };
-
-  const getEventName = name => {
-    switch (name) {
-      case 'onDoubleClick':
-        return 'dblclick';
-      default:
-        return name.slice(2).toLowerCase();
-    }
-  };
-
   const createUUID = () => {
     const s4 = () =>
         Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
     return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
   };
 
+  const lowerDash = name =>
+      name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+
+  const getAttributeName = key => {
+    if (key === 'acceptCharset' || key === 'httpEquiv') {
+      return lowerDash(key);
+    } else if (key.startsWith('aria')) {
+      return `aria-${key.slice(4).toLowerCase()}`;
+    }
+    return key.toLowerCase();
+  };
+
+  const getEventName = key =>
+      key === 'onDoubleClick' ? 'dblclick' : key.slice(2).toLowerCase();
+
   const isSpecialProperty =
       prop => ['key', 'class', 'style', 'dataset', 'properties'].includes(prop);
 
   const isSupportedAttribute = attr => isSpecialProperty(attr) ||
-      opr.Toolkit.SUPPORTED_ATTRIBUTES.includes(attr) ||
-      opr.Toolkit.SUPPORTED_EVENTS.includes(attr);
+      opr.Toolkit.Browser.isAttributeSupported(attr) ||
+      opr.Toolkit.Browser.isEventSupported(attr);
 
   const postRender = fn => {
 

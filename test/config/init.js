@@ -18,11 +18,10 @@ global.sinon = require('sinon');
   };
 
   const Toolkit = require('../../src/core/toolkit.js');
-
-  const consts = require('../../src/core/consts.js');
   const nodes = require('../../src/core/nodes.js');
 
-  Object.assign(Toolkit.prototype, consts, nodes, {
+  Object.assign(Toolkit.prototype, nodes, {
+    Browser: require('../../src/core/browser.js'),
     Description: require('../../src/core/description.js'),
     Diff: require('../../src/core/diff.js'),
     Lifecycle: require('../../src/core/lifecycle.js'),

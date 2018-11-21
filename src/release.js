@@ -16,11 +16,10 @@ limitations under the License.
 
 {
   const Toolkit = loader.get('core/toolkit');
-
-  const consts = loader.get('core/consts');
   const nodes = loader.get('core/nodes');
 
-  Object.assign(Toolkit.prototype, consts, nodes, {
+  Object.assign(Toolkit.prototype, nodes, {
+    Browser: loader.get('core/browser'),
     Description: loader.get('core/description'),
     Diff: loader.get('core/diff'),
     Lifecycle: loader.get('core/lifecycle'),
