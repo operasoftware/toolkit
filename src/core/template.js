@@ -192,6 +192,11 @@ limitations under the License.
             }
             if (opr.Toolkit.isDebug()) {
               const element = description.name;
+              if (attr === undefined) {
+                console.warn(
+                    `Invalid undefined value for attribute "${key}"`,
+                    `on element "${element}".`);
+              }
               if (!element.includes('-') && !isAttributeValid(key, element)) {
                 const names = getValidElementNamesFor(key)
                                   .map(key => `"${key}"`)
@@ -297,7 +302,7 @@ limitations under the License.
 
       const reduceToNonEmptyValues = (style, [name, value]) => {
         const string = this.getStyleProperty(value, name);
-        if (string !== null) {
+        if (isDefined(string)) {
           style[name] = string;
         }
         return style;
@@ -355,7 +360,7 @@ limitations under the License.
       }
       for (const [key, value] of entries) {
         const stringValue = this.getAttributeValue(value, false);
-        if (stringValue !== null) {
+        if (isDefined(stringValue)) {
           composite[key] = stringValue;
         }
       }
@@ -382,8 +387,10 @@ limitations under the License.
         return allowEmpty ? '' : null;
       } else if (typeof value === 'string') {
         return value;
-      } else if ([null, false, undefined].includes(value)) {
+      } else if (value === null || value === false) {
         return null;
+      } else if (value === undefined) {
+        return undefined;
       } else if (Array.isArray(value)) {
         return value.join('');
       } else if (['object', 'function', 'symbol'].includes(typeof value)) {
@@ -399,7 +406,7 @@ limitations under the License.
       const dataset = {};
       for (const key of Object.keys(object)) {
         const value = this.getAttributeValue(object[key]);
-        if (value !== null) {
+        if (isDefined(value)) {
           dataset[key] = value;
         }
       }
@@ -421,7 +428,7 @@ limitations under the License.
       const attrs = {};
       for (const [key, value] of Object.entries(object)) {
         const attr = this.getAttributeValue(value, true);
-        if (attr !== null) {
+        if (isDefined(attr)) {
           attrs[key] = attr;
         }
       }

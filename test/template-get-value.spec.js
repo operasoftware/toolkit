@@ -542,7 +542,7 @@ describe('Template', () => {
       const dataset = Template.getDataset(props);
 
       // then
-      assert.equal(dataset, null);
+      assert.equal(dataset, undefined);
     });
 
     it('rejects symbols', () => {

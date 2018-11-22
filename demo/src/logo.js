@@ -31,7 +31,6 @@
       return [
         'logo',
         {
-          id: this.props.id,
           style: {
             background: `url('/images/${this.props.channel}.svg')`,
           },
