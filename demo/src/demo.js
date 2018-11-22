@@ -75,7 +75,7 @@
       ]),
       ];
     }
-  };
+  }
 
   module.exports = Demo;
 }

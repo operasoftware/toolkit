@@ -6,9 +6,10 @@
   const addLogo = (state, logo) => ({
     ...state,
     logos: [
-      ...state.logos, createLogo(logo, {
+      ...state.logos,
+      createLogo(logo, {
         highlighted: false,
-      })
+      }),
     ],
   });
 

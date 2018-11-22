@@ -1,6 +1,4 @@
 {
-  const CHANGE_CHANNEL = Symbol('change-channel');
-
   const getNextChannel = current => current === 'developer' ? 'beta' : 'stable';
 
   class Logo extends opr.Toolkit.Root {
@@ -41,7 +39,7 @@
         },
       ];
     }
-  };
+  }
 
   module.exports = Logo;
 }
