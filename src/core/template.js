@@ -62,17 +62,10 @@ limitations under the License.
           }
           if (index === 1 && type === 'props') {
             if (description.type === 'component') {
-              const props = this.getComponentProps(
-                  item, description.component, description.isRoot);
-              if (props) {
-                description.props = props;
-                if (props.key) {
-                  description.key = props.key;
-                }
-              }
-              continue;
+              this.assignPropsToComponent(item, description);
+            } else if (description.type === 'element') {
+              this.assignPropsToElement(item, description);
             }
-            this.assignPropsToElement(item, description);
             continue;
           }
           if (isFalsy(item)) {
@@ -103,21 +96,6 @@ limitations under the License.
       throw new Error('Expecting array, null or false');
     },
 
-    getComponentProps(object, ComponentClass, isRoot) {
-      const props = isRoot ?
-          object :
-          this.normalizeComponentProps(object, ComponentClass);
-      return isNotEmpty(props) ? props : null;
-    },
-
-    /*
-     * Supplements given object with default props for given class.
-     * Returns either a non-empty props object or null.
-     */
-    normalizeComponentProps(props = {}, ComponentClass) {
-      return this.normalizeProps(props, ComponentClass.defaultProps);
-    },
-
     /*
      * Returns a new props object supplemented by overriden values.
      */
@@ -137,11 +115,33 @@ limitations under the License.
      * Normalizes specified element props object and returns either
      * a non-empty object containing only supported props or null.
      */
+    normalizeComponentProps(props, ComponentClass) {
+      return this.normalizeProps(props, ComponentClass.defaultProps || {});
+    },
+
+    assignPropsToComponent(object, description) {
+      const props = this.getComponentProps(
+          object, description.component, description.isRoot);
+      if (props) {
+        description.props = props;
+        if (isDefined(props.key)) {
+          description.key = String(props.key);
+        }
+      }
+    },
+
+    getComponentProps(object, ComponentClass, isRoot) {
+      const props = isRoot ?
+          object :
+          this.normalizeComponentProps(object, ComponentClass);
+      return isNotEmpty(props) ? props : null;
+    },
+
     assignPropsToElement(props, description) {
       for (const [key, value] of Object.entries(props)) {
         if (key === 'key') {
           if (isDefined(value)) {
-            description.key = value;
+            description.key = String(value);
           }
         } else if (key === 'class') {
           const className = this.getClassName(value);
