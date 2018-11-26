@@ -264,7 +264,7 @@ limitations under the License.
         throw new Error('Initial state must be a plain object!');
       }
 
-      this.commands.init(this.normalize(state));
+      this.commands.setState(this.normalize(state));
       if (this.pendingDescription) {
         const description = this.pendingDescription;
         delete this.pendingDescription;

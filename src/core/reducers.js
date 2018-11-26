@@ -15,15 +15,10 @@ limitations under the License.
 */
 
 {
-
-  const INIT = Symbol('init');
   const SET_STATE = Symbol('set-state');
   const UPDATE = Symbol('update');
 
   const coreReducer = (state, command) => {
-    if (command.type === INIT) {
-      return command.state;
-    }
     if (command.type === SET_STATE) {
       return command.state;
     }
@@ -37,10 +32,6 @@ limitations under the License.
   };
 
   coreReducer.commands = {
-    init: state => ({
-      type: INIT,
-      state,
-    }),
     setState: state => ({
       type: SET_STATE,
       state,

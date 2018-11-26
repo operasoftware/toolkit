@@ -2,14 +2,14 @@ describe('Reducers', () => {
 
   describe('core reducer', () => {
 
-    it('returns the state provided by the INIT command', () => {
+    it('returns the state provided by the set state command', () => {
 
       // given
       const state = {
         foo: 'bar',
       };
       const reducers = opr.Toolkit.Reducers.create(createRoot());
-      const command = reducers.reducer.commands.init(state);
+      const command = reducers.reducer.commands.setState(state);
 
       // when
       const nextState = reducers.reducer({}, command);
@@ -134,7 +134,7 @@ describe('Reducers', () => {
       const reducer = opr.Toolkit.Reducers.create(root).reducer;
 
       // when
-      const initCommand = reducer.commands.init({
+      const initCommand = reducer.commands.setState({
         value: 1,
       });
       let state = reducer({}, initCommand);
