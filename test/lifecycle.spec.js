@@ -3,7 +3,6 @@ describe('Lifecycle', () => {
   const {
     Lifecycle,
     Patch,
-    VirtualDOM,
   } = opr.Toolkit;
 
   let spy = sinon.spy();
@@ -72,13 +71,11 @@ describe('Lifecycle', () => {
   let root;
 
   const createRootWith = template => {
-    root = createRoot();
+    root = createRootInstance(Root);
     const node = createFromTemplate(template);
     root.child = node;
     return node;
   };
-
-  const createRoot = () => VirtualDOM.createRoot(Root);
 
   const assertCalled = expectedCalls => {
     assert.equal(spy.callCount, expectedCalls.length);
@@ -105,7 +102,7 @@ describe('Lifecycle', () => {
       it('creating root component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const patches = [
           Patch.initRootComponent(root),
         ];
@@ -120,7 +117,7 @@ describe('Lifecycle', () => {
       it('adding component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const component = createFromTemplate([Component]);
         const patches = [
           Patch.insertChild(component, 0, root),
@@ -136,7 +133,7 @@ describe('Lifecycle', () => {
       it('adding nested components', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const component = createFromTemplate([
           Component,
           [
@@ -157,7 +154,7 @@ describe('Lifecycle', () => {
       it('adding element containing component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const element = createFromTemplate([
           'div',
           [
@@ -178,7 +175,7 @@ describe('Lifecycle', () => {
       it('adding element containing nested components', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const element = createFromTemplate([
           'div',
           [
@@ -307,7 +304,7 @@ describe('Lifecycle', () => {
       it('created root component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const patches = [
           Patch.initRootComponent(root),
         ];
@@ -322,7 +319,7 @@ describe('Lifecycle', () => {
       it('added component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const component = createFromTemplate([
           Component,
         ]);
@@ -340,7 +337,7 @@ describe('Lifecycle', () => {
       it('added nested components', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const component = createFromTemplate([
           Component,
           [
@@ -361,7 +358,7 @@ describe('Lifecycle', () => {
       it('added element containing component', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const element = createFromTemplate([
           'div',
           [
@@ -382,7 +379,7 @@ describe('Lifecycle', () => {
       it('added element containing nested components', () => {
 
         // given
-        const root = createRoot();
+        const root = createRootInstance(Root);
         const element = createFromTemplate([
           'div',
           [

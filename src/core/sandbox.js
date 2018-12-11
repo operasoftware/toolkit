@@ -63,7 +63,7 @@ limitations under the License.
             if (target.isRoot()) {
               // returns rendered node instead of custom element for usage of
               // this.ref.querySelector
-              return target.child.ref;
+              return target.content.ref;
             }
             return target.ref;
           }

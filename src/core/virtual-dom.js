@@ -45,14 +45,14 @@ limitations under the License.
       const ComponentClass = description.component;
       if (ComponentClass.prototype instanceof opr.Toolkit.Root) {
         return this.createRoot(
-            ComponentClass, description.props,
-            parentNode && parentNode.rootNode,
+            description, parentNode && parentNode.rootNode,
             /*= requireCustomElement */ true);
       }
       const component = new ComponentClass(description, parentNode);
       const nodeDescription = opr.Toolkit.Renderer.render(
           component, description.props, description.childrenAsTemplates);
-      component.child = this.createFromDescription(nodeDescription, component);
+      component.content =
+          this.createFromDescription(nodeDescription, component);
       return component;
     },
 
@@ -61,13 +61,7 @@ limitations under the License.
      *
      * If the root class declares a custom element name
      */
-    createRoot(
-        component, props = {}, parentNode, requireCustomElement = false) {
-
-      const description = opr.Toolkit.Template.describe([
-        component,
-        props,
-      ]);
+    createRoot(description, parentNode, requireCustomElement = false) {
       try {
         const ComponentClass = description.component;
         if (requireCustomElement && !ComponentClass.elementName) {

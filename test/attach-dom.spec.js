@@ -27,7 +27,7 @@ describe('Virtual Element => Attach DOM', () => {
     const template = typeof content === 'string' ? [name, props, content] :
                                                    [name, props, ...content];
     const description = Template.describe(template);
-    const root = VirtualDOM.createRoot(Root);
+    const root = createRootInstance(Root);
     const element = VirtualDOM.createFromDescription(description, root);
     root.child = element;
     return element;
@@ -99,7 +99,7 @@ describe('Virtual Element => Attach DOM', () => {
   describe('=> create element', () => {
 
     const createFromTemplate = template => {
-      const root = VirtualDOM.createRoot(Root);
+      const root = createRootInstance(Root);
       const node =
           VirtualDOM.createFromDescription(Template.describe(template), root);
       root.child = node;
@@ -184,7 +184,7 @@ describe('Virtual Element => Attach DOM', () => {
       const component = element.children[0];
       assert.equal(component.constructor, Component);
 
-      const span = component.child;
+      const span = component.content;
       assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
     });
@@ -213,10 +213,10 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(component.constructor, Component);
       assert(component instanceof opr.Toolkit.Component);
 
-      const subcomponent = component.child;
+      const subcomponent = component.content;
       assert.equal(subcomponent.constructor, Subcomponent);
 
-      const span = subcomponent.child;
+      const span = subcomponent.content;
       assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
     });
@@ -245,13 +245,13 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(component.constructor, Component);
       assert(component.isComponent());
 
-      const span = component.child;
+      const span = component.content;
       assert.equal(span.description.name, 'span');
       assert.equal(span.ref.tagName, 'SPAN');
 
       const subcomponent = span.children[0];
       assert.equal(subcomponent.constructor, Subcomponent);
-      assert(subcomponent.child.isComment());
+      assert(subcomponent.content.isComment());
     });
 
     it('creates properties', () => {
@@ -283,7 +283,7 @@ describe('Virtual Element => Attach DOM', () => {
         ]);
 
         // then
-        assert(component.child);
+        assert(component.content);
         assert(component.placeholder.description.text.includes(Component.name));
       });
 
@@ -301,7 +301,7 @@ describe('Virtual Element => Attach DOM', () => {
         ]);
 
         // then
-        assert(component.child);
+        assert(component.content);
         assert(
             component.placeholder.description.text.includes(Subcomponent.name));
       });

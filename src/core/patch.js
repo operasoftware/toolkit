@@ -18,7 +18,7 @@ limitations under the License.
   const INIT_ROOT_COMPONENT = {
     type: Symbol('init-root-component'),
     apply: function() {
-      this.root.container.appendChild(this.root.child.ref);
+      this.root.container.appendChild(this.root.content.ref);
     },
   };
   const UPDATE_NODE = {
@@ -144,6 +144,13 @@ limitations under the License.
     },
   };
 
+  const SET_CONTENT = {
+    type: Symbol('set-content'),
+    apply: function() {
+      this.parent.setContent(this.node);
+    },
+  };
+
   const Types = {
     INIT_ROOT_COMPONENT,
     UPDATE_NODE,
@@ -163,6 +170,7 @@ limitations under the License.
     REPLACE_CHILD,
     MOVE_CHILD,
     REMOVE_CHILD,
+    SET_CONTENT,
   };
   const PatchTypes = Object.keys(Types).reduce((result, key) => {
     result[key] = Types[key].type;
@@ -219,6 +227,14 @@ limitations under the License.
       const patch = new Patch(REMOVE_CHILD);
       patch.child = child;
       patch.at = at;
+      patch.parent = parent;
+      return patch;
+    }
+
+    static setContent(node, parent) {
+      const patch = new Patch(SET_CONTENT);
+      patch.node = node;
+      patch.child = parent.content;
       patch.parent = parent;
       return patch;
     }

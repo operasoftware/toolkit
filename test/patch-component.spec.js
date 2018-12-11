@@ -26,14 +26,14 @@ describe('Patch component => apply', () => {
   };
 
   const createRootWith = template => {
-    const root = VirtualDOM.createRoot(Root);
+    const root = createRootInstance(Root);
     container = document.createElement('main');
     root.container = container;
     Patch.initRootComponent(root).apply();
     let node = null;
     if (template) {
       node = createFromTemplate(template, root);
-      Patch.replaceChild(root.child, node, root).apply();
+      Patch.setContent(node, root).apply();
     }
     return [root, node];
   };
@@ -47,7 +47,7 @@ describe('Patch component => apply', () => {
   it('creates root component', () => {
 
     // given
-    const root = VirtualDOM.createRoot(Root);
+    const root = createRootInstance(Root);
     const container = document.createElement('section');
     root.container = container;
 
@@ -93,11 +93,11 @@ describe('Patch component => apply', () => {
       const component = createFromTemplate([Component], root);
 
       // when
-      Patch.replaceChild(root.child, component, root).apply();
+      Patch.setContent(component, root).apply();
 
       // then
       assert.equal(root.container, container);
-      assert.equal(root.child, component);
+      assert.equal(root.content, component);
 
       assert(component.placeholder);
       assert(component.placeholder.isComment());
@@ -118,7 +118,7 @@ describe('Patch component => apply', () => {
       // given
       const [root] = createRootWith([Subcomponent]);
       const commentNode = createComment(root);
-      Patch.replaceChild(root.child, commentNode, root).apply();
+      Patch.setContent(commentNode, root).apply();
       const component = createFromTemplate([Component], root);
 
       // then
@@ -129,11 +129,11 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, root.placeholder.ref);
 
       // when
-      Patch.replaceChild(root.child, component, root).apply();
+      Patch.setContent(component, root).apply();
 
       // then
       assert.equal(root.container, container);
-      assert.equal(root.child, component);
+      assert.equal(root.content, component);
       assert(component.placeholder);
       assert(component.placeholder.isComment());
       assert(component.placeholder.description.text.includes('Component'));
@@ -183,10 +183,10 @@ describe('Patch component => apply', () => {
       const subcomponent = createFromTemplate([Subcomponent], component);
 
       // when
-      Patch.replaceChild(component.child, subcomponent, component).apply();
+      Patch.setContent(subcomponent, component).apply();
 
       // then
-      assert.equal(component.child, subcomponent);
+      assert.equal(component.content, subcomponent);
       assert.equal(subcomponent.parentNode, component);
 
       assert(component.placeholder);
@@ -227,7 +227,7 @@ describe('Patch component => apply', () => {
 
       assert(divElement.ref);
 
-      const parentComponent = divElement.children[1].child;
+      const parentComponent = divElement.children[1].content;
       assert(parentComponent.isComponent());
 
       assert(parentComponent.placeholder);
@@ -240,11 +240,10 @@ describe('Patch component => apply', () => {
       const component = createFromTemplate([Component], parentComponent);
 
       // when
-      Patch.replaceChild(parentComponent.child, component, parentComponent)
-          .apply();
+      Patch.setContent(component, parentComponent).apply();
 
       // then
-      assert.equal(parentComponent.child, component);
+      assert.equal(parentComponent.content, component);
       assert.equal(component.parentNode, parentComponent);
 
       assert(parentComponent.placeholder);
@@ -276,18 +275,18 @@ describe('Patch component => apply', () => {
       ], root);
 
       // when
-      Patch.replaceChild(root.child, component, root).apply();
+      Patch.setContent(component, root).apply();
 
       // then
       assert.equal(root.container, container);
-      assert.equal(root.child, component);
-      assert(component.child);
-      assert(component.child.isElement());
-      assert.equal(component.child.description.name, 'span'); // Mr. Minimum
-      assert(component.child.ref);
-      assert.equal(component.child.ref.tagName, 'SPAN');
+      assert.equal(root.content, component);
+      assert(component.content);
+      assert(component.content.isElement());
+      assert.equal(component.content.description.name, 'span'); // Mr. Minimum
+      assert(component.content.ref);
+      assert.equal(component.content.ref.tagName, 'SPAN');
 
-      assert.equal(container.childNodes[0], component.child.ref);
+      assert.equal(container.childNodes[0], component.content.ref);
     });
 
     it('adds component with a child element to a component', () => {
@@ -328,21 +327,21 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, subcomponent, component).apply();
+      Patch.setContent(subcomponent, component).apply();
 
       // then
-      assert.equal(component.child, subcomponent);
+      assert.equal(component.content, subcomponent);
       assert.equal(subcomponent.parentNode, component);
 
       assert.equal(component.placeholder, null);
 
-      assert.equal(component.childElement, subcomponent.child);
-      assert.equal(subcomponent.child.description.name, 'a');
-      assert.equal(subcomponent.child.parentElement, divElement);
+      assert.equal(component.childElement, subcomponent.content);
+      assert.equal(subcomponent.content.description.name, 'a');
+      assert.equal(subcomponent.content.parentElement, divElement);
 
       assert.equal(component.childElement.ref.tagName, 'A');
       assert.equal(component.childElement.ref.parentNode, divElement.ref);
-      assert.equal(divElement.ref.childNodes[1], subcomponent.child.ref);
+      assert.equal(divElement.ref.childNodes[1], subcomponent.content.ref);
     });
 
     it('adds component with a child element to a subcomponent', () => {
@@ -366,7 +365,7 @@ describe('Patch component => apply', () => {
 
       assert(divElement.ref);
 
-      const parentComponent = divElement.children[1].child;
+      const parentComponent = divElement.children[1].content;
       assert(parentComponent.isComponent());
 
       assert(parentComponent.placeholder);
@@ -384,22 +383,21 @@ describe('Patch component => apply', () => {
       ], parentComponent);
 
       // when
-      Patch.replaceChild(
-          parentComponent.placeholder, component, parentComponent).apply();
+      Patch.setContent(component, parentComponent).apply();
 
       // then
-      assert.equal(parentComponent.child, component);
+      assert.equal(parentComponent.content, component);
       assert.equal(component.parentNode, parentComponent);
 
       assert.equal(parentComponent.placeholder, null);
 
-      assert.equal(parentComponent.childElement, component.child);
-      assert.equal(component.child.description.name, 'p');
-      assert.equal(component.child.parentElement, divElement);
+      assert.equal(parentComponent.childElement, component.content);
+      assert.equal(component.content.description.name, 'p');
+      assert.equal(component.content.parentElement, divElement);
 
       assert.equal(parentComponent.childElement.ref.tagName, 'P');
       assert.equal(parentComponent.childElement.ref.parentNode, divElement.ref);
-      assert.equal(divElement.ref.childNodes[1], component.child.ref);
+      assert.equal(divElement.ref.childNodes[1], component.content.ref);
     });
   });
 
@@ -417,13 +415,13 @@ describe('Patch component => apply', () => {
       ], root);
 
       // when
-      Patch.replaceChild(root.child, element, root).apply();
+      Patch.setContent(element, root).apply();
 
       // then
       assert.equal(root.container, container);
       assert.equal(element.container, container);
 
-      assert.equal(root.child, element);
+      assert.equal(root.content, element);
       assert.equal(root.childElement, element);
       assert.equal(element.parentNode, root);
       assert.equal(root.childElement.ref.tagName, 'DIV');
@@ -450,12 +448,12 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, element, component).apply();
+      Patch.setContent(element, component).apply();
 
       // then
-      assert.equal(root.child, component);
+      assert.equal(root.content, component);
       assert.equal(root.childElement, element);
-      assert.equal(component.child, element);
+      assert.equal(component.content, element);
       assert.equal(component.childElement, element);
       assert.equal(element.parentNode, component);
       assert.equal(component.childElement.ref.tagName, 'DIV');
@@ -471,7 +469,7 @@ describe('Patch component => apply', () => {
 
       assert.equal(component.placeholder.ref.parentNode, container);
 
-      const subcomponent = component.child;
+      const subcomponent = component.content;
 
       assert(component.placeholder.ref);
       assert(
@@ -485,15 +483,15 @@ describe('Patch component => apply', () => {
       ], subcomponent);
 
       // when
-      Patch.replaceChild(subcomponent.child, element, subcomponent).apply();
+      Patch.setContent(element, subcomponent).apply();
 
       // then
       assert.equal(element.container, container);
 
-      assert.equal(root.child, component);
+      assert.equal(root.content, component);
       assert.equal(root.childElement, element);
       assert.equal(component.childElement, element);
-      assert.equal(subcomponent.child, element);
+      assert.equal(subcomponent.content, element);
       assert.equal(subcomponent.childElement, element);
       assert.equal(element.parentNode, subcomponent);
       assert.equal(component.childElement.ref.tagName, 'DIV');
@@ -518,14 +516,14 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root);
-      Patch.replaceChild(element, placeholder, root).apply();
+      Patch.setContent(placeholder, root).apply();
 
       // then
       assert(root.placeholder);
       assert(root.placeholder.isComment());
       assert(root.placeholder.description.text.includes(Root.name));
 
-      assert.equal(root.child, placeholder);
+      assert.equal(root.content, placeholder);
 
       assert.equal(element.parentNode, null);
       assert.equal(element.ref.parentNode, null);
@@ -542,7 +540,7 @@ describe('Patch component => apply', () => {
           'div',
         ],
       ]);
-      const element = component.child;
+      const element = component.content;
 
       // then
       assert.equal(element.container, container);
@@ -552,14 +550,14 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component);
-      Patch.replaceChild(element, placeholder, component).apply();
+      Patch.setContent(placeholder, component).apply();
 
       // then
       assert(root.placeholder);
       assert(root.placeholder.isComment());
       assert(root.placeholder.description.text.includes('Component'));
 
-      assert.equal(component.child, placeholder);
+      assert.equal(component.content, placeholder);
 
       assert.equal(element.parentNode, null);
       assert.equal(element.ref.parentNode, null);
@@ -579,8 +577,8 @@ describe('Patch component => apply', () => {
           ],
         ],
       ]);
-      const subcomponent = component.child;
-      const element = subcomponent.child;
+      const subcomponent = component.content;
+      const element = subcomponent.content;
 
       // then
       assert.equal(element.container, container);
@@ -590,14 +588,14 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(subcomponent);
-      Patch.replaceChild(element, placeholder, subcomponent).apply();
+      Patch.setContent(placeholder, subcomponent).apply();
 
       // then
       assert(root.placeholder);
       assert(root.placeholder.isComment());
       assert(root.placeholder.description.text.includes('Subcomponent'));
 
-      assert.equal(subcomponent.child, placeholder);
+      assert.equal(subcomponent.content, placeholder);
 
       assert.equal(element.parentNode, null);
       assert.equal(element.ref.parentNode, null);
@@ -620,7 +618,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root);
-      Patch.replaceChild(component, placeholder, root).apply();
+      Patch.setContent(placeholder, root).apply();
 
       // then
       assert(root.placeholder);
@@ -628,7 +626,7 @@ describe('Patch component => apply', () => {
       assert(root.placeholder.description.text.includes(Root.name));
 
       assert.equal(root.placeholder, placeholder);
-      assert.equal(root.child, placeholder);
+      assert.equal(root.content, placeholder);
       assert.equal(component.parentNode, null);
 
       assert(root.placeholder.ref);
@@ -643,7 +641,7 @@ describe('Patch component => apply', () => {
           'div',
         ],
       ]);
-      const element = component.child;
+      const element = component.content;
 
       // then
       assert.equal(component.container, container);
@@ -651,7 +649,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root);
-      Patch.replaceChild(component, placeholder, root).apply();
+      Patch.setContent(placeholder, root).apply();
 
       // then
       assert(root.placeholder);
@@ -659,7 +657,7 @@ describe('Patch component => apply', () => {
       assert(root.placeholder.description.text.includes(Root.name));
 
       assert.equal(root.placeholder, placeholder);
-      assert.equal(root.child, placeholder);
+      assert.equal(root.content, placeholder);
       assert.equal(component.parentNode, null);
 
       assert(root.placeholder.ref);
@@ -669,7 +667,7 @@ describe('Patch component => apply', () => {
 
       // given
       const [root, component] = createRootWith([Component, [Subcomponent]]);
-      const subcomponent = component.child;
+      const subcomponent = component.content;
 
       // then
       assert.equal(component.container, container);
@@ -678,7 +676,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component);
-      Patch.replaceChild(subcomponent, placeholder, component).apply();
+      Patch.setContent(placeholder, component).apply();
 
       // then
       assert(root.placeholder);
@@ -686,7 +684,7 @@ describe('Patch component => apply', () => {
       assert(root.placeholder.description.text.includes('Component'));
 
       assert.equal(component.placeholder, placeholder);
-      assert.equal(component.child, placeholder);
+      assert.equal(component.content, placeholder);
       assert.equal(subcomponent.parentNode, null);
 
       assert(root.placeholder.ref);
@@ -704,8 +702,8 @@ describe('Patch component => apply', () => {
           ],
         ],
       ]);
-      const subcomponent = component.child;
-      const element = subcomponent.child;
+      const subcomponent = component.content;
+      const element = subcomponent.content;
 
       // then
       assert.equal(component.container, container);
@@ -713,7 +711,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component);
-      Patch.replaceChild(subcomponent, placeholder, component).apply();
+      Patch.setContent(placeholder, component).apply();
 
       // then
       assert(root.placeholder);
@@ -721,7 +719,7 @@ describe('Patch component => apply', () => {
       assert(root.placeholder.description.text.includes('Component'));
 
       assert.equal(component.placeholder, placeholder);
-      assert.equal(component.child, placeholder);
+      assert.equal(component.content, placeholder);
       assert.equal(subcomponent.parentNode, null);
 
       assert(root.placeholder.ref);
@@ -745,11 +743,11 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, subcomponent, component).apply();
+      Patch.setContent(subcomponent, component).apply();
 
       // then
-      assert.equal(component.child, subcomponent);
-      assert(component.child.ref.textContent.includes('Subcomponent'));
+      assert.equal(component.content, subcomponent);
+      assert(component.content.ref.textContent.includes('Subcomponent'));
     });
 
     it('replaces element with element', () => {
@@ -767,11 +765,11 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, span, component).apply();
+      Patch.setContent(span, component).apply();
 
       // then
-      assert.equal(component.child, span);
-      assert.equal(component.child.ref.tagName, 'SPAN');
+      assert.equal(component.content, span);
+      assert.equal(component.content.ref.tagName, 'SPAN');
     });
 
     it('replaces component with component', () => {
@@ -789,11 +787,11 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, subcomponent, component).apply();
+      Patch.setContent(subcomponent, component).apply();
 
       // then
-      assert.equal(component.child, subcomponent);
-      assert(component.child.ref.textContent.includes('Subcomponent'));
+      assert.equal(component.content, subcomponent);
+      assert(component.content.ref.textContent.includes('Subcomponent'));
     });
 
     it('replaces component with element', () => {
@@ -811,11 +809,11 @@ describe('Patch component => apply', () => {
       ], component);
 
       // when
-      Patch.replaceChild(component.child, div, component).apply();
+      Patch.setContent(div, component).apply();
 
       // then
-      assert.equal(component.child, div);
-      assert.equal(component.child.ref.tagName, 'DIV');
+      assert.equal(component.content, div);
+      assert.equal(component.content.ref.tagName, 'DIV');
     });
   });
 });
