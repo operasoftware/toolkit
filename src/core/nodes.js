@@ -481,7 +481,6 @@ limitations under the License.
       const shadow = this.attachShadow({
         mode: 'open',
       });
-      const main = document.createElement('main');
 
       const stylesheets = root.getStylesheets();
 
@@ -490,16 +489,14 @@ limitations under the License.
         const style = document.createElement('style');
         style.textContent = cssImports(stylesheets);
 
-        style.onload = () => root.init(main);
+        style.onload = () => root.init(shadow);
         style.onerror = () => {
           throw new Error(
               `Error loading stylesheets: ${stylesheets.join(', ')}`);
         };
         shadow.appendChild(style);
-        shadow.appendChild(main);
       } else {
-        shadow.appendChild(main);
-        root.init(main);
+        root.init(shadow);
       }
     }
 
