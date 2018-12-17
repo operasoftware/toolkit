@@ -130,7 +130,7 @@ describe('Reducers', () => {
           return [doubleReducer, tripleReducer];
         }
       }
-      const root = opr.Toolkit.VirtualDOM.createRoot(SomeRoot);
+      const root = createRootInstance(SomeRoot);
       const reducer = opr.Toolkit.Reducers.create(root).reducer;
 
       // when

@@ -57,10 +57,10 @@ describe('Diff => calculate patches', () => {
   describe('=> on an Element', () => {
 
     const renderNodeAndDescription = (currentTemplate, nextTemplate) => {
-      const root = VirtualDOM.createRoot(Root);
+      const root = createRootInstance(Root);
       const node = VirtualDOM.createFromDescription(
           Template.describe(currentTemplate), root);
-      root.replaceChild(root.child, node);
+      root.setContent(node);
       const description = Template.describe(nextTemplate);
       return [
         node,
@@ -1403,10 +1403,10 @@ describe('Diff => calculate patches', () => {
 
     const renderComponentAndDescription =
         (props, children, nextProps, nextChildren) => {
-          const root = VirtualDOM.createRoot(Root);
+          const root = createRootInstance(Root);
           const component = VirtualDOM.createFromDescription(
               Template.describe([Component, props, ...children]), root);
-          root.child = component;
+          root.content = component;
           const description =
               Template.describe([Component, nextProps, ...nextChildren]);
           return [
@@ -1449,9 +1449,8 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+      assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
       assert.equal(patches[0].parent, component);
-      assert(patches[0].child.isComment());
       assert(patches[0].node.isElement());
       assert.deepEqual(patches[0].node.description, description.children[0]);
 
@@ -1486,10 +1485,8 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+      assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
       assert.equal(patches[0].parent, component);
-      assert(patches[0].child.isElement());
-      assert.equal(patches[0].child, component.child);
       assert(patches[0].node.isComment());
 
       assertComponentUpdate(patches[1], component, nextProps);
@@ -1523,9 +1520,8 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+      assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
       assert.equal(patches[0].parent, component);
-      assert(patches[0].child.isComment());
       assert.deepEqual(patches[0].node.description, description.children[0]);
 
       assertComponentUpdate(patches[1], component, nextProps);
@@ -1559,11 +1555,9 @@ describe('Diff => calculate patches', () => {
       // then
       assert.equal(patches.length, 2);
 
-      assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+      assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
       assert.equal(patches[0].parent, component);
-      assert(patches[0].child.isComponent());
       assert(patches[0].node.isComment());
-      assert.equal(patches[0].child.constructor, Subcomponent);
 
       assertComponentUpdate(patches[1], component, nextProps);
     });
@@ -1604,11 +1598,9 @@ describe('Diff => calculate patches', () => {
         // then
         assert.equal(patches.length, 2);
 
-        assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+        assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
         assert(patches[0].parent.isComponent());
         assert.equal(patches[0].parent, component);
-        assert(patches[0].child.isElement());
-        assert.equal(patches[0].child.description.name, 'div');
         assert(patches[0].node.isElement());
         assert.equal(patches[0].node.description.name, 'span');
 
@@ -1649,11 +1641,9 @@ describe('Diff => calculate patches', () => {
         // then
         assert.equal(patches.length, 2);
 
-        assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+        assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
         assert(patches[0].parent.isComponent());
         assert.equal(patches[0].parent, component);
-        assert(patches[0].child.isElement());
-        assert.equal(patches[0].child.description.name, 'div');
         assert(patches[0].node.isComponent());
         assert.equal(patches[0].node.constructor, Subcomponent);
 
@@ -1696,11 +1686,9 @@ describe('Diff => calculate patches', () => {
         // then
         assert.equal(patches.length, 2);
 
-        assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+        assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
         assert(patches[0].parent.isComponent());
         assert.equal(patches[0].parent, component);
-        assert(patches[0].child.isComponent());
-        assert.equal(patches[0].child.constructor, Subcomponent);
         assert(patches[0].node.isElement());
         assert.equal(patches[0].node.description.name, 'div');
 
@@ -1741,11 +1729,9 @@ describe('Diff => calculate patches', () => {
         // then
         assert.equal(patches.length, 2);
 
-        assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD);
+        assert.equal(patches[0].type, Patch.Type.SET_CONTENT);
         assert(patches[0].parent.isComponent());
         assert.equal(patches[0].parent, component);
-        assert(patches[0].child.isComponent());
-        assert.equal(patches[0].child.constructor, Subcomponent);
         assert(patches[0].node.isComponent());
         assert.equal(patches[0].node.constructor, OtherComponent);
 

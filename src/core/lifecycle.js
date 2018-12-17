@@ -21,8 +21,8 @@ limitations under the License.
       if (component.hasOwnMethod('onCreated')) {
         component.onCreated.call(component.sandbox);
       }
-      if (component.child) {
-        this.onNodeCreated(component.child);
+      if (component.content) {
+        this.onNodeCreated(component.content);
       }
     },
 
@@ -49,8 +49,8 @@ limitations under the License.
     },
 
     onComponentAttached(component) {
-      if (component.child) {
-        this.onNodeAttached(component.child);
+      if (component.content) {
+        this.onNodeAttached(component.content);
       }
       if (component.hasOwnMethod('onAttached')) {
         component.onAttached.call(component.sandbox);
@@ -108,8 +108,8 @@ limitations under the License.
       if (component.hasOwnMethod('onDestroyed')) {
         component.onDestroyed.call(component.sandbox);
       }
-      if (component.child) {
-        this.onNodeDestroyed(component.child);
+      if (component.content) {
+        this.onNodeDestroyed(component.content);
       }
     },
 
@@ -130,8 +130,8 @@ limitations under the License.
     },
 
     onComponentDetached(component) {
-      if (component.child) {
-        this.onNodeDetached(component.child);
+      if (component.content) {
+        this.onNodeDetached(component.content);
       }
       if (component.hasOwnMethod('onDetached')) {
         component.onDetached.call(component.sandbox);
@@ -172,6 +172,7 @@ limitations under the License.
           this.onNodeCreated(patch.node);
           return;
         case Type.REPLACE_CHILD:
+        case Type.SET_CONTENT:
           this.onNodeDestroyed(patch.child);
           this.onNodeCreated(patch.node);
           return;
@@ -201,6 +202,7 @@ limitations under the License.
           this.onNodeAttached(patch.node);
           return;
         case Type.REPLACE_CHILD:
+        case Type.SET_CONTENT:
           this.onNodeDetached(patch.child);
           this.onNodeAttached(patch.node);
           return;

@@ -36,14 +36,14 @@ describe('Virtual DOM', () => {
 
       // then
       assert(component.isComponent());
-      assert.equal(component.childElement, component.child);
+      assert.equal(component.childElement, component.content);
 
-      assert(component.child.isElement());
-      assert.equal(component.child.parentNode, component);
+      assert(component.content.isElement());
+      assert.equal(component.content.parentNode, component);
 
-      assert.equal(component.child.description.name, 'a');
-      assert.equal(component.child.description.children[0].text, label);
-      assert.equal(component.child.description.attrs.href, url);
+      assert.equal(component.content.description.name, 'a');
+      assert.equal(component.content.description.children[0].text, label);
+      assert.equal(component.content.description.attrs.href, url);
     });
 
     it('creates a leaf with nested elements', () => {
@@ -82,7 +82,7 @@ describe('Virtual DOM', () => {
       });
 
       // then
-      const divElement = component.child;
+      const divElement = component.content;
       const spanElement = divElement.children[0];
       const linkElement = spanElement.children[0];
 
@@ -164,15 +164,15 @@ describe('Virtual DOM', () => {
       assert(component.isComponent());
       assert.equal(component.constructor, Application);
 
-      const parent = component.child;
+      const parent = component.content;
       assert(parent.isComponent());
       assert.equal(parent.constructor, Parent);
 
-      const child = parent.child;
+      const child = parent.content;
       assert(child.isComponent());
       assert.equal(child.constructor, Child);
 
-      const spanElement = child.child;
+      const spanElement = child.content;
       assert(spanElement.isElement());
 
       const divElement = spanElement.children[0];

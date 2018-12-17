@@ -25,6 +25,11 @@ limitations under the License.
       this.description = description;
       this.key = description.key;
       this.parentNode = parentNode;
+      if (description.children && this.nodeType !== Component.NodeType) {
+        this.children = description.children.map(
+            childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
+                childDescription, this));
+      }
     }
 
     get parentElement() {
@@ -50,6 +55,58 @@ limitations under the License.
         return this.parentNode.rootNode;
       }
       throw new Error('Inconsistent virtual DOM tree detected!');
+    }
+
+    attachChildren() {
+      if (this.children) {
+        for (const child of this.children) {
+          this.ref.appendChild(child.ref);
+        }
+      }
+    }
+
+    insertChild(child, index) {
+      if (!this.children) {
+        this.children = [];
+      }
+      if (index === undefined) {
+        index = this.children.length;
+      }
+      const nextChild = this.children[index];
+      this.children.splice(index, 0, child);
+      this.ref.insertBefore(child.ref, nextChild && nextChild.ref || null);
+      child.parentNode = this;
+    }
+
+    replaceChild(child, node) {
+      const index = this.children.indexOf(child);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified node is not a child of this element!');
+      this.children.splice(index, 1, node);
+      child.parentNode = null;
+      node.parentNode = this;
+      child.ref.replaceWith(node.ref);
+    }
+
+    moveChild(child, from, to) {
+      opr.Toolkit.assert(
+          this.children[from] === child,
+          'Specified node is not a child of this element!');
+      this.children.splice(from, 1);
+      this.children.splice(to, 0, child);
+      this.ref.removeChild(child.ref);
+      this.ref.insertBefore(child.ref, this.ref.children[to]);
+    }
+
+    removeChild(child) {
+      const index = this.children.indexOf(child);
+      opr.Toolkit.assert(
+          index >= 0, 'Specified node is not a child of this element!');
+      this.children.splice(index, 1);
+      if (!this.children.length) {
+        delete this.children;
+      }
+      this.ref.removeChild(child.ref);
     }
 
     isRoot() {
@@ -99,24 +156,21 @@ limitations under the License.
       if (attachDOM) {
         this.attachDOM();
       }
-      // the rendered child node is inserted right after instantiation
-      this.child = null;
+      // the rendered content is inserted right after instantiation
+      this.content = null;
     }
 
     /*
-     * This is the only method making modifications to the component's child as
-     * Component always needs a child node to book it's place in the node tree.
+     * Sets the component content.
      */
-    replaceChild(child, node) {
-      opr.Toolkit.assert(
-          this.child === child, 'Replaced node is not a child of this node!');
+    setContent(node) {
       opr.Toolkit.assert(
           node.parentNode === this,
           'Specified node does not have a valid parent!');
-      child.parentNode = null;
+      this.content.parentNode = null;
       node.parentNode = this;
-      child.ref.replaceWith(node.ref);
-      this.child = node;
+      this.content.ref.replaceWith(node.ref);
+      this.content = node;
     }
 
     hasOwnMethod(method) {
@@ -136,22 +190,22 @@ limitations under the License.
     }
 
     get childElement() {
-      if (this.child) {
-        if (this.child.isElement() || this.child.isRoot()) {
-          return this.child;
+      if (this.content) {
+        if (this.content.isElement() || this.content.isRoot()) {
+          return this.content;
         }
-        if (this.child.isComponent()) {
-          return this.child.childElement;
+        if (this.content.isComponent()) {
+          return this.content.childElement;
         }
       }
       return null;
     }
 
     get placeholder() {
-      if (this.child.isComment()) {
-        return this.child;
+      if (this.content.isComment()) {
+        return this.content;
       }
-      return this.child.placeholder || null;
+      return this.content.placeholder || null;
     }
 
     render() {
@@ -190,7 +244,7 @@ limitations under the License.
     }
 
     get ref() {
-      return this.child.ref;
+      return this.content.ref;
     }
 
     isCompatible(node) {
@@ -198,14 +252,14 @@ limitations under the License.
     }
 
     attachDOM() {
-      if (this.child) {
-        this.child.attachDOM();
+      if (this.content) {
+        this.content.attachDOM();
       }
     }
 
     detachDOM() {
-      if (this.child) {
-        this.child.detachDOM();
+      if (this.content) {
+        this.content.detachDOM();
       }
     }
   }
@@ -238,7 +292,7 @@ limitations under the License.
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
-      this.child = opr.Toolkit.VirtualDOM.createFromDescription(
+      this.content = opr.Toolkit.VirtualDOM.createFromDescription(
           new opr.Toolkit.Description.CommentDescription(
               this.constructor.displayName));
       this.attachDOM();
@@ -384,6 +438,7 @@ limitations under the License.
     attachDOM() {
       if (this.constructor.elementName) {
         this.ref = this.createCustomElement();
+        this.attachChildren();
       } else {
         super.attachDOM();
       }
@@ -530,56 +585,7 @@ limitations under the License.
 
     constructor(description, parentNode) {
       super(description, parentNode);
-      if (description.children) {
-        this.children = description.children.map(
-            childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
-                childDescription, this));
-      }
       this.attachDOM();
-    }
-
-    insertChild(child, index) {
-      if (!this.children) {
-        this.children = [];
-      }
-      if (index === undefined) {
-        index = this.children.length;
-      }
-      const nextChild = this.children[index];
-      this.children.splice(index, 0, child);
-      this.ref.insertBefore(child.ref, nextChild && nextChild.ref || null);
-      child.parentNode = this;
-    }
-
-    replaceChild(child, node) {
-      const index = this.children.indexOf(child);
-      opr.Toolkit.assert(
-          index >= 0, 'Specified node is not a child of this element!');
-      this.children.splice(index, 1, node);
-      child.parentNode = null;
-      node.parentNode = this;
-      child.ref.replaceWith(node.ref);
-    }
-
-    moveChild(child, from, to) {
-      opr.Toolkit.assert(
-          this.children[from] === child,
-          'Specified node is not a child of this element!');
-      this.children.splice(from, 1);
-      this.children.splice(to, 0, child);
-      this.ref.removeChild(child.ref);
-      this.ref.insertBefore(child.ref, this.ref.children[to]);
-    }
-
-    removeChild(child) {
-      const index = this.children.indexOf(child);
-      opr.Toolkit.assert(
-          index >= 0, 'Specified node is not a child of this element!');
-      this.children.splice(index, 1);
-      if (!this.children.length) {
-        delete this.children;
-      }
-      this.ref.removeChild(child.ref);
     }
 
     get nodeType() {
@@ -592,11 +598,7 @@ limitations under the License.
 
     attachDOM() {
       this.ref = opr.Toolkit.Renderer.createElement(this.description);
-      if (this.children) {
-        for (const child of this.children) {
-          this.ref.appendChild(child.ref);
-        }
-      }
+      this.attachChildren();
     }
 
     detachDOM() {

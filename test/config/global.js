@@ -6,6 +6,15 @@ $global.createFromTemplate = (template, parent) =>
     opr.Toolkit.VirtualDOM.createFromDescription(
         opr.Toolkit.Template.describe(template), parent);
 
+$global.createRootInstance = RootClass => {
+  const {
+    Template,
+    VirtualDOM,
+  } = opr.Toolkit;
+  const description = Template.describe([RootClass]);
+  return VirtualDOM.createRoot(description, null, false);
+};
+
 $global.createRoot = (template = null, container) => {
   const {
     Template,
@@ -16,7 +25,7 @@ $global.createRoot = (template = null, container) => {
       return template;
     }
   }
-  const root = VirtualDOM.createRoot(Root);
+  const root = createRootInstance(Root);
   root.container = document.createElement('main');
   const node = VirtualDOM.createFromDescription(Template.describe(template));
   if (node) {

@@ -62,10 +62,16 @@ limitations under the License.
         return [];
       }
 
-      const description = opr.Toolkit.Template.describe([
+      const template = [
         this.root.constructor,
         nextState,
-      ]);
+      ];
+      if (this.root.description.children) {
+        template.push(
+            ...this.root.description.children.map(child => child.asTemplate));
+      }
+
+      const description = opr.Toolkit.Template.describe(template);
 
       this.componentPatches(this.root, description);
     }
@@ -84,14 +90,16 @@ limitations under the License.
         return;
       }
 
-      const childDescription = opr.Toolkit.Renderer.render(
+      const nodeDescription = opr.Toolkit.Renderer.render(
           component, description.props, description.childrenAsTemplates, true);
-      this.componentChildPatches(component.child, childDescription, component);
+      this.componentContentPatches(nodeDescription, component);
 
       this.addPatch(opr.Toolkit.Patch.updateNode(component, description));
     }
 
-    componentChildPatches(child, description, parent) {
+    componentContentPatches(description, parent) {
+
+      const content = parent.content;
 
       const {
         Diff,
@@ -99,33 +107,33 @@ limitations under the License.
         VirtualDOM,
       } = opr.Toolkit;
 
-      if (!child && !description) {
+      if (!content && !description) {
         return;
       }
 
       // insert
-      if (!child && description) {
+      if (!content && description) {
         throw new Error('Invalid component state!');
       }
 
       // remove
-      if (child && !description) {
+      if (content && !description) {
         throw new Error('Invalid component state!');
       }
 
       // update
-      if (child.description.isCompatible(description)) {
-        if (Diff.deepEqual(child.description, description)) {
+      if (content.description.isCompatible(description)) {
+        if (Diff.deepEqual(content.description, description)) {
           return;
         }
-        this.childPatches(child, description, parent);
+        this.childPatches(content, description, parent);
         return;
       }
 
       // replace
       const node =
           VirtualDOM.createFromDescription(description, parent, this.root);
-      this.addPatch(Patch.replaceChild(child, node, parent));
+      this.addPatch(Patch.setContent(node, parent));
     }
 
     /*
@@ -135,6 +143,7 @@ limitations under the License.
     childPatches(child, description) {
       if (child.isComponent()) {
         if (child.isRoot()) {
+          this.childrenPatches(child.children, description.children, child);
           return child.update(description);
         }
         return this.componentPatches(child, description);
@@ -177,7 +186,7 @@ limitations under the License.
       }
 
       if (element.children || description.children) {
-        this.elementChildrenPatches(
+        this.childrenPatches(
             element.children, description.children, element);
       }
       this.addPatch(opr.Toolkit.Patch.updateNode(element, description));
@@ -306,7 +315,7 @@ limitations under the License.
       }
     }
 
-    elementChildrenPatches(sourceNodes = [], targetDescriptions = [], parent) {
+    childrenPatches(sourceNodes = [], targetDescriptions = [], parent) {
 
       const {
         Patch,
