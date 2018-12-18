@@ -1,6 +1,6 @@
 {
   "name": "opera-toolkit",
-  "version": "0.58.3",
+  "version": "0.58.4",
   "description": "Opera Web UI Toolkit",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "coverage": "nyc mocha",
     "eslint": "eslint src/core/*.js test/*.spec.js",
     "release": "node build.js",
-    "update-opera": "node build.js && cp dist/toolkit-0.58.3.js $WORK_DIR",
+    "update-opera": "node build.js && cp dist/toolkit-0.58.4.js $WORK_DIR",
     "watch": "npm-watch update-opera"
   },
   "pre-commit": [
