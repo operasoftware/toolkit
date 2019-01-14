@@ -144,6 +144,7 @@ limitations under the License.
       if (child.isComponent()) {
         if (child.isRoot()) {
           this.childrenPatches(child.children, description.children, child);
+          this.addPatch(opr.Toolkit.Patch.updateNode(child, description));
           return child.update(description);
         }
         return this.componentPatches(child, description);

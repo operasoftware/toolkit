@@ -381,7 +381,7 @@ limitations under the License.
       return dispatcher;
     }
 
-    createPlugins(toolkit) {
+    createPlugins() {
       const plugins = new opr.Toolkit.Plugins(this);
       const inherited =
           this.parentNode ? this.parentNode.plugins : opr.Toolkit.plugins;
