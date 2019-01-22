@@ -25,11 +25,12 @@ limitations under the License.
       this.description = description;
       this.key = description.key;
       this.parentNode = parentNode;
-      if (description.children && this.nodeType !== Component.NodeType) {
-        this.children = description.children.map(
-            childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
-                childDescription, this));
-      }
+    }
+
+    createChildren() {
+      this.children = this.description.children.map(
+          childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
+              childDescription, this));
     }
 
     get parentElement() {
@@ -281,6 +282,9 @@ limitations under the License.
     constructor(description, parentNode = null) {
       super(description, parentNode, /*= attachDOM */ false);
       this.plugins = this.createPlugins();
+      if (description.children) {
+        this.createChildren();
+      }
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
       this.dispatch = command => {
@@ -585,6 +589,9 @@ limitations under the License.
 
     constructor(description, parentNode) {
       super(description, parentNode);
+      if (description.children) {
+        this.createChildren();
+      }
       this.attachDOM();
     }
 
