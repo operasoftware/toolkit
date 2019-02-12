@@ -43,7 +43,8 @@
           0;
       const x = event.offsetX / event.target.offsetWidth;
       const y = event.offsetY / event.target.offsetHeight;
-      this.dispatch(reducer.commands.create(service.createLogo(id, x, y)));
+      this.commands.dispatch(
+          reducer.commands.create(service.createLogo(id, x, y)));
     }
 
     onDoubleClick(event) {
