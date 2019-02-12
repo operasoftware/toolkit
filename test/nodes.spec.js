@@ -807,25 +807,10 @@ describe('Nodes', () => {
 
         // given
         const root = createRoot();
-        root.dispatch = sinon.spy();
-        root.state.reducer = () => {};
-        root.state.reducer.commands = {
-          someCommand: (key, value) => ({
-            key,
-            value,
-          }),
-        };
-        const commands = root.createCommandsDispatcher();
 
-        // when
-        commands.someCommand(commands.someCommand('foo', 'bar'));
-
-        // then
-        assert(root.dispatch.called);
-        assert(root.dispatch.calledWith({
-          key: 'foo',
-          value: 'bar',
-        }));
+        // assert
+        assert(root.commands);
+        assert(root.commands.dispatch);
       });
     });
   });

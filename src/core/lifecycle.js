@@ -19,7 +19,9 @@ limitations under the License.
 
     onComponentCreated(component) {
       if (component.hasOwnMethod('onCreated')) {
+        component.commands.queueIncoming();
         component.onCreated.call(component.sandbox);
+        component.commands.executeIncoming();
       }
       if (component.content) {
         this.onNodeCreated(component.content);
@@ -44,7 +46,9 @@ limitations under the License.
 
     onRootCreated(root) {
       if (root.hasOwnMethod('onCreated')) {
+        root.commands.queueIncoming();
         root.onCreated.call(root.sandbox);
+        root.commands.executeIncoming();
       }
     },
 
@@ -53,7 +57,9 @@ limitations under the License.
         this.onNodeAttached(component.content);
       }
       if (component.hasOwnMethod('onAttached')) {
+        component.commands.queueIncoming();
         component.onAttached.call(component.sandbox);
+        component.commands.executeIncoming();
       }
     },
 
@@ -93,20 +99,26 @@ limitations under the License.
 
     onComponentReceivedProps(component, nextProps = {}) {
       if (component.hasOwnMethod('onPropsReceived')) {
+        component.commands.queueIncoming();
         component.onPropsReceived.call(component.sandbox, nextProps);
+        component.commands.executeIncoming();
       }
     },
 
     onComponentUpdated(component, prevProps = {}) {
       if (component.hasOwnMethod('onUpdated')) {
+        component.commands.queueIncoming();
         component.onUpdated.call(component.sandbox, prevProps);
+        component.commands.executeIncoming();
       }
     },
 
     onComponentDestroyed(component) {
       component.destroy();
       if (component.hasOwnMethod('onDestroyed')) {
+        component.commands.ignoreIncoming();
         component.onDestroyed.call(component.sandbox);
+        component.commands.executeIncoming();
       }
       if (component.content) {
         this.onNodeDestroyed(component.content);
@@ -134,7 +146,9 @@ limitations under the License.
         this.onNodeDetached(component.content);
       }
       if (component.hasOwnMethod('onDetached')) {
+        component.commands.ignoreIncoming();
         component.onDetached.call(component.sandbox);
+        component.commands.executeIncoming();
       }
     },
 
