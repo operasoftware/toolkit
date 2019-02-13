@@ -15,6 +15,13 @@ $global.createRootInstance = RootClass => {
   return VirtualDOM.createRoot(description, null, false);
 };
 
+$global.createWebComponent = async WebComponent => {
+  const instance = createRootInstance(WebComponent);
+  const container = document.createElement('main');
+  await instance.init(container);
+  return instance;
+};
+
 $global.createRoot = (template = null, container) => {
   const {
     Template,

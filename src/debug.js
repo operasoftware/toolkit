@@ -27,6 +27,7 @@ window.loadToolkit = async configureLoader => {
     Browser: await loader.require('core/browser'),
     Description: await loader.require('core/description'),
     Diff: await loader.require('core/diff'),
+    Dispatcher: await loader.require('core/dispatcher'),
     Lifecycle: await loader.require('core/lifecycle'),
     Patch: await loader.require('core/patch'),
     Plugins: await loader.require('core/plugins'),

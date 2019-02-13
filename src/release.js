@@ -22,6 +22,7 @@ limitations under the License.
     Browser: loader.get('core/browser'),
     Description: loader.get('core/description'),
     Diff: loader.get('core/diff'),
+    Dispatcher: loader.get('core/dispatcher'),
     Lifecycle: loader.get('core/lifecycle'),
     Patch: loader.get('core/patch'),
     Plugins: loader.get('core/plugins'),

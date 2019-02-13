@@ -269,91 +269,6 @@ limitations under the License.
   const CUSTOM_ELEMENT = Symbol('custom-element');
   const COMMANDS = Symbol('commands');
 
-  const Mode = {
-    QUEUE: Symbol('queue-commands'),
-    EXECUTE: Symbol('execute-commands'),
-    IGNORE: Symbol('ignore-commands'),
-  };
-
-  // enhance with context assist tools supoort
-  class Dispatcher {
-
-    constructor(root) {
-      const state = root.state;
-      const commands = state.reducer.commands;
-
-      this.names = Object.keys(commands);
-      this.queue = [];
-
-      this.dispatch = command => {
-        const prevState = state.current;
-        const nextState = state.reducer(prevState, command);
-        opr.Toolkit.Renderer.update(root, prevState, nextState, command);
-      };
-
-      this.queueIncoming = () => {
-        this.mode = Mode.QUEUE;
-      }
-
-      this.executeIncoming = () => {
-        this.mode = Mode.EXECUTE;
-      };
-
-      this.ignoreIncoming = () => {
-        this.mode = Mode.IGNORE;
-      };
-
-      this.mode = Mode.EXECUTE;
-      let level = 0;
-      for (const name of this.names) {
-        this[name] = (...args) => {
-          if (this.mode === Mode.IGNORE) {
-            level = 0;
-            return;
-          }
-          if (this.mode === Mode.QUEUE) {
-            this.queue.push({
-              name,
-              args,
-            });
-            return;
-          }
-          const command = commands[name](...args);
-          this.mode = Mode.QUEUE;
-          this.dispatch(command);
-          this.mode = Mode.EXECUTE;
-          if (this.queue.length) {
-            const calls = [...this.queue];
-            setTimeout(() => {
-              level = level + 1;
-              if (level > 3) {
-                throw new Error(
-                    'Too many cycles updating state in lifecycle methods!');
-              }
-              for (const {name, args} of calls) {
-                this[name](...args);
-              }
-            });
-            this.queue.length = 0;
-          } else {
-            level = 0;
-          }
-        };
-      }
-
-
-      return new Proxy(this, {
-        get(target, property) {
-          return target[property];
-        },
-        set(object, property, value) {
-          object[property] = value;
-          return true;
-        },
-      });
-    }
- }
-
   class Root extends Component {
 
     static get NodeType() {
@@ -372,7 +287,7 @@ limitations under the License.
       }
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
-      this.commands = new Dispatcher(this);
+      this.commands = new opr.Toolkit.Dispatcher(this);
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });

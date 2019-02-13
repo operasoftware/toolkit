@@ -49,6 +49,7 @@ const Browser = normalizeModule('core/browser');
 const Nodes = normalizeModule('core/nodes');
 const Description = normalizeModule('core/description');
 const Diff = normalizeModule('core/diff');
+const Dispatcher = normalizeModule('core/dispatcher');
 const Lifecycle = normalizeModule('core/lifecycle');
 const Patch = normalizeModule('core/patch');
 const Plugins = normalizeModule('core/plugins');
@@ -66,9 +67,10 @@ const Toolkit = normalizeModule('core/toolkit');
 const Release = loadModule('release');
 
 let release = merge(
-                    Loader, Browser, Nodes, Diff, Lifecycle, Patch, Description,
-                    Plugins, Reconciler, Renderer, Sandbox, Service, State,
-                    Reducers, Template, VirtualDOM, utils, Toolkit, Release,
+                    Loader, Browser, Dispatcher, Nodes, Diff, Lifecycle, Patch,
+                    Description, Plugins, Reconciler, Renderer, Sandbox,
+                    Service, State, Reducers, Template, VirtualDOM, utils,
+                    Toolkit, Release,
               ).replace(/\n\n\n/g, '\n\n');
 
 while (release.includes(copyrightHeader)) {

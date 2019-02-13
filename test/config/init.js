@@ -24,6 +24,7 @@ global.sinon = require('sinon');
     Browser: require('../../src/core/browser.js'),
     Description: require('../../src/core/description.js'),
     Diff: require('../../src/core/diff.js'),
+    Dispatcher: require('../../src/core/dispatcher.js'),
     Lifecycle: require('../../src/core/lifecycle.js'),
     Patch: require('../../src/core/patch.js'),
     Plugins: require('../../src/core/plugins.js'),
