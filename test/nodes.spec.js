@@ -810,7 +810,6 @@ describe('Nodes', () => {
 
         // assert
         assert(root.commands);
-        assert(root.commands.dispatch);
       });
     });
   });
