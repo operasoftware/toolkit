@@ -282,9 +282,6 @@ limitations under the License.
     constructor(description, parentNode = null) {
       super(description, parentNode, /*= attachDOM */ false);
       this.plugins = this.createPlugins();
-      if (description.children) {
-        this.createChildren();
-      }
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
       this.commands = new opr.Toolkit.Dispatcher(this);
@@ -310,6 +307,11 @@ limitations under the License.
 
       await this.plugins.installAll();
       opr.Toolkit.track(this);
+
+      if (this.description.children) {
+        this.createChildren();
+        this.attachChildren();
+      }
 
       const state = await this.getInitialState.call(
           this.sandbox, this.description.props || {});
@@ -424,7 +426,6 @@ limitations under the License.
     attachDOM() {
       if (this.constructor.elementName) {
         this.ref = this.createCustomElement();
-        this.attachChildren();
       } else {
         super.attachDOM();
       }
