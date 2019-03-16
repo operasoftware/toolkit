@@ -346,7 +346,7 @@ limitations under the License.
         return;
       }
       const state = this.getUpdatedState(
-          description.props || {}, this.description.props || {});
+          description.props || {}, this.state.current || {});
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
