@@ -63,13 +63,21 @@ limitations under the License.
   const SET_STYLE_PROPERTY = {
     type: Symbol('set-style-property'),
     apply: function() {
-      this.target.ref.style[this.property] = this.value;
+      if (this.property.startsWith('--')) {
+        this.target.ref.style.setProperty(this.property, ` ${this.value}`);
+      } else {
+        this.target.ref.style[this.property] = this.value;
+      }
     },
   };
   const REMOVE_STYLE_PROPERTY = {
     type: Symbol('remove-style-property'),
     apply: function() {
-      this.target.ref.style[this.property] = null;
+      if (this.property.startsWith('--')) {
+        this.target.ref.style.removeProperty(this.property);
+      } else {
+        this.target.ref.style[this.property] = null;
+      }
     },
   };
 

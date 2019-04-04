@@ -45,7 +45,11 @@ limitations under the License.
       }
       if (description.style) {
         for (const [prop, value] of Object.entries(description.style)) {
-          element.style[prop] = value;
+          if (prop.startsWith('--')) {
+            element.style.setProperty(prop, ` ${value}`);
+          } else {
+            element.style[prop] = value;
+          }
         }
       }
       if (description.listeners) {

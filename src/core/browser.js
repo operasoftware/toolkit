@@ -1076,7 +1076,7 @@ limitations under the License.
     },
 
     isStyleSupported(key) {
-      return SUPPORTED_STYLES.includes(key);
+      return key.startsWith('--') || SUPPORTED_STYLES.includes(key);
     },
 
     isFilterSupported(key) {
