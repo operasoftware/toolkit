@@ -307,7 +307,6 @@ limitations under the License.
      */
     async init(container) {
       this.container = container;
-
       await this.plugins.installAll();
       opr.Toolkit.track(this);
 
@@ -348,7 +347,9 @@ limitations under the License.
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
-      this.commands.setState(this.normalize(state));
+      setTimeout(() => {
+        this.commands.setState(this.normalize(state));
+      });
     }
 
     /*
@@ -504,7 +505,7 @@ limitations under the License.
       this.state = null;
       this.plugins.destroy();
       this.plugins = null;
-      // this.commands = null;
+      this.commands.destroy();
       this.parentNode = null;
     }
 

@@ -118,7 +118,6 @@ limitations under the License.
       if (component.hasOwnMethod('onDestroyed')) {
         component.commands.ignoreIncoming();
         component.onDestroyed.call(component.sandbox);
-        component.commands.executeIncoming();
       }
       if (component.content) {
         this.onNodeDestroyed(component.content);
@@ -148,7 +147,6 @@ limitations under the License.
       if (component.hasOwnMethod('onDetached')) {
         component.commands.ignoreIncoming();
         component.onDetached.call(component.sandbox);
-        component.commands.executeIncoming();
       }
     },
 
