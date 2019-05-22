@@ -530,19 +530,52 @@ limitations under the License.
 
       const stylesheets = root.getStylesheets();
 
+      const onSuccess = () => {
+        root.init(shadow);
+      };
+
       if (stylesheets && stylesheets.length) {
 
-        const style = document.createElement('style');
-        style.textContent = cssImports(stylesheets);
+        const imports = cssImports(stylesheets);
 
-        style.onload = () => root.init(shadow);
-        style.onerror = () => {
+        const onError = () => {
           throw new Error(
               `Error loading stylesheets: ${stylesheets.join(', ')}`);
         };
-        shadow.appendChild(style);
+
+        if (opr.Toolkit.isDebug()) {
+
+          const style = document.createElement('style');
+          style.textContent = imports;
+          style.onload = onSuccess;
+          style.onerror = onError;
+          shadow.appendChild(style);
+
+        } else {
+
+          if (root.constructor.adoptedStyleSheet) {
+            root.constructor.adoptedStyleSheet.then(sheet => {
+              shadow.adoptedStyleSheets = [sheet];
+              onSuccess();
+            });
+          } else {
+            let onSheetConstructed;
+            root.constructor.adoptedStyleSheet = new Promise(resolve => {
+              onSheetConstructed = resolve;
+            })
+            const sheet = new CSSStyleSheet();
+            sheet.replace(imports)
+                .then(sheet => {
+                  shadow.adoptedStyleSheets = [sheet];
+                  onSheetConstructed(sheet);
+                  onSuccess();
+                })
+                .catch(onError);
+          }
+        }
+
       } else {
-        root.init(shadow);
+        onSuccess();
       }
     }
 
