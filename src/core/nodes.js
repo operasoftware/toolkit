@@ -561,8 +561,8 @@ limitations under the License.
             root.constructor.adoptedStyleSheet = new Promise(resolve => {
               onSheetConstructed = resolve;
             })
-            const sheet = new CSSStyleSheet();
-            sheet.replace(imports)
+            root.sheet = new CSSStyleSheet();
+            root.sheet.replace(imports)
                 .then(sheet => {
                   shadow.adoptedStyleSheets = [sheet];
                   onSheetConstructed(sheet);
