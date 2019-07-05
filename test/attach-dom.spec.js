@@ -115,7 +115,7 @@ describe('Virtual Element => Attach DOM', () => {
       assert.equal(element.description.name, 'div');
       assert.equal(element.children, undefined);
       assert.equal(element.ref.tagName, 'DIV');
-      assert.deepEqual(element.ref.children, []);
+      assert.equal(element.ref.children.length, 0);
     });
 
     it('creates two nested elements', () => {

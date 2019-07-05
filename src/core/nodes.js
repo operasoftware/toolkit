@@ -347,9 +347,7 @@ limitations under the License.
       if (state.constructor !== Object) {
         throw new Error('Updated state must be a plain object!');
       }
-      setTimeout(() => {
-        this.commands.setState(this.normalize(state));
-      });
+      this.commands.setState(this.normalize(state));
     }
 
     /*
