@@ -223,23 +223,6 @@ limitations under the License.
       }
     }
 
-    broadcast(name, data) {
-      this.container.dispatchEvent(new CustomEvent(name, {
-        detail: data,
-        bubbles: true,
-        composed: true,
-      }));
-    }
-
-    preventDefault(event) {
-      event.preventDefault();
-    }
-
-    stopEvent(event) {
-      event.stopImmediatePropagation();
-      event.preventDefault();
-    }
-
     get nodeType() {
       return Component.NodeType;
     }

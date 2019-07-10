@@ -365,34 +365,6 @@ describe('Nodes', () => {
       });
     });
 
-    describe('broadcast', () => {
-
-      it('dispatches custom composed event', () => {
-
-        // given
-        const dispatchEvent = sinon.spy();
-        const container = document.createElement('container');
-        container.dispatchEvent = dispatchEvent;
-
-        const root = createRootInstance(Root);
-        root.container = container;
-        const element = createElement('section', root);
-        root.content = element;
-        const component = createComponent();
-        element.insertChild(component);
-        const eventName = 'event-name';
-        const data = {view: 'speeddial'};
-
-        // when
-        component.broadcast(eventName, data);
-
-        // then
-        assert(dispatchEvent.called);
-        assert.equal(dispatchEvent.firstCall.args[0].type, 'event-name');
-        assert.deepEqual(dispatchEvent.firstCall.args[0].detail, data);
-      });
-    });
-
     describe('register service', () => {
 
       it('stores a reference to the clean-up task', () => {

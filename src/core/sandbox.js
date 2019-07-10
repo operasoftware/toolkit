@@ -24,11 +24,8 @@ limitations under the License.
     'container',
     'dispatch',
     'elementName',
-    'preventDefault',
-    'stopEvent',
   ];
   const methods = [
-    'broadcast',
     'connectTo',
   ];
   const pluginMethods = [];
