@@ -111,7 +111,7 @@ limitations under the License.
     }
 
     isRoot() {
-      return this instanceof Root;
+      return this instanceof WebComponent;
     }
 
     isComponent() {
@@ -252,7 +252,7 @@ limitations under the License.
   const CUSTOM_ELEMENT = Symbol('custom-element');
   const COMMANDS = Symbol('commands');
 
-  class Root extends Component {
+  class WebComponent extends Component {
 
     static get NodeType() {
       return 'root';
@@ -491,7 +491,7 @@ limitations under the License.
     }
 
     get nodeType() {
-      return Root.NodeType;
+      return WebComponent.NodeType;
     }
   }
 
@@ -668,7 +668,8 @@ limitations under the License.
   const CoreTypes = {
     VirtualNode,
     Component,
-    Root,
+    WebComponent,
+    Root: WebComponent,
     VirtualElement,
     Comment,
     Text,
