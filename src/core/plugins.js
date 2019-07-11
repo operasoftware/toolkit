@@ -47,8 +47,8 @@ limitations under the License.
         this.register = () => manifest.register(sandbox);
       }
       if (typeof manifest.install === 'function') {
-        this.install = async root => {
-          const uninstall = await manifest.install(root);
+        this.install = root => {
+          const uninstall = manifest.install(root);
           opr.Toolkit.assert(
               typeof uninstall === 'function',
               'The plugin installation must return the uninstall function!');
@@ -164,15 +164,15 @@ limitations under the License.
       this.registry.add(plugin);
     }
 
-    async installAll() {
+    installAll() {
       for (const plugin of this.registry) {
-        await this.install(plugin);
+        this.install(plugin);
       }
     }
 
-    async install(plugin) {
+    install(plugin) {
       if (this.root && plugin.install) {
-        const uninstall = await plugin.install(this.root);
+        const uninstall = plugin.install(this.root);
         this.uninstalls.set(plugin.name, uninstall);
       }
     }
@@ -181,10 +181,10 @@ limitations under the License.
      * Removes the plugin from the registry and invokes it's uninstall method
      * if present.
      */
-    async uninstall(name) {
+    uninstall(name) {
       const uninstall = this.uninstalls.get(name);
       if (uninstall) {
-        await uninstall();
+        uninstall();
       }
     }
 
@@ -193,7 +193,7 @@ limitations under the License.
      */
     async destroy() {
       for (const plugin of this.registry) {
-        await this.uninstall(plugin.name);
+        this.uninstall(plugin.name);
       }
       this.root = null;
     }

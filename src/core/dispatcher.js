@@ -96,6 +96,7 @@ limitations under the License.
     destroy() {
       this.execute = opr.Toolkit.noop;
     }
- }
+  }
+
   module.exports = Dispatcher;
 }

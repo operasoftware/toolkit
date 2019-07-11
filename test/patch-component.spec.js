@@ -49,7 +49,7 @@ describe('Patch component => apply', () => {
     // given
     const root = createRootInstance(Root);
     const container = document.createElement('section');
-    root.container = container;
+    root.shadow = container;
 
     // when
     Patch.initRootComponent(root).apply();

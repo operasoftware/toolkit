@@ -277,6 +277,7 @@ limitations under the License.
       this.content = opr.Toolkit.VirtualDOM.createFromDescription(
           new opr.Toolkit.Description.CommentDescription(
               this.constructor.displayName));
+      this.shadow = null;
       this.attachDOM();
     }
 
@@ -288,9 +289,7 @@ limitations under the License.
     /*
      * Triggers the initial rendering of the component in given container.
      */
-    async init(container) {
-      this.container = container;
-      await this.plugins.installAll();
+    async init() {
       opr.Toolkit.track(this);
 
       const state = await this.getInitialState.call(
@@ -398,7 +397,8 @@ limitations under the License.
         container.appendChild(this.ref);
         await this.ready;
       } else {
-        await this.init(container);
+        this.container = container;
+        await this.init();
       }
       return this;
     }
@@ -505,14 +505,14 @@ limitations under the License.
       super();
       this.$root = root;
 
-      const shadow = this.attachShadow({
+      root.shadow = this.attachShadow({
         mode: 'open',
       });
 
       const stylesheets = root.getStylesheets();
 
       const onSuccess = () => {
-        root.init(shadow);
+        root.init();
       };
 
       if (stylesheets && stylesheets.length) {
@@ -530,13 +530,13 @@ limitations under the License.
           style.textContent = imports;
           style.onload = onSuccess;
           style.onerror = onError;
-          shadow.appendChild(style);
+          root.shadow.appendChild(style);
 
         } else {
 
           if (root.constructor.adoptedStyleSheet) {
             root.constructor.adoptedStyleSheet.then(sheet => {
-              shadow.adoptedStyleSheets = [sheet];
+              root.shadow.adoptedStyleSheets = [sheet];
               onSuccess();
             });
           } else {
@@ -547,7 +547,7 @@ limitations under the License.
             root.sheet = new CSSStyleSheet();
             root.sheet.replace(imports)
                 .then(sheet => {
-                  shadow.adoptedStyleSheets = [sheet];
+                  root.shadow.adoptedStyleSheets = [sheet];
                   onSheetConstructed(sheet);
                   onSuccess();
                 })

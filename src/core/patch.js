@@ -18,7 +18,9 @@ limitations under the License.
   const INIT_ROOT_COMPONENT = {
     type: Symbol('init-root-component'),
     apply: function() {
-      this.root.container.appendChild(this.root.content.ref);
+      const container =
+          this.root.container ? this.root.container : this.root.shadow;
+      container.appendChild(this.root.content.ref);
     },
   };
   const UPDATE_NODE = {
