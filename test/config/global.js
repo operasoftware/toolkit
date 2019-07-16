@@ -2,6 +2,8 @@ const isBrowser = typeof window === 'object';
 
 const $global = isBrowser ? window : global;
 
+const container = document.createElement('main');
+
 $global.createFromTemplate = (template, parent) =>
     opr.Toolkit.VirtualDOM.createFromDescription(
         opr.Toolkit.Template.describe(template), parent);
@@ -12,7 +14,9 @@ $global.createRootInstance = RootClass => {
     VirtualDOM,
   } = opr.Toolkit;
   const description = Template.describe([RootClass]);
-  return VirtualDOM.createRoot(description, null, false);
+  const root = VirtualDOM.createRoot(description, null, false);
+  root.container = container;
+  return root;
 };
 
 $global.createWebComponent = async WebComponent => {
