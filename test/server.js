@@ -8,6 +8,8 @@ const PORT = 3033;
 app.set('port', PORT);
 
 app.use('/', express.static('test'));
+app.use('/functional', express.static('test/functional'));
+app.use('/introspector', express.static('test/web/introspector'));
 app.use('/config', express.static('test/config'));
 app.use('/src', express.static('src'));
 app.use('/core', express.static('src/core'));
