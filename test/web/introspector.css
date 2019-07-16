@@ -1,0 +1,48 @@
+* {
+  -webkit-font-smoothing: antialiased;
+  font: menu;
+}
+
+main {
+  color: darkgreen;
+  font-size: 21px;
+  font-weight: 550;
+  letter-spacing: 0.5px;
+}
+
+#mocha {
+  margin-top: 20px;
+}
+
+#mocha .test.pass::before {
+  font-size: 17px;
+  font-weight: bold;
+  padding-top: 3px;
+}
+
+#mocha .test.fail::before {
+  font-size: 15px;
+  padding-top: 3px;
+}
+
+#mocha h1 a {
+  font-size: 16px;
+  font-weight: 550;
+  letter-spacing: 0.4px;
+}
+
+#mocha-stats a,
+#mocha-stats li {
+  font-size: 13px;
+}
+
+#mocha-stats em {
+  font-size: 17px;
+  font-weight: 550;
+  padding: 0 8px 0 4px;
+}
+
+#mocha h2 {
+  font-size: 13px;
+  padding-top: 4px;
+}
