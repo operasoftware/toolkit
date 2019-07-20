@@ -70,9 +70,7 @@ limitations under the License.
                                  ComponentClass.displayName
                                }" does not define custom element name!`);
         }
-        const root = new ComponentClass(description, parentNode);
-        root.plugins.installAll();
-        return root;
+        return new ComponentClass(description, parentNode);
       } catch (error) {
         console.error('Error rendering root component:', description);
         throw error;

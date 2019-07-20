@@ -264,21 +264,22 @@ limitations under the License.
 
     constructor(description, parentNode = null) {
       super(description, parentNode, /*= attachDOM */ false);
-      this.plugins = this.createPlugins();
-      if (description.children) {
-        this.createChildren();
-      }
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
       this.commands = new opr.Toolkit.Dispatcher(this);
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
-      this.content = opr.Toolkit.VirtualDOM.createFromDescription(
-          new opr.Toolkit.Description.CommentDescription(
-              this.constructor.displayName));
+      this.plugins = this.createPlugins();
+      this.content = this.createPlaceholder();
       this.shadow = null;
       this.attachDOM();
+    }
+
+    createPlaceholder() {
+      return opr.Toolkit.VirtualDOM.createFromDescription(
+          new opr.Toolkit.Description.CommentDescription(
+              this.constructor.displayName));
     }
 
     normalize(props) {
@@ -305,7 +306,7 @@ limitations under the License.
         setTimeout(() => this.update(description));
       }
       this.isInitialized = true;
-      this.markAsReady(this);
+      this.markAsReady();
     }
 
     /*
@@ -406,8 +407,13 @@ limitations under the License.
     attachDOM() {
       if (this.constructor.elementName) {
         this.ref = this.createCustomElement();
-        this.attachChildren();
+        this.plugins.installAll();
+        if (this.description.children) {
+          this.createChildren();
+          this.attachChildren();
+        }
       } else {
+        this.plugins.installAll();
         super.attachDOM();
       }
     }
