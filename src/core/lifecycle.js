@@ -50,6 +50,11 @@ limitations under the License.
         root.onCreated.call(root.sandbox);
         root.commands.executeIncoming();
       }
+      if (root.children) {
+        for (const child of root.children) {
+          this.onNodeCreated(child);
+        }
+      }
     },
 
     onComponentAttached(component) {
@@ -92,6 +97,11 @@ limitations under the License.
     },
 
     onRootAttached(root) {
+      if (root.children) {
+        for (const child of root.children) {
+          this.onNodeAttached(child);
+        }
+      }
       if (root.hasOwnMethod('onAttached')) {
         root.onAttached.call(root.sandbox);
       }
