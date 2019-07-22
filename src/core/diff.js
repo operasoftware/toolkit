@@ -126,13 +126,12 @@ limitations under the License.
         if (Diff.deepEqual(content.description, description)) {
           return;
         }
-        this.childPatches(content, description, parent);
+        this.childPatches(content, description);
         return;
       }
 
       // replace
-      const node =
-          VirtualDOM.createFromDescription(description, parent, this.root);
+      const node = VirtualDOM.createFromDescription(description, parent);
       this.addPatch(Patch.setContent(node, parent));
     }
 
@@ -329,8 +328,7 @@ limitations under the License.
       const createdNodesMap = new Map();
 
       const createNode = (description, key) => {
-        const node =
-            VirtualDOM.createFromDescription(description, parent, this.root);
+        const node = VirtualDOM.createFromDescription(description, parent);
         created.push(node);
         createdNodesMap.set(key, node);
         return node;
@@ -404,10 +402,10 @@ limitations under the License.
         if (opr.Toolkit.Diff.deepEqual(child.description, description)) {
           return;
         }
-        this.childPatches(child, description, parent);
+        this.childPatches(child, description);
       } else {
-        const node = opr.Toolkit.VirtualDOM.createFromDescription(
-            description, parent, this.root);
+        const node =
+            opr.Toolkit.VirtualDOM.createFromDescription(description, parent);
         this.addPatch(opr.Toolkit.Patch.replaceChild(child, node, parent));
       }
     }
