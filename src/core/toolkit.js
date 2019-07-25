@@ -176,18 +176,18 @@ limitations under the License.
           RootClass,
           props,
         ]);
-        if (RootClass.prototype instanceof opr.Toolkit.Root) {
-          return opr.Toolkit.VirtualDOM.createRoot(description, null);
+        if (RootClass.prototype instanceof opr.Toolkit.WebComponent) {
+          return opr.Toolkit.VirtualDOM.createWebComponent(description, null);
         }
         console.error(
-            'Specified class is not a root component: ', ComponentClass);
-        throw new Error('Invalid root class!');
+            'Specified class is not a WebComponent: ', ComponentClass);
+        throw new Error('Invalid Web Component class!');
       }
       const description = opr.Toolkit.Template.describe([
         component,
         props,
       ]);
-      return opr.Toolkit.VirtualDOM.createRoot(description, null);
+      return opr.Toolkit.VirtualDOM.createWebComponent(description, null);
     }
 
     async render(component, container, props = {}) {

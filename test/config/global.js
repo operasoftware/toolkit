@@ -14,7 +14,7 @@ $global.createRootInstance = RootClass => {
     VirtualDOM,
   } = opr.Toolkit;
   const description = Template.describe([RootClass]);
-  const root = VirtualDOM.createRoot(description, null, false);
+  const root = VirtualDOM.createWebComponent(description, null, null, false);
   root.container = container;
   return root;
 };

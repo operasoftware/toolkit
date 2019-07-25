@@ -21,16 +21,21 @@ limitations under the License.
    */
   class VirtualNode {
 
-    constructor(description, parentNode = null) {
+    constructor(description, parentNode = null, context = null) {
       this.description = description;
       this.key = description.key;
       this.parentNode = parentNode;
+      this.context = context;
     }
 
     createChildren() {
       this.children = this.description.children.map(
-          childDescription => opr.Toolkit.VirtualDOM.createFromDescription(
-              childDescription, this));
+          childDescription => this.createChild(childDescription));
+    }
+
+    createChild(description) {
+      return opr.Toolkit.VirtualDOM.createFromDescription(
+          description, this, this.context);
     }
 
     get parentElement() {
@@ -149,8 +154,8 @@ limitations under the License.
       return this.name;
     }
 
-    constructor(description, parentNode, attachDOM = true) {
-      super(description, parentNode);
+    constructor(description, parent, context, attachDOM = true) {
+      super(description, parent, context);
       this.sandbox = opr.Toolkit.Sandbox.create(this);
       this.cleanUpTasks = [];
       this.isInitialized = attachDOM;
@@ -214,7 +219,7 @@ limitations under the License.
     }
 
     get commands() {
-      return this.rootNode.commands;
+      return this.context ? this.context.commands : this.rootNode.commands;
     }
 
     destroy() {
@@ -262,8 +267,8 @@ limitations under the License.
       return [];
     }
 
-    constructor(description, parentNode = null) {
-      super(description, parentNode, /*= attachDOM */ false);
+    constructor(description, parent = null, context = null) {
+      super(description, parent, context, /*= attachDOM */ false);
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
       this.commands = new opr.Toolkit.Dispatcher(this);
@@ -594,8 +599,8 @@ limitations under the License.
       return 'element';
     }
 
-    constructor(description, parentNode) {
-      super(description, parentNode);
+    constructor(description, parent, context) {
+      super(description, parent, context);
       if (description.children) {
         this.createChildren();
       }

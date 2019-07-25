@@ -24,7 +24,7 @@ limitations under the License.
     constructor(root, currentState, nextState) {
       this.root = root;
       this.patches = [];
-      this.rootPatches(currentState, nextState);
+      this.calculate(currentState, nextState);
     }
 
     /*
@@ -52,7 +52,7 @@ limitations under the License.
      * Calculates and returns all patches needed for transformation
      * of the rendered DOM fragment from one state to another.
      */
-    rootPatches(currentState, nextState) {
+    calculate(currentState, nextState) {
 
       if (!currentState) {
         this.addPatch(opr.Toolkit.Patch.initRootComponent(this.root));
@@ -131,7 +131,8 @@ limitations under the License.
       }
 
       // replace
-      const node = VirtualDOM.createFromDescription(description, parent);
+      const node =
+          VirtualDOM.createFromDescription(description, parent, this.root);
       this.addPatch(Patch.setContent(node, parent));
     }
 
@@ -328,7 +329,8 @@ limitations under the License.
       const createdNodesMap = new Map();
 
       const createNode = (description, key) => {
-        const node = VirtualDOM.createFromDescription(description, parent);
+        const node =
+            VirtualDOM.createFromDescription(description, parent, this.root);
         created.push(node);
         createdNodesMap.set(key, node);
         return node;
@@ -404,8 +406,8 @@ limitations under the License.
         }
         this.childPatches(child, description);
       } else {
-        const node =
-            opr.Toolkit.VirtualDOM.createFromDescription(description, parent);
+        const node = opr.Toolkit.VirtualDOM.createFromDescription(
+            description, parent, this.root);
         this.addPatch(opr.Toolkit.Patch.replaceChild(child, node, parent));
       }
     }
