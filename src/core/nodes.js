@@ -271,7 +271,7 @@ limitations under the License.
       super(description, parent, context, /*= attachDOM */ false);
       this.subroots = new Set();
       this.state = opr.Toolkit.Reducers.create(this);
-      this.commands = new opr.Toolkit.Dispatcher(this);
+      this.commands = opr.Toolkit.Dispatcher.create(this);
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
@@ -281,15 +281,24 @@ limitations under the License.
       this.attachDOM();
     }
 
+    attachDOM() {
+      if (this.constructor.elementName) {
+        this.ref = opr.Toolkit.Renderer.createCustomElement(this);
+        this.plugins.installAll();
+        if (this.description.children) {
+          this.createChildren();
+          this.attachChildren();
+        }
+      } else {
+        this.plugins.installAll();
+        super.attachDOM();
+      }
+    }
+
     createPlaceholder() {
       return opr.Toolkit.VirtualDOM.createFromDescription(
           new opr.Toolkit.Description.CommentDescription(
               this.constructor.displayName));
-    }
-
-    normalize(props) {
-      return opr.Toolkit.Template.normalizeComponentProps(
-          props, this.constructor);
     }
 
     /*
@@ -300,11 +309,8 @@ limitations under the License.
 
       const state = await this.getInitialState.call(
           this.sandbox, this.description.props || {});
-      if (state.constructor !== Object) {
-        throw new Error('Initial state must be a plain object!');
-      }
+      this.setState(state);
 
-      this.commands.setState(this.normalize(state));
       if (this.pendingDescription) {
         const description = this.pendingDescription;
         delete this.pendingDescription;
@@ -312,14 +318,6 @@ limitations under the License.
       }
       this.isInitialized = true;
       this.markAsReady();
-    }
-
-    /*
-     * The default implementation delegating the calculation of initial state
-     * to the state manager.
-     */
-    async getInitialState(props) {
-      return this.state.getInitialState(props);
     }
 
     /*
@@ -332,10 +330,26 @@ limitations under the License.
       }
       const state = this.getUpdatedState(
           description.props || {}, this.state.current || {});
+      this.setState(state);
+    }
+
+    /**
+     * Sets the normalized state.
+     */
+    setState(state) {
       if (state.constructor !== Object) {
-        throw new Error('Updated state must be a plain object!');
+        throw new Error('Web Component state must be a plain object!');
       }
-      this.commands.setState(this.normalize(state));
+      this.commands.setState(
+        opr.Toolkit.Template.normalizeComponentProps(state, this.constructor));
+    }
+
+    /*
+     * The default implementation delegating the calculation of initial state
+     * to the state manager.
+     */
+    async getInitialState(props) {
+      return this.state.getInitialState(props);
     }
 
     /*
@@ -364,39 +378,6 @@ limitations under the License.
       return plugins;
     }
 
-    addPluginsAPI(element) {
-      const {
-        Plugin,
-      } = opr.Toolkit.Plugins;
-      element.install = (plugin, cascade = true) => {
-        const installTo = root => {
-          if (plugin instanceof Plugin) {
-            root.plugins.use(plugin);
-          } else {
-            root.plugins.install(plugin);
-          }
-          if (cascade) {
-            for (const subroot of root.subroots) {
-              installTo(subroot);
-            }
-          }
-        };
-        installTo(this);
-      };
-      element.uninstall = (plugin, cascade = true) => {
-        const name = typeof plugin === 'string' ? plugin : plugin.name;
-        const uninstallFrom = root => {
-          root.plugins.uninstall(name);
-          if (cascade) {
-            for (const subroot of root.subroots) {
-              uninstallFrom(subroot);
-            }
-          }
-        };
-        uninstallFrom(this);
-      };
-    }
-
     async mount(container) {
       if (this.constructor.elementName) {
         // triggers this.init() from element's connected callback
@@ -407,36 +388,6 @@ limitations under the License.
         await this.init();
       }
       return this;
-    }
-
-    attachDOM() {
-      if (this.constructor.elementName) {
-        this.ref = this.createCustomElement();
-        this.plugins.installAll();
-        if (this.description.children) {
-          this.createChildren();
-          this.attachChildren();
-        }
-      } else {
-        this.plugins.installAll();
-        super.attachDOM();
-      }
-    }
-
-    createCustomElement(toolkit) {
-      const defineCustomElementClass = RootClass => {
-        let ElementClass = customElements.get(RootClass.elementName);
-        if (!ElementClass) {
-          ElementClass = class RootElement extends ComponentElement {};
-          customElements.define(RootClass.elementName, ElementClass);
-          RootClass.prototype.elementClass = ElementClass;
-        }
-        return ElementClass;
-      };
-      const ElementClass = defineCustomElementClass(this.constructor);
-      const customElement = new ElementClass(this);
-      this.addPluginsAPI(customElement);
-      return customElement;
     }
 
     getStylesheets() {
@@ -503,93 +454,6 @@ limitations under the License.
 
     get nodeType() {
       return WebComponent.NodeType;
-    }
-  }
-
-  const cssImports = paths =>
-      paths.map(loader.path).map(path => `@import url(${path});`).join('\n');
-
-  class ComponentElement extends HTMLElement {
-
-    constructor(root) {
-
-      super();
-      this.$root = root;
-
-      root.shadow = this.attachShadow({
-        mode: 'open',
-      });
-
-      const stylesheets = root.getStylesheets();
-
-      const onSuccess = () => {
-        root.init();
-      };
-
-      if (stylesheets && stylesheets.length) {
-
-        const imports = cssImports(stylesheets);
-
-        const onError = () => {
-          throw new Error(
-              `Error loading stylesheets: ${stylesheets.join(', ')}`);
-        };
-
-        if (opr.Toolkit.isDebug()) {
-
-          const style = document.createElement('style');
-          style.textContent = imports;
-          style.onload = onSuccess;
-          style.onerror = onError;
-          root.shadow.appendChild(style);
-
-        } else {
-
-          if (root.constructor.adoptedStyleSheet) {
-            root.constructor.adoptedStyleSheet.then(sheet => {
-              root.shadow.adoptedStyleSheets = [sheet];
-              onSuccess();
-            });
-          } else {
-            let onSheetConstructed;
-            root.constructor.adoptedStyleSheet = new Promise(resolve => {
-              onSheetConstructed = resolve;
-            })
-            root.sheet = new CSSStyleSheet();
-            root.sheet.replace(imports)
-                .then(sheet => {
-                  root.shadow.adoptedStyleSheets = [sheet];
-                  onSheetConstructed(sheet);
-                  onSuccess();
-                })
-                .catch(onError);
-          }
-        }
-
-      } else {
-        onSuccess();
-      }
-    }
-
-    get isComponentElement() {
-      return true;
-    }
-
-    connectedCallback() {
-      clearTimeout(this.pendingDestruction);
-    }
-
-    disconnectedCallback() {
-      this.pendingDestruction = setTimeout(() => this.destroy(), 50);
-    }
-
-    destroy() {
-      const Lifecycle = opr.Toolkit.Lifecycle;
-      const root = this.$root;
-      Lifecycle.onComponentDestroyed(root);
-      Lifecycle.onComponentDetached(root);
-      root.ref = null;
-      this.$root = null;
     }
   }
 

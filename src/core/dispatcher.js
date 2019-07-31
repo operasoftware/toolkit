@@ -24,6 +24,10 @@ limitations under the License.
 
   class Dispatcher {
 
+    static create(root) {
+      return new Dispatcher(root);
+    }
+
     constructor(root) {
       const state = root.state;
       const commands = state.reducer.commands;
