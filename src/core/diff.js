@@ -74,6 +74,10 @@ limitations under the License.
       const description = opr.Toolkit.Template.describe(template);
 
       this.componentPatches(this.root, description);
+      if (this.root.description.attrs || description.attrs) {
+        this.attributePatches(
+            this.root.description.attrs, description.attrs, this.root, true);
+      }
     }
 
     /**
@@ -222,6 +226,7 @@ limitations under the License.
     }
 
     attributePatches(current = {}, next = {}, target = null, isCustom = false) {
+
       const Patch = opr.Toolkit.Patch;
 
       const attrs = Object.keys(current);

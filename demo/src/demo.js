@@ -2,7 +2,7 @@
   let reducer;
   let service;
 
-  const Bubble = loader.symbol('demo/logo');
+  const Logo = loader.symbol('demo/logo');
 
   class Demo extends opr.Toolkit.Root {
 
@@ -71,7 +71,16 @@
                      top: [props.y * 100, '%'],
                    },
                  },
-                 [Bubble, props],
+                 [
+                   Logo,
+                   {
+                     ...props,
+                     attrs: {
+                       lastModified: Date.now(),
+                       id: props.id,
+                     },
+                   },
+                 ],
       ]),
       ];
     }

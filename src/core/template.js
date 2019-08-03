@@ -127,6 +127,12 @@ limitations under the License.
         if (isDefined(props.key)) {
           description.key = String(props.key);
         }
+        if (props.attrs) {
+          const attrs = this.getCustomAttributes(props.attrs, true);
+          if (attrs) {
+            description.attrs = attrs;
+          }
+        }
       }
     },
 
@@ -359,7 +365,8 @@ limitations under the License.
         entries = entries.filter(([key, value]) => whitelist.includes(key));
       }
       for (const [key, value] of entries) {
-        const stringValue = this.getAttributeValue(value, false);
+        const stringValue =
+            this.getAttributeValue(value, /*= allowEmpty */ false);
         if (isDefined(stringValue)) {
           composite[key] = stringValue;
         }
@@ -421,15 +428,16 @@ limitations under the License.
       return isNotEmpty(object) ? object : null;
     },
 
-    getCustomAttributes(object) {
+    getCustomAttributes(object, forComponent) {
       console.assert(
           object.constructor === Object,
           'Expecting object for custom attributes!');
       const attrs = {};
       for (const [key, value] of Object.entries(object)) {
-        const attr = this.getAttributeValue(value, true);
+        const attr = this.getAttributeValue(value, /*= allowEmpty */ true);
         if (isDefined(attr)) {
-          attrs[key] = attr;
+          const name = forComponent ? opr.Toolkit.utils.lowerDash(key) : key;
+          attrs[name] = attr;
         }
       }
       return isNotEmpty(attrs) ? attrs : null;

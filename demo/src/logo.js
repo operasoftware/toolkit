@@ -11,8 +11,9 @@
       return ['styles/logo.css'];
     }
 
-    async getInitialState() {
+    async getInitialState(props) {
       return {
+        ...props,
         channel: 'developer',
       };
     }

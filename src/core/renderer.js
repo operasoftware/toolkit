@@ -84,9 +84,14 @@ limitations under the License.
         return ElementClass;
       };
       const ElementClass = defineCustomElementClass(root.constructor);
-      const customElement = new ElementClass(root);
-      addPluginsAPI(customElement);
-      return customElement;
+      const element = new ElementClass(root);
+      if (root.description.attrs) {
+        const attrs = Object.entries(root.description.attrs);
+        for (const [name, value] of attrs) {
+          element.setAttribute(name, value);
+        }
+      }
+      return element;
     },
 
     /*
