@@ -618,6 +618,7 @@ limitations under the License.
         'map',
         'meta',
         'param',
+        'slot',
       ],
     ],
     [
