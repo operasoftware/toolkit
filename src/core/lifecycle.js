@@ -132,6 +132,9 @@ limitations under the License.
       if (component.content) {
         this.onNodeDestroyed(component.content);
       }
+      if (component.isRoot()) {
+        this.onElementDestroyed(component);
+      }
     },
 
     onElementDestroyed(element) {
@@ -151,6 +154,9 @@ limitations under the License.
     },
 
     onComponentDetached(component) {
+      if (component.isRoot()) {
+        this.onElementDetached(component);
+      }
       if (component.content) {
         this.onNodeDetached(component.content);
       }
