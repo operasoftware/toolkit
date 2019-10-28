@@ -56,6 +56,9 @@ limitations under the License.
           if (property === 'children') {
             return state.children || [];
           }
+          if (property === 'host') {
+            return target.isRoot() ? target.shadow.host : null;
+          }
           if (property === 'ref') {
             if (target.isRoot()) {
               // returns rendered node instead of custom element for usage of
