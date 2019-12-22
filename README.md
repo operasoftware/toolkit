@@ -7,7 +7,7 @@ It allows to build the user interface natively by utilising the engine's latest 
 
 All JavaScript frameworks are intended for rendering Web pages which work across a variety of browsers with diversified support for latest HTML5+ features. That results in compromises and requires a number of techniques to make this possible - transpilation, polyfills, external live-reload servers to name a few.
 
-A solution dedicated for a single browser asks for a different approach, an attempt to use as many tools provided by the browser itself as possible. Support for async/await, object spread and other syntactic sugar allows to write nifty code without any need of transpilation. Native templating system - Bragi - makes possible to describe rendered DOM elements and components with arrays and objects. Single execution environment pushes away the worries of browser compatibility issues. DevTools workspaces provide built-in live reload system, neither external tools nor constant builds and browser restarts are necessary.
+A solution dedicated for a single browser asks for a different approach, an attempt to use as many tools provided by the browser itself as possible. Support for async/await, object spread and other syntactic sugar allows to write nifty code without any need of transpilation. Native templating system makes possible to describe rendered DOM elements and components with arrays and objects. Single execution environment pushes away the worries of browser compatibility issues. DevTools workspaces provide built-in live reload system, neither external tools nor constant builds and browser restarts are necessary.
 
 ## Design principles
 
@@ -21,127 +21,65 @@ A solution dedicated for a single browser asks for a different approach, an atte
 * **testable** - unit test all your components with little effort,
 * **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.
 
-## UI first
+## Web Apps
 
-Building user interfaces for a browser requires pretty much two things: a mechanism to render the view and the way to load and manipulate the data utilised by that view.
+Toolkit renders Web Apps as a composition of Web Components encapsulated within custom elements.
+Web Components manage their own state, use isolated stylesheets, provide rendering context with Commands API and support plugins.
 
-Opera Toolkit builds the UI as a sandboxed app that renders DOM elements in the specified container.
+Toolkit also encourages functional programming by utilizing pure functions and pure components.
+These components always generate the same template when given the same props object.
 
-As a rule of thumb, no excess resources are fetched unless they are needed to render the requested interface.
-Dependencies required for showing particular UI fragments are defined within the components responsible for rendering those fragments. All dependencies are resolved with the built-in discovery service and module loader.
+```js
+const Square = props => [
+  'section',
+  {
+    class: 'square',
+    style: {
+      backgroundColor: props.color,
+      height: [props.size, 'px'],
+      width: [props.size, 'px'],
+    },
+  },
+];
+```
 
-Apps can be isolated within custom elements as Web components.
-Multiple apps rendered on the same page share dependencies, as these are stateless by design. All stateful components are encapsulated within apps.
+There is no transpilation phase, the sources are directly used by the browser in the form of ES modules.
+
+## State management
+
+Instead of using the centralized state, as in Redux, Web Component manages only the view model that is necessary
+to render the particular fragment of the UI it is responsible for.
+
+There is no need to traverse and clone complex data structures in order to amend the state.
+By design Web Components are small, single-purpose nestable apps. Their state is based on the props received from the parent.
+They can fetch the additional data asynchronously and handle the data changes themselves. The ancestor Web Components are not involved when not interested in that data.
+
+Web Components use reducer functions to make a transition between one state and another.
+There are two built-in commands, `update` and `setState`, allowing to override the properties and replace the state respectively.
+
+## Templating
+
+Toolkit uses **Bragi** templates, which allow to express HTML nodes with pure JavaScript code, using only objects, arrays and primitive types.
+
+Find out more about [Bragi templates](BRAGI.md)
 
 ## Examples
 
-Simple counter app with anonymous render method:
+Here are a few conceptual examples of [Web Components](EXAMPLES.md)
 
-```js
-const CounterApp = await opr.Toolkit.render(
-    props =>
-        ['main',
-         [
-           'div',
-           {
-             class: 'header',
-           },
-           props.header,
-         ],
-         [
-           'div',
-           {
-             class: 'content',
-             onClick: () => {
-               CounterApp.commands.update({
-                 value: CounterApp.state.value + 1,
-               });
-             },
-           },
-           `Value: ${props.value}`,
-         ],
-], document.body, {
-  header: 'Simple counter',
-  value: 0,
-});
+## Build
+
+To build a single-script, production version of Toolkit with no external dependencies just run:
+```
+npm run release
 ```
 
-App encapsulated within custom element displaying data coming from an external service:
+## Demo
 
-```js
-class RandomService extends opr.Toolkit.Service {
+A simple demo in both `debug` and `release` mode:
 
-  static init() {
-    this.listeners = new Set();
-    this.generate();
-    setInterval(() => {
-      this.generate();
-      this.notifyListeners(this.value);
-    }, 2000);
-  }
-
-  static getValue() {
-    return this.value;
-  }
-
-  static generate() {
-    this.value = Math.floor(256 * Math.random());
-  }
-
-  static notifyListeners(value) {
-    for (const listener of this.listeners) {
-      listener(value);
-    }
-  }
-
-  static get events() {
-    return ['onValueChanged'];
-  }
-
-  static connect(listeners) {
-    this.validate(listeners);
-    this.listeners.add(listeners.onValueChanged);
-    return () => {
-      // disconnect method
-      this.listeners.delete(listeners.onValueChanged);
-    };
-  }
-}
-
-RandomService.init();
-
-class RandomApp extends opr.Toolkit.Root {
-
-  static get elementName(){
-    return 'encapsulated-component';
-  }
-
-  async getInitialState() {
-    return {
-      value: RandomService.getValue(),
-    };
-  }
-
-  onValueChanged(value) {
-    this.commands.setState({
-      value,
-    });
-  }
-
-  onAttached() {
-    // automatically disconnects when detached from DOM
-    this.connectTo(RandomService, {
-      onValueChanged: this.onValueChanged,
-    });
-  }
-
-  render() {
-    return [
-      'section',
-      `Value: ${this.props.value}`,
-    ];
-  }
-}
-
-opr.Toolkit.render(RandomApp, document.body);
+```sh
+npm run demo
 ```
+
+The debug mode uses the logger plugin showing all executed commands, patches applied on the DOM and time taken on each operation.

@@ -12,6 +12,7 @@ const introspect = async () => {
   const loadTest = async name => await esImport(`/functional/${name}.test.js`);
 
   await loadTest('attributes');
+  await loadTest('components');
 
   mocha.checkLeaks();
   mocha.run();
