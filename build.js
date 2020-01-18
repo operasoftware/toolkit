@@ -22,7 +22,7 @@ const normalizeModule = path => {
 };
 
 const copyrightHeader = `/*
-Copyright 2017-2019 Opera Software AS
+Copyright 2017-2020 Opera Software AS
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
