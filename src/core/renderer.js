@@ -46,7 +46,6 @@ limitations under the License.
           to,
         },
       };
-      root.state.update(to);
 
       this.onBeforeUpdate(update, root);
 

@@ -19,9 +19,9 @@ limitations under the License.
 
     onComponentCreated(component) {
       if (component.hasOwnMethod('onCreated')) {
-        component.commands.queueIncoming();
+        component.dispatcher.queueIncoming();
         component.onCreated.call(component.sandbox);
-        component.commands.executeIncoming();
+        component.dispatcher.executeIncoming();
       }
       if (component.content) {
         this.onNodeCreated(component.content);
@@ -46,9 +46,9 @@ limitations under the License.
 
     onRootCreated(root) {
       if (root.hasOwnMethod('onCreated')) {
-        root.commands.queueIncoming();
+        root.dispatcher.queueIncoming();
         root.onCreated.call(root.sandbox);
-        root.commands.executeIncoming();
+        root.dispatcher.executeIncoming();
       }
       if (root.children) {
         for (const child of root.children) {
@@ -62,9 +62,9 @@ limitations under the License.
         this.onNodeAttached(component.content);
       }
       if (component.hasOwnMethod('onAttached')) {
-        component.commands.queueIncoming();
+        component.dispatcher.queueIncoming();
         component.onAttached.call(component.sandbox);
-        component.commands.executeIncoming();
+        component.dispatcher.executeIncoming();
       }
     },
 
@@ -109,24 +109,24 @@ limitations under the License.
 
     onComponentReceivedProps(component, nextProps = {}) {
       if (component.hasOwnMethod('onPropsReceived')) {
-        component.commands.queueIncoming();
+        component.dispatcher.queueIncoming();
         component.onPropsReceived.call(component.sandbox, nextProps);
-        component.commands.executeIncoming();
+        component.dispatcher.executeIncoming();
       }
     },
 
     onComponentUpdated(component, prevProps = {}) {
       if (component.hasOwnMethod('onUpdated')) {
-        component.commands.queueIncoming();
+        component.dispatcher.queueIncoming();
         component.onUpdated.call(component.sandbox, prevProps);
-        component.commands.executeIncoming();
+        component.dispatcher.executeIncoming();
       }
     },
 
     onComponentDestroyed(component) {
       component.destroy();
       if (component.hasOwnMethod('onDestroyed')) {
-        component.commands.ignoreIncoming();
+        component.dispatcher.ignoreIncoming();
         component.onDestroyed.call(component.sandbox);
       }
       if (component.content) {
@@ -161,7 +161,7 @@ limitations under the License.
         this.onNodeDetached(component.content);
       }
       if (component.hasOwnMethod('onDetached')) {
-        component.commands.ignoreIncoming();
+        component.dispatcher.ignoreIncoming();
         component.onDetached.call(component.sandbox);
       }
     },

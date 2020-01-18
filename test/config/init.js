@@ -33,7 +33,6 @@ global.sinon = require('sinon');
     Renderer: require('../../src/core/renderer.js'),
     Sandbox: require('../../src/core/sandbox.js'),
     Service: require('../../src/core/service.js'),
-    State: require('../../src/core/state.js'),
     Template: require('../../src/core/template.js'),
     VirtualDOM: require('../../src/core/virtual-dom.js'),
     utils: require('../../src/core/utils.js'),

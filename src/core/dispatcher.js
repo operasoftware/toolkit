@@ -15,77 +15,138 @@ limitations under the License.
 */
 
 {
-
   const Mode = {
     QUEUE: Symbol('queue-commands'),
     EXECUTE: Symbol('execute-commands'),
     IGNORE: Symbol('ignore-commands'),
   };
 
+  const coreAPI = {
+    setState(state) {
+      return () => state;
+    },
+    update(overrides) {
+      return state => ({
+        ...state,
+        ...overrides,
+      });
+    },
+  }
+
+  class Command {
+
+    constructor(name, args, method) {
+      this.name = name;
+      this.args = args;
+      this.method = method;
+    }
+
+    invoke(state) {
+      return this.method(...this.args)(state);
+    }
+  }
+
+  const createCommandsAPI = (...apis) => {
+    let commandsAPI = {};
+    for (const api of [coreAPI, ...apis]) {
+      const defined = Object.keys(commandsAPI);
+      const incoming = Object.keys(api);
+      const overriden = incoming.find(key => defined.includes(key));
+      if (overriden) {
+        throw new Error(`The "${overriden}" command is already defined!`)
+      }
+      Object.assign(commandsAPI, api);
+    }
+    return commandsAPI;
+  };
+
   class Dispatcher {
 
-    static create(root) {
-      return new Dispatcher(root);
+    queueIncoming() {
+      this.mode = Mode.QUEUE;
+    }
+
+    executeIncoming() {
+      this.mode = Mode.EXECUTE;
+    }
+
+    ignoreIncoming() {
+      this.mode = Mode.IGNORE;
+    }
+
+    execute(command, root) {
+      const prevState = root.state;
+      const nextState = command.invoke(prevState);
+      root.state = nextState;
+      opr.Toolkit.Renderer.update(root, prevState, nextState, command);
     }
 
     constructor(root) {
-      const state = root.state;
-      const commands = state.reducer.commands;
 
-      this.names = Object.keys(commands);
+      this.mode = Mode.EXECUTE;
       this.queue = [];
+      this.commands = {};
 
-      this.execute = command => {
-        const prevState = state.current;
-        const nextState = state.reducer(prevState, command);
-        opr.Toolkit.Renderer.update(root, prevState, nextState, command);
-      };
+      let createCommand;
 
-      this.queueIncoming = () => {
-        this.mode = Mode.QUEUE;
+      const ComponentClass = root.constructor;
+      if (typeof ComponentClass.getCommands === 'function') {
+
+        const customAPI = ComponentClass.getCommands();
+        if (!customAPI) {
+          throw new Error('No API returned in getCommands() method');
+        }
+        const customAPIs = Array.isArray(customAPI) ? customAPI : [customAPI];
+        const api = createCommandsAPI(...customAPIs);
+
+        this.names = Object.keys(api);
+        createCommand = (name, args) => new Command(name, args, api[name]);
+
+      } else {
+
+        const reducers = root.getReducers ? root.getReducers() : [];
+        const combinedReducer = opr.Toolkit.Reducers.combine(...reducers);
+        const api = combinedReducer.commands;
+
+        this.names = Object.keys(api);
+        createCommand = (name, args) => new Command(
+            name, args,
+            () => state => combinedReducer(state, api[name](...args)));
       }
-
-      this.executeIncoming = () => {
-        this.mode = Mode.EXECUTE;
-      };
-
-      this.ignoreIncoming = () => {
-        this.mode = Mode.IGNORE;
-      };
 
       this.mode = Mode.EXECUTE;
       let level = 0;
+
       for (const name of this.names) {
-        this[name] = async (...args) => {
+        this.commands[name] = (...args) => {
+
+          const command = createCommand(name, args);
+
+          if (this.mode === Mode.QUEUE) {
+            const donePromise = new Promise(resolve => {
+              command.done = resolve;
+            });
+            this.queue.push(command);
+            return donePromise;
+          }
+
           if (this.mode === Mode.IGNORE) {
             level = 0;
             return false;
           }
-          if (this.mode === Mode.QUEUE) {
-            let done;
-            const donePromise = new Promise(resolve => {
-              done = resolve;
-            });
-            this.queue.push({
-              name,
-              args,
-              done,
-            });
-            return donePromise;
-          }
-          const command = commands[name](...args);
-          this.execute(command);
+
+          this.execute(command, root);
+
           if (this.queue.length) {
             level = level + 1;
             if (level >= 3) {
               throw new Error(
                   'Too many cycles updating state in lifecycle methods!');
             }
-            const calls = [...this.queue];
             setTimeout(() => {
-              for (const {name, args, done} of calls) {
-                this[name](...args);
-                done();
+              for (const command of this.queue) {
+                this.execute(command, root);
+                command.done();
               }
             });
             this.queue.length = 0;
@@ -95,10 +156,6 @@ limitations under the License.
           }
         };
       }
-    }
-
-    destroy() {
-      this.execute = opr.Toolkit.noop;
     }
   }
 

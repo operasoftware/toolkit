@@ -222,6 +222,10 @@ limitations under the License.
       return this.context ? this.context.commands : this.rootNode.commands;
     }
 
+    get dispatcher() {
+      return this.context ? this.context.dispatcher : this.rootNode.dispatcher;
+    }
+
     destroy() {
       for (const cleanUpTask of this.cleanUpTasks) {
         cleanUpTask();
@@ -255,7 +259,7 @@ limitations under the License.
 
   const CONTAINER = Symbol('container');
   const CUSTOM_ELEMENT = Symbol('custom-element');
-  const COMMANDS = Symbol('commands');
+  const DISPATCHER = Symbol('dispatcher');
 
   class WebComponent extends Component {
 
@@ -270,8 +274,7 @@ limitations under the License.
     constructor(description, parent = null, context = null) {
       super(description, parent, context, /*= attachDOM */ false);
       this.subroots = new Set();
-      this.state = opr.Toolkit.Reducers.create(this);
-      this.commands = opr.Toolkit.Dispatcher.create(this);
+      this.dispatcher = new opr.Toolkit.Dispatcher(this);
       this.ready = new Promise(resolve => {
         this.markAsReady = resolve;
       });
@@ -320,6 +323,14 @@ limitations under the License.
       this.markAsReady();
     }
 
+    setState(state) {
+      if (state.constructor !== Object) {
+        throw new Error('Web Component state must be a plain object!');
+      }
+      this.commands.setState(opr.Toolkit.Template.normalizeComponentProps(
+          state, this.constructor));
+    }
+
     /*
      * Triggers the component update.
      */
@@ -329,19 +340,8 @@ limitations under the License.
         return;
       }
       const state = this.getUpdatedState(
-          description.props || {}, this.state.current || {});
+          description.props || {}, this.state || {});
       this.setState(state);
-    }
-
-    /**
-     * Sets the normalized state.
-     */
-    setState(state) {
-      if (state.constructor !== Object) {
-        throw new Error('Web Component state must be a plain object!');
-      }
-      this.commands.setState(
-        opr.Toolkit.Template.normalizeComponentProps(state, this.constructor));
     }
 
     /*
@@ -349,7 +349,9 @@ limitations under the License.
      * to the state manager.
      */
     async getInitialState(props) {
-      return this.state.getInitialState(props);
+      return {
+        ...props,
+      };
     }
 
     /*
@@ -357,15 +359,22 @@ limitations under the License.
      * to the state manager.
      */
     getUpdatedState(props, state) {
-      return this.state.getUpdatedState(props, state);
+      return {
+        ...state,
+        ...props,
+      };
     }
 
-    set commands(commands) {
-      this[COMMANDS] = commands;
+    get dispatcher() {
+      return this[DISPATCHER];
+    }
+
+    set dispatcher(dispatcher) {
+      this[DISPATCHER] = dispatcher;
     }
 
     get commands() {
-      return this[COMMANDS];
+      return this.dispatcher.commands;
     }
 
     createPlugins() {
@@ -425,10 +434,6 @@ limitations under the License.
       return this[CONTAINER];
     }
 
-    getReducers() {
-      return [];
-    }
-
     get tracked() {
       const tracked = [];
       for (const root of this.subroots) {
@@ -444,11 +449,8 @@ limitations under the License.
       } catch (e) {
         return;
       }
-      this.state.destroy();
-      this.state = null;
       this.plugins.destroy();
       this.plugins = null;
-      this.commands.destroy();
       this.parentNode = null;
     }
 

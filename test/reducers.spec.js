@@ -8,11 +8,11 @@ describe('Reducers', () => {
       const state = {
         foo: 'bar',
       };
-      const reducers = opr.Toolkit.Reducers.create(createRoot());
-      const command = reducers.reducer.commands.setState(state);
+      const reducer = opr.Toolkit.Reducers.combine();
+      const command = reducer.commands.setState(state);
 
       // when
-      const nextState = reducers.reducer({}, command);
+      const nextState = reducer({}, command);
 
       // then
       assert.deepEqual(nextState, state);
@@ -62,7 +62,7 @@ describe('Reducers', () => {
     it('allows to use setState command from the core reducer', () => {
 
       // given
-      const reducer = opr.Toolkit.Reducers.create(createRoot()).reducer;
+      const reducer = opr.Toolkit.Reducers.combine();
       const state = {};
       const newState = {
         foo: 'bar',
@@ -79,7 +79,7 @@ describe('Reducers', () => {
     it('allows to use update command from the core reducer', () => {
 
       // given
-      const reducer = opr.Toolkit.Reducers.create(createRoot()).reducer;
+      const reducer = opr.Toolkit.Reducers.combine();
       const state = {
         some: 'value',
       };
@@ -125,13 +125,8 @@ describe('Reducers', () => {
     it('chains reducers and merges commands', () => {
 
       // given
-      class SomeRoot extends opr.Toolkit.Root {
-        getReducers() {
-          return [doubleReducer, tripleReducer];
-        }
-      }
-      const root = createRootInstance(SomeRoot);
-      const reducer = opr.Toolkit.Reducers.create(root).reducer;
+      const reducer =
+          opr.Toolkit.Reducers.combine(doubleReducer, tripleReducer);
 
       // when
       const initCommand = reducer.commands.setState({

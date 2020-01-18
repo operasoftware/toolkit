@@ -30,7 +30,6 @@ limitations under the License.
     Renderer: loader.get('core/renderer'),
     Sandbox: loader.get('core/sandbox'),
     Service: loader.get('core/service'),
-    State: loader.get('core/state'),
     Reducers: loader.get('core/reducers'),
     Template: loader.get('core/template'),
     VirtualDOM: loader.get('core/virtual-dom'),

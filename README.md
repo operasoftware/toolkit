@@ -54,8 +54,9 @@ There is no need to traverse and clone complex data structures in order to amend
 By design Web Components are small, single-purpose nestable apps. Their state is based on the props received from the parent.
 They can fetch the additional data asynchronously and handle the data changes themselves. The ancestor Web Components are not involved when not interested in that data.
 
-Web Components use reducer functions to make a transition between one state and another.
-There are two built-in commands, `update` and `setState`, allowing to override the properties and replace the state respectively.
+Web Components use commands to make a transition between one state and another.
+
+Read more about the [Commands API](COMMANDS.md).
 
 ## Templating
 
