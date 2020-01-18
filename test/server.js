@@ -26,6 +26,9 @@ app.use((request, response, next) => {
 
 const server = app.listen(app.get('port'), () => {
   console.log('---------------------------------------------------');
-  console.log(` Running test server at: http://localhost:${PORT}`);
+  console.log(' Running test server');
+  console.log('---------------------------------------------------');
+  console.log(` - web tests: http://localhost:${PORT}`);
+  console.log(` - introspector: http://localhost:${PORT}/introspector.html`);
   console.log('---------------------------------------------------');
 });

@@ -25,6 +25,10 @@ main {
   padding-top: 3px;
 }
 
+#mocha h1 {
+  margin-bottom: 4px;
+}
+
 #mocha h1 a {
   font-size: 16px;
   font-weight: 550;

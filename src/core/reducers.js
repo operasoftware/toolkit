@@ -42,75 +42,31 @@ limitations under the License.
     }),
   };
 
-  const combineReducers = (...reducers) => {
-    const commands = {};
-    const reducer = (state, command) => {
-      [coreReducer, ...reducers].forEach(reducer => {
-        state = reducer(state, command);
-      });
-      return state;
-    };
-    [coreReducer, ...reducers].forEach(reducer => {
-      const defined = Object.keys(commands);
-      const incoming = Object.keys(reducer.commands);
-
-      const overriden = incoming.find(key => defined.includes(key));
-      if (overriden) {
-        console.error(
-            'Reducer:', reducer,
-            `conflicts an with exiting one with method: "${overriden}"`);
-        throw new Error(`The "${overriden}" command is already defined!`)
-      }
-      Object.assign(commands, reducer.commands);
-    });
-    reducer.commands = commands;
-    return reducer;
-  };
-
   class Reducers {
 
-    /*
-     * Creates a new reducer-based state manager for given root component.
-     */
-    static create(root) {
-
-      class Reducers extends opr.Toolkit.State {
-
-        constructor(root) {
-          super(root);
-          this.reducer = combineReducers(...(root.getReducers() || []));
+    static combine(...reducers) {
+      const commands = {};
+      const reducer = (state, command) => {
+        for (const reducer of [coreReducer, ...reducers]) {
+          state = reducer(state, command);
         }
+        return state;
+      };
+      for (const reducer of [coreReducer, ...reducers]) {
+        const defined = Object.keys(commands);
+        const incoming = Object.keys(reducer.commands);
 
-        /*
-         * By default returns a new object derived from the current state.
-         */
-        async getInitialState(props) {
-          return {
-            ...props,
-          };
+        const overriden = incoming.find(key => defined.includes(key));
+        if (overriden) {
+          console.error(
+              'Reducer:', reducer,
+              `conflicts an with exiting one with method: "${overriden}"`);
+          throw new Error(`The "${overriden}" command is already defined!`)
         }
-
-        /*
-         * By default returns a new object derived from the current state
-         * and overriden by updated props passed from the parent.
-         */
-        getUpdatedState(props = {}, state = {}) {
-          return {
-            ...state,
-            ...props,
-          };
-        }
-
-        /*
-         * Removes references to used objects.
-         */
-        destroy() {
-          super.destroy();
-          this.reducer = null;
-        }
+        Object.assign(commands, reducer.commands);
       }
-
-      return new Reducers(root);
+      reducer.commands = commands;
+      return reducer;
     }
   }
 

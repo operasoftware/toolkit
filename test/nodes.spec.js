@@ -632,13 +632,6 @@ describe('Nodes', () => {
         assert.deepEqual(await root.getInitialState(), {});
       });
     });
-
-    describe('get reducers', () => {
-
-      it('by default returns an empty array', () => {
-        assert.deepEqual(root.getReducers(), []);
-      });
-    });
   });
 
   describe('Element', () => {

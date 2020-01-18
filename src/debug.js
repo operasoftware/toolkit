@@ -36,7 +36,6 @@ window.loadToolkit = async configureLoader => {
     Renderer: await loader.require('core/renderer'),
     Sandbox: await loader.require('core/sandbox'),
     Service: await loader.require('core/service'),
-    State: await loader.require('core/state'),
     Template: await loader.require('core/template'),
     VirtualDOM: await loader.require('core/virtual-dom'),
     utils: await loader.require('core/utils'),
