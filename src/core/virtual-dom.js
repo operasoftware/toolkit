@@ -46,7 +46,7 @@ limitations under the License.
       if (ComponentClass.prototype instanceof opr.Toolkit.WebComponent) {
         return this.createWebComponent(
             description, parent && parent.rootNode, context,
-            /*= requireCustomElement */ true);
+            /*= requireCustomElement */ false);
       }
       const component = new ComponentClass(description, parent, context);
       const nodeDescription = opr.Toolkit.Renderer.render(

@@ -1,4 +1,5 @@
-describe.skip('Components', () => {
+describe.only('Components', () => {
+
   let container;
 
   beforeEach(() => {
@@ -8,12 +9,27 @@ describe.skip('Components', () => {
 
   afterEach(() => { container.remove(); })
 
-  it('creates a simple Component', async () => {
+  describe('=> Web Component', () => {
 
-  });
+    it('renders custom element', async() => {
 
-  // drive
-  it('creates a Web Component', async () => {
+      // given
+      class CustomElement extends opr.Toolkit.WebComponent {
 
+        static elementName = 'custom-element';
+
+        render() {
+          return [
+            'main',
+          ];
+        }
+      }
+
+      // when
+      const customElement = await opr.Toolkit.render(CustomElement, container);
+
+      // then
+      assert.equal(customElement.ref.tagName, 'CUSTOM-ELEMENT');
+    })
   });
 });
