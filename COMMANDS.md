@@ -89,7 +89,7 @@ export default class Stack extends opr.Toolkit.WebComponent {
     return StackCommands;
   }
 
-  pushItem(item) {
+  pushItem() {
     const item = parseInt(256 * Math.random());
     console.log('Pushing item:', item);
     this.commands.push(item);
