@@ -180,6 +180,7 @@ limitations under the License.
     }
 
     hasOwnMethod(method) {
+      // eslint-disable-next-line no-prototype-builtins
       return this.constructor.prototype.hasOwnProperty(method);
     }
 

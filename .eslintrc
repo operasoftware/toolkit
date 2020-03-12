@@ -28,12 +28,7 @@
     ],
     "no-else-return": "error",
     "no-extra-boolean-cast": "off",
-    "no-fallthrough": [
-      "error",
-      {
-        "commentPattern": "falls?(\\s|\\-)?through"
-      }
-    ],
+    "no-fallthrough": "error",
     "no-invalid-this": "error",
     "no-multi-spaces": "error",
     "no-undef": "off",
