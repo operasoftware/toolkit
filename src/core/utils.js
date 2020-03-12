@@ -51,7 +51,7 @@ limitations under the License.
     };
   };
 
-  const debounce = (fn, wait = 200) => {
+  const debounce = (fn, wait = 200, leading = false) => {
 
     let taskId = null;
 
@@ -59,7 +59,7 @@ limitations under the License.
     let params;
 
     return function debounced(...args) {
-      /* eslint-disable no-invalid-this */
+      const isFirstInvocation = !taskId;
       if (taskId) {
         clearTimeout(taskId);
       }
@@ -68,9 +68,12 @@ limitations under the License.
         return fn.call(context, ...params);
       }, wait);
 
-      context = this;
+      context = this; // eslint-disable-line no-invalid-this
       params = args;
-      /* eslint-enable no-invalid-this */
+
+      if (isFirstInvocation && leading) {
+        return fn.call(context, ...params);
+      }
     };
   };
 
