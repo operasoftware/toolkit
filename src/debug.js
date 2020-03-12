@@ -42,6 +42,7 @@ window.loadToolkit = async configureLoader => {
     noop: () => {},
   });
 
-  window.opr = window.opr || {};
-  window.opr.Toolkit = new Toolkit();
+  const scope = typeof window === 'undefined' ? global : window;
+  scope.opr = scope.opr || {};
+  scope.opr.Toolkit = new Toolkit();
 };
