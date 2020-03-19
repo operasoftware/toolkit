@@ -195,6 +195,18 @@ limitations under the License.
       const root = await this.createRoot(component, props);
       return root.mount(container);
     }
+
+    /**
+     * Appends the component instance to Virtual DOM and mounts the
+     * corresponding HTML node in the specified container element.
+     *
+     * If Web Component is used, the update will be scheduled to run once
+     * the state is calculated.
+     */
+    async experimentalRender(component, container, props) {
+      await this.ready;
+      debugger; // eslint-disable-line no-debugger
+    }
   }
 
   module.exports = Toolkit;

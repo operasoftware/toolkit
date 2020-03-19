@@ -7,11 +7,41 @@ describe.only('Components', () => {
     document.body.appendChild(container);
   });
 
-  afterEach(() => { container.remove(); })
+  afterEach(() => {
+    container.remove();
+  });
 
-  describe('=> Web Component', () => {
+  describe('- pure function', () => {
 
-    it('renders custom element', async() => {
+    const Section = props => [
+      'section',
+      {
+        class: 'pure-component',
+      },
+      props.text || null,
+    ];
+
+    let component;
+
+    it('renders content', async() => {
+
+      // given
+      const text = 'One Toolkit to rule them all.';
+
+      const props = {
+        text,
+      };
+
+      // when
+      const component =
+          await opr.Toolkit.experimentalRender(Section, container);
+
+      // then
+      assert(component.ref);
+      assert.equal(component.ref.textContent, text);
+    });
+
+    it.skip('renders custom element', async() => {
 
       // given
       class CustomElement extends opr.Toolkit.WebComponent {
@@ -26,10 +56,11 @@ describe.only('Components', () => {
       }
 
       // when
-      const customElement = await opr.Toolkit.render(CustomElement, container);
+      const component = await opr.Toolkit.render(CustomElement, container);
 
       // then
-      assert.equal(customElement.ref.tagName, 'CUSTOM-ELEMENT');
-    })
+      assert.equal(component.ref.tagName, 'CUSTOM-ELEMENT');
+    });
+
   });
 });

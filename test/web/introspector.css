@@ -14,6 +14,10 @@ main {
   margin-top: 20px;
 }
 
+#mocha .suite {
+  margin-top: 8px;
+}
+
 #mocha .test.pass::before {
   font-size: 17px;
   font-weight: bold;
@@ -30,8 +34,8 @@ main {
 }
 
 #mocha h1 a {
-  font-size: 16px;
-  font-weight: 550;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: 0.4px;
 }
 
