@@ -59,14 +59,14 @@ limitations under the License.
      * Notifies the observers about upcoming update.
      */
     onBeforeUpdate(update, root) {
-      root.plugins.notify('before-update', update);
+      root.plugins && root.plugins.notify('before-update', update);
     },
 
     /*
      * Notifies the observers about completed update.
      */
     onAfterUpdate(update, root) {
-      root.plugins.notify('after-update', update);
+      root.plugins && root.plugins.notify('after-update', update);
     },
 
     /**

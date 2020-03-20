@@ -4,6 +4,7 @@ describe.only('Components', () => {
 
   beforeEach(() => {
     container = document.createElement('section');
+    container.style.opacity = 0;
     document.body.appendChild(container);
   });
 
@@ -23,7 +24,7 @@ describe.only('Components', () => {
 
     let component;
 
-    it('renders content', async() => {
+    it('renders content', async () => {
 
       // given
       const text = 'One Toolkit to rule them all.';
@@ -33,15 +34,14 @@ describe.only('Components', () => {
       };
 
       // when
-      const component =
-          await opr.Toolkit.experimentalRender(Section, container);
+      component = await opr.Toolkit.xpRender(Section, container, props);
 
       // then
       assert(component.ref);
       assert.equal(component.ref.textContent, text);
     });
 
-    it.skip('renders custom element', async() => {
+    it.skip('renders custom element', async () => {
 
       // given
       class CustomElement extends opr.Toolkit.WebComponent {

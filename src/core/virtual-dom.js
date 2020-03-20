@@ -38,6 +38,12 @@ limitations under the License.
       }
     },
 
+    createXPComponent(description) {
+      const ComponentClass = description.component;
+      const component = new ComponentClass(description);
+      return component;
+    },
+
     /*
      * Creates a new component instance from given description.
      */

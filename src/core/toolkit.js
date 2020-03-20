@@ -85,12 +85,12 @@ limitations under the License.
     /*
      * Returns resolved Component class.
      */
-    resolveComponentClass(component, type) {
+    resolveComponentClass(component, type, isExperimental = false) {
       switch (type) {
         case 'component':
           return component;
         case 'function':
-          return this.resolvePureComponentClass(component);
+          return this.resolvePureComponentClass(component, isExperimental);
         case 'symbol':
           return this.resolveLoadedClass(String(component).slice(7, -1));
         default:
@@ -102,16 +102,24 @@ limitations under the License.
      * Returns a PureComponent class rendering the template
      * provided by the specified function.
      */
-    resolvePureComponentClass(fn) {
+    resolvePureComponentClass(fn, isExperimental) {
       let ComponentClass = pureComponentClassRegistry.get(fn);
       if (ComponentClass) {
         return ComponentClass;
       }
-      ComponentClass = class PureComponent extends opr.Toolkit.Component {
-        render() {
-          fn.bind(this)(this.props);
+      if (isExperimental) {
+        ComponentClass = class PureExperiment extends opr.Toolkit.XPComponent {
+          render() {
+            return fn.bind(this)(this.props);
+          }
         }
-      };
+      } else {
+        ComponentClass = class PureComponent extends opr.Toolkit.Component {
+          render() {
+            fn.bind(this)(this.props);
+          }
+        };
+      }
       ComponentClass.renderer = fn;
       pureComponentClassRegistry.set(fn, ComponentClass);
       return ComponentClass;
@@ -196,6 +204,15 @@ limitations under the License.
       return root.mount(container);
     }
 
+    create(component, props, children = []) {
+      const description = opr.Toolkit.Template.describe([
+        component,
+        props,
+        ...children,
+      ], true);
+      return opr.Toolkit.VirtualDOM.createXPComponent(description, null);
+    }
+
     /**
      * Appends the component instance to Virtual DOM and mounts the
      * corresponding HTML node in the specified container element.
@@ -203,9 +220,11 @@ limitations under the License.
      * If Web Component is used, the update will be scheduled to run once
      * the state is calculated.
      */
-    async experimentalRender(component, container, props) {
+    async xpRender(component, container, props = {}) {
       await this.ready;
-      debugger; // eslint-disable-line no-debugger
+      const instance = this.create(component, props);
+      instance.mount(container);
+      return instance;
     }
   }
 
