@@ -176,45 +176,16 @@ limitations under the License.
       };
 
       if (stylesheets && stylesheets.length) {
-
         const imports = cssImports(stylesheets);
-
         const onError = () => {
           throw new Error(
               `Error loading stylesheets: ${stylesheets.join(', ')}`);
         };
-
-        if (opr.Toolkit.isDebug()) {
-
-          const style = document.createElement('style');
-          style.textContent = imports;
-          style.onload = onSuccess;
-          style.onerror = onError;
-          root.shadow.appendChild(style);
-
-        } else {
-
-          if (root.constructor.adoptedStyleSheet) {
-            root.constructor.adoptedStyleSheet.then(sheet => {
-              root.shadow.adoptedStyleSheets = [sheet];
-              onSuccess();
-            });
-          } else {
-            let onSheetConstructed;
-            root.constructor.adoptedStyleSheet = new Promise(resolve => {
-              onSheetConstructed = resolve;
-            })
-            root.sheet = new CSSStyleSheet();
-            root.sheet.replace(imports)
-                .then(sheet => {
-                  root.shadow.adoptedStyleSheets = [sheet];
-                  onSheetConstructed(sheet);
-                  onSuccess();
-                })
-                .catch(onError);
-          }
-        }
-
+        const style = document.createElement('style');
+        style.textContent = imports;
+        style.onload = onSuccess;
+        style.onerror = onError;
+        root.shadow.appendChild(style);
       } else {
         onSuccess();
       }
