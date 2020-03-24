@@ -31,7 +31,7 @@ limitations under the License.
         ...overrides,
       });
     },
-  }
+  };
 
   class Command {
 
@@ -53,7 +53,7 @@ limitations under the License.
       const incoming = Object.keys(api);
       const overriden = incoming.find(key => defined.includes(key));
       if (overriden) {
-        throw new Error(`The "${overriden}" command is already defined!`)
+        throw new Error(`The "${overriden}" command is already defined!`);
       }
       Object.assign(commandsAPI, api);
     }

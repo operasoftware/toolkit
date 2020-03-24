@@ -61,7 +61,7 @@ limitations under the License.
           console.error(
               'Reducer:', reducer,
               `conflicts an with exiting one with method: "${overriden}"`);
-          throw new Error(`The "${overriden}" command is already defined!`)
+          throw new Error(`The "${overriden}" command is already defined!`);
         }
         Object.assign(commands, reducer.commands);
       }

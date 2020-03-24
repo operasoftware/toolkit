@@ -244,7 +244,7 @@ limitations under the License.
       };
       uninstallFrom(element.$root);
     };
-  }
+  };
 
   module.exports = Renderer;
 }

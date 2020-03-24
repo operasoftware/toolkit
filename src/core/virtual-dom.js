@@ -34,7 +34,7 @@ limitations under the License.
         case 'text':
           return new opr.Toolkit.Text(description, parent);
         default:
-          throw new Error(`Unsupported node type: ${description.type}`)
+          throw new Error(`Unsupported node type: ${description.type}`);
       }
     },
 

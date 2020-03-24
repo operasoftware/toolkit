@@ -53,7 +53,7 @@ limitations under the License.
               typeof uninstall === 'function',
               'The plugin installation must return the uninstall function!');
           return uninstall;
-        }
+        };
       }
     }
 

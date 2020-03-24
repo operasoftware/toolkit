@@ -86,7 +86,7 @@ limitations under the License.
         const result = this.comparator(after[0], before[0]);
         if (result === 0) {
           before.shift();
-          after.shift()
+          after.shift();
         } else if (result === 1) {
           removed.push(before.shift());
         } else {
@@ -95,7 +95,7 @@ limitations under the License.
       }
 
       const sortByIndex = function(foo, bar) {
-        return foo.index - bar.index
+        return foo.index - bar.index;
       };
 
       removed.sort(sortByIndex).reverse();
