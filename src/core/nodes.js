@@ -450,6 +450,7 @@ limitations under the License.
       } catch (e) {
         return;
       }
+      this.dispatcher.ignoreIncoming();
       this.plugins.destroy();
       this.plugins = null;
       this.parentNode = null;

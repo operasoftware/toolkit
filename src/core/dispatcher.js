@@ -139,12 +139,17 @@ limitations under the License.
 
           if (this.queue.length) {
             level = level + 1;
-            if (level >= 3) {
-              throw new Error(
-                  'Too many cycles updating state in lifecycle methods!');
+            if (level > 3) {
+              try {
+                throw new Error(
+                    'Too many cycles updating state in lifecycle methods!');
+              } finally {
+                level = 0;
+              }
             }
+            const tasks = [...this.queue];
             setTimeout(() => {
-              for (const command of this.queue) {
+              for (const command of tasks) {
                 this.execute(command, root);
                 command.done();
               }
