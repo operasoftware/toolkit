@@ -4,7 +4,7 @@
   "description": "Opera Web UI Toolkit",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha 'test/**/*.spec.js'",
     "test:server": "node test/server.js",
     "demo": "node demo/server.js",
     "coverage": "nyc mocha",
