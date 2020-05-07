@@ -38,6 +38,12 @@ limitations under the License.
       }
     },
 
+    createXPComponent(description) {
+      const ComponentClass = description.component;
+      const component = new ComponentClass(description);
+      return component;
+    },
+
     /*
      * Creates a new component instance from given description.
      */
@@ -46,7 +52,7 @@ limitations under the License.
       if (ComponentClass.prototype instanceof opr.Toolkit.WebComponent) {
         return this.createWebComponent(
             description, parent && parent.rootNode, context,
-            /*= requireCustomElement */ true);
+            /*= requireCustomElement */ false);
       }
       const component = new ComponentClass(description, parent, context);
       const nodeDescription = opr.Toolkit.Renderer.render(

@@ -24,7 +24,7 @@ limitations under the License.
     /*
      * Creates a normalized Description of given template.
      */
-    describe(template) {
+    describe(template, experiment = false) {
 
       if (isFalsy(template)) {
         return null;
@@ -50,7 +50,7 @@ limitations under the License.
               case 'function':
               case 'symbol':
                 description = new ComponentDescription(
-                    opr.Toolkit.resolveComponentClass(item, type));
+                    opr.Toolkit.resolveComponentClass(item, type, experiment));
                 break;
               default:
                 console.error(

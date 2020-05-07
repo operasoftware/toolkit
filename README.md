@@ -45,6 +45,20 @@ const Square = props => [
 
 There is no transpilation phase, the sources are directly used by the browser in the form of ES modules.
 
+## Props-driven
+
+All the components receive props from the parent in a form of an object.
+These props are the single source of truth for each and every component. The props define what given component renders.
+
+All simple components, based only on props, always render the same template for the same set of props.
+
+Elements get props transformed into properties, attributes and listeners set on the element instance.
+
+Web Components are also driven by props, but they can fetch supplementary data if necessary.
+Supplemented props object is stored as internal state, which feeds the rendered content.
+
+More about props-driven components [here](PROPS.md).
+
 ## State management
 
 Instead of using the centralized state, as in Redux, Web Component manages only the view model that is necessary

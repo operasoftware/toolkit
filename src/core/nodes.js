@@ -141,8 +141,38 @@ limitations under the License.
   }
 
   /*
+   * Node representing experimental Component in the virtual DOM tree.
+   */
+  class XPComponent extends VirtualNode {
+
+    static get NodeType() {
+      return 'component';
+    }
+
+    isCompatible(node) {
+      return super.isCompatible(node) && this.constructor === node.constructor;
+    }
+
+    constructor(description, attachDOM = true) {
+      super(description, null, null);
+      this.sandbox = opr.Toolkit.Sandbox.create(this);
+      this.cleanUpTasks = [];
+    }
+
+    mount(container) {
+      const content = opr.Toolkit.Renderer.render(this, this.description.props);
+      const node = opr.Toolkit.VirtualDOM.createFromDescription(content);
+      this.ref = node.ref;
+      container.appendChild(node.ref);
+    }
+
+    render() {
+      return undefined;
+    }
+  }
+
+  /*
    * Node representing Component in the virtual DOM tree.
-   * Components
    */
   class Component extends VirtualNode {
 
@@ -546,6 +576,7 @@ limitations under the License.
 
   const CoreTypes = {
     VirtualNode,
+    XPComponent,
     Component,
     WebComponent,
     Root: WebComponent,

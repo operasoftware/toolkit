@@ -1,5 +1,8 @@
 * {
   -webkit-font-smoothing: antialiased;
+}
+
+:root {
   font: menu;
 }
 
@@ -14,8 +17,12 @@ main {
   margin-top: 20px;
 }
 
+#mocha .suite {
+  margin-top: 8px;
+}
+
 #mocha .test.pass::before {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: bold;
   padding-top: 3px;
 }
@@ -25,13 +32,17 @@ main {
   padding-top: 3px;
 }
 
+#mocha .test.pending {
+  color: #888;
+}
+
 #mocha h1 {
   margin-bottom: 4px;
 }
 
 #mocha h1 a {
-  font-size: 16px;
-  font-weight: 550;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: 0.4px;
 }
 
@@ -50,3 +61,9 @@ main {
   font-size: 13px;
   padding-top: 4px;
 }
+
+#mocha code .comment { color: #999; }
+#mocha code .init { color: #2f6fad; }
+#mocha code .string { color: #1d8e1c; }
+#mocha code .keyword { color: #8a6343; }
+#mocha code .number { color: #2f6fad; }

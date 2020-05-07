@@ -21,8 +21,9 @@ limitations under the License.
      * Creates a new instance bound to a root component
      * with an empty list of patches.
      */
-    constructor(root, currentState, nextState) {
+    constructor(root, currentState, nextState, isExperimental = false) {
       this.root = root;
+      this.isExperimental = isExperimental;
       this.patches = [];
       this.calculate(currentState, nextState);
     }

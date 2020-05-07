@@ -6,6 +6,7 @@
   "scripts": {
     "test": "mocha 'test/**/*.spec.js'",
     "test:server": "node test/server.js",
+    "introspector": "node test/server.js",
     "demo": "node demo/server.js",
     "coverage": "nyc mocha",
     "eslint": "eslint src/core/*.js test/*.spec.js",
