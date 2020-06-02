@@ -77,7 +77,7 @@ describe('Diff => calculate patches', () => {
       const nextTemplate = [
         'input',
         {
-          value: 'next',
+          title: 'foobar',
         },
       ];
 
@@ -90,8 +90,8 @@ describe('Diff => calculate patches', () => {
       assert.equal(patches.length, 2);
       assert.equal(patches[0].type, Patch.Type.SET_ATTRIBUTE);
       assert(patches[0].target.isElement());
-      assert.equal(patches[0].name, 'value');
-      assert.equal(patches[0].value, 'next');
+      assert.equal(patches[0].name, 'title');
+      assert.equal(patches[0].value, 'foobar');
 
       assertUpdatesNode(patches[1], element);
     });

@@ -237,14 +237,19 @@ limitations under the License.
       const changed = attrs.filter(
           attr => nextAttrs.includes(attr) && current[attr] !== next[attr]);
 
-      for (let attr of added) {
-        this.addPatch(Patch.setAttribute(attr, next[attr], target, isCustom));
+      for (let attr of added.concat(changed)) {
+        if (opr.Toolkit.Browser.isAttributeDerived(attr)) {
+          this.addPatch(Patch.setProperty(attr, next[attr], target));
+        } else {
+          this.addPatch(Patch.setAttribute(attr, next[attr], target, isCustom));
+        }
       }
       for (let attr of removed) {
-        this.addPatch(Patch.removeAttribute(attr, target, isCustom));
-      }
-      for (let attr of changed) {
-        this.addPatch(Patch.setAttribute(attr, next[attr], target, isCustom));
+        if (opr.Toolkit.Browser.isAttributeDerived(attr)) {
+          this.addPatch(Patch.deleteProperty(attr, target));
+        } else {
+          this.addPatch(Patch.removeAttribute(attr, target, isCustom));
+        }
       }
     }
 

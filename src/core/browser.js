@@ -193,6 +193,9 @@ limitations under the License.
         'select',
         'textarea',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'autoPlay',
@@ -213,6 +216,9 @@ limitations under the License.
       [
         'input',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'challenge',
@@ -233,6 +239,9 @@ limitations under the License.
         'command',
         'input',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'cite',
@@ -348,6 +357,9 @@ limitations under the License.
         'select',
         'textarea',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'download',
@@ -463,6 +475,9 @@ limitations under the License.
       [
         'input',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'inputMode',
@@ -594,6 +609,9 @@ limitations under the License.
         'input',
         'select',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'muted',
@@ -601,6 +619,9 @@ limitations under the License.
         'audio',
         'video',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'name',
@@ -626,6 +647,9 @@ limitations under the License.
       [
         'form',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'open',
@@ -684,6 +708,9 @@ limitations under the License.
         'input',
         'textarea',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'rel',
@@ -700,6 +727,9 @@ limitations under the License.
         'select',
         'textarea',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'reversed',
@@ -746,6 +776,9 @@ limitations under the License.
       [
         'option',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'shape',
@@ -760,6 +793,9 @@ limitations under the License.
         'input',
         'select',
       ],
+      {
+        derived: true,
+      },
     ],
     [
       'sizes',
@@ -884,6 +920,10 @@ limitations under the License.
         'progress',
         'param',
       ],
+      {
+        derived: true,
+        normalize: false,
+      },
     ],
     [
       'width',
@@ -1050,8 +1090,16 @@ limitations under the License.
   ];
 
   const supportedAttributes = new Map();
-  for (const [key, whitelist] of SUPPORTED_ATTRIBUTES) {
-    supportedAttributes.set(key, whitelist || '*');
+  const derivedAttributes = [];
+  for (const [key, whitelist, config] of SUPPORTED_ATTRIBUTES) {
+    const options = {
+      whitelist: whitelist || '*',
+      config: config || {},
+    };
+    supportedAttributes.set(key, options);
+    if (config && config.derived) {
+      derivedAttributes.push(key);
+    }
   }
 
   const Browser = {
@@ -1060,12 +1108,20 @@ limitations under the License.
       return supportedAttributes.has(key);
     },
 
+    isAttributeDerived(key) {
+      return derivedAttributes.includes(key);
+    },
+
     isAttributeValid(key, element) {
-      const whitelist = supportedAttributes.get(key);
-      if (whitelist) {
-        return whitelist === '*' || whitelist.includes(element);
+      const options = supportedAttributes.get(key);
+      if (options) {
+        return options.whitelist === '*' || options.whitelist.includes(element);
       }
       return false;
+    },
+
+    getDerivedAttributes() {
+      return derivedAttributes;
     },
 
     getValidElementNamesFor(key) {
