@@ -2,6 +2,7 @@
   "name": "opera-toolkit",
   "version": "0.69.0",
   "description": "Opera Web UI Toolkit",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "test": "mocha 'test/**/*.spec.js'",
